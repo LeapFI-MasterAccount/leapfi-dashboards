@@ -9,16 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --obsidian:#111111; --charcoal:#2D2D2D; --cyan:#00F2FF; --teal:#0A8FA3;
-    --gallery:#F4F4F4; --grid:#E4E7EA; --muted:#6E757D; --grey:#9BA0A6;
-    --zebra:#FAFBFC; --ink:#14181C;
+    --obsidian:#111111; --charcoal:#c9d0d7; --cyan:#00F2FF; --teal:#0A8FA3;
+    --gallery:#1a1e24; --grid:#262b31; --muted:#9aa3ad; --grey:#7f878f;
+    --zebra:#16191e; --ink:#c9d0d7;
     --m1:#C94A4A; --m2:#D99B43; --m3:#E4C662; --m4:#7FA774; --m5:#557A61;
-    --panel:#ffffff; --shadow:0 1px 3px rgba(17,17,17,.07),0 8px 24px rgba(17,17,17,.05);
+    --panel:#13171d; --shadow:0 1px 3px rgba(0,0,0,.45),0 10px 28px rgba(0,0,0,.35);
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    color:var(--charcoal); background:#EBEEF1; font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased;}
+    color:var(--charcoal); background:#0a0c10; font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased;}
   .shell{display:grid; grid-template-columns:236px 1fr; min-height:100vh}
   /* Sidebar */
   .side{background:var(--obsidian); color:#fff; position:sticky; top:0; height:100vh; overflow:auto; border-right:2px solid var(--cyan)}
@@ -34,7 +34,7 @@
   .side .foot{padding:16px 20px 24px; color:var(--grey); font-size:10px; line-height:1.55; margin-top:8px; border-top:1px solid #262626}
   /* Main */
   .main{padding:0 0 0}
-  .topbar{position:sticky; top:0; z-index:20; background:rgba(255,255,255,.94); backdrop-filter:blur(6px);
+  .topbar{position:sticky; top:0; z-index:20; background:rgba(10,12,16,.92); backdrop-filter:blur(6px);
     border-bottom:1px solid var(--grid); padding:11px 28px; display:flex; align-items:center; gap:16px; flex-wrap:wrap}
   .ribbon{background:var(--cyan); color:var(--obsidian); font-weight:800; font-size:9px; letter-spacing:.16em; padding:4px 9px; border-radius:3px; text-transform:uppercase}
   .topbar h1{font-size:15px; margin:0; font-weight:700; color:var(--obsidian)}
@@ -186,6 +186,40 @@
     .tiles{grid-template-columns:1fr 1fr}
     .genout{grid-template-columns:1fr 1fr}
   }
+
+  /* ===== LeapFI dark theme (matches Entra / Command Center pages + brand kit) ===== */
+  .topbar h1,.kpi .v,.screentitle h2,.panel h3,.dial .val,.tile .v,.cfrow .v,.prerun b,.body .bn,.profile .pt{color:#eef1f5}
+  .topbar{border-bottom-color:#262b31}
+  select.sel{background:#171b21;color:#eef1f5;border-color:#2b313a}
+  .seg button{background:#171b21;border-right-color:#2b313a}
+  .seg button.on{background:var(--cyan);color:#04121a}
+  .btn{background:var(--teal);color:#041417}
+  .btn.ghost{background:#171b21;color:#c9d0d7;border-color:#2b313a}
+  .lookup input{background:#171b21;color:#dfe4ea;border-color:#2b313a}
+  .formula code{background:#0d1014;border-color:#2b313a;color:#eef1f5}
+  .srcs span{background:#0e1a1d;border-color:#164048}
+  .note{background:#1b1710;border-color:#3a2f16;border-left-color:#D99B43;color:#e6cf9a}
+  .note .k{color:#e2b654}
+  .prerun{background:linear-gradient(90deg,#0e1a1d,#13171d);border-color:#15343b;border-left-color:var(--teal)}
+  .prerun .k{color:var(--cyan)}
+  .profile{background:#0e1a1d;border-color:#15343b}
+  .profile .pg div b{color:#9aa3ad}
+  .body{border-color:#2b313a}
+  .body.pri{background:#0e1a1d;border-color:var(--teal)}
+  .body.app{background:#12161b}.body.app .bs{color:#5fbf85}
+  .body.cond{background:#1b1710;border-color:#3a2f16}.body.cond .bs{color:#e2b654}
+  .body.na{background:#111418}
+  .body.manon{background:#07242a;border-color:var(--cyan)}
+  .body.manoff{background:#111418}
+  .mapwrap{border-left-color:#3a424b;border-bottom-color:#3a424b}
+  .mapwrap .quad{background:#0e1a1d}
+  .mapwrap .ml{background:#2b313a}
+  input[type=range]::-webkit-slider-thumb{border-color:#0a0c10}
+  input[type=range]::-moz-range-thumb{border-color:#0a0c10}
+  .tile.dark{background:#05070a;border-color:#262b31}
+  .instpill{background:#05070a}
+  .genwrap{background:#05070a}
+  .genout .go{background:#13171d;border-color:#262b31}
 </style>
 </head>
 <body>
@@ -217,7 +251,7 @@
       </div>
       <div class="kpis">
         <div class="kpi"><div class="v" id="k_rate">$245/hr</div><div class="l">Delivery rate</div></div>
-        <div class="kpi"><div class="v" id="k_price">$0</div><div class="l">Engagement price</div></div>
+        <div class="kpi"><div class="v" id="k_price">$50,000</div><div class="l">Engagement price</div></div>
         <div class="kpi"><div class="v" id="k_depth">Full</div><div class="l">Scope depth</div></div>
         <div class="kpi"><div class="v" id="k_bodies">0 / 8</div><div class="l">Bodies in scope</div></div>
       </div>
@@ -575,7 +609,7 @@ function render(){
   $('#d_wroi').textContent=Math.round(state.wroi/tot*100)+'%';
   $('#d_wstrat').textContent=Math.round(state.wstrat/tot*100)+'%';
 
-  const engPrice=state.ehrs*state.rate*state.local;
+  const engPrice=50000;
   $('#k_price').textContent=d1k(engPrice);
 
   // rate card
