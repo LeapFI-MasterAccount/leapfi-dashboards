@@ -1,0 +1,10 @@
+{
+  "base_url": "https://leapfi-admin.github.io/leapfi-dashboards",
+  "dashboards": {
+    "sample-dashboard.html": {
+      "title": "Sample Dashboard (pipeline test)",
+      "slug": "sample-dashboard",
+      "order": 1
+    }
+  }
+}

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sample Dashboard (pipeline test)</title>
+<style>
+  :root{--ink:#0B1F3A;--accent:#C8A24B;--bg:#F5F6F8}
+  body{margin:0;font-family:Inter,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:820px;margin:0 auto;padding:40px 24px}
+  .badge{display:inline-block;background:var(--accent);color:#111;font-weight:700;font-size:12px;letter-spacing:.05em;padding:4px 10px;border-radius:999px}
+  h1{font-size:30px;margin:14px 0 6px}
+  p{color:#41506a;line-height:1.55}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:26px 0}
+  .card{background:#fff;border:1px solid #e5e8ee;border-left:4px solid var(--accent);border-radius:10px;padding:18px}
+  .k{font-size:12px;color:#5b6b7f;text-transform:uppercase;letter-spacing:.04em}
+  .v{font-size:26px;font-weight:700;margin-top:4px}
+  .clock{font-variant-numeric:tabular-nums}
+  .ok{color:#1a7f4b;font-weight:600}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <span class="badge">LEAPFI &middot; PIPELINE TEST</span>
+    <h1>Dashboard pipeline is live</h1>
+    <p>This self-contained page was published by the LeapFI dashboards pipeline and is being served from GitHub Pages. If you can read this inside a Google Sites page, the embed-by-URL wiring works end to end. Replace this file with your real dashboard and re-run the publish step &mdash; nothing in Google Sites needs to change.</p>
+    <div class="cards">
+      <div class="card"><div class="k">Status</div><div class="v ok">Operational</div></div>
+      <div class="card"><div class="k">Rendered at</div><div class="v clock" id="clock">--:--:--</div></div>
+      <div class="card"><div class="k">Refreshes</div><div class="v">Auto on redeploy</div></div>
+    </div>
+    <p style="font-size:13px;color:#7a8699">Live clock below confirms the page is executing JavaScript inside the Google Sites iframe.</p>
+  </div>
+  <script>
+    function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString();}
+    tick();setInterval(tick,1000);
+  </script>
+</body>
+</html>

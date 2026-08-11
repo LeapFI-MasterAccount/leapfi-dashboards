@@ -1,0 +1,10 @@
+[
+  {
+    "file": "sample-dashboard.html",
+    "slug": "sample-dashboard",
+    "title": "Sample Dashboard (pipeline test)",
+    "order": 1,
+    "url": "https://leapfi-admin.github.io/leapfi-dashboards/sample-dashboard.html",
+    "kb": 2.2
+  }
+]
