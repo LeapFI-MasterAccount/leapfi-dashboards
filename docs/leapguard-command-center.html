@@ -1187,7 +1187,7 @@ function panel(title,sub,body,foot){ return '<div class="panel"><div class="pane
 
 /* ================= NAV ================= */
 var NAV=[
-  {v:'overview',  label:'Overview',        ico:'grid',   subs:[['summary','Summary'],['maturity','Maturity & Graphics']]},
+  {v:'overview',  label:'Overview',        ico:'grid',   subs:[['summary','Summary'],['maturity','Analytics']]},
   {v:'frameworks',label:'Frameworks',      ico:'layers', subs:[['all','All Frameworks'],['functions','Function Breakdown'],['register','Control Register']]},
   {v:'documents', label:'Documents',       ico:'doc',    subs:[['all','All'],['gaps','Open Gaps'],['compliant','Compliant']]},
   {v:'monitoring',label:'Regulatory Feed', ico:'radar',  subs:[['lifecycle','Rulemaking Lifecycle'],['bodies','Governing Bodies'],['inforce','In Force']]},
@@ -1275,7 +1275,7 @@ RENDER.overview.summary=function(){
   var attn=DATA.docs.filter(function(d){return d.status!=='good';}).sort(function(x,y){return (x.status==='crit'?0:1)-(y.status==='crit'?0:1);}).slice(0,5);
   var attnRows=attn.length?attn.map(function(d){return '<div class="grc-attn-row" onclick="openDoc(\''+d.id+'\')"><span class="grc-dot" style="background:'+dotColor(d.status)+'"></span><span class="grc-attn-name">'+esc(d.name)+'</span><span class="rep-sev '+d.status+'">'+statusWord(d.status)+'</span></div>';}).join(''):'<div class="grc-headline" style="padding:8px 2px">Nothing needs attention right now.</div>';
 
-  var actions=[['Review open items',"showSub('documents','gaps')"],['Open control register',"showSub('frameworks','register')"],['Rulemaking lifecycle',"showSub('monitoring','lifecycle')"],['Ownership &amp; RACI',"showSub('ownership','matrix')"],['Graphics &amp; trends',"showSub('overview','maturity')"]];
+  var actions=[['Review open items',"showSub('documents','gaps')"],['Open control register',"showSub('frameworks','register')"],['Rulemaking lifecycle',"showSub('monitoring','lifecycle')"],['Ownership &amp; RACI',"showSub('ownership','matrix')"],['Analytics',"showSub('overview','maturity')"]];
   var actionBtns='<div class="grc-actions">'+actions.map(function(a){return '<button class="grc-action" onclick="'+a[1]+'">'+a[0]+' &rarr;</button>';}).join('')+'</div>';
 
   return '<div class="section grc-wrap">'+band+gauges+'<div class="grid-2 grc-lower">'+panel('Needs your attention', c.crit+' high &middot; '+c.warn+' to update', attnRows)+panel('Quick actions','Jump straight to a task', actionBtns)+'</div></div>';
@@ -1312,7 +1312,7 @@ RENDER.overview.maturity=function(){
   var matAxis='<div class="mat-axis"><div class="mat-axis-track"><span style="left:12.5%">Initial</span><span style="left:37.5%">Minimal</span><span style="left:62.5%">Evolving</span><span style="left:87.5%">Embedded</span></div></div>';
   var fwRows=matAxis+DATA.frameworks.map(function(f){return fwRowHTML(f);}).join('');
 
-  return '<div class="section">'+secHead('chart','Maturity & coverage','The same posture, shown visually · click any gauge, function, or framework to see what is covered and the open gaps.')+'</div>'+
+  return '<div class="section">'+secHead('chart','Analytics','The same posture, shown visually · click any gauge, function, or framework to see what is covered and the open gaps.')+'</div>'+
     '<div class="grid-3" style="align-items:flex-start">'+ringCard+statusCard+fnCard+'</div>'+
     '<div style="height:20px"></div>'+
     card('Coverage by function','Click any function to see covered and open controls',fnRows)+
