@@ -5,7 +5,7 @@
     "title": "LeapGuard Regulatory Command Center",
     "order": 1,
     "url": "https://leapfi-admin.github.io/leapfi-dashboards/leapguard-command-center.html",
-    "kb": 304.6
+    "kb": 304.8
   },
   {
     "file": "onside-plan-timeline.html",
@@ -37,7 +37,7 @@
     "title": "OnSide Regulatory Command Center",
     "order": 5,
     "url": "https://leapfi-admin.github.io/leapfi-dashboards/onside-command-center.html",
-    "kb": 251.3
+    "kb": 251.5
   },
   {
     "file": "regintel-ingestion.html",
