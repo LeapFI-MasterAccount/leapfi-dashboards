@@ -15,6 +15,8 @@ where <base_url> is set in dashboards.config.json.
 The <slug> is derived from the filename (lowercased, non-alphanumerics -> '-').
 To pin a nice title / stable slug / display order, add an entry to
 dashboards.config.json under "dashboards" keyed by the exact filename.
+
+Index page uses LeapFI Brand Kit v2.2 (Inter; obsidian/cyan/teal/gallery).
 """
 import json, re, sys, shutil, subprocess, datetime
 from pathlib import Path
@@ -54,16 +56,23 @@ def extract_title(raw: str, fallback: str) -> str:
 
 
 INDEX_CSS = """<style>
-:root{--ink:#0B1F3A;--accent:#C8A24B;--bg:#F5F6F8;--card:#fff;--muted:#5b6b7f}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-.wrap{max-width:960px;margin:0 auto;padding:48px 24px}
-h1{font-size:28px;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 32px}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+:root{--obsidian:#111111;--charcoal:#2D2D2D;--cyan:#00F2FF;--teal:#0A8FA3;--gallery:#F4F4F4;--card:#fff;--muted:#5b5b5b}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Inter',-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--gallery);color:var(--obsidian)}
+.hero{background:var(--obsidian);color:#fff;padding:40px 24px}
+.hero .inner{max-width:960px;margin:0 auto}
+.hero .chev{color:var(--cyan);font-weight:800;letter-spacing:.14em;font-size:12px;text-transform:uppercase}
+.hero h1{font-size:30px;margin:8px 0 4px;font-weight:800;letter-spacing:-.01em}
+.hero .sub{color:#c9c9c9;margin:0;font-size:14px}
+.wrap{max-width:960px;margin:0 auto;padding:32px 24px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-a.card{display:block;text-decoration:none;background:var(--card);border:1px solid #e5e8ee;border-left:4px solid var(--accent);border-radius:10px;padding:18px 20px;color:var(--ink);transition:.15s}
-a.card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(11,31,58,.10)}
-.card h3{margin:0 0 6px;font-size:16px}.card .u{color:var(--muted);font-size:12px;word-break:break-all}
-.foot{margin-top:36px;color:var(--muted);font-size:12px}
-code{background:#eef1f6;padding:2px 6px;border-radius:4px}
+a.card{display:block;text-decoration:none;background:var(--card);border:1px solid #e3e3e3;border-left:4px solid var(--teal);border-radius:10px;padding:18px 20px;color:var(--obsidian);transition:.15s}
+a.card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(17,17,17,.12);border-left-color:var(--cyan)}
+.card h3{margin:0 0 6px;font-size:16px;font-weight:700}
+.card .u{color:var(--muted);font-size:12px;word-break:break-all}
+.foot{margin-top:32px;color:var(--muted);font-size:12px}
+code{background:#e9e9e9;padding:2px 6px;border-radius:4px;font-size:12px}
 </style>"""
 
 
@@ -79,10 +88,13 @@ def build_index(entries, updated: str) -> str:
         '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
         "<title>LeapFI Dashboards</title>" + INDEX_CSS + "</head><body>"
-        '<div class="wrap"><h1>LeapFI Dashboards</h1>'
-        '<p class="sub">Live dashboard index &middot; updated ' + updated + "</p>"
-        '<div class="grid">' + cards + "</div>"
-        '<p class="foot">Maintained via the publish pipeline &mdash; drop updated HTML into '
+        '<div class="hero"><div class="inner">'
+        '<div class="chev">&#9656;&#9656;&#9656; LEAPFI</div>'
+        "<h1>Dashboards</h1>"
+        '<p class="sub">Live dashboard index &bull; updated ' + updated + "</p>"
+        "</div></div>"
+        '<div class="wrap"><div class="grid">' + cards + "</div>"
+        '<p class="foot">Maintained via the publish pipeline. Drop updated HTML into '
         "<code>src/</code> and run <code>python3 publish.py --push</code>.</p>"
         "</div></body></html>"
     )
