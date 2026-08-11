@@ -8,6 +8,7 @@
     "onside-command-center.html":    { "title": "OnSide Regulatory Command Center", "order": 5 },
     "regintel-ingestion.html":       { "title": "RegIntel Ingestion Explainer", "order": 6 },
     "team-infra-architecture.html":  { "title": "Team Infrastructure & Access Architecture", "order": 7 },
-    "entra-clean-start-flow.html":   { "title": "Entra & Azure Clean-Start Flow", "order": 8 }
+    "entra-clean-start-flow.html":   { "title": "Entra & Azure Clean-Start Flow", "order": 8 },
+    "engine-operator-console.html":  { "title": "Engine Operator Console", "order": 9 }
   }
 }
