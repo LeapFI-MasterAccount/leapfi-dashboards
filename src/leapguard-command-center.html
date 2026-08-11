@@ -538,6 +538,42 @@ footer.page{padding:22px 0 48px 0;font-size:12px;color:var(--grey2);text-align:c
 
 </style>
 <style id="clickpills-css">
+.grc-wrap{display:flex;flex-direction:column;gap:16px}
+.grc-band{display:flex;align-items:center;gap:16px;padding:17px 20px;border-radius:14px;background:var(--panel,#13171d);border:1px solid var(--line,#262b31);border-left-width:5px}
+.grc-band.good{border-left-color:var(--sem5,#3fb950)}
+.grc-band.warn{border-left-color:var(--sem2,#f0aa3c)}
+.grc-band.crit{border-left-color:var(--sem1,#f04c4c)}
+.grc-light{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+.grc-band.good .grc-light{background:var(--sem5,#3fb950);box-shadow:0 0 14px var(--sem5,#3fb950)}
+.grc-band.warn .grc-light{background:var(--sem2,#f0aa3c);box-shadow:0 0 14px var(--sem2,#f0aa3c)}
+.grc-band.crit .grc-light{background:var(--sem1,#f04c4c);box-shadow:0 0 14px var(--sem1,#f04c4c)}
+.grc-band-txt{flex:1}
+.grc-verdict{font-size:17px;font-weight:800}
+.grc-headline{font-size:13px;color:var(--muted,#9aa3ad);margin-top:2px}
+.grc-band-act{background:var(--cyan);color:#04121a;border:0;border-radius:8px;font-weight:800;font-size:12px;letter-spacing:.04em;padding:10px 16px;cursor:pointer;white-space:nowrap;font-family:inherit}
+.grc-band-act:hover{filter:brightness(1.1)}
+.grc-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:13px}
+.grc-tile{position:relative;cursor:pointer;padding:17px 17px;border-radius:12px;background:var(--panel,#13171d);border:1px solid var(--line,#262b31);transition:transform .15s,border-color .15s}
+.grc-tile:hover{transform:translateY(-2px)}
+.grc-tile.good:hover{border-color:var(--sem5,#3fb950)}
+.grc-tile.warn:hover{border-color:var(--sem2,#f0aa3c)}
+.grc-tile.crit:hover{border-color:var(--sem1,#f04c4c)}
+.grc-tile-top{display:flex;align-items:center;gap:8px}
+.grc-dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+.grc-tile.good .grc-dot{background:var(--sem5,#3fb950)}
+.grc-tile.warn .grc-dot{background:var(--sem2,#f0aa3c)}
+.grc-tile.crit .grc-dot{background:var(--sem1,#f04c4c)}
+.grc-tile-label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#9aa3ad)}
+.grc-tile-metric{font-size:16px;font-weight:700;margin-top:10px}
+.grc-tile-go{position:absolute;top:13px;right:14px;color:var(--cyan);opacity:.45;font-weight:800}
+.grc-tile:hover .grc-tile-go{opacity:1}
+.grc-attn-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer}
+.grc-attn-row:hover{background:rgba(255,255,255,.03)}
+.grc-attn-name{flex:1;font-size:13.5px}
+.grc-actions{display:flex;flex-direction:column;gap:9px}
+.grc-action{text-align:left;background:rgba(255,255,255,.03);border:1px solid var(--line,#262b31);border-radius:9px;color:var(--ink,#e8ecf1);font-family:inherit;font-weight:600;font-size:13px;padding:12px 14px;cursor:pointer;transition:border-color .15s,background .15s}
+.grc-action:hover{border-color:var(--cyan);background:rgba(0,242,255,.06);color:#fff}
+
 .fn-card-link{cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s}
 .fn-card-link:hover{transform:translateY(-3px);border-color:rgba(0,242,255,.5);box-shadow:0 12px 32px rgba(0,0,0,.38)}
 .fn-card-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:2px}
@@ -1177,6 +1213,7 @@ function renderContent(){
   var fn=(RENDER[curView]&&RENDER[curView][curSub]);
   document.getElementById('views').innerHTML= fn?fn():'<div class="card">Coming soon.</div>';
   document.body.setAttribute('data-view',curView);
+  (function(){var sb=document.getElementById('ph-sub');if(sb){if(window.__PHSUB__==null)window.__PHSUB__=sb.innerHTML;sb.innerHTML=(curView==='overview'&&curSub==='summary')?'NorthWinds Credit Union':window.__PHSUB__;}})();
   if(curView==='frameworks'&&curSub==='register') setTimeout(renderControlList,0);
 }
 
@@ -1194,36 +1231,30 @@ var RENDER={overview:{},frameworks:{},documents:{},monitoring:{},ownership:{},re
 /* ---------- OVERVIEW ---------- */
 RENDER.overview.summary=function(){
   var c=counts();
-  var fw=DATA.frameworks[0]; var pct=Math.round(fw.mapped/fw.controls*100);
+  var fw=DATA.frameworks[0];
+  var flagCov=Math.round(fw.mapped/fw.controls*100);
+  var below=DATA.frameworks.filter(function(f){return Math.round(f.mapped/f.controls*100)<f.target;}).length;
+  var overall=c.crit>0?'crit':((c.warn>0||below>0||flagCov<fw.target)?'warn':'good');
+  var verdict=overall==='crit'?'Action required':(overall==='warn'?'Attention needed':'On track');
+  var headline=c.crit+' high-priority '+(c.crit===1?'gap':'gaps')+' &middot; '+(c.warn+c.crit)+' open items &middot; '+DATA.lifecycle.length+' rulemakings tracked';
+  var band='<div class="grc-band '+overall+'"><span class="grc-light"></span><div class="grc-band-txt"><div class="grc-verdict">'+verdict+'</div><div class="grc-headline">'+headline+'</div></div><button class="grc-band-act" onclick="showSub(\'documents\',\'gaps\')">Review open items &rarr;</button></div>';
 
-  // ---- top-level KPI tiles (each drills down) ----
-  var kpis=[
-    {ico:'bank',n:DATA.bodies.length,c:'c-cyan',l:'Governing Bodies',to:"showSub('monitoring','bodies')"},
-    {ico:'layers',n:DATA.frameworks.length,c:'c-white',l:'Frameworks',to:"showSub('frameworks','all')"},
-    {ico:'shield',n:c.good,c:'c-sem5',l:'Documents Compliant',to:"showSub('documents','compliant')"},
-    {ico:'alert',n:c.warn+c.crit,c:'c-sem2',l:'Open Items ('+c.crit+' high)',to:"showSub('documents','gaps')"}
-  ];
-  var kpiRow='<div class="kpi-row">'+kpis.map(function(k){return '<div class="kpi kpi-clk" onclick="'+k.to+'" title="Drill in"><div class="kpi-ico" style="color:var(--cyan)">'+icon(k.ico)+'</div><div><div class="num '+k.c+'">'+k.n+'</div><div class="lab">'+k.l+'</div></div><span class="kpi-go">&rarr;</span></div>';}).join('')+'</div>';
+  function statusTile(light,label,metric,js){return '<div class="grc-tile '+light+'" onclick="'+js+'"><div class="grc-tile-top"><span class="grc-dot"></span><span class="grc-tile-label">'+label+'</span></div><div class="grc-tile-metric">'+metric+'</div><span class="grc-tile-go">&rarr;</span></div>';}
+  var docLight=c.crit>0?'crit':(c.warn>0?'warn':'good');
+  var tiles='<div class="grc-tiles">'+
+    statusTile(below>0?'warn':'good','Framework coverage',(DATA.frameworks.length-below)+' of '+DATA.frameworks.length+' at target',"showSub('frameworks','all')")+
+    statusTile(docLight,'Document health',c.good+' compliant &middot; '+(c.warn+c.crit)+' open',"showSub('documents','gaps')")+
+    statusTile(flagCov<fw.target?'warn':'good','Control mapping',fw.mapped+' of '+fw.controls+' mapped &middot; '+flagCov+'%',"showSub('frameworks','register')")+
+    statusTile(DATA.lifecycle.length>0?'warn':'good','Regulatory horizon',DATA.lifecycle.length+' rulemakings tracked',"showSub('monitoring','lifecycle')")+
+  '</div>';
 
-  // ---- rollup gauges (each drills down on click) ----
-  var ringChart='<div class="chart-center">'+ringSVG(pct, covColor(pct), {size:150,stroke:16,label:pct+'%',sub:'Mapped'})+'<div style="width:100%;margin-top:14px">'+gaugeHTML(fw.stage)+'</div></div>';
-  var ringCard=navGauge('AI RMF Maturity', fw.mapped+' of '+fw.controls+' controls mapped &middot; stage '+DATA.stages[fw.stage], ringChart, "showSub('frameworks','register')", 'Open control register');
+  var attn=DATA.docs.filter(function(d){return d.status!=='good';}).sort(function(x,y){return (x.status==='crit'?0:1)-(y.status==='crit'?0:1);}).slice(0,5);
+  var attnRows=attn.length?attn.map(function(d){return '<div class="grc-attn-row" onclick="openDoc(\''+d.id+'\')"><span class="grc-dot" style="background:'+dotColor(d.status)+'"></span><span class="grc-attn-name">'+esc(d.name)+'</span><span class="rep-sev '+d.status+'">'+statusWord(d.status)+'</span></div>';}).join(''):'<div class="grc-headline" style="padding:8px 2px">Nothing needs attention right now.</div>';
 
-  var dsegs=[{value:c.good,color:'var(--sem5)',label:'Compliant'},{value:c.warn,color:'var(--sem2)',label:'Needs update'},{value:c.crit,color:'var(--sem1)',label:'High priority'}];
-  var statusChart='<div class="chart-center">'+donutSVG(dsegs,{size:140,stroke:20,centerLabel:c.total,centerSub:'Docs'})+'<div style="margin-top:12px">'+legendHTML([{color:'var(--sem5)',label:'Compliant',val:c.good},{color:'var(--sem2)',label:'Needs update',val:c.warn},{color:'var(--sem1)',label:'High priority',val:c.crit}])+'</div></div>';
-  var statusCard=navGauge('Document Health', c.good+' compliant &middot; '+(c.warn+c.crit)+' need attention', statusChart, "showSub('documents','gaps')", 'Review open items');
+  var actions=[['Review open items',"showSub('documents','gaps')"],['Open control register',"showSub('frameworks','register')"],['Rulemaking lifecycle',"showSub('monitoring','lifecycle')"],['Ownership &amp; RACI',"showSub('ownership','matrix')"],['Graphics &amp; trends',"showSub('overview','maturity')"]];
+  var actionBtns='<div class="grc-actions">'+actions.map(function(a){return '<button class="grc-action" onclick="'+a[1]+'">'+a[0]+' &rarr;</button>';}).join('')+'</div>';
 
-  var fsegs=DATA.functions.map(function(f){return {value:f.total,color:f.color,label:f.code};});
-  var totalCtrl=DATA.functions.reduce(function(x,f){return x+f.total;},0);
-  var fnChart='<div class="chart-center">'+donutSVG(fsegs,{size:140,stroke:20,centerLabel:totalCtrl,centerSub:'Controls'})+'<div style="margin-top:12px">'+legendHTML(DATA.functions.map(function(f){return {color:f.color,label:f.code,val:f.total};}))+'</div></div>';
-  var fnCard=navGauge('Controls by Function', totalCtrl+' controls across four functions', fnChart, "showSub('frameworks','functions')", 'Open function breakdown');
-
-  var lifeN=DATA.lifecycle.length;
-  var horizonChart='<div class="chart-center" style="padding:14px 0"><div style="font-size:72px;font-weight:800;color:var(--cyan);line-height:1">'+lifeN+'</div><div class="lab" style="margin-top:8px">rulemakings tracked</div><div style="margin-top:14px;color:var(--muted,#9aa3ad);font-size:13px;text-align:center;max-width:240px;line-height:1.5">Pending and in-force rulemaking across every governing body NorthWinds answers to.</div></div>';
-  var horizonCard=navGauge('Regulatory Horizon', 'What is moving, and what it will touch', horizonChart, "showSub('monitoring','lifecycle')", 'Open rulemaking lifecycle');
-
-  return '<div class="section">'+secHead('grid','Compliance at a glance','Top-level rollup for NorthWinds Credit Union. Click any tile or gauge to drill into the detail beneath it.')+kpiRow+'</div>'+
-    '<div class="rollup-grid">'+ringCard+statusCard+fnCard+horizonCard+'</div>';
+  return '<div class="section grc-wrap">'+band+tiles+'<div class="grid-2 grc-lower">'+panel('Needs your attention', c.crit+' high &middot; '+c.warn+' to update', attnRows)+panel('Quick actions','Jump straight to a task', actionBtns)+'</div></div>';
 };
 
 RENDER.overview.maturity=function(){
