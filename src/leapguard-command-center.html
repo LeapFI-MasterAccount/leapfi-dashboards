@@ -537,6 +537,16 @@ footer.page{padding:22px 0 48px 0;font-size:12px;color:var(--grey2);text-align:c
 .fn-row .fw-bar-track{margin-top:10px;}
 
 </style>
+<style id="clickpills-css">
+.fw-stat-pill.clk{cursor:pointer;transition:filter .15s}
+.fw-stat-pill.clk:hover{filter:brightness(1.2)}
+.fw-fn-num .clk{cursor:pointer;border-bottom:1px dashed rgba(255,255,255,.25);transition:color .15s,border-color .15s}
+.fw-fn-num .clk:hover{color:var(--cyan);border-bottom-color:var(--cyan)}
+.cov-tabs{margin-left:2px}
+.cov-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:20px;vertical-align:1px;margin-left:2px}
+.cov-yes{background:rgba(0,242,255,.12);color:#00F2FF;border:1px solid rgba(0,242,255,.35)}
+.cov-no{background:rgba(240,170,60,.12);color:#f0aa3c;border:1px solid rgba(240,170,60,.4)}
+</style>
 </head>
 <body><style>
 #dlbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#0a0c10;border-top:1px solid #00F2FF;padding:9px 16px;font-family:Inter,-apple-system,'Segoe UI',Arial,sans-serif;font-size:12px;font-weight:600;color:#9aa3ad}
@@ -1237,10 +1247,11 @@ RENDER.frameworks.functions=function(){
 };
 RENDER.frameworks.register=function(){
   var counts2={}; CONTROLS.forEach(function(c){counts2[c.fn]=(counts2[c.fn]||0)+1;});
+  var covTabs=[['ALL','All'],['covered','Covered'],['open','Open']].map(function(t,i){return '<button class="'+(i===0?'active':'')+'" data-cov="'+t[0]+'" onclick="filterCov(\''+t[0]+'\',this)">'+t[1]+'</button>';}).join('');
   var fnTabs=['ALL','GOVERN','MAP','MEASURE','MANAGE'].map(function(f,i){return '<button class="'+(i===0?'active':'')+'" data-fn="'+f+'" onclick="filterControls(\''+f+'\',this)">'+f+'</button>';}).join('');
   return '<div class="section">'+secHead('layers','Control register','All 230 CRI FS AI RMF controls. Filter by function or search, then click any control for its full text, associated risk, and mapped documents.')+'</div>'+
     panel('CRI FS AI RMF · 230 controls','<span id="ctrl-count">'+CONTROLS.length+'</span> shown &middot; GOVERN '+(counts2.GOVERN||0)+' &middot; MAP '+(counts2.MAP||0)+' &middot; MEASURE '+(counts2.MEASURE||0)+' &middot; MANAGE '+(counts2.MANAGE||0),
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px"><div class="filter-tabs" id="ctrl-fn">'+fnTabs+'</div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px"><div class="filter-tabs" id="ctrl-fn">'+fnTabs+'</div>'+'<div class="filter-tabs cov-tabs" id="ctrl-cov">'+covTabs+'</div>'+
       '<input id="ctrl-search" oninput="filterControls(null)" placeholder="Search controls, e.g. “vendor”, “bias”, GV-1.1.1…" style="flex:1;min-width:200px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--white);font-size:12.5px;padding:9px 12px;font-family:inherit"/></div>'+
       '<div id="ctrl-list"></div>');
 };
@@ -1347,11 +1358,11 @@ function bodyCardHTML(b){
 }
 function fwDetailHTML(f){
   var open=f.controls-f.mapped;
-  var stat='<div class="fw-stat"><span class="fw-stat-pill done">'+f.mapped+' covered</span><span class="fw-stat-pill gap">'+open+' open</span><span class="fw-stat-of">of '+f.controls+' controls · target '+f.target+'%</span></div>';
+  var stat='<div class="fw-stat">'+covPill('done',f.mapped+' covered','ALL','covered',f.flagship)+covPill('gap',open+' open','ALL','open',f.flagship)+'<span class="fw-stat-of">of '+f.controls+' controls · target '+f.target+'%</span></div>';
   if(f.flagship){
     var fnb=DATA.functions.map(function(fn){
       var o=fn.total-fn.mapped, p=Math.round(fn.mapped/fn.total*100);
-      return '<div class="fw-fn"><div class="fw-fn-top"><span class="fw-fn-name"><span class="fn-dot" style="background:'+fn.color+'"></span>'+esc(fn.name)+'</span><span class="fw-fn-num">'+fn.mapped+' covered · <b>'+o+' open</b></span></div><div class="fw-fn-track"><div class="fw-fn-fill" style="width:'+p+'%;background:'+fn.color+'"></div></div></div>';
+      return '<div class="fw-fn"><div class="fw-fn-top"><span class="fw-fn-name"><span class="fn-dot" style="background:'+fn.color+'"></span>'+esc(fn.name)+'</span><span class="fw-fn-num">'+fnNumLink(fn.code,fn.mapped,o)+'</span></div><div class="fw-fn-track"><div class="fw-fn-fill" style="width:'+p+'%;background:'+fn.color+'"></div></div></div>';
     }).join('');
     return '<p>'+esc(f.desc)+'</p>'+stat+'<div class="fw-sub-lab">Coverage by function</div>'+fnb+
       '<button class="fw-open-reg" onclick="event.stopPropagation();showSub(\'frameworks\',\'register\')">Open full control register &rarr;</button>';
@@ -1383,7 +1394,7 @@ function fnRowHTML(fn){
     '<div class="fw-top">'+chevSvg+'<div class="fw-name"><span class="fn-dot" style="background:'+fn.color+';width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:8px;vertical-align:-1px"></span>'+esc(fn.name)+'</div>'+
     '<div class="fw-count">'+fn.mapped+' of '+fn.total+'</div><div class="fw-stage-lab" style="color:'+fn.color+'">'+p+'%</div></div>'+
     '<div class="fw-bar-track"><div class="fw-bar-fill" style="width:'+p+'%;background:'+fn.color+'"></div><div class="fw-tick" style="left:25%"></div><div class="fw-tick" style="left:50%"></div><div class="fw-tick" style="left:75%"></div></div>'+
-    '<div class="fw-detail"><div class="fw-stat"><span class="fw-stat-pill done">'+fn.mapped+' covered</span><span class="fw-stat-pill gap">'+open+' open</span><span class="fw-stat-of">of '+fn.total+' controls</span></div>'+
+    '<div class="fw-detail"><div class="fw-stat">'+covPill('done',fn.mapped+' covered',fn.code,'covered',true)+covPill('gap',open+' open',fn.code,'open',true)+'<span class="fw-stat-of">of '+fn.total+' controls</span></div>'+
       '<div class="fw-sub-lab">Covered ('+fn.mapped+')</div><div class="fw-cov-wrap">'+covChips+(moreN>0?'<span class="fw-cov-more">+ '+moreN+' more covered</span>':'')+'</div>'+
       '<div class="fw-sub-lab">Open controls ('+open+')</div><div class="fw-gap-list">'+opens+'</div>'+
       '<button class="fw-open-reg" onclick="event.stopPropagation();showSub(\'frameworks\',\'register\')">Open full control register &rarr;</button></div></div>';
@@ -1395,7 +1406,7 @@ function matGauge(title,sub,chart,detail){
 }
 function fnMiniBars(){
   return DATA.functions.map(function(fn){var o=fn.total-fn.mapped,p=Math.round(fn.mapped/fn.total*100);
-    return '<div class="fw-fn"><div class="fw-fn-top"><span class="fw-fn-name"><span class="fn-dot" style="background:'+fn.color+'"></span>'+esc(fn.name)+'</span><span class="fw-fn-num">'+fn.mapped+' covered · <b>'+o+' open</b></span></div><div class="fw-fn-track"><div class="fw-fn-fill" style="width:'+p+'%;background:'+fn.color+'"></div></div></div>';}).join('');
+    return '<div class="fw-fn"><div class="fw-fn-top"><span class="fw-fn-name"><span class="fn-dot" style="background:'+fn.color+'"></span>'+esc(fn.name)+'</span><span class="fw-fn-num">'+fnNumLink(fn.code,fn.mapped,o)+'</span></div><div class="fw-fn-track"><div class="fw-fn-fill" style="width:'+p+'%;background:'+fn.color+'"></div></div></div>';}).join('');
 }
 function miniDocRow(d){
   return '<div class="doc-row" onclick="openDoc(\''+d.id+'\')"><div class="doc-top"><div class="status-dot '+d.status+'"></div>'+
@@ -1429,13 +1440,18 @@ function policyRowHTML(p){
 }
 
 /* ---------- control register ---------- */
+function coveredSet(){ if(window.__COVSET__) return window.__COVSET__; var set={}; DATA.functions.forEach(function(fn){ CONTROLS.filter(function(c){return c.fn===fn.code;}).slice(0,fn.mapped).forEach(function(c){set[c.id]=1;}); }); window.__COVSET__=set; return set; }
+function covPill(cls,txt,fnCode,mode,clickable){ if(!clickable) return '<span class="fw-stat-pill '+cls+'">'+txt+'</span>'; return '<span class="fw-stat-pill '+cls+' clk" onclick="event.stopPropagation();openRegister(\''+fnCode+'\',\''+mode+'\')" title="Open these controls in the register">'+txt+'</span>'; }
+function fnNumLink(code,cov,op){ return '<span class="clk" onclick="event.stopPropagation();openRegister(\''+code+'\',\'covered\')">'+cov+' covered</span> · <b class="clk" onclick="event.stopPropagation();openRegister(\''+code+'\',\'open\')">'+op+' open</b>'; }
+function filterCov(cov,btn){ if(btn){Array.prototype.forEach.call(document.querySelectorAll('#ctrl-cov button'),function(b){b.classList.remove('active');});btn.classList.add('active');} renderControlList(); }
+function openRegister(fn,cov){ showSub('frameworks','register'); setTimeout(function(){ var f=fn||'ALL'; var fb=document.querySelector('#ctrl-fn button[data-fn="'+f+'"]'); if(fb){Array.prototype.forEach.call(document.querySelectorAll('#ctrl-fn button'),function(b){b.classList.remove('active');});fb.classList.add('active');} var cm=cov||'ALL'; var cb=document.querySelector('#ctrl-cov button[data-cov="'+cm+'"]'); if(cb){Array.prototype.forEach.call(document.querySelectorAll('#ctrl-cov button'),function(b){b.classList.remove('active');});cb.classList.add('active');} renderControlList(); var v=document.getElementById('views'); if(v){var p=v.querySelector('.panel')||v; p.scrollIntoView({behavior:'smooth',block:'start'});} },60); }
 function renderControlList(){
   var list=document.getElementById('ctrl-list'); if(!list) return;
-  var fnBtn=document.querySelector('#ctrl-fn button.active'); var fn=fnBtn?fnBtn.dataset.fn:'ALL';
+  var fnBtn=document.querySelector('#ctrl-fn button.active'); var fn=fnBtn?fnBtn.dataset.fn:'ALL'; var covBtn=document.querySelector('#ctrl-cov button.active'); var covMode=covBtn?covBtn.dataset.cov:'ALL'; var covS=coveredSet();
   var q=((document.getElementById('ctrl-search')||{}).value||'').toLowerCase().trim();
-  var rows=CONTROLS.filter(function(c){ if(fn!=='ALL'&&c.fn!==fn)return false; if(q)return (c.id+' '+c.title+' '+c.desc+' '+c.cat+' '+c.principle).toLowerCase().indexOf(q)>=0; return true; });
+  var rows=CONTROLS.filter(function(c){ if(fn!=='ALL'&&c.fn!==fn)return false; if(covMode==='covered'&&!covS[c.id])return false; if(covMode==='open'&&covS[c.id])return false; if(q)return (c.id+' '+c.title+' '+c.desc+' '+c.cat+' '+c.principle).toLowerCase().indexOf(q)>=0; return true; });
   var cc=document.getElementById('ctrl-count'); if(cc)cc.textContent=rows.length;
-  list.innerHTML=rows.slice(0,120).map(function(c){return '<div class="ctrl-item" onclick="openControl(\''+c.id+'\')"><div class="ctrl-id">'+esc(c.id)+'</div><div><div class="ctrl-title">'+esc(c.title)+' <span class="fw-body-tag" style="margin-left:4px">'+esc(c.fn)+'</span></div><div class="ctrl-desc">'+esc(c.desc.slice(0,160))+(c.desc.length>160?'…':'')+'</div></div></div>';}).join('')+(rows.length>120?'<div class="group-note" style="padding-top:12px">Showing first 120 of '+rows.length+' matching controls. Refine with search.</div>':'');
+  list.innerHTML=rows.slice(0,120).map(function(c){var isC=!!covS[c.id];return '<div class="ctrl-item" onclick="openControl(\''+c.id+'\')"><div class="ctrl-id">'+esc(c.id)+'</div><div><div class="ctrl-title">'+esc(c.title)+' <span class="fw-body-tag" style="margin-left:4px">'+esc(c.fn)+'</span> <span class="cov-tag '+(isC?'cov-yes':'cov-no')+'">'+(isC?'Covered':'Open')+'</span></div><div class="ctrl-desc">'+esc(c.desc.slice(0,160))+(c.desc.length>160?'…':'')+'</div></div></div>';}).join('')+(rows.length>120?'<div class="group-note" style="padding-top:12px">Showing first 120 of '+rows.length+' matching controls. Refine with search.</div>':'');
 }
 function filterControls(fn,btn){ if(fn&&btn){Array.prototype.forEach.call(document.querySelectorAll('#ctrl-fn button'),function(b){b.classList.remove('active');});btn.classList.add('active');} renderControlList(); }
 function filterByBody(code){
