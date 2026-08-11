@@ -538,6 +538,17 @@ footer.page{padding:22px 0 48px 0;font-size:12px;color:var(--grey2);text-align:c
 
 </style>
 <style id="clickpills-css">
+.grc-gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(305px,1fr));gap:14px}
+.grc-gauge{position:relative;display:flex;align-items:center;gap:16px;padding:15px 18px;border-radius:12px;background:var(--panel,#13171d);border:1px solid var(--line,#262b31);cursor:pointer;transition:transform .15s,border-color .15s}
+.grc-gauge:hover{transform:translateY(-2px);border-color:rgba(0,242,255,.4)}
+.grc-gauge-ring{flex:0 0 auto;line-height:0}
+.grc-gauge-body{flex:1;min-width:0}
+.grc-gauge-title{font-size:14.5px;font-weight:700}
+.grc-gauge-sub{font-size:12px;color:var(--muted,#9aa3ad);margin-top:3px;line-height:1.45}
+.grc-gauge-status{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:10px;color:var(--muted,#9aa3ad)}
+.grc-gauge-go{position:absolute;top:13px;right:14px;color:var(--cyan);opacity:.4;font-weight:800}
+.grc-gauge:hover .grc-gauge-go{opacity:1}
+
 .grc-wrap{display:flex;flex-direction:column;gap:16px}
 .grc-band{display:flex;align-items:center;gap:16px;padding:17px 20px;border-radius:14px;background:var(--panel,#13171d);border:1px solid var(--line,#262b31);border-left-width:5px}
 .grc-band.good{border-left-color:var(--sem5,#3fb950)}
@@ -1233,19 +1244,31 @@ RENDER.overview.summary=function(){
   var c=counts();
   var fw=DATA.frameworks[0];
   var flagCov=Math.round(fw.mapped/fw.controls*100);
-  var below=DATA.frameworks.filter(function(f){return Math.round(f.mapped/f.controls*100)<f.target;}).length;
+  var covs=DATA.frameworks.map(function(f){return f.mapped/f.controls*100;});
+  var progAvg=Math.round(covs.reduce(function(x,y){return x+y;},0)/covs.length);
+  var atTarget=DATA.frameworks.filter(function(f){return Math.round(f.mapped/f.controls*100)>=f.target;}).length;
+  var docPct=Math.round(c.good/c.total*100);
+  var below=DATA.frameworks.length-atTarget;
+  var wf=DATA.functions.slice().sort(function(x,y){return (x.mapped/x.total)-(y.mapped/y.total);})[0];
+  var wfPct=Math.round(wf.mapped/wf.total*100);
+  var CG='var(--sem5)',CW='var(--sem2)',CC='var(--sem1)';
+
   var overall=c.crit>0?'crit':((c.warn>0||below>0||flagCov<fw.target)?'warn':'good');
   var verdict=overall==='crit'?'Action required':(overall==='warn'?'Attention needed':'On track');
   var headline=c.crit+' high-priority '+(c.crit===1?'gap':'gaps')+' &middot; '+(c.warn+c.crit)+' open items &middot; '+DATA.lifecycle.length+' rulemakings tracked';
   var band='<div class="grc-band '+overall+'"><span class="grc-light"></span><div class="grc-band-txt"><div class="grc-verdict">'+verdict+'</div><div class="grc-headline">'+headline+'</div></div><button class="grc-band-act" onclick="showSub(\'documents\',\'gaps\')">Review open items &rarr;</button></div>';
 
-  function statusTile(light,label,metric,js){return '<div class="grc-tile '+light+'" onclick="'+js+'"><div class="grc-tile-top"><span class="grc-dot"></span><span class="grc-tile-label">'+label+'</span></div><div class="grc-tile-metric">'+metric+'</div><span class="grc-tile-go">&rarr;</span></div>';}
-  var docLight=c.crit>0?'crit':(c.warn>0?'warn':'good');
-  var tiles='<div class="grc-tiles">'+
-    statusTile(below>0?'warn':'good','Framework coverage',(DATA.frameworks.length-below)+' of '+DATA.frameworks.length+' at target',"showSub('frameworks','all')")+
-    statusTile(docLight,'Document health',c.good+' compliant &middot; '+(c.warn+c.crit)+' open',"showSub('documents','gaps')")+
-    statusTile(flagCov<fw.target?'warn':'good','Control mapping',fw.mapped+' of '+fw.controls+' mapped &middot; '+flagCov+'%',"showSub('frameworks','register')")+
-    statusTile(DATA.lifecycle.length>0?'warn':'good','Regulatory horizon',DATA.lifecycle.length+' rulemakings tracked',"showSub('monitoring','lifecycle')")+
+  function g(pct,color,word,title,sub,js){
+    return '<div class="grc-gauge" onclick="'+js+'" title="'+title+' &middot; '+pct+'%"><div class="grc-gauge-ring">'+ringSVG(pct,color,{size:116,stroke:12,label:pct+'%'})+'</div>'+
+      '<div class="grc-gauge-body"><div class="grc-gauge-title">'+title+'</div><div class="grc-gauge-sub">'+sub+'</div>'+
+      '<div class="grc-gauge-status"><span class="grc-dot" style="background:'+color+'"></span>'+word+'</div></div>'+
+      '<span class="grc-gauge-go">&rarr;</span></div>';
+  }
+  var gauges='<div class="grc-gauges">'+
+    g(flagCov, flagCov>=fw.target?CG:CW, flagCov>=fw.target?'On track':'Below target', 'AI RMF coverage', fw.mapped+' of '+fw.controls+' controls mapped &middot; goal '+fw.target+'%', "showSub('frameworks','register')")+
+    g(progAvg, progAvg>=85?CG:CW, progAvg>=85?'On track':'Below target', 'Program coverage', 'Average across '+DATA.frameworks.length+' frameworks &middot; '+atTarget+' at target', "showSub('frameworks','all')")+
+    g(docPct, c.crit>0?CC:(docPct>=85?CG:CW), c.crit>0?'Action needed':(docPct>=85?'On track':'Below target'), 'Document compliance', c.good+' of '+c.total+' compliant &middot; '+c.crit+' high priority', "showSub('documents','gaps')")+
+    g(wfPct, wfPct>=85?CG:CW, wfPct>=85?'On track':'Weakest area', esc(wf.name)+' function', 'Lowest-covered function &middot; '+wf.mapped+' of '+wf.total+' controls', "showSub('frameworks','functions')")+
   '</div>';
 
   var attn=DATA.docs.filter(function(d){return d.status!=='good';}).sort(function(x,y){return (x.status==='crit'?0:1)-(y.status==='crit'?0:1);}).slice(0,5);
@@ -1254,7 +1277,7 @@ RENDER.overview.summary=function(){
   var actions=[['Review open items',"showSub('documents','gaps')"],['Open control register',"showSub('frameworks','register')"],['Rulemaking lifecycle',"showSub('monitoring','lifecycle')"],['Ownership &amp; RACI',"showSub('ownership','matrix')"],['Graphics &amp; trends',"showSub('overview','maturity')"]];
   var actionBtns='<div class="grc-actions">'+actions.map(function(a){return '<button class="grc-action" onclick="'+a[1]+'">'+a[0]+' &rarr;</button>';}).join('')+'</div>';
 
-  return '<div class="section grc-wrap">'+band+tiles+'<div class="grid-2 grc-lower">'+panel('Needs your attention', c.crit+' high &middot; '+c.warn+' to update', attnRows)+panel('Quick actions','Jump straight to a task', actionBtns)+'</div></div>';
+  return '<div class="section grc-wrap">'+band+gauges+'<div class="grid-2 grc-lower">'+panel('Needs your attention', c.crit+' high &middot; '+c.warn+' to update', attnRows)+panel('Quick actions','Jump straight to a task', actionBtns)+'</div></div>';
 };
 
 RENDER.overview.maturity=function(){
