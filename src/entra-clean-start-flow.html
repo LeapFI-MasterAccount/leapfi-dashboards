@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clean-Start Identity &amp; Azure Signup Flow</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+:root{
+  --bg:#0a0c10;--panel:#12151b;--panel2:#171b22;--line:#242a33;
+  --ink:#eef1f5;--muted:#9aa6b2;--dim:#6b7683;
+  --cyan:#00F2FF;--teal:#0A8FA3;--amber:#f0a44a;--green:#39d98a;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:40px 24px 72px}
+.kick{color:var(--cyan);font-weight:700;letter-spacing:.16em;font-size:12px;text-transform:uppercase}
+h1{font-size:34px;line-height:1.12;margin:12px 0 8px;font-weight:800;letter-spacing:-.02em}
+h1 .hl{color:var(--cyan)}
+.lede{color:var(--muted);max-width:760px;font-size:15px}
+.principle{display:inline-flex;align-items:center;gap:10px;margin-top:18px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:13px;color:var(--ink)}
+.principle .dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:28px 0 8px}
+.metric{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.metric .v{font-size:24px;font-weight:800}
+.metric .k{color:var(--dim);font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-top:4px}
+.c-cyan{color:var(--cyan)}.c-teal{color:var(--teal)}.c-amber{color:var(--amber)}.c-green{color:var(--green)}
+.sec{margin-top:34px}
+.sec-h{color:var(--teal);font-weight:700;letter-spacing:.14em;font-size:12px;text-transform:uppercase}
+.sec-t{font-size:20px;font-weight:700;margin:6px 0 2px}
+.sec-s{color:var(--muted);font-size:14px;margin-bottom:16px}
+.flow{position:relative;margin-left:8px}
+.flow:before{content:"";position:absolute;left:19px;top:8px;bottom:8px;width:2px;background:linear-gradient(var(--teal),var(--line))}
+.step{position:relative;padding:0 0 14px 56px}
+.node{position:absolute;left:0;top:2px;width:40px;height:40px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--cyan);z-index:1}
+.card{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:12px;overflow:hidden;transition:border-color .15s}
+.card:hover{border-left-color:var(--cyan)}
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;cursor:pointer;user-select:none}
+.head .t{font-size:16px;font-weight:700}
+.head .wk{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+.head .car{color:var(--dim);transition:transform .18s;font-size:13px}
+.card.open .car{transform:rotate(90deg);color:var(--cyan)}
+.body{max-height:0;overflow:hidden;transition:max-height .28s ease}
+.card.open .body{max-height:640px}
+.body .inner{padding:0 18px 18px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+.body .inner p{margin:12px 0 0}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.tag{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--ink);background:var(--panel2)}
+.tag.own{border-color:rgba(0,242,255,.35);color:var(--cyan)}
+.tag.cost{border-color:rgba(240,164,74,.35);color:var(--amber)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.split .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.split .box h4{margin:0 0 8px;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink)}
+.split .box.inh h4{color:var(--green)}
+.split .box.own h4{color:var(--cyan)}
+.split ul{margin:0;padding-left:18px;color:var(--muted);font-size:13px}
+.split li{margin:5px 0}
+.foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+.hint{color:var(--dim);font-size:12px;margin-bottom:8px}
+@media(max-width:640px){.split{grid-template-columns:1fr}h1{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kick">&#9656;&#9656;&#9656; LEAPFI &middot; ONSIDE &middot; CLEAN-START PLATFORM</div>
+  <h1>Sign up <span class="hl">identity first.</span><br>Then hang the whole company off it.</h1>
+  <p class="lede">The clean-start order for standing up Microsoft Entra ID and the Azure boundary. Identity is the plane everything else attaches to, so it goes first &mdash; then endpoints, source &amp; CI, and the product. Everything must finish and <strong>freeze before the ~Sept 1</strong> SOC&nbsp;2 observation window opens, because a Type II report attests controls that operated over the <em>whole</em> window.</p>
+  <div class="principle"><span class="dot"></span> Order of operations: <strong>&nbsp;identity &rarr; endpoints &rarr; source/CI &rarr; product &rarr; freeze</strong></div>
+
+  <div class="metrics">
+    <div class="metric"><div class="v c-cyan">1</div><div class="k">Identity plane (Entra ID)</div></div>
+    <div class="metric"><div class="v c-teal">~Sep 1</div><div class="k">Config freeze &middot; window opens</div></div>
+    <div class="metric"><div class="v c-green">$100K+</div><div class="k">Microsoft for Startups credits</div></div>
+    <div class="metric"><div class="v c-amber">Type II</div><div class="k">SOC 2 report by year-end</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h">The Flow</div>
+    <div class="sec-t">From a blank tenant to a frozen, attestable stack</div>
+    <div class="sec-s">Each platform is SOC 2-attested, so most controls are inherited or configured once centrally rather than hand-built.</div>
+    <div class="hint">Click any step to expand the detail.</div>
+
+    <div class="flow" id="flow">
+      <!-- 1 -->
+      <div class="step"><div class="node">1</div>
+        <div class="card">
+          <div class="head"><span class="t">Sign up the Microsoft tenant</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">Wk 1</span><span class="car">&#9656;</span></span></div>
+          <div class="body"><div class="inner">
+            <p>Create a fresh Microsoft 365 / Entra ID tenant and verify the <strong>leapfi.ai</strong> custom domain. Enroll in <strong>Microsoft for Startups</strong> (enterprise account manager + $100K+ Azure credits) so hosting, AVD compute, and Azure OpenAI run against credits.</p>
+            <p>Licensing: baseline <strong>M365 Business Premium</strong> is free via the program; upgrade key users to <strong>E5</strong> (~$57/user/mo) for highest protection + unified audit. GitHub Enterprise is free via the program too.</p>
+            <div class="tags"><span class="tag">M365 tenant</span><span class="tag">Domain verify</span><span class="tag">MS for Startups</span><span class="tag cost">E5 ~$57/user/mo</span></div>
+          </div></div>
+        </div>
+      </div>
+      <!-- 2 -->
+      <div class="step"><div class="node">2</div>
+        <div class="card">
+          <div class="head"><span class="t">Establish Entra ID as the single identity plane</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">Wk 1</span><span class="car">&#9656;</span></span></div>
+          <div class="body"><div class="inner">
+            <p>Entra ID becomes the one place identity lives: <strong>SSO, MFA, Conditional Access, RBAC, SCIM</strong>. This is the CC6 access spine and the top SOC 2 evidence source.</p>
+            <p>Create a global admin plus <strong>break-glass emergency accounts</strong>; apply least-privilege admin roles. Define the <strong>joiner / mover / leaver</strong> process now, before users exist.</p>
+            <div class="tags"><span class="tag">SSO</span><span class="tag">RBAC</span><span class="tag">SCIM</span><span class="tag own">LeapFI-owned control (CC6)</span></div>
+          </div></div>
+        </div>
+      </div>
+      <!-- 3 -->
+      <div class="step"><div class="node">3</div>
+        <div class="card">
+          <div class="head"><span class="t">Enforce MFA + Conditional Access baseline</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">Wk 1</span><span class="car">&#9656;</span></span></div>
+          <div class="body"><div class="inner">
+            <p>Require <strong>MFA for everyone</strong>. Conditional Access blocks unmanaged / non-compliant devices from reaching corporate or customer data. These are controls LeapFI owns and evidences (not inherited from the vendor).</p>
+            <div class="tags"><span class="tag">MFA</span><span class="tag">Conditional Access</span><span class="tag own">LeapFI-owned + evidenced</span></div>
+          </div></div>
+        </div>
+      </div>
+      <!-- 4 -->
+      <div class="step"><div class="node">4</div>
+        <div class="card">
+          <div class="head"><span class="t">Managed cloud desktops under Intune</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">Wk 1&ndash;2</span><span class="car">&#9656;</span></span></div>
+          <div class="body"><div class="inner">
+            <p>Staff work in <strong>Azure Virtual Desktop (AVD)</strong> &mdash; consumption-based, credit-eligible, Entra-joined + Intune-managed &mdash; so corporate/customer data never rests on a laptop. Dan and Adam run company-owned <strong>Intune-managed physical machines</strong>. Then <strong>decommission local storage</strong>.</p>
+            <p>Windows 365 Cloud PC is simpler but a fixed, non-credit-eligible subscription &mdash; use only where predictability beats credit savings.</p>
+            <div class="tags"><span class="tag">Azure Virtual Desktop</span><span class="tag">Intune baselines</span><span class="tag">No data on laptops</span></div>
+          </div></div>
+        </div>
+      </div>
+      <!-- 5 -->
+      <div class="step"><div class="node">5</div>
+        <div class="card">
+          <div class="head"><span class="t">GitHub Enterprise + SSO / SCIM</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">Wk 2</span><span class="car">&#9656;</span></span></div>
+          <div class="body"><div class="inner">
+            <p>Stand up GitHub Enterprise with <strong>SAML SSO, SCIM, audit log, branch protection / rulesets, secret scanning</strong> &mdash; the change-management evidence. Structure as <strong>two orgs</strong>: Org A (engine + product, in SOC 2 scope, no Claude connection) and Org B (business/ops, Claude read-only). Separate orgs make the engine unreachable by construction.</p>
+            <div class="tags"><span class="tag">SAML SSO</span><span class="tag">Branch protection</span><span class="tag">Secret scanning</span><span class="tag own">Two-org boundary</span></div>
+          </div></div>
+        </div>
+      </div>
+      <!-- 6 -->
+      <div class="step"><div class="node">6</div>
+        <div class="card">
+          <div class="head"><span class="t">Azure subscription + product boundary</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">Wk 2&ndash;3</span><span class="car">&#9656;</span></span></div>
+          <div class="body"><div class="inner">
+            <p>Stand up the Azure hosting foundation (SOC 1/2/3, ISO 27001/17/18) and re-platform OnSide into it. Model layer = <strong>Azure OpenAI</strong> (in-boundary, not used to train, region-pinnable) with <strong>Claude via Azure Foundry</strong> for Claude-grade reasoning. <strong>Purview DLP</strong> reinforces the no-NPI boundary. Retire the local Docling/Ollama pipeline. Hosting + AVD + Azure OpenAI are Azure consumption &mdash; covered by credits.</p>
+            <div class="tags"><span class="tag">Azure hosting</span><span class="tag">Azure OpenAI</span><span class="tag">Foundry-Claude</span><span class="tag">Purview DLP</span></div>
+          </div></div>
+        </div>
+      </div>
+      <!-- 7 -->
+      <div class="step"><div class="node">7</div>
+        <div class="card">
+          <div class="head"><span class="t">Adopt Claude Team as the company assistant</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">Wk 3</span><span class="car">&#9656;</span></span></div>
+          <div class="body"><div class="inner">
+            <p><strong>Claude Team</strong> is the company standard and is SOC 2-compliant (Anthropic SOC 2 I &amp; II, ISO 27001 / 42001; business data training-excluded by default) &mdash; a certified vendor in the data room. SSO is available on Team; layer on Enterprise controls (audit logs, SCIM, custom retention) later if the auditor wants tool-level access evidence.</p>
+            <div class="tags"><span class="tag">Claude Team</span><span class="tag">SSO on Team</span><span class="tag">Vendor in data room</span></div>
+          </div></div>
+        </div>
+      </div>
+      <!-- 8 -->
+      <div class="step"><div class="node" style="color:var(--amber);border-color:rgba(240,164,74,.4)">8</div>
+        <div class="card" style="border-left-color:var(--amber)">
+          <div class="head"><span class="t">Freeze config before ~Sept 1</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">~Sep 1</span><span class="car">&#9656;</span></span></div>
+          <div class="body"><div class="inner">
+            <p><strong>Freeze the configuration</strong>; the managed SOC 2 partner starts the Type II <strong>observation window</strong>. Migrating mid-window breaks the report &mdash; so the whole clean start finishes and freezes first. Map every platform to the partner's readiness checklist before the freeze.</p>
+            <div class="tags"><span class="tag cost">Load-bearing deadline</span><span class="tag">Observation window opens</span></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-h">Shared Responsibility</div>
+    <div class="sec-t">What the platforms give you vs what LeapFI still owns</div>
+    <div class="split">
+      <div class="box inh"><h4>Inherited from vendors</h4>
+        <ul>
+          <li>Data-center physical security</li>
+          <li>Host / hypervisor / network controls</li>
+          <li>Platform availability + patching</li>
+          <li>Baseline encryption + KMS infrastructure</li>
+          <li>The vendors' own SOC 2 / ISO attestations</li>
+        </ul>
+      </div>
+      <div class="box own"><h4>Still owned &amp; evidenced by LeapFI</h4>
+        <ul>
+          <li>Entra config: MFA, Conditional Access, joiner/mover/leaver</li>
+          <li>Data classification + the no-NPI boundary</li>
+          <li>RBAC / least-privilege</li>
+          <li>Log collection, retention, review, alerting</li>
+          <li>Change management in GitHub</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    Vendor compliance status changes &mdash; verify each attestation against the vendor's trust portal before relying on it. All regulatory references are informational; the managed compliance partner / auditor makes the final scoping call. Source: OnSide Compliant Platform &amp; Migration Program (LeapFI Brand Kit v2.2).
+  </div>
+</div>
+<script>
+  document.querySelectorAll('#flow .head').forEach(function(h){
+    h.addEventListener('click',function(){ h.parentElement.classList.toggle('open'); });
+  });
+  // open the first step by default
+  var first=document.querySelector('#flow .card'); if(first){first.classList.add('open');}
+</script>
+</body>
+</html>

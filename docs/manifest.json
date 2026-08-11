@@ -46,5 +46,21 @@
     "order": 6,
     "url": "https://leapfi-admin.github.io/leapfi-dashboards/regintel-ingestion.html",
     "kb": 25.7
+  },
+  {
+    "file": "team-infra-architecture.html",
+    "slug": "team-infra-architecture",
+    "title": "Team Infrastructure & Access Architecture",
+    "order": 7,
+    "url": "https://leapfi-admin.github.io/leapfi-dashboards/team-infra-architecture.html",
+    "kb": 20.8
+  },
+  {
+    "file": "entra-clean-start-flow.html",
+    "slug": "entra-clean-start-flow",
+    "title": "Entra & Azure Clean-Start Flow",
+    "order": 8,
+    "url": "https://leapfi-admin.github.io/leapfi-dashboards/entra-clean-start-flow.html",
+    "kb": 15.4
   }
 ]

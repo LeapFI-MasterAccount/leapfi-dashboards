@@ -6,6 +6,8 @@
     "onside-plan-explainer.html":    { "title": "OnSide Master Project Plan: Explainer", "order": 3 },
     "leapfi-program-explainer.html": { "title": "LeapFI Program Explainer", "order": 4 },
     "onside-command-center.html":    { "title": "OnSide Regulatory Command Center", "order": 5 },
-    "regintel-ingestion.html":       { "title": "RegIntel Ingestion Explainer", "order": 6 }
+    "regintel-ingestion.html":       { "title": "RegIntel Ingestion Explainer", "order": 6 },
+    "team-infra-architecture.html":  { "title": "Team Infrastructure & Access Architecture", "order": 7 },
+    "entra-clean-start-flow.html":   { "title": "Entra & Azure Clean-Start Flow", "order": 8 }
   }
 }
