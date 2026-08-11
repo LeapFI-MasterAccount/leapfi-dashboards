@@ -1,10 +1,50 @@
 [
   {
-    "file": "sample-dashboard.html",
-    "slug": "sample-dashboard",
-    "title": "Sample Dashboard (pipeline test)",
+    "file": "leapguard-command-center.html",
+    "slug": "leapguard-command-center",
+    "title": "LeapGuard Regulatory Command Center",
     "order": 1,
-    "url": "https://leapfi-admin.github.io/leapfi-dashboards/sample-dashboard.html",
-    "kb": 2.2
+    "url": "https://leapfi-admin.github.io/leapfi-dashboards/leapguard-command-center.html",
+    "kb": 302.0
+  },
+  {
+    "file": "onside-plan-timeline.html",
+    "slug": "onside-plan-timeline",
+    "title": "OnSide Master Project Plan \u2014 Timeline",
+    "order": 2,
+    "url": "https://leapfi-admin.github.io/leapfi-dashboards/onside-plan-timeline.html",
+    "kb": 1392.2
+  },
+  {
+    "file": "onside-plan-explainer.html",
+    "slug": "onside-plan-explainer",
+    "title": "OnSide Master Project Plan \u2014 Explainer",
+    "order": 3,
+    "url": "https://leapfi-admin.github.io/leapfi-dashboards/onside-plan-explainer.html",
+    "kb": 1400.6
+  },
+  {
+    "file": "leapfi-program-explainer.html",
+    "slug": "leapfi-program-explainer",
+    "title": "LeapFI Program Explainer",
+    "order": 4,
+    "url": "https://leapfi-admin.github.io/leapfi-dashboards/leapfi-program-explainer.html",
+    "kb": 1425.0
+  },
+  {
+    "file": "onside-command-center.html",
+    "slug": "onside-command-center",
+    "title": "OnSide Regulatory Command Center",
+    "order": 5,
+    "url": "https://leapfi-admin.github.io/leapfi-dashboards/onside-command-center.html",
+    "kb": 248.7
+  },
+  {
+    "file": "regintel-ingestion.html",
+    "slug": "regintel-ingestion",
+    "title": "RegIntel Ingestion Explainer",
+    "order": 6,
+    "url": "https://leapfi-admin.github.io/leapfi-dashboards/regintel-ingestion.html",
+    "kb": 25.7
   }
 ]

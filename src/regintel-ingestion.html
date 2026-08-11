@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RegIntel · Automated Ingestion Architecture</title>
+<style>
+  :root{
+    --bg:#0a0b0d; --panel:rgba(255,255,255,0.04); --panel2:rgba(255,255,255,0.06);
+    --line:rgba(255,255,255,0.10); --text:#f5f5f7; --muted:#8a8f98; --muted2:#6b7078;
+    --accent:#DA7756; --api:#4ea87b; --rss:#d9a441; --scrape:#c0655a; --hybrid:#5b8bd0;
+    --spine:#b07de0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:radial-gradient(1200px 700px at 15% -10%,rgba(218,119,86,0.10),transparent 60%),
+               radial-gradient(1000px 600px at 100% 0%,rgba(91,139,208,0.08),transparent 55%),
+               var(--bg);
+    color:var(--text);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
+    line-height:1.55; letter-spacing:-0.01em; padding:0 0 90px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:46px;font-weight:800;line-height:1.05;margin:14px 0 10px;letter-spacing:-0.03em}
+  h2{font-size:15px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .sub{font-size:19px;color:var(--muted);max-width:840px;font-weight:400}
+  section{padding:56px 0 8px;border-top:1px solid var(--line);margin-top:44px}
+  section:first-of-type{border-top:none;margin-top:0}
+  .sectlead{font-size:15.5px;color:var(--muted);max-width:880px;margin:14px 0 30px}
+
+  /* header */
+  header{padding:74px 0 20px}
+  .tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;padding:6px 13px;margin-top:22px;background:var(--panel)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+
+  /* stat row */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:34px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 20px}
+  .stat .n{font-size:38px;font-weight:800;letter-spacing:-0.03em}
+  .stat .l{font-size:13px;color:var(--muted);margin-top:4px}
+  .stat.api .n{color:var(--api)} .stat.rss .n{color:var(--rss)}
+  .stat.gate .n{color:var(--accent)} .stat.src .n{color:var(--hybrid)}
+
+  /* pipeline flow */
+  .pipe{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:8px;position:relative}
+  .node{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 15px;position:relative}
+  .node .k{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent)}
+  .node h3{font-size:16px;font-weight:700;margin:7px 0 6px}
+  .node p{font-size:12.5px;color:var(--muted);line-height:1.5}
+  .node .layer{position:absolute;top:14px;right:14px;font-size:10.5px;color:var(--muted2);font-weight:700}
+  .arrow{color:var(--muted2);text-align:center;font-size:20px;align-self:center}
+  .zones{display:grid;grid-template-columns:4fr 2fr;gap:12px;margin:16px 0 4px}
+  .zone{border-radius:12px;padding:10px 16px;font-size:12.5px;font-weight:700;letter-spacing:0.04em;text-align:center;border:1px dashed}
+  .zone.auto{border-color:rgba(78,168,123,0.5);color:var(--api);background:rgba(78,168,123,0.06)}
+  .zone.human{border-color:rgba(218,119,86,0.5);color:var(--accent);background:rgba(218,119,86,0.06)}
+
+  /* legend chips */
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 20px}
+  .chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+  .sw{width:9px;height:9px;border-radius:2px}
+  .sw.api{background:var(--api)} .sw.rss{background:var(--rss)}
+  .sw.hybrid{background:var(--hybrid)} .sw.scrape{background:var(--scrape)}
+
+  /* matrix table */
+  .grp{font-size:12px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted2);margin:26px 0 10px}
+  table{width:100%;border-collapse:separate;border-spacing:0 6px}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted2);text-align:left;padding:0 14px 6px;font-weight:700}
+  td{background:var(--panel);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:13px 14px;font-size:13.5px;vertical-align:middle}
+  td:first-child{border-left:1px solid var(--line);border-radius:11px 0 0 11px;font-weight:700}
+  td:last-child{border-right:1px solid var(--line);border-radius:0 11px 11px 0}
+  .method{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:7px;white-space:nowrap}
+  .method.api{color:var(--api);background:rgba(78,168,123,0.12);border:1px solid rgba(78,168,123,0.3)}
+  .method.rss{color:var(--rss);background:rgba(217,164,65,0.12);border:1px solid rgba(217,164,65,0.3)}
+  .method.hybrid{color:var(--hybrid);background:rgba(91,139,208,0.12);border:1px solid rgba(91,139,208,0.3)}
+  .method.scrape{color:var(--scrape);background:rgba(192,101,90,0.12);border:1px solid rgba(192,101,90,0.3)}
+  td .feed{font-size:11.5px;color:var(--muted2);font-family:'SF Mono',ui-monospace,Menlo,monospace}
+  td .cov{color:var(--muted)}
+
+  /* cards */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 20px}
+  .card .ico{font-size:12px;font-weight:800;letter-spacing:0.1em;color:var(--accent);text-transform:uppercase}
+  .card h3{font-size:17px;margin:9px 0 8px;font-weight:700}
+  .card p{font-size:13.5px;color:var(--muted)}
+  .card ul{list-style:none;margin-top:10px}
+  .card li{font-size:13px;color:var(--muted);padding:6px 0 6px 18px;position:relative;border-top:1px solid var(--line)}
+  .card li:first-child{border-top:none}
+  .card li::before{content:"›";position:absolute;left:0;color:var(--accent);font-weight:800}
+
+  /* db schema */
+  .db{background:linear-gradient(180deg,rgba(176,125,224,0.08),var(--panel));border:1px solid rgba(176,125,224,0.25);border-radius:18px;padding:26px}
+  .fields{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+  .field{background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .field .fn{font-size:12.5px;font-weight:700;color:var(--spine)}
+  .field .fd{font-size:11.5px;color:var(--muted2);margin-top:2px}
+
+  /* loop */
+  .loop{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px}
+  .lstep{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:10px 18px;font-size:13px;font-weight:700}
+  .lstep span{color:var(--muted2);font-weight:400;font-size:12px}
+  .lsep{color:var(--accent);font-size:18px}
+
+  .callout{background:linear-gradient(120deg,rgba(218,119,86,0.10),rgba(218,119,86,0.03));
+    border:1px solid rgba(218,119,86,0.30);border-radius:16px;padding:24px 26px;margin-top:34px}
+  .callout .k{font-size:12px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent)}
+  .callout p{font-size:15.5px;color:var(--text);margin-top:8px;max-width:920px}
+  .foot{margin-top:40px;font-size:12px;color:var(--muted2);border-top:1px solid var(--line);padding-top:20px}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  @media(max-width:900px){
+    .stats,.pipe,.cards,.fields{grid-template-columns:1fr 1fr}
+    .zones{grid-template-columns:1fr}
+    h1{font-size:34px}
+    table{font-size:12px} td{padding:10px}
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="eyebrow">LeapFI · OnSide Regulatory Intelligence Engine</div>
+  <h1>Automate the collection.<br>Reserve the judgment for a person.</h1>
+  <p class="sub">One ingestion spine watches every banking and credit union governing body through a mix of REST APIs and RSS feeds. It normalizes what it finds into a single obligation database inside the risk engine, and it routes each item to a reviewer before any of it can shape a customer recommendation.</p>
+  <div class="tag"><span class="dot"></span> Collection runs unattended. Approval stays with a person. The design follows the ratified Layer 1 to 5 architecture.</div>
+</header>
+
+<div class="wrap">
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat api"><div class="n">6</div><div class="l">True REST APIs on the codified and data spine</div></div>
+    <div class="stat rss"><div class="n">6</div><div class="l">Agency RSS or subscription feeds for guidance</div></div>
+    <div class="stat src"><div class="n">15+</div><div class="l">Governing body sources on one pipe</div></div>
+    <div class="stat gate"><div class="n">1</div><div class="l">Human approval gate before any recommendation</div></div>
+  </div>
+
+  <!-- PIPELINE -->
+  <section>
+    <div class="eyebrow">The pipeline</div>
+    <h2 style="margin-top:8px">From feed to filed obligation</h2>
+    <p class="sectlead">Every source lands in the same five layer pipe, whether it exposes a JSON API or only an RSS headline. The first stages run unattended around the clock. The database holds each item as unreviewed until a qualified person confirms it. Only at that point does it become authoritative and eligible to shape a recommendation.</p>
+
+    <div class="pipe">
+      <div class="node"><span class="layer">L1</span><div class="k">Watch</div><h3>Acquire and monitor</h3><p>Fetchers poll each API and RSS feed on a set cadence, detect a change, pull the full text, and hash it.</p></div>
+      <div class="arrow">→</div>
+      <div class="node"><span class="layer">L2</span><div class="k">Extract</div><h3>Decompose</h3><p>A language model splits each provision into atomic obligations and records its method and confidence.</p></div>
+      <div class="arrow">→</div>
+      <div class="node"><span class="layer">L3·4</span><div class="k">Normalize</div><h3>Map to the spine</h3><p>The engine resolves modality, actor, and applicability, then writes a typed crosswalk edge to the canonical topic node.</p></div>
+      <div class="node" style="grid-column:6"><span class="layer">DB</span><div class="k">Store</div><h3>Obligation database</h3><p>A bitemporal, append only, provenance anchored store. This is the risk engine system of record.</p></div>
+    </div>
+
+    <div class="zones">
+      <div class="zone auto">◤ FULLY AUTOMATED: collect, extract, normalize, store, diff, re-flag</div>
+      <div class="zone human">◤ HUMAN GATE: confirm, approve, publish</div>
+    </div>
+    <p class="sectlead" style="margin-top:10px">A reviewer works a confidence ranked queue rather than a firehose. Diff based reprocessing sends only what actually changed back into that queue, so the human effort scales with the pace of regulatory change and not with the size of the corpus.</p>
+  </section>
+
+  <!-- MATRIX -->
+  <section>
+    <div class="eyebrow">The answer to your question</div>
+    <h2 style="margin-top:8px">Which governing bodies feed by API and which by RSS</h2>
+    <p class="sectlead">The sources below were verified reachable in August 2026. The pattern is consistent. Codified law and structured data expose real APIs, the day to day guidance layer publishes by RSS, and state regulator guidance is the one thin spot. Every method here is machine triggerable, because an RSS item is enough to detect a new document and pull it automatically.</p>
+
+    <div class="legend">
+      <span class="chip"><span class="sw api"></span> REST API: structured and queryable</span>
+      <span class="chip"><span class="sw rss"></span> RSS or subscription: auto trigger, then fetch</span>
+      <span class="chip"><span class="sw hybrid"></span> Hybrid: API for data, RSS for guidance</span>
+      <span class="chip"><span class="sw scrape"></span> Scrape or manual: no clean feed</span>
+    </div>
+
+    <div class="grp">Cross-cutting rulemaking and legislative, the codified backbone</div>
+    <table>
+      <thead><tr><th style="width:16%">Source</th><th style="width:15%">Method</th><th style="width:23%">Feed or endpoint</th><th>What it authoritatively covers</th><th style="width:16%">2026 note</th></tr></thead>
+      <tbody>
+        <tr><td>Federal Register</td><td><span class="method api"><span class="sw api"></span>API</span></td><td><span class="feed">federalregister.gov/api/v1</span></td><td class="cov">Every proposed and final rule from all agencies, with effective dates, CFR references, and RIN</td><td class="cov">Access request and rate limits on heavy pulls</td></tr>
+        <tr><td>eCFR</td><td><span class="method api"><span class="sw api"></span>API</span></td><td><span class="feed">ecfr.gov/api/versioner/v1</span></td><td class="cov">Current codified CFR text and a change enumerator that reports which section moved and when</td><td class="cov">No key</td></tr>
+        <tr><td>Regulations.gov</td><td><span class="method api"><span class="sw api"></span>API v4</span></td><td><span class="feed">api.regulations.gov</span></td><td class="cov">Dockets, comment periods, and supporting documents</td><td class="cov">api.data.gov key</td></tr>
+        <tr><td>Congress.gov</td><td><span class="method api"><span class="sw api"></span>API v3</span></td><td><span class="feed">api.congress.gov</span></td><td class="cov">Federal bills and enacted law affecting financial services</td><td class="cov">api.data.gov key</td></tr>
+        <tr><td>GovInfo</td><td><span class="method api"><span class="sw api"></span>API and bulk</span></td><td><span class="feed">api.govinfo.gov</span></td><td class="cov">Bulk USC, CFR, and Public Laws, the authoritative full text</td><td class="cov">api.data.gov key</td></tr>
+      </tbody>
+    </table>
+
+    <div class="grp">Federal banking and credit union regulators</div>
+    <table>
+      <thead><tr><th style="width:16%">Agency</th><th style="width:15%">Method</th><th style="width:23%">Feed or endpoint</th><th>What it covers</th><th style="width:16%">Notes</th></tr></thead>
+      <tbody>
+        <tr><td>OCC</td><td><span class="method rss"><span class="sw rss"></span>RSS</span></td><td><span class="feed">occ.gov/rss</span></td><td class="cov">Bulletins, alerts, enforcement actions, and news releases</td><td class="cov">No API. Codified rules arrive through FR and eCFR</td></tr>
+        <tr><td>FDIC</td><td><span class="method hybrid"><span class="sw hybrid"></span>Hybrid</span></td><td><span class="feed">api.fdic.gov (BankFind) and RSS</span></td><td class="cov">The API carries institution and financial data. RSS carries Financial Institution Letters and press</td><td class="cov">Guidance is RSS</td></tr>
+        <tr><td>Federal Reserve</td><td><span class="method hybrid"><span class="sw hybrid"></span>Hybrid</span></td><td><span class="feed">federalreserve.gov/feeds and FRED API</span></td><td class="cov">RSS carries SR and CA supervisory letters, press, and enforcement. FRED carries economic data</td><td class="cov">Rulemaking arrives through FR and eCFR</td></tr>
+        <tr><td>NCUA</td><td><span class="method hybrid"><span class="sw hybrid"></span>Hybrid</span></td><td><span class="feed">Express Subscription and bulk call-report data</span></td><td class="cov">Letters to Credit Unions and guidance by RSS or email. Call Report data by bulk and DEXA</td><td class="cov">No official guidance REST API</td></tr>
+        <tr><td>CFPB</td><td><span class="method api"><span class="sw api"></span>API</span></td><td><span class="feed">Complaint DB, HMDA, eRegulations, and RSS</span></td><td class="cov">Regulation text through eRegulations, plus complaints, HMDA, circulars, and newsroom</td><td class="cov">The strongest API coverage of the set</td></tr>
+        <tr><td>FinCEN</td><td><span class="method rss"><span class="sw rss"></span>RSS</span></td><td><span class="feed">fincen.gov/news (RSS)</span></td><td class="cov">Advisories, alerts, notices, fact sheets, and FAQs</td><td class="cov">No guidance API. BSA E-Filing is separate</td></tr>
+        <tr><td>SEC (EDGAR)</td><td><span class="method api"><span class="sw api"></span>API</span></td><td><span class="feed">data.sec.gov and structured RSS</span></td><td class="cov">Filings and rules for holding companies and any broker-dealer or securities arm</td><td class="cov">Real time</td></tr>
+        <tr><td>FFIEC</td><td><span class="method hybrid"><span class="sw hybrid"></span>Hybrid</span></td><td><span class="feed">CDR Public Data Distribution web service</span></td><td class="cov">Call Report data over a SOAP service with a free account, plus interagency exam guidance</td><td class="cov">Guidance is not on a unified API</td></tr>
+        <tr><td>OFAC (Treasury)</td><td><span class="method api"><span class="sw api"></span>API</span></td><td><span class="feed">Sanctions List Service and data files</span></td><td class="cov">SDN and consolidated sanctions lists, a core BSA and AML screening input</td><td class="cov">Frequent updates in XML, CSV, and JSON</td></tr>
+      </tbody>
+    </table>
+
+    <div class="grp">State, local, and state legislative</div>
+    <table>
+      <thead><tr><th style="width:16%">Source</th><th style="width:15%">Method</th><th style="width:23%">Feed or endpoint</th><th>What it covers</th><th style="width:16%">Notes</th></tr></thead>
+      <tbody>
+        <tr><td>LegiScan</td><td><span class="method api"><span class="sw api"></span>API</span></td><td><span class="feed">legiscan.com/legiscan (key)</span></td><td class="cov">Bill tracking across all 50 states and Congress, with change monitoring</td><td class="cov">The best single state legislative feed</td></tr>
+        <tr><td>Open States</td><td><span class="method api"><span class="sw api"></span>API v3</span></td><td><span class="feed">v3.openstates.org (key)</span></td><td class="cov">Bills, legislators, and votes across all 50 states</td><td class="cov">A good API backup and cross-check</td></tr>
+        <tr><td>NYDFS and state regulators</td><td><span class="method scrape"><span class="sw scrape"></span>Scrape</span></td><td><span class="feed">Site RSS where present (for example the NY Open Legislation API)</span></td><td class="cov">Part 500 amendments, state guidance, and enforcement</td><td class="cov">Mostly scrape, and it is a per state effort</td></tr>
+        <tr><td>NMLS and CSBS</td><td><span class="method scrape"><span class="sw scrape"></span>Manual</span></td><td><span class="feed">Portal based</span></td><td class="cov">Licensing and multistate actions</td><td class="cov">Limited or no open API</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- WHAT THE DB HOLDS -->
+  <section>
+    <div class="eyebrow">Inside the risk engine</div>
+    <h2 style="margin-top:8px">The obligation database</h2>
+    <p class="sectlead">Every fetched item becomes one or more obligation records on the canonical spine. This is the object the engine already scores, gap analyzes, and reports against, so the regulatory feeds simply keep it fed and current. Records are append only and bitemporal, which lets a reviewer or an examiner ask both what a rule required on a given date and what the platform believed on that same date.</p>
+    <div class="db">
+      <div class="eyebrow" style="color:var(--spine)">One record, authority agnostic, mapped to a topic node such as BSA and AML, UDAAP, fair lending, information security, third party risk, model risk, privacy, or AI governance</div>
+      <div class="fields">
+        <div class="field"><div class="fn">provenance</div><div class="fd">issuing body, instrument type, exact pin-cite, verbatim span, and content hash</div></div>
+        <div class="field"><div class="fn">statement and modality</div><div class="fd">normalized text, and one of mandatory, prohibition, permission, or conditional</div></div>
+        <div class="field"><div class="fn">actor and action</div><div class="fd">who must act, the action primitive, and the trigger</div></div>
+        <div class="field"><div class="fn">applicability</div><div class="fd">a declarative predicate over charter, asset threshold, and activity, tested against the institution profile</div></div>
+        <div class="field"><div class="fn">dates</div><div class="fd">effective, compliance, sunset, and the recorded-at system time</div></div>
+        <div class="field"><div class="fn">crosswalk edge</div><div class="fd">a typed link to a spine node, one of equal, subset, superset, or intersects</div></div>
+        <div class="field"><div class="fn">lifecycle status</div><div class="fd">proposed, final, stayed, or superseded, held as first-class data and never hard-coded</div></div>
+        <div class="field"><div class="fn">extraction meta</div><div class="fd">method, model or version, and confidence score</div></div>
+        <div class="field"><div class="fn">review state</div><div class="fd"><span style="color:var(--accent)">unreviewed, then approved</span>, with the reviewer and the proposal versus approved diff</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MONITORING LOOP -->
+  <section>
+    <div class="eyebrow">Staying on top of it</div>
+    <h2 style="margin-top:8px">The always-on monitoring loop</h2>
+    <p class="sectlead">The loop is what turns a one time load into a living database. Cheap change detection runs constantly, and the expensive work fires only when something has actually changed.</p>
+    <div class="loop">
+      <div class="lstep">Poll <span>a cheap check, titles.json or an RSS timestamp</span></div><div class="lsep">→</div>
+      <div class="lstep">Detect change <span>has the amendment stamp advanced</span></div><div class="lsep">→</div>
+      <div class="lstep">Pull the diff <span>only the changed slice</span></div><div class="lsep">→</div>
+      <div class="lstep">Re-flow <span>extract, normalize, crosswalk</span></div><div class="lsep">→</div>
+      <div class="lstep">Flag edges <span>dependent obligations to re-review</span></div><div class="lsep">→</div>
+      <div class="lstep">Raise event <span>this changed, here is what it touches</span></div>
+    </div>
+    <div class="cards" style="margin-top:26px">
+      <div class="card"><div class="ico">Cadence</div><h3>Tiered polling</h3><p>Volatile, high impact sources sit in fast lanes, and stable codified text sits in slower ones. An RSS item is caught within its publish cycle, and eCFR is checked against its amendment stamp.</p></div>
+      <div class="card"><div class="ico">Efficiency</div><h3>Diff based reprocessing</h3><p>Only changed provisions re-enter the pipe. A single CFR amendment does not re-run the whole corpus. It re-flows one slice and re-flags only the crosswalk edges that touch it.</p></div>
+      <div class="card"><div class="ico">Defensibility</div><h3>Source against interpretation</h3><p>A change in the law and a change in our own mapping are recorded as separate events, so a re-map never reads to an examiner as a legal change.</p></div>
+    </div>
+  </section>
+
+  <!-- HUMAN GATE -->
+  <section>
+    <div class="eyebrow">Where the person sits</div>
+    <h2 style="margin-top:8px">Automated to the edge of judgment</h2>
+    <p class="sectlead">You asked to automate the gathering and keep people on review, and that line falls exactly where the liability does. Everything up to a legal interpretation claim is machine work, and the claim itself is confirmed by a person.</p>
+    <div class="cards">
+      <div class="card" style="border-color:rgba(78,168,123,0.35)">
+        <div class="ico" style="color:var(--api)">The machine does</div>
+        <h3>Collect and prepare</h3>
+        <ul>
+          <li>Watches every API and RSS source continuously</li>
+          <li>Detects changes and pulls the full text with a hash</li>
+          <li>Drafts atomic obligations with a confidence score</li>
+          <li>Proposes crosswalk edges and applicability</li>
+          <li>Ranks the review queue and re-flags on change</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:rgba(218,119,86,0.4)">
+        <div class="ico" style="color:var(--accent)">The person does</div>
+        <h3>Confirm and authorize</h3>
+        <ul>
+          <li>Approves an obligation as authoritative</li>
+          <li>Confirms the crosswalk and applicability call</li>
+          <li>Signs off on a redline before it routes</li>
+          <li>Holds the final word on citations</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:rgba(91,139,208,0.35)">
+        <div class="ico" style="color:var(--hybrid)">Only then</div>
+        <h3>It reaches the customer</h3>
+        <ul>
+          <li>Gap analysis runs on approved obligations only</li>
+          <li>Recommendations cite verbatim, reviewed sources</li>
+          <li>The MCP and API serve current, approved policy</li>
+          <li>A full audit trail stands behind every claim</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div class="callout">
+    <div class="k">The bottom line</div>
+    <p>Yes, the entire gather can be automated. A mix of REST APIs and RSS feeds covers every federal banking and credit union governing body. The APIs carry the codified backbone along with the FDIC, CFPB, SEC, and OFAC data. The RSS and subscription feeds carry the guidance layer from the OCC, the Federal Reserve, the NCUA, and FinCEN. LegiScan and Open States cover state legislation. The one honest gap is state regulator guidance from bodies such as NYDFS and NMLS, which stays part scrape. All of it flows into a single obligation database in the risk engine, kept current by the monitoring loop, and none of it crosses into a customer recommendation until a person has approved it.</p>
+  </div>
+
+  <div class="foot">
+    Verified reachable in August 2026. The design follows regulatory-expansion/1_architecture_and_normalization_design.md, covering Layers 1 to 5 and the monitoring loop, and onside/RegIntel_1_Implementation_Plan.md, covering E1 Monitoring and E2 Gap analysis. All regulatory references are informational. Institutions verify currency and applicability with their primary regulator.
+  </div>
+
+</div>
+</body>
+</html>
