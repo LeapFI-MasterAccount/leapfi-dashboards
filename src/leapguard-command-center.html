@@ -538,7 +538,22 @@ footer.page{padding:22px 0 48px 0;font-size:12px;color:var(--grey2);text-align:c
 
 </style>
 <style id="clickpills-css">
-.rollup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin-top:16px}
+/* ov-hero */
+body[data-view="overview"] .page-head{margin-bottom:6px}
+body[data-view="overview"] #ph-title{font-size:clamp(36px,4.8vw,60px);line-height:1.03;letter-spacing:-.02em;font-weight:800}
+body[data-view="overview"] #ph-sub{font-size:clamp(14.5px,1.55vw,18.5px);line-height:1.55;margin-top:12px;max-width:1000px}
+body[data-view="overview"] .kpi-row{gap:18px}
+body[data-view="overview"] .kpi{padding:26px 24px}
+body[data-view="overview"] .kpi .num{font-size:clamp(32px,3.1vw,48px)}
+body[data-view="overview"] .kpi .lab{font-size:13.5px;margin-top:2px}
+body[data-view="overview"] .kpi-ico{transform:scale(1.18);transform-origin:left center}
+.rollup-grid .navgauge{padding:34px 32px;min-height:480px}
+.rollup-grid .navgauge .card-title{font-size:23px;font-weight:700}
+.rollup-grid .navgauge .card-sub{font-size:14px;margin-top:4px}
+.rollup-grid .navgauge-cta{font-size:13px;letter-spacing:.05em;padding-top:24px}
+.rollup-grid .chart-center{margin-top:10px}
+
+.rollup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:22px;margin-top:26px}
 .navgauge{cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,border-color .15s,box-shadow .15s}
 .navgauge:hover{transform:translateY(-3px);border-color:rgba(0,242,255,.5);box-shadow:0 12px 32px rgba(0,0,0,.38)}
 .navgauge .chart-center{flex:1;justify-content:center}
@@ -1154,6 +1169,7 @@ function showSub(v,s){ curView=v; curSub=s; renderSidebar(); renderContent(); wi
 function renderContent(){
   var fn=(RENDER[curView]&&RENDER[curView][curSub]);
   document.getElementById('views').innerHTML= fn?fn():'<div class="card">Coming soon.</div>';
+  document.body.setAttribute('data-view',curView);
   if(curView==='frameworks'&&curSub==='register') setTimeout(renderControlList,0);
 }
 
@@ -1183,20 +1199,20 @@ RENDER.overview.summary=function(){
   var kpiRow='<div class="kpi-row">'+kpis.map(function(k){return '<div class="kpi kpi-clk" onclick="'+k.to+'" title="Drill in"><div class="kpi-ico" style="color:var(--cyan)">'+icon(k.ico)+'</div><div><div class="num '+k.c+'">'+k.n+'</div><div class="lab">'+k.l+'</div></div><span class="kpi-go">&rarr;</span></div>';}).join('')+'</div>';
 
   // ---- rollup gauges (each drills down on click) ----
-  var ringChart='<div class="chart-center">'+ringSVG(pct, covColor(pct), {size:150,stroke:16,label:pct+'%',sub:'Mapped'})+'<div style="width:100%;margin-top:14px">'+gaugeHTML(fw.stage)+'</div></div>';
+  var ringChart='<div class="chart-center">'+ringSVG(pct, covColor(pct), {size:200,stroke:20,label:pct+'%',sub:'Mapped'})+'<div style="width:100%;margin-top:14px">'+gaugeHTML(fw.stage)+'</div></div>';
   var ringCard=navGauge('AI RMF Maturity', fw.mapped+' of '+fw.controls+' controls mapped &middot; stage '+DATA.stages[fw.stage], ringChart, "showSub('frameworks','register')", 'Open control register');
 
   var dsegs=[{value:c.good,color:'var(--sem5)',label:'Compliant'},{value:c.warn,color:'var(--sem2)',label:'Needs update'},{value:c.crit,color:'var(--sem1)',label:'High priority'}];
-  var statusChart='<div class="chart-center">'+donutSVG(dsegs,{size:150,stroke:22,centerLabel:c.total,centerSub:'Docs'})+'<div style="margin-top:12px">'+legendHTML([{color:'var(--sem5)',label:'Compliant',val:c.good},{color:'var(--sem2)',label:'Needs update',val:c.warn},{color:'var(--sem1)',label:'High priority',val:c.crit}])+'</div></div>';
+  var statusChart='<div class="chart-center">'+donutSVG(dsegs,{size:186,stroke:26,centerLabel:c.total,centerSub:'Docs'})+'<div style="margin-top:12px">'+legendHTML([{color:'var(--sem5)',label:'Compliant',val:c.good},{color:'var(--sem2)',label:'Needs update',val:c.warn},{color:'var(--sem1)',label:'High priority',val:c.crit}])+'</div></div>';
   var statusCard=navGauge('Document Health', c.good+' compliant &middot; '+(c.warn+c.crit)+' need attention', statusChart, "showSub('documents','gaps')", 'Review open items');
 
   var fsegs=DATA.functions.map(function(f){return {value:f.total,color:f.color,label:f.code};});
   var totalCtrl=DATA.functions.reduce(function(x,f){return x+f.total;},0);
-  var fnChart='<div class="chart-center">'+donutSVG(fsegs,{size:150,stroke:22,centerLabel:totalCtrl,centerSub:'Controls'})+'<div style="margin-top:12px">'+legendHTML(DATA.functions.map(function(f){return {color:f.color,label:f.code,val:f.total};}))+'</div></div>';
+  var fnChart='<div class="chart-center">'+donutSVG(fsegs,{size:186,stroke:26,centerLabel:totalCtrl,centerSub:'Controls'})+'<div style="margin-top:12px">'+legendHTML(DATA.functions.map(function(f){return {color:f.color,label:f.code,val:f.total};}))+'</div></div>';
   var fnCard=navGauge('Controls by Function', totalCtrl+' controls across four functions', fnChart, "showSub('frameworks','functions')", 'Open function breakdown');
 
   var lifeN=DATA.lifecycle.length;
-  var horizonChart='<div class="chart-center" style="padding:14px 0"><div style="font-size:56px;font-weight:800;color:var(--cyan);line-height:1">'+lifeN+'</div><div class="lab" style="margin-top:8px">rulemakings tracked</div><div style="margin-top:14px;color:var(--muted,#9aa3ad);font-size:12.5px;text-align:center;max-width:200px">Pending and in-force rulemaking across every governing body NorthWinds answers to.</div></div>';
+  var horizonChart='<div class="chart-center" style="padding:14px 0"><div style="font-size:96px;font-weight:800;color:var(--cyan);line-height:1">'+lifeN+'</div><div class="lab" style="margin-top:8px">rulemakings tracked</div><div style="margin-top:14px;color:var(--muted,#9aa3ad);font-size:15px;text-align:center;max-width:270px;line-height:1.5">Pending and in-force rulemaking across every governing body NorthWinds answers to.</div></div>';
   var horizonCard=navGauge('Regulatory Horizon', 'What is moving, and what it will touch', horizonChart, "showSub('monitoring','lifecycle')", 'Open rulemaking lifecycle');
 
   return '<div class="section">'+secHead('grid','Compliance at a glance','Top-level rollup for NorthWinds Credit Union. Click any tile or gauge to drill into the detail beneath it.')+kpiRow+'</div>'+
