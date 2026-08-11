@@ -538,6 +538,16 @@ footer.page{padding:22px 0 48px 0;font-size:12px;color:var(--grey2);text-align:c
 
 </style>
 <style id="clickpills-css">
+.rollup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin-top:16px}
+.navgauge{cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,border-color .15s,box-shadow .15s}
+.navgauge:hover{transform:translateY(-3px);border-color:rgba(0,242,255,.5);box-shadow:0 12px 32px rgba(0,0,0,.38)}
+.navgauge .chart-center{flex:1;justify-content:center}
+.navgauge-cta{margin-top:auto;padding-top:16px;color:var(--cyan);font-weight:700;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase}
+.kpi-clk{cursor:pointer;position:relative;transition:transform .15s,border-color .15s}
+.kpi-clk:hover{transform:translateY(-2px);border-color:rgba(0,242,255,.45)}
+.kpi-go{position:absolute;top:9px;right:12px;color:var(--cyan);opacity:.5;font-weight:800;transition:opacity .15s,transform .15s}
+.kpi-clk:hover .kpi-go{opacity:1;transform:translateX(3px)}
+
 .fw-stat-pill.clk{cursor:pointer;transition:filter .15s}
 .fw-stat-pill.clk:hover{filter:brightness(1.2)}
 .fw-fn-num .clk{cursor:pointer;border-bottom:1px dashed rgba(255,255,255,.25);transition:color .15s,border-color .15s}
@@ -1161,30 +1171,36 @@ var RENDER={overview:{},frameworks:{},documents:{},monitoring:{},ownership:{},re
 /* ---------- OVERVIEW ---------- */
 RENDER.overview.summary=function(){
   var c=counts();
+  var fw=DATA.frameworks[0]; var pct=Math.round(fw.mapped/fw.controls*100);
+
+  // ---- top-level KPI tiles (each drills down) ----
   var kpis=[
-    {ico:'bank',n:DATA.bodies.length,c:'c-cyan',l:'Governing Bodies'},
-    {ico:'layers',n:DATA.frameworks.length,c:'c-white',l:'Frameworks'},
-    {ico:'shield',n:c.good,c:'c-sem5',l:'Documents Compliant'},
-    {ico:'alert',n:c.warn+c.crit,c:'c-sem2',l:'Open Items ('+c.crit+' high)'}
+    {ico:'bank',n:DATA.bodies.length,c:'c-cyan',l:'Governing Bodies',to:"showSub('monitoring','bodies')"},
+    {ico:'layers',n:DATA.frameworks.length,c:'c-white',l:'Frameworks',to:"showSub('frameworks','all')"},
+    {ico:'shield',n:c.good,c:'c-sem5',l:'Documents Compliant',to:"showSub('documents','compliant')"},
+    {ico:'alert',n:c.warn+c.crit,c:'c-sem2',l:'Open Items ('+c.crit+' high)',to:"showSub('documents','gaps')"}
   ];
-  var kpiRow='<div class="kpi-row">'+kpis.map(function(k){return '<div class="kpi"><div class="kpi-ico" style="color:var(--cyan)">'+icon(k.ico)+'</div><div><div class="num '+k.c+'">'+k.n+'</div><div class="lab">'+k.l+'</div></div></div>';}).join('')+'</div>';
+  var kpiRow='<div class="kpi-row">'+kpis.map(function(k){return '<div class="kpi kpi-clk" onclick="'+k.to+'" title="Drill in"><div class="kpi-ico" style="color:var(--cyan)">'+icon(k.ico)+'</div><div><div class="num '+k.c+'">'+k.n+'</div><div class="lab">'+k.l+'</div></div><span class="kpi-go">&rarr;</span></div>';}).join('')+'</div>';
 
-  var gaps=DATA.docs.filter(function(d){return d.status!=='good';}).sort(function(a,b){return (a.status==='crit'?0:1)-(b.status==='crit'?0:1);});
-  var openList=gaps.map(function(d){return miniDocRow(d);}).join('');
-  var horizon=DATA.lifecycle.slice(0,4).map(function(l){
-    var aff=(l.affects||[]);
-    var primary=aff[0];
-    var chips=aff.map(function(id){var dd=docById(id);return dd?'<span class="aff-chip" onclick="event.stopPropagation();openDoc(\''+id+'\')">'+statusIcon(dd.status)+esc(dd.name)+'</span>':'';}).join('');
-    var affRow=aff.length?'<div class="affects-row"><span class="affects-lab">Affects</span>'+chips+'</div>':'';
-    var rowClick=primary?'openDoc(\''+primary+'\')':'showView(\'monitoring\')';
-    return '<div class="policy-row" onclick="'+rowClick+'"><div class="policy-top"><div class="jur-badge">'+esc(l.jur)+'</div><div class="policy-info"><div class="policy-name">'+esc(l.title)+'</div><div class="policy-date" style="margin-top:2px">'+esc(DATA.lifeStages[l.stageIdx])+' &middot; '+esc(l.num)+'</div>'+affRow+'</div>'+chevSvg+'</div></div>';
-  }).join('');
+  // ---- rollup gauges (each drills down on click) ----
+  var ringChart='<div class="chart-center">'+ringSVG(pct, covColor(pct), {size:150,stroke:16,label:pct+'%',sub:'Mapped'})+'<div style="width:100%;margin-top:14px">'+gaugeHTML(fw.stage)+'</div></div>';
+  var ringCard=navGauge('AI RMF Maturity', fw.mapped+' of '+fw.controls+' controls mapped &middot; stage '+DATA.stages[fw.stage], ringChart, "showSub('frameworks','register')", 'Open control register');
 
-  return '<div class="section">'+secHead('grid','Compliance at a glance','Where NorthWinds stands right now across every governing body, and the handful of things that need a decision.')+kpiRow+'</div>'+
-    '<div class="grid-2">'+
-      panel('Needs your attention','Ranked by severity &middot; click any to open the document viewer',openList)+
-      panel('On the horizon','Pending rulemaking &middot; click an item, or a document it affects, to open it',horizon,'<span style="cursor:pointer;color:var(--cyan)" onclick="showView(\'monitoring\')">View full lifecycle &rarr;</span>')+
-    '</div>';
+  var dsegs=[{value:c.good,color:'var(--sem5)',label:'Compliant'},{value:c.warn,color:'var(--sem2)',label:'Needs update'},{value:c.crit,color:'var(--sem1)',label:'High priority'}];
+  var statusChart='<div class="chart-center">'+donutSVG(dsegs,{size:150,stroke:22,centerLabel:c.total,centerSub:'Docs'})+'<div style="margin-top:12px">'+legendHTML([{color:'var(--sem5)',label:'Compliant',val:c.good},{color:'var(--sem2)',label:'Needs update',val:c.warn},{color:'var(--sem1)',label:'High priority',val:c.crit}])+'</div></div>';
+  var statusCard=navGauge('Document Health', c.good+' compliant &middot; '+(c.warn+c.crit)+' need attention', statusChart, "showSub('documents','gaps')", 'Review open items');
+
+  var fsegs=DATA.functions.map(function(f){return {value:f.total,color:f.color,label:f.code};});
+  var totalCtrl=DATA.functions.reduce(function(x,f){return x+f.total;},0);
+  var fnChart='<div class="chart-center">'+donutSVG(fsegs,{size:150,stroke:22,centerLabel:totalCtrl,centerSub:'Controls'})+'<div style="margin-top:12px">'+legendHTML(DATA.functions.map(function(f){return {color:f.color,label:f.code,val:f.total};}))+'</div></div>';
+  var fnCard=navGauge('Controls by Function', totalCtrl+' controls across four functions', fnChart, "showSub('frameworks','functions')", 'Open function breakdown');
+
+  var lifeN=DATA.lifecycle.length;
+  var horizonChart='<div class="chart-center" style="padding:14px 0"><div style="font-size:56px;font-weight:800;color:var(--cyan);line-height:1">'+lifeN+'</div><div class="lab" style="margin-top:8px">rulemakings tracked</div><div style="margin-top:14px;color:var(--muted,#9aa3ad);font-size:12.5px;text-align:center;max-width:200px">Pending and in-force rulemaking across every governing body NorthWinds answers to.</div></div>';
+  var horizonCard=navGauge('Regulatory Horizon', 'What is moving, and what it will touch', horizonChart, "showSub('monitoring','lifecycle')", 'Open rulemaking lifecycle');
+
+  return '<div class="section">'+secHead('grid','Compliance at a glance','Top-level rollup for NorthWinds Credit Union. Click any tile or gauge to drill into the detail beneath it.')+kpiRow+'</div>'+
+    '<div class="rollup-grid">'+ringCard+statusCard+fnCard+horizonCard+'</div>';
 };
 
 RENDER.overview.maturity=function(){
@@ -1398,6 +1414,11 @@ function fnRowHTML(fn){
       '<div class="fw-sub-lab">Covered ('+fn.mapped+')</div><div class="fw-cov-wrap">'+covChips+(moreN>0?'<span class="fw-cov-more">+ '+moreN+' more covered</span>':'')+'</div>'+
       '<div class="fw-sub-lab">Open controls ('+open+')</div><div class="fw-gap-list">'+opens+'</div>'+
       '<button class="fw-open-reg" onclick="event.stopPropagation();showSub(\'frameworks\',\'register\')">Open full control register &rarr;</button></div></div>';
+}
+function navGauge(title,sub,chart,onclickJS,cta){
+  return '<div class="card gauge-card navgauge" onclick="'+onclickJS+'">'+
+    '<div class="gauge-head"><div><div class="card-title">'+title+'</div><div class="card-sub">'+sub+'</div></div>'+chevSvg+'</div>'+
+    chart+'<div class="navgauge-cta">'+cta+' &rarr;</div></div>';
 }
 function matGauge(title,sub,chart,detail){
   return '<div class="card gauge-card" onclick="this.classList.toggle(\'open\')">'+
