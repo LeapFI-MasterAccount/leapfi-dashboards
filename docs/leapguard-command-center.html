@@ -538,7 +538,8 @@ footer.page{padding:22px 0 48px 0;font-size:12px;color:var(--grey2);text-align:c
 
 </style>
 <style id="clickpills-css">
-.grc-gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px}
+.grc-gauges{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:820px){.grc-gauges{grid-template-columns:1fr}}
 .grc-gauge{position:relative;display:flex;align-items:center;gap:16px;padding:15px 18px;border-radius:12px;background:var(--panel,#13171d);border:1px solid var(--line,#262b31);cursor:pointer;transition:transform .15s,border-color .15s}
 .grc-gauge:hover{transform:translateY(-2px);border-color:rgba(0,242,255,.4)}
 .grc-gauge-ring{flex:0 0 auto;line-height:0}
