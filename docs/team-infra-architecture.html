@@ -157,7 +157,7 @@
     <div class="eyebrow"><span class="chev"></span>LeapFI &middot; Internal Architecture &middot; v5</div>
     <h1>Team Infrastructure &amp; Access Architecture</h1>
     <div class="subtitle">Four horizontal lanes, left to right: the implementer lane's CI/CD chain, the shared lane's infrastructure and roadmap loop, and the two rows of planned automation agents. Built wide for a large monitor, scroll sideways to follow each lane end to end. Click any node to trace its connections; hover for detail.</div>
-    <div class="flagnote">Node colors mark workflow <b>role</b> (trigger / process / tool / output / data / decision) &mdash; functional legend, not the brand palette, flagged per brand kit &sect;. Solid nodes are <b>live today</b>; dashed/hatched nodes are <b>planned</b>, nothing in the bottom two lanes is built yet.</div>
+    <div class="flagnote">Node colors mark workflow <b>role</b> (trigger / process / tool / output / data / decision) · functional legend, not the brand palette, flagged per brand kit &sect;. Solid nodes are <b>live today</b>; dashed/hatched nodes are <b>planned</b>, nothing in the bottom two lanes is built yet.</div>
   </div>
 
   <div class="legend">
@@ -188,12 +188,12 @@
 const LANES = [
   { top:60,  height:450, label:'Implementer Lane', note:'Dan &amp; Josh · live', alt:false },
   { top:510, height:285, label:'Shared Lane', note:'All 5 · Team Standard seats · live', alt:true },
-  { top:795, height:270, label:'Planned — Ops Agents', note:'foundational, not built', alt:false },
-  { top:1065, height:285, label:'Planned — Consultancy Pipeline', note:'foundational, not built', alt:true },
+  { top:795, height:270, label:'Planned · Ops Agents', note:'foundational, not built', alt:false },
+  { top:1065, height:285, label:'Planned · Consultancy Pipeline', note:'foundational, not built', alt:true },
 ];
 
 const NODES = [
-  // Lane 1 — Implementer (two stacked rows: GitHub Enterprise sits above the repo row it governs)
+  // Lane 1 · Implementer (two stacked rows: GitHub Enterprise sits above the repo row it governs)
   { id:'ghent', x:660, y:150, type:'tool', status:'live', icon:'&#128274;', label:'GitHub Enterprise', sub:'Security + access-control layer for all 5 seats: SSO, repo permissions, audit logs. Visibility limits live here now, not in the docs.', wide:true },
   { id:'devs', x:40,   y:330, type:'trigger', status:'live', icon:'&#9889;', label:'Dan &amp; Josh', sub:'Personal Claude Max ($200/mo each) + own Anthropic API keys. Push code, and pick up whatever the team has agreed to build.', wide:true },
   { id:'ghrepo', x:660, y:330, type:'data', status:'live', icon:'&#128193;', label:'GitHub Repos', sub:'Code, docs, and the roadmap board. The single source of truth for the whole team.', wide:true },
@@ -201,7 +201,7 @@ const NODES = [
   { id:'testdecide', x:1900, y:330, type:'decision', status:'live', icon:'&#10067;', label:'Tests Pass?', sub:'Gate before anything ships to test or prod.' },
   { id:'deploy', x:2520, y:330, type:'output', status:'live', icon:'&#128640;', label:'Deploy to Test / Prod', sub:'Successful build promotes automatically through the pipeline.' },
 
-  // Lane 2 — Shared
+  // Lane 2 · Shared
   { id:'claudeeng', x:40,  y:600, type:'tool', status:'live', icon:'&#128187;', label:'Claude Project: Engineering', sub:'Synced to the code repos via the GitHub integration. Live context for Dan and Josh’s dev work.', wide:true },
   { id:'claudeops', x:470, y:600, type:'tool', status:'live', icon:'&#128203;', label:'Claude Project: Ops &amp; Roadmap', sub:'Synced to docs, SOW templates, and the roadmap. Where the whole team works.', wide:true },
   { id:'gwconn', x:900, y:600, type:'tool', status:'live', icon:'&#128231;', label:'Google Workspace Connectors', sub:'Deep integration with Gmail, Calendar, and Drive for the team’s own workflows and automation, each person authorizes their own. Not a dependency of the agent pipeline below.', wide:true },
@@ -210,13 +210,13 @@ const NODES = [
   { id:'teamagree', x:2190, y:600, type:'decision', status:'live', icon:'&#129309;', label:'Team Agrees to Build It?', sub:'The gate between an idea and actual work. What the team agrees on moves into the implementer lane; what does not stays on the backlog.', wide:true },
   { id:'team5', x:2620, y:600, type:'data', status:'live', icon:'&#128101;', label:'All 5 Team Members', sub:'Shared, lighter-usage seats: chat with infrastructure, read docs, use Claude Projects, view + add to the roadmap. Full visibility, enforced at GitHub Enterprise.', wide:true },
 
-  // Lane 3 — Planned Ops Agents
+  // Lane 3 · Planned Ops Agents
   { id:'newcust', x:40, y:885, type:'trigger', status:'live', icon:'&#127974;', label:'New Customer Signs', sub:'Will kick off both onboarding and document intake, once those agents exist.' },
   { id:'sowagent', x:660, y:885, type:'process', status:'planned', icon:'&#9997;', label:'SOW Drafting Agent', sub:'PLANNED, not yet built: will pull the standard template from GitHub, fill in engagement specifics, produce a first draft.', wide:true },
   { id:'sowout', x:1280, y:885, type:'output', status:'planned', icon:'&#9989;', label:'SOW Draft Delivered', sub:'PLANNED output, once the SOW agent exists.' },
   { id:'onboardagent', x:1900, y:885, type:'process', status:'planned', icon:'&#129302;', label:'Customer Onboarding Agent', sub:'PLANNED, not yet built: will run the new-customer setup checklist end to end when a deal closes.', wide:true },
 
-  // Lane 4 — Planned Consultancy Pipeline
+  // Lane 4 · Planned Consultancy Pipeline
   { id:'docagents', x:40, y:1155, type:'process', status:'planned', icon:'&#128269;', label:'Document Agents', sub:'PLANNED: sorts incoming customer documents, then interprets them (vision + text). This is the CAPTURE + REFLECTION stage of the locked engine pipeline, built as agents.', wide:true },
   { id:'enginefeed', x:660, y:1155, type:'tool', status:'planned', icon:'&#9878;', label:'RISK + OPPORTUNITY Engines', sub:'PLANNED: interpreted document output feeds directly into the two locked engines for scoring and opportunity identification.', wide:true },
   { id:'reportagent', x:1280, y:1155, type:'process', status:'planned', icon:'&#128209;', label:'Report Construction Agent', sub:'PLANNED: builds the standards-based deliverable from engine output, following the same templates the SOW agent will use.', wide:true },
@@ -227,7 +227,7 @@ const EDGES = [
   { from:'ghrepo', to:'cicd', label:'triggers on push' },
   { from:'cicd', to:'testdecide', label:'test results' },
   { from:'testdecide', to:'deploy', label:'yes' },
-  { from:'testdecide', to:'devs', label:'no — fix needed', dashed:true },
+  { from:'testdecide', to:'devs', label:'no · fix needed', dashed:true },
   { from:'deploy', to:'ghrepo', label:'deployment recorded', dashed:true },
   { from:'ghent', to:'ghrepo', label:'permissions' },
   { from:'ghent', to:'team5', label:'SSO + access control' },
@@ -238,8 +238,8 @@ const EDGES = [
   { from:'claudeops', to:'roadmap', label:'displays' },
   { from:'addidea', to:'roadmap', label:'new issue' },
   { from:'roadmap', to:'teamagree', label:'reviewed at planning' },
-  { from:'teamagree', to:'devs', label:'yes — becomes implementer-lane work', key:true },
-  { from:'teamagree', to:'roadmap', label:'no — stays on backlog', dashed:true },
+  { from:'teamagree', to:'devs', label:'yes · becomes implementer-lane work', key:true },
+  { from:'teamagree', to:'roadmap', label:'no · stays on backlog', dashed:true },
   { from:'team5', to:'gwconn', label:'each member connects their own account' },
   { from:'gwconn', to:'team5', label:'powers personal workflow automation' },
   { from:'team5', to:'sowagent', label:'will request a draft', dashed:true },
@@ -265,7 +265,7 @@ LANES.forEach(l=>{
   band.style.height = l.height + 'px';
   const lbl = document.createElement('div');
   lbl.className = 'lane-label';
-  lbl.innerHTML = l.label + ' <span class="n">— ' + l.note + '</span>';
+  lbl.innerHTML = l.label + ' <span class="n">· ' + l.note + '</span>';
   band.appendChild(lbl);
   canvas.appendChild(band);
 });

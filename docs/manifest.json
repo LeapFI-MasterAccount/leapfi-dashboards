@@ -5,7 +5,7 @@
     "title": "LeapGuard Regulatory Command Center",
     "order": 1,
     "url": "https://leapfi-admin.github.io/leapfi-dashboards/leapguard-command-center.html",
-    "kb": 302.0
+    "kb": 301.9
   },
   {
     "file": "onside-plan-timeline.html",
@@ -37,7 +37,7 @@
     "title": "OnSide Regulatory Command Center",
     "order": 5,
     "url": "https://leapfi-admin.github.io/leapfi-dashboards/onside-command-center.html",
-    "kb": 248.7
+    "kb": 248.6
   },
   {
     "file": "regintel-ingestion.html",
@@ -61,7 +61,7 @@
     "title": "Entra & Azure Clean-Start Flow",
     "order": 8,
     "url": "https://leapfi-admin.github.io/leapfi-dashboards/entra-clean-start-flow.html",
-    "kb": 15.4
+    "kb": 15.3
   },
   {
     "file": "engine-operator-console.html",

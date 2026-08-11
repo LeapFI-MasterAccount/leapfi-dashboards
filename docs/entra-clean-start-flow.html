@@ -64,8 +64,8 @@ h1 .hl{color:var(--cyan)}
 <body>
 <div class="wrap">
   <div class="kick">&#9656;&#9656;&#9656; LEAPFI &middot; ONSIDE &middot; CLEAN-START PLATFORM</div>
-  <h1>Sign up <span class="hl">identity first.</span><br>Then hang the whole company off it.</h1>
-  <p class="lede">The clean-start order for standing up Microsoft Entra ID and the Azure boundary. Identity is the plane everything else attaches to, so it goes first &mdash; then endpoints, source &amp; CI, and the product. Everything must finish and <strong>freeze before the ~Sept 1</strong> SOC&nbsp;2 observation window opens, because a Type II report attests controls that operated over the <em>whole</em> window.</p>
+  <h1>Sign up <span class="hl">identity first.</span><br>Then hang the company off it.</h1>
+  <p class="lede">The clean-start order for standing up Microsoft Entra ID and the Azure boundary. Identity is the plane everything else attaches to, so it goes first, then endpoints, source and CI, and the product. Everything must finish and <strong>freeze before the ~Sept 1</strong> SOC&nbsp;2 observation window opens, because a Type II report attests controls that operated over the <em>whole</em> window.</p>
   <div class="principle"><span class="dot"></span> Order of operations: <strong>&nbsp;identity &rarr; endpoints &rarr; source/CI &rarr; product &rarr; freeze</strong></div>
 
   <div class="metrics">
@@ -119,8 +119,8 @@ h1 .hl{color:var(--cyan)}
         <div class="card">
           <div class="head"><span class="t">Managed cloud desktops under Intune</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">Wk 1&ndash;2</span><span class="car">&#9656;</span></span></div>
           <div class="body"><div class="inner">
-            <p>Staff work in <strong>Azure Virtual Desktop (AVD)</strong> &mdash; consumption-based, credit-eligible, Entra-joined + Intune-managed &mdash; so corporate/customer data never rests on a laptop. Dan and Adam run company-owned <strong>Intune-managed physical machines</strong>. Then <strong>decommission local storage</strong>.</p>
-            <p>Windows 365 Cloud PC is simpler but a fixed, non-credit-eligible subscription &mdash; use only where predictability beats credit savings.</p>
+            <p>Staff work in <strong>Azure Virtual Desktop (AVD)</strong>: consumption-based, credit-eligible, Entra-joined + Intune-managed, so corporate/customer data never rests on a laptop. Dan and Adam run company-owned <strong>Intune-managed physical machines</strong>. Then <strong>decommission local storage</strong>.</p>
+            <p>Windows 365 Cloud PC is simpler but a fixed, non-credit-eligible subscription; use it only where predictability beats credit savings.</p>
             <div class="tags"><span class="tag">Azure Virtual Desktop</span><span class="tag">Intune baselines</span><span class="tag">No data on laptops</span></div>
           </div></div>
         </div>
@@ -130,7 +130,7 @@ h1 .hl{color:var(--cyan)}
         <div class="card">
           <div class="head"><span class="t">GitHub Enterprise + SSO / SCIM</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">Wk 2</span><span class="car">&#9656;</span></span></div>
           <div class="body"><div class="inner">
-            <p>Stand up GitHub Enterprise with <strong>SAML SSO, SCIM, audit log, branch protection / rulesets, secret scanning</strong> &mdash; the change-management evidence. Structure as <strong>two orgs</strong>: Org A (engine + product, in SOC 2 scope, no Claude connection) and Org B (business/ops, Claude read-only). Separate orgs make the engine unreachable by construction.</p>
+            <p>Stand up GitHub Enterprise with <strong>SAML SSO, SCIM, audit log, branch protection / rulesets, secret scanning</strong>. This is the change-management evidence. Structure as <strong>two orgs</strong>: Org A (engine + product, in SOC 2 scope, no Claude connection) and Org B (business/ops, Claude read-only). Separate orgs make the engine unreachable by construction.</p>
             <div class="tags"><span class="tag">SAML SSO</span><span class="tag">Branch protection</span><span class="tag">Secret scanning</span><span class="tag own">Two-org boundary</span></div>
           </div></div>
         </div>
@@ -140,7 +140,7 @@ h1 .hl{color:var(--cyan)}
         <div class="card">
           <div class="head"><span class="t">Azure subscription + product boundary</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">Wk 2&ndash;3</span><span class="car">&#9656;</span></span></div>
           <div class="body"><div class="inner">
-            <p>Stand up the Azure hosting foundation (SOC 1/2/3, ISO 27001/17/18) and re-platform OnSide into it. Model layer = <strong>Azure OpenAI</strong> (in-boundary, not used to train, region-pinnable) with <strong>Claude via Azure Foundry</strong> for Claude-grade reasoning. <strong>Purview DLP</strong> reinforces the no-NPI boundary. Retire the local Docling/Ollama pipeline. Hosting + AVD + Azure OpenAI are Azure consumption &mdash; covered by credits.</p>
+            <p>Stand up the Azure hosting foundation (SOC 1/2/3, ISO 27001/17/18) and re-platform OnSide into it. Model layer = <strong>Azure OpenAI</strong> (in-boundary, not used to train, region-pinnable) with <strong>Claude via Azure Foundry</strong> for Claude-grade reasoning. <strong>Purview DLP</strong> reinforces the no-NPI boundary. Retire the local Docling/Ollama pipeline. Hosting + AVD + Azure OpenAI are Azure consumption, covered by credits.</p>
             <div class="tags"><span class="tag">Azure hosting</span><span class="tag">Azure OpenAI</span><span class="tag">Foundry-Claude</span><span class="tag">Purview DLP</span></div>
           </div></div>
         </div>
@@ -150,7 +150,7 @@ h1 .hl{color:var(--cyan)}
         <div class="card">
           <div class="head"><span class="t">Adopt Claude Team as the company assistant</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">Wk 3</span><span class="car">&#9656;</span></span></div>
           <div class="body"><div class="inner">
-            <p><strong>Claude Team</strong> is the company standard and is SOC 2-compliant (Anthropic SOC 2 I &amp; II, ISO 27001 / 42001; business data training-excluded by default) &mdash; a certified vendor in the data room. SSO is available on Team; layer on Enterprise controls (audit logs, SCIM, custom retention) later if the auditor wants tool-level access evidence.</p>
+            <p><strong>Claude Team</strong> is the company standard and is SOC 2-compliant (Anthropic SOC 2 I &amp; II, ISO 27001 / 42001; business data training-excluded by default), a certified vendor in the data room. SSO is available on Team; layer on Enterprise controls (audit logs, SCIM, custom retention) later if the auditor wants tool-level access evidence.</p>
             <div class="tags"><span class="tag">Claude Team</span><span class="tag">SSO on Team</span><span class="tag">Vendor in data room</span></div>
           </div></div>
         </div>
@@ -160,7 +160,7 @@ h1 .hl{color:var(--cyan)}
         <div class="card" style="border-left-color:var(--amber)">
           <div class="head"><span class="t">Freeze config before ~Sept 1</span><span style="display:flex;gap:12px;align-items:center"><span class="wk">~Sep 1</span><span class="car">&#9656;</span></span></div>
           <div class="body"><div class="inner">
-            <p><strong>Freeze the configuration</strong>; the managed SOC 2 partner starts the Type II <strong>observation window</strong>. Migrating mid-window breaks the report &mdash; so the whole clean start finishes and freezes first. Map every platform to the partner's readiness checklist before the freeze.</p>
+            <p><strong>Freeze the configuration</strong>; the managed SOC 2 partner starts the Type II <strong>observation window</strong>. Migrating mid-window breaks the report, so the whole clean start finishes and freezes first. Map every platform to the partner's readiness checklist before the freeze.</p>
             <div class="tags"><span class="tag cost">Load-bearing deadline</span><span class="tag">Observation window opens</span></div>
           </div></div>
         </div>
@@ -194,7 +194,7 @@ h1 .hl{color:var(--cyan)}
   </div>
 
   <div class="foot">
-    Vendor compliance status changes &mdash; verify each attestation against the vendor's trust portal before relying on it. All regulatory references are informational; the managed compliance partner / auditor makes the final scoping call. Source: OnSide Compliant Platform &amp; Migration Program (LeapFI Brand Kit v2.2).
+    Vendor compliance status changes; verify each attestation against the vendor's trust portal before relying on it. All regulatory references are informational; the managed compliance partner / auditor makes the final scoping call. Source: OnSide Compliant Platform &amp; Migration Program (LeapFI Brand Kit v2.2).
   </div>
 </div>
 <script>
