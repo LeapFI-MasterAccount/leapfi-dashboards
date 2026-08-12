@@ -6,16 +6,19 @@ WORKFLOW
   1. Drop / replace your self-contained dashboard HTML files in ./src/
   2. Run:
         python3 publish.py            # build only (writes ./docs, prints URLs)
-        python3 publish.py --push     # build + commit + push -> GitHub Pages goes live
+        python3 publish.py --push     # build + commit + TAG a revision + push
 
-Each file in src/ becomes a live page at:
-    <base_url>/<slug>.html
-where <base_url> is set in dashboards.config.json.
+Each --push creates a numbered, revertible revision:
+  * bumps ./REVISION (integer),
+  * commits as "Publish rev N",
+  * creates git tag  rev-N  and pushes it.
 
-The <slug> is derived from the filename (lowercased, non-alphanumerics -> '-').
-To pin a nice title / stable slug / display order, add an entry to
-dashboards.config.json under "dashboards" keyed by the exact filename.
+Revert to a prior revision (forward-only, safe):
+        git checkout rev-<N> -- src docs && python3 publish.py --push
+List revisions:
+        git tag -n
 
+Each file in src/ becomes a live page at <base_url>/<slug>.html (see dashboards.config.json).
 Index page uses LeapFI Brand Kit v2.2 (Inter; obsidian/cyan/teal/gallery).
 """
 import json, re, sys, shutil, subprocess, datetime
@@ -25,6 +28,7 @@ ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 DOCS = ROOT / "docs"          # GitHub Pages serves from main branch /docs
 CFG = ROOT / "dashboards.config.json"
+REV_FILE = ROOT / "REVISION"
 
 
 def slugify(name: str) -> str:
@@ -76,7 +80,7 @@ code{background:#e9e9e9;padding:2px 6px;border-radius:4px;font-size:12px}
 </style>"""
 
 
-def build_index(entries, updated: str) -> str:
+def build_index(entries, updated: str, rev=None) -> str:
     cards = ""
     for e in entries:
         cards += (
@@ -84,6 +88,7 @@ def build_index(entries, updated: str) -> str:
             "<h3>" + e["title"] + "</h3>"
             '<div class="u">' + e["slug"] + ".html</div></a>\n"
         )
+    revtxt = (" &bull; rev " + str(rev)) if rev else ""
     return (
         '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
@@ -91,13 +96,20 @@ def build_index(entries, updated: str) -> str:
         '<div class="hero"><div class="inner">'
         '<div class="chev">&#9656;&#9656;&#9656; LEAPFI</div>'
         "<h1>Dashboards</h1>"
-        '<p class="sub">Live dashboard index &bull; updated ' + updated + "</p>"
+        '<p class="sub">Live dashboard index &bull; updated ' + updated + revtxt + "</p>"
         "</div></div>"
         '<div class="wrap"><div class="grid">' + cards + "</div>"
         '<p class="foot">Maintained via the publish pipeline. Drop updated HTML into '
         "<code>src/</code> and run <code>python3 publish.py --push</code>.</p>"
         "</div></body></html>"
     )
+
+
+def read_rev() -> int:
+    try:
+        return int(REV_FILE.read_text().strip())
+    except Exception:
+        return 0
 
 
 def main():
@@ -135,9 +147,16 @@ def main():
 
     entries.sort(key=lambda e: (e["order"], e["title"].lower()))
     updated = datetime.date.today().isoformat()
-    (DOCS / "manifest.json").write_text(json.dumps(entries, indent=2))
+
+    # revision: bump only on --push; build-only shows the current published rev
+    cur_rev = read_rev()
+    rev = cur_rev + 1 if push else cur_rev
+    if push:
+        REV_FILE.write_text(str(rev) + "\n")
+
+    (DOCS / "manifest.json").write_text(json.dumps({"revision": rev, "updated": updated, "dashboards": entries}, indent=2))
     (DOCS / ".nojekyll").write_text("")  # serve files verbatim, no Jekyll
-    (DOCS / "index.html").write_text(build_index(entries, updated), encoding="utf-8")
+    (DOCS / "index.html").write_text(build_index(entries, updated, rev if rev else None), encoding="utf-8")
 
     if not entries:
         print("No .html files found in ./src -- drop your dashboards there, then re-run.")
@@ -151,10 +170,17 @@ def main():
     print()
 
     if push:
+        tag = "rev-" + str(rev)
+        msg = "Publish rev " + str(rev) + " (" + updated + ")"
         subprocess.run(["git", "add", "-A"], cwd=ROOT, check=True)
-        subprocess.run(["git", "commit", "-m", "Publish dashboards " + updated], cwd=ROOT)
+        subprocess.run(["git", "commit", "-m", msg], cwd=ROOT)
+        subprocess.run(["git", "tag", "-a", tag, "-m", msg], cwd=ROOT)
         subprocess.run(["git", "push"], cwd=ROOT, check=True)
-        print("Pushed. Live in ~1-2 min; updates to an existing page can take up to ~10 min (GitHub Pages CDN cache).")
+        subprocess.run(["git", "push", "origin", tag], cwd=ROOT, check=True)
+        print("Pushed as REVISION " + str(rev) + "   (git tag " + tag + ").")
+        print("Revert to a prior revision:  git checkout rev-<N> -- src docs && python3 publish.py --push")
+        print("List all revisions:          git tag -n")
+        print("Live in ~1-2 min; existing pages refresh up to ~10 min (CDN cache).")
 
 
 if __name__ == "__main__":
