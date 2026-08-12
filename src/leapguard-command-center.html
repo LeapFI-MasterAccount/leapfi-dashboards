@@ -538,6 +538,31 @@ footer.page{padding:22px 0 48px 0;font-size:12px;color:var(--grey2);text-align:c
 
 </style>
 <style id="clickpills-css">
+.grc-hero{display:flex;align-items:center;gap:30px;padding:20px 24px;border-radius:14px;background:var(--panel,#13171d);border:1px solid var(--line,#262b31);border-left-width:5px;flex-wrap:wrap}
+.grc-hero.good{border-left-color:var(--sem5,#557A61)}
+.grc-hero.warn{border-left-color:var(--sem2,#D99B43)}
+.grc-hero.crit{border-left-color:var(--sem1,#C94A4A)}
+.grc-hero-score{min-width:250px;flex:0 0 auto}
+.grc-hero-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted,#9aa3ad)}
+.grc-hero-num{font-size:52px;font-weight:800;line-height:1;margin-top:4px;display:flex;align-items:baseline;gap:12px}
+.grc-delta{font-size:15px;font-weight:700}
+.grc-delta.up,.grc-gauge-delta.up{color:var(--sem5,#7bb489)}
+.grc-delta.down,.grc-gauge-delta.down{color:var(--sem1,#C94A4A)}
+.grc-hero-bar{position:relative;height:7px;border-radius:4px;background:rgba(255,255,255,.09);margin-top:14px}
+.grc-hero-fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--cyan)}
+.grc-hero-target{position:absolute;top:-3px;width:2px;height:13px;background:#fff;opacity:.75}
+.grc-hero-target-lbl{font-size:11.5px;color:var(--muted,#9aa3ad);margin-top:8px}
+.grc-hero-mid{flex:1;min-width:210px}
+.grc-hero-verdict{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:800}
+.grc-hero .grc-light{width:13px;height:13px;border-radius:50%;flex:0 0 auto}
+.grc-hero.good .grc-light{background:var(--sem5,#557A61);box-shadow:0 0 12px var(--sem5,#557A61)}
+.grc-hero.warn .grc-light{background:var(--sem2,#D99B43);box-shadow:0 0 12px var(--sem2,#D99B43)}
+.grc-hero.crit .grc-light{background:var(--sem1,#C94A4A);box-shadow:0 0 12px var(--sem1,#C94A4A)}
+.grc-hero-sub{font-size:13px;color:var(--muted,#9aa3ad);margin-top:5px}
+.grc-hero-fresh{font-size:12px;color:var(--muted,#9aa3ad);margin-top:11px;opacity:.9}
+.grc-gauge-delta{font-size:11px;font-weight:700;margin-left:9px}
+.grc-attn-meta{font-size:11.5px;color:var(--muted,#9aa3ad);white-space:nowrap;margin-right:4px}
+
 .grc-gauges{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:820px){.grc-gauges{grid-template-columns:1fr}}
 .grc-gauge{position:relative;display:flex;align-items:center;gap:16px;padding:15px 18px;border-radius:12px;background:var(--panel,#13171d);border:1px solid var(--line,#262b31);cursor:pointer;transition:transform .15s,border-color .15s}
@@ -1254,31 +1279,46 @@ RENDER.overview.summary=function(){
   var wfPct=Math.round(wf.mapped/wf.total*100);
   var CG='var(--sem5)',CW='var(--sem2)',CC='var(--sem1)';
 
+  var readiness=Math.round(0.45*flagCov+0.30*progAvg+0.25*docPct);
+  var rTarget=90, rDelta=6;
+
   var overall=c.crit>0?'crit':((c.warn>0||below>0||flagCov<fw.target)?'warn':'good');
   var verdict=overall==='crit'?'Action required':(overall==='warn'?'Attention needed':'On track');
   var headline=c.crit+' high-priority '+(c.crit===1?'gap':'gaps')+' &middot; '+(c.warn+c.crit)+' open items &middot; '+DATA.lifecycle.length+' rulemakings tracked';
-  var band='<div class="grc-band '+overall+'"><span class="grc-light"></span><div class="grc-band-txt"><div class="grc-verdict">'+verdict+'</div><div class="grc-headline">'+headline+'</div></div><button class="grc-band-act" onclick="showSub(\'documents\',\'gaps\')">Review open items &rarr;</button></div>';
 
-  function g(pct,color,word,title,sub,js){
-    return '<div class="grc-gauge" onclick="'+js+'" title="'+title+' &middot; '+pct+'%"><div class="grc-gauge-ring">'+ringSVG(pct,color,{size:116,stroke:12,label:pct+'%'})+'</div>'+
+  var hero='<div class="grc-hero '+overall+'">'+
+    '<div class="grc-hero-score"><div class="grc-hero-label">Exam readiness</div>'+
+      '<div class="grc-hero-num">'+readiness+'%<span class="grc-delta up">&#9650; '+rDelta+'</span></div>'+
+      '<div class="grc-hero-bar"><div class="grc-hero-fill" style="width:'+readiness+'%"></div><div class="grc-hero-target" style="left:'+rTarget+'%"></div></div>'+
+      '<div class="grc-hero-target-lbl">Up '+rDelta+' pts since last scan &middot; target '+rTarget+'% by Q4 2026</div></div>'+
+    '<div class="grc-hero-mid"><div class="grc-hero-verdict"><span class="grc-light"></span>'+verdict+'</div>'+
+      '<div class="grc-hero-sub">'+headline+'</div>'+
+      '<div class="grc-hero-fresh">As of Aug 9, 2026 &middot; 6:12 AM ET &middot; next scan in 6h</div></div>'+
+    '<button class="grc-band-act" onclick="showSub(\'documents\',\'gaps\')">Review open items &rarr;</button>'+
+  '</div>';
+
+  function g(pct,color,word,title,sub,js,dv){
+    var delta=dv?'<span class="grc-gauge-delta '+(dv>0?'up':'down')+'">'+(dv>0?'&#9650; ':'&#9660; ')+Math.abs(dv)+'</span>':'';
+    return '<div class="grc-gauge" onclick="'+js+'" title="'+title+' &middot; '+pct+'%"><div class="grc-gauge-ring">'+ringSVG(pct,color,{size:112,stroke:12,label:pct+'%'})+'</div>'+
       '<div class="grc-gauge-body"><div class="grc-gauge-title">'+title+'</div><div class="grc-gauge-sub">'+sub+'</div>'+
-      '<div class="grc-gauge-status"><span class="grc-dot" style="background:'+color+'"></span>'+word+'</div></div>'+
+      '<div class="grc-gauge-status"><span class="grc-dot" style="background:'+color+'"></span>'+word+delta+'</div></div>'+
       '<span class="grc-gauge-go">&rarr;</span></div>';
   }
   var gauges='<div class="grc-gauges">'+
-    g(flagCov, flagCov>=fw.target?CG:CW, flagCov>=fw.target?'On track':'Below target', 'AI RMF coverage', fw.mapped+' of '+fw.controls+' controls mapped &middot; goal '+fw.target+'%', "showSub('frameworks','register')")+
-    g(progAvg, progAvg>=85?CG:CW, progAvg>=85?'On track':'Below target', 'Program coverage', 'Average across '+DATA.frameworks.length+' frameworks &middot; '+atTarget+' at target', "showSub('frameworks','all')")+
-    g(docPct, c.crit>0?CC:(docPct>=85?CG:CW), c.crit>0?'Action needed':(docPct>=85?'On track':'Below target'), 'Document compliance', c.good+' of '+c.total+' compliant &middot; '+c.crit+' high priority', "showSub('documents','gaps')")+
-    g(wfPct, wfPct>=85?CG:CW, wfPct>=85?'On track':'Weakest area', esc(wf.name)+' function', 'Lowest-covered function &middot; '+wf.mapped+' of '+wf.total+' controls', "showSub('frameworks','functions')")+
+    g(flagCov, flagCov>=fw.target?CG:CW, flagCov>=fw.target?'On track':'Below target', 'AI RMF coverage', fw.mapped+' of '+fw.controls+' controls mapped &middot; goal '+fw.target+'%', "showSub('frameworks','register')", 4)+
+    g(progAvg, progAvg>=85?CG:CW, progAvg>=85?'On track':'Below target', 'Program coverage', 'Average across '+DATA.frameworks.length+' frameworks &middot; '+atTarget+' at target', "showSub('frameworks','all')", 3)+
+    g(docPct, c.crit>0?CC:(docPct>=85?CG:CW), c.crit>0?'Action needed':(docPct>=85?'On track':'Below target'), 'Document compliance', c.good+' of '+c.total+' compliant &middot; '+c.crit+' high priority', "showSub('documents','gaps')", 2)+
+    g(wfPct, wfPct>=85?CG:CW, wfPct>=85?'On track':'Weakest area', esc(wf.name)+' function', 'Lowest-covered function &middot; '+wf.mapped+' of '+wf.total+' controls', "showSub('frameworks','functions')", 5)+
   '</div>';
 
+  var DUE=['Sep 1','Sep 15','Sep 30','Oct 15','Oct 31'];
   var attn=DATA.docs.filter(function(d){return d.status!=='good';}).sort(function(x,y){return (x.status==='crit'?0:1)-(y.status==='crit'?0:1);}).slice(0,5);
-  var attnRows=attn.length?attn.map(function(d){return '<div class="grc-attn-row" onclick="openDoc(\''+d.id+'\')"><span class="grc-dot" style="background:'+dotColor(d.status)+'"></span><span class="grc-attn-name">'+esc(d.name)+'</span><span class="rep-sev '+d.status+'">'+statusWord(d.status)+'</span></div>';}).join(''):'<div class="grc-headline" style="padding:8px 2px">Nothing needs attention right now.</div>';
+  var attnRows=attn.length?attn.map(function(d,i){return '<div class="grc-attn-row" onclick="openDoc(\''+d.id+'\')"><span class="grc-dot" style="background:'+dotColor(d.status)+'"></span><span class="grc-attn-name">'+esc(d.name)+'</span><span class="grc-attn-meta">'+esc(d.owner||'Unassigned')+' &middot; due '+DUE[i]+'</span><span class="rep-sev '+d.status+'">'+statusWord(d.status)+'</span></div>';}).join(''):'<div class="grc-headline" style="padding:8px 2px">Nothing needs attention right now.</div>';
 
   var actions=[['Review open items',"showSub('documents','gaps')"],['Open control register',"showSub('frameworks','register')"],['Rulemaking lifecycle',"showSub('monitoring','lifecycle')"],['Ownership &amp; RACI',"showSub('ownership','matrix')"],['Analytics',"showSub('overview','maturity')"]];
   var actionBtns='<div class="grc-actions">'+actions.map(function(a){return '<button class="grc-action" onclick="'+a[1]+'">'+a[0]+' &rarr;</button>';}).join('')+'</div>';
 
-  return '<div class="section grc-wrap">'+band+gauges+'<div class="grid-2 grc-lower">'+panel('Needs your attention', c.crit+' high &middot; '+c.warn+' to update', attnRows)+panel('Quick actions','Jump straight to a task', actionBtns)+'</div></div>';
+  return '<div class="section grc-wrap">'+hero+gauges+'<div class="grid-2 grc-lower">'+panel('Needs your attention', c.crit+' high &middot; '+c.warn+' to update', attnRows)+panel('Quick actions','Jump straight to a task', actionBtns)+'</div></div>';
 };
 
 RENDER.overview.maturity=function(){
