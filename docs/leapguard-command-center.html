@@ -538,6 +538,17 @@ footer.page{padding:22px 0 48px 0;font-size:12px;color:var(--grey2);text-align:c
 
 </style>
 <style id="clickpills-css">
+.grc-verdict-link{cursor:pointer;display:inline-flex;align-items:center;gap:9px;transition:color .15s}
+.grc-verdict-link:hover{color:var(--cyan)}
+.grc-verdict-go{color:var(--cyan);opacity:.55;font-weight:800}
+.grc-verdict-link:hover .grc-verdict-go{opacity:1;transform:translateX(2px)}
+.hl-link{cursor:pointer;border-bottom:1px dashed rgba(255,255,255,.22);transition:color .15s,border-color .15s}
+.hl-link:hover{color:var(--cyan);border-bottom-color:var(--cyan)}
+.tower-trend{min-width:232px;flex:0 0 auto}
+.tower-trend-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:5px}
+.tower-trend-lab{font-size:11px;color:var(--muted,#9aa3ad);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.tower-trend-foot{font-size:11px;color:var(--muted,#9aa3ad);margin-top:3px}
+
 .tower-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:16px}
 .tower-card{position:relative;display:flex;flex-direction:column;padding:20px 20px 18px;border-radius:14px;background:var(--panel,#13171d);border:1px solid var(--line,#262b31);cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;min-height:212px}
 .tower-card:hover{transform:translateY(-3px);border-color:rgba(0,242,255,.5);box-shadow:0 12px 30px rgba(0,0,0,.35)}
@@ -1352,6 +1363,7 @@ function sparkSVG(vals,color,w,h){ w=w||150;h=h||40; var mn=Math.min.apply(null,
 function tSeg(items){ return '<div class="tower-seg">'+items.map(function(it){return '<span style="width:'+it.pct+'%;background:'+it.color+'"></span>';}).join('')+'</div>'; }
 function tBars(vals){ return '<div class="tower-bars">'+vals.map(function(v){return '<span class="tb" style="height:'+Math.max(14,v.p)+'%;background:'+v.c+'" title="'+(v.t||'')+'"></span>';}).join('')+'</div>'; }
 function towerCard(ico,name,statusS,num,unit,mini,topLine,cta,js){ return '<div class="tower-card" onclick="'+js+'"><div class="tower-head"><span class="tower-ico">'+icon(ico)+'</span><span class="tower-name">'+name+'</span><span class="grc-dot" style="margin-left:auto;background:'+dotColor(statusS)+'"></span></div><div class="tower-num">'+num+'<span class="tower-unit">'+unit+'</span></div><div class="tower-mini">'+mini+'</div><div class="tower-top">'+topLine+'</div><div class="tower-cta">'+cta+' &rarr;</div></div>'; }
+function trendSVG(vals,target,w,h){ w=w||220;h=h||70; var all=vals.concat([target]); var mn=Math.min.apply(null,all),mx=Math.max.apply(null,all); var pad=((mx-mn)*0.15)||4; mn-=pad;mx+=pad; var rng=(mx-mn)||1; var top=8,bot=h-10; function Y(v){return (bot-((v-mn)/rng)*(bot-top)).toFixed(1);} function X(i){return (6+(i/(vals.length-1))*(w-34)).toFixed(1);} var ty=Y(target); var pts=vals.map(function(v,i){return X(i)+','+Y(v);}).join(' '); var area=X(0)+','+bot+' '+pts+' '+X(vals.length-1)+','+bot; var lx=X(vals.length-1),ly=Y(vals[vals.length-1]); return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"><line x1="6" y1="'+ty+'" x2="'+(w-26)+'" y2="'+ty+'" stroke="#ffffff" stroke-opacity=".25" stroke-width="1" stroke-dasharray="3 3"/><text x="'+(w-22)+'" y="'+(parseFloat(ty)+3)+'" fill="#8b93a0" font-size="9">'+target+'%</text><polygon points="'+area+'" fill="#00F2FF" fill-opacity=".08"/><polyline points="'+pts+'" fill="none" stroke="#00F2FF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+lx+'" cy="'+ly+'" r="3.2" fill="#00F2FF"/><text x="'+(parseFloat(lx)-6)+'" y="'+(parseFloat(ly)-7)+'" fill="#ffffff" font-size="11" font-weight="700" text-anchor="end">'+vals[vals.length-1]+'%</text></svg>'; }
 RENDER.overview.tower=function(){
   var c=counts();
   var fw=DATA.frameworks[0];
@@ -1367,18 +1379,19 @@ RENDER.overview.tower=function(){
   var rTarget=90,rDelta=6;
   var overall=c.crit>0?'crit':((c.warn>0||below>0||flagCov<fw.target)?'warn':'good');
   var verdict=overall==='crit'?'Action required':(overall==='warn'?'Attention needed':'On track');
-  var headline=c.crit+' high-priority '+(c.crit===1?'gap':'gaps')+' &middot; '+(c.warn+c.crit)+' open items &middot; '+DATA.lifecycle.length+' rulemakings tracked';
+  var headline='<span class="hl-link" onclick="'+(firstGap?'openDoc(\''+firstGap.id+'\')':'showSub(\'documents\',\'gaps\')')+'">'+c.crit+' high-priority '+(c.crit===1?'gap':'gaps')+'</span> &middot; <span class="hl-link" onclick="showSub(\'documents\',\'gaps\')">'+(c.warn+c.crit)+' open items</span> &middot; <span class="hl-link" onclick="showSub(\'monitoring\',\'lifecycle\')">'+DATA.lifecycle.length+' rulemakings tracked</span>';
   var series=[64,67,69,71,73,readiness];
+  var firstGap=DATA.docs.filter(function(d){return d.status!=='good';}).sort(function(x,y){return (x.status==='crit'?0:1)-(y.status==='crit'?0:1);})[0];
 
   var hero='<div class="grc-hero '+overall+'">'+
     '<div class="grc-hero-score"><div class="grc-hero-label">Exam readiness</div>'+
       '<div class="grc-hero-num">'+readiness+'%<span class="grc-delta up">&#9650; '+rDelta+'</span></div>'+
       '<div class="grc-hero-bar"><div class="grc-hero-fill" style="width:'+readiness+'%"></div><div class="grc-hero-target" style="left:'+rTarget+'%"></div></div>'+
       '<div class="grc-hero-target-lbl">Up '+rDelta+' pts since last scan &middot; target '+rTarget+'% by Q4 2026</div></div>'+
-    '<div class="grc-hero-mid"><div class="grc-hero-verdict"><span class="grc-light"></span>'+verdict+'</div>'+
+    '<div class="grc-hero-mid"><div class="grc-hero-verdict grc-verdict-link" onclick="'+(firstGap?'openDoc(\''+firstGap.id+'\')':'showSub(\'documents\',\'gaps\')')+'"><span class="grc-light"></span>'+verdict+' <span class="grc-verdict-go">&rarr;</span></div>'+
       '<div class="grc-hero-sub">'+headline+'</div>'+
       '<div class="grc-hero-fresh">As of Aug 9, 2026 &middot; 6:12 AM ET &middot; next scan in 6h</div></div>'+
-    '<div class="tower-spark"><div class="tower-spark-lab">Readiness &middot; last 6 scans</div>'+sparkSVG(series,'var(--cyan)',160,46)+'</div>'+
+    '<div class="tower-trend"><div class="tower-trend-top"><span class="tower-trend-lab">Readiness trend</span><span class="grc-delta up">&#9650; '+rDelta+' pts</span></div>'+trendSVG(series,rTarget,230,72)+'<div class="tower-trend-foot">'+series[0]+'% &rarr; '+readiness+'% over '+series.length+' scans &middot; target '+rTarget+'%</div></div>'+
     '<button class="grc-band-act" onclick="showSub(\'documents\',\'gaps\')">Review open items &rarr;</button>'+
   '</div>';
 
