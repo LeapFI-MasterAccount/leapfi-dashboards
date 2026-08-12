@@ -538,6 +538,16 @@ footer.page{padding:22px 0 48px 0;font-size:12px;color:var(--grey2);text-align:c
 
 </style>
 <style id="clickpills-css">
+.ov-sec-lab{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted,#9aa3ad);margin:6px 2px -4px}
+.ov-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.ov-chart{background:var(--panel,#13171d);border:1px solid var(--line,#262b31);border-radius:14px;padding:18px 18px 16px;cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,border-color .15s,box-shadow .15s}
+.ov-chart:hover{transform:translateY(-3px);border-color:rgba(0,242,255,.5);box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.ov-chart-head{margin-bottom:8px}
+.ov-chart-title{font-size:15px;font-weight:700}
+.ov-chart-sub{font-size:12px;color:var(--muted,#9aa3ad);margin-top:3px}
+.ov-chart .chart-center{flex:1;justify-content:center}
+.ov-chart-cta{color:var(--cyan);font-weight:700;font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-top:14px}
+
 .grc-verdict-link{cursor:pointer;display:inline-flex;align-items:center;gap:9px;transition:color .15s}
 .grc-verdict-link:hover{color:var(--cyan)}
 .grc-verdict-go{color:var(--cyan);opacity:.55;font-weight:800}
@@ -1250,7 +1260,7 @@ function panel(title,sub,body,foot){ return '<div class="panel"><div class="pane
 
 /* ================= NAV ================= */
 var NAV=[
-  {v:'overview',  label:'Overview',        ico:'grid',   subs:[['tower','Control Tower'],['summary','Summary'],['maturity','Analytics']]},
+  {v:'overview',  label:'Overview',        ico:'grid',   subs:[['summary','Dashboard']]},
   {v:'frameworks',label:'Frameworks',      ico:'layers', subs:[['all','All Frameworks'],['functions','Function Breakdown'],['register','Control Register']]},
   {v:'documents', label:'Documents',       ico:'doc',    subs:[['all','All'],['gaps','Open Gaps'],['compliant','Compliant']]},
   {v:'monitoring',label:'Regulatory Feed', ico:'radar',  subs:[['lifecycle','Rulemaking Lifecycle'],['bodies','Governing Bodies'],['inforce','In Force']]},
@@ -1311,52 +1321,68 @@ RENDER.overview.summary=function(){
   var covs=DATA.frameworks.map(function(f){return f.mapped/f.controls*100;});
   var progAvg=Math.round(covs.reduce(function(x,y){return x+y;},0)/covs.length);
   var atTarget=DATA.frameworks.filter(function(f){return Math.round(f.mapped/f.controls*100)>=f.target;}).length;
-  var docPct=Math.round(c.good/c.total*100);
   var below=DATA.frameworks.length-atTarget;
+  var docPct=Math.round(c.good/c.total*100);
   var wf=DATA.functions.slice().sort(function(x,y){return (x.mapped/x.total)-(y.mapped/y.total);})[0];
   var wfPct=Math.round(wf.mapped/wf.total*100);
-  var CG='var(--sem5)',CW='var(--sem2)',CC='var(--sem1)';
-
   var readiness=Math.round(0.45*flagCov+0.30*progAvg+0.25*docPct);
-  var rTarget=90, rDelta=6;
-
+  var rTarget=90,rDelta=6;
   var overall=c.crit>0?'crit':((c.warn>0||below>0||flagCov<fw.target)?'warn':'good');
   var verdict=overall==='crit'?'Action required':(overall==='warn'?'Attention needed':'On track');
-  var headline=c.crit+' high-priority '+(c.crit===1?'gap':'gaps')+' &middot; '+(c.warn+c.crit)+' open items &middot; '+DATA.lifecycle.length+' rulemakings tracked';
+  var firstGap=DATA.docs.filter(function(d){return d.status!=='good';}).sort(function(x,y){return (x.status==='crit'?0:1)-(y.status==='crit'?0:1);})[0];
+  var series=[64,67,69,71,73,readiness];
+  var headline='<span class="hl-link" onclick="'+(firstGap?'openDoc(\''+firstGap.id+'\')':'showSub(\'documents\',\'gaps\')')+'">'+c.crit+' high-priority '+(c.crit===1?'gap':'gaps')+'</span> &middot; <span class="hl-link" onclick="showSub(\'documents\',\'gaps\')">'+(c.warn+c.crit)+' open items</span> &middot; <span class="hl-link" onclick="showSub(\'monitoring\',\'lifecycle\')">'+DATA.lifecycle.length+' rulemakings tracked</span>';
 
   var hero='<div class="grc-hero '+overall+'">'+
     '<div class="grc-hero-score"><div class="grc-hero-label">Exam readiness</div>'+
       '<div class="grc-hero-num">'+readiness+'%<span class="grc-delta up">&#9650; '+rDelta+'</span></div>'+
       '<div class="grc-hero-bar"><div class="grc-hero-fill" style="width:'+readiness+'%"></div><div class="grc-hero-target" style="left:'+rTarget+'%"></div></div>'+
       '<div class="grc-hero-target-lbl">Up '+rDelta+' pts since last scan &middot; target '+rTarget+'% by Q4 2026</div></div>'+
-    '<div class="grc-hero-mid"><div class="grc-hero-verdict"><span class="grc-light"></span>'+verdict+'</div>'+
+    '<div class="grc-hero-mid"><div class="grc-hero-verdict grc-verdict-link" onclick="'+(firstGap?'openDoc(\''+firstGap.id+'\')':'showSub(\'documents\',\'gaps\')')+'"><span class="grc-light"></span>'+verdict+' <span class="grc-verdict-go">&rarr;</span></div>'+
       '<div class="grc-hero-sub">'+headline+'</div>'+
       '<div class="grc-hero-fresh">As of Aug 9, 2026 &middot; 6:12 AM ET &middot; next scan in 6h</div></div>'+
+    '<div class="tower-trend"><div class="tower-trend-top"><span class="tower-trend-lab">Readiness trend</span><span class="grc-delta up">&#9650; '+rDelta+' pts</span></div>'+trendSVG(series,rTarget,230,72)+'<div class="tower-trend-foot">'+series[0]+'% &rarr; '+readiness+'% over '+series.length+' scans &middot; target '+rTarget+'%</div></div>'+
     '<button class="grc-band-act" onclick="showSub(\'documents\',\'gaps\')">Review open items &rarr;</button>'+
   '</div>';
 
-  function g(pct,color,word,title,sub,js,dv,rsub){
-    var delta=dv?'<span class="grc-gauge-delta '+(dv>0?'up':'down')+'">'+(dv>0?'&#9650; ':'&#9660; ')+Math.abs(dv)+'</span>':'';
-    return '<div class="grc-gauge" onclick="'+js+'" title="'+title+' &middot; '+pct+'%"><div class="grc-gauge-ring">'+ringSVG(pct,color,{size:112,stroke:12,label:pct+'%',sub:rsub})+'</div>'+
-      '<div class="grc-gauge-body"><div class="grc-gauge-title">'+title+'</div><div class="grc-gauge-sub">'+sub+'</div>'+
-      '<div class="grc-gauge-status"><span class="grc-dot" style="background:'+color+'"></span>'+word+delta+'</div></div>'+
-      '<span class="grc-gauge-go">&rarr;</span></div>';
-  }
-  var gauges='<div class="grc-gauges">'+
-    g(flagCov, flagCov>=fw.target?CG:CW, flagCov>=fw.target?'On track':'Below target', 'AI RMF coverage', fw.mapped+' of '+fw.controls+' controls mapped &middot; goal '+fw.target+'%', "showSub('frameworks','register')", 4, 'mapped')+
-    g(progAvg, progAvg>=85?CG:CW, progAvg>=85?'On track':'Below target', 'Program coverage', 'Average across '+DATA.frameworks.length+' frameworks &middot; '+atTarget+' at target', "showSub('frameworks','all')", 3, 'avg')+
-    g(docPct, c.crit>0?CC:(docPct>=85?CG:CW), c.crit>0?'Action needed':(docPct>=85?'On track':'Below target'), 'Document compliance', c.good+' of '+c.total+' compliant &middot; '+c.crit+' high priority', "showSub('documents','gaps')", 2, 'compliant')+
-    g(wfPct, wfPct>=85?CG:CW, wfPct>=85?'On track':'Weakest area', esc(wf.name)+' function', 'Lowest-covered function &middot; '+wf.mapped+' of '+wf.total+' controls', "showSub('frameworks','functions')", 5, 'covered')+
+  var fwBars=tBars(DATA.frameworks.map(function(f){var p=Math.round(f.mapped/f.controls*100);return {p:p,c:(p>=f.target?'var(--sem5)':(p>=f.target-15?'var(--sem2)':'var(--sem1)')),t:f.name+' '+p+'%'};}));
+  var ctrlSeg=tSeg(DATA.functions.map(function(f){return {pct:f.total/fw.controls*100,color:f.color};}));
+  var docSeg=tSeg([{pct:c.good/c.total*100,color:'var(--sem5)'},{pct:c.warn/c.total*100,color:'var(--sem2)'},{pct:c.crit/c.total*100,color:'var(--sem1)'}]);
+  var stageCounts=[0,0,0,0];DATA.lifecycle.forEach(function(l){stageCounts[l.stageIdx]++;});
+  var stageCols=['#3a4553','#0A8FA3','#00F2FF','#557A61'];
+  var regSeg=tSeg(stageCounts.map(function(n,i){return {pct:(n/DATA.lifecycle.length*100)||0,color:stageCols[i]};}));
+  var assigned=DATA.docs.filter(function(d){return d.owner;}).length;
+  var ownSeg=tSeg([{pct:assigned/c.total*100,color:'var(--cyan)'},{pct:(c.total-assigned)/c.total*100,color:'rgba(255,255,255,.08)'}]);
+  var riskBars=tBars(DATA.functions.map(function(f){var p=Math.round(f.mapped/f.total*100);return {p:p,c:f.color,t:f.name+' '+p+'%'};}));
+  var nextRule=DATA.lifecycle[0];
+  var cards='<div class="tower-grid">'+
+    towerCard('layers','Frameworks', below>0?'warn':'good', DATA.frameworks.length, 'tracked', fwBars, atTarget+' of '+DATA.frameworks.length+' at target &middot; avg '+progAvg+'% coverage', 'View frameworks', "showSub('frameworks','all')")+
+    towerCard('grid','Controls', flagCov<fw.target?'warn':'good', flagCov+'%', 'mapped &middot; '+fw.mapped+'/'+fw.controls, ctrlSeg, 'CRI FS AI RMF &middot; goal '+fw.target+'% &middot; '+(fw.controls-fw.mapped)+' open', 'Open register', "openRegister('ALL')")+
+    towerCard('doc','Documents &amp; policies', c.crit>0?'crit':(c.warn>0?'warn':'good'), c.good+'/'+c.total, 'compliant', docSeg, (firstGap?('Top gap: '+esc(firstGap.name)):'All policies compliant'), 'Review documents', "showSub('documents','gaps')")+
+    towerCard('radar','Regulatory feed', 'warn', DATA.lifecycle.length, 'rulemakings', regSeg, 'Next: '+esc(nextRule.status), 'Open lifecycle', "showSub('monitoring','lifecycle')")+
+    towerCard('users','Ownership', assigned>=c.total?'good':'warn', assigned+'/'+c.total, 'assigned', ownSeg, DATA.roles.length+' roles in the RACI matrix', 'Open RACI', "showSub('ownership','matrix')")+
+    towerCard('alert','Risk &amp; gaps', wfPct<70?'crit':'warn', wfPct+'%', esc(wf.name)+' &middot; weakest', riskBars, (fw.controls-fw.mapped)+' open controls across four functions', 'View functions', "showSub('frameworks','functions')")+
+  '</div>';
+
+  var ringChart='<div class="chart-center">'+ringSVG(flagCov, covColor(flagCov), {size:150,stroke:16,label:flagCov+'%',sub:'mapped'})+'<div style="width:100%;margin-top:12px">'+gaugeHTML(fw.stage)+'</div></div>';
+  var dsegs=[{value:c.good,color:'var(--sem5)',label:'Compliant'},{value:c.warn,color:'var(--sem2)',label:'Needs update'},{value:c.crit,color:'var(--sem1)',label:'High priority'}];
+  var docChart='<div class="chart-center">'+donutSVG(dsegs,{size:150,stroke:22,centerLabel:c.total,centerSub:'Docs'})+'<div style="margin-top:12px">'+legendHTML([{color:'var(--sem5)',label:'Compliant',val:c.good},{color:'var(--sem2)',label:'Needs update',val:c.warn},{color:'var(--sem1)',label:'High priority',val:c.crit}])+'</div></div>';
+  var fsegs=DATA.functions.map(function(f){return {value:f.total,color:f.color,label:f.code};});
+  var fnChart='<div class="chart-center">'+donutSVG(fsegs,{size:150,stroke:22,centerLabel:fw.controls,centerSub:'Controls'})+'<div style="margin-top:12px">'+legendHTML(DATA.functions.map(function(f){return {color:f.color,label:f.code,val:f.total};}))+'</div></div>';
+  function chartCard(title,sub,chart,js,cta){ return '<div class="ov-chart" onclick="'+js+'"><div class="ov-chart-head"><div class="ov-chart-title">'+title+'</div><div class="ov-chart-sub">'+sub+'</div></div>'+chart+'<div class="ov-chart-cta">'+cta+' &rarr;</div></div>'; }
+  var charts='<div class="ov-sec-lab">Coverage &amp; health</div><div class="ov-charts">'+
+    chartCard('AI RMF maturity', fw.mapped+' of '+fw.controls+' controls &middot; stage '+DATA.stages[fw.stage], ringChart, "openRegister('ALL')", 'Open register')+
+    chartCard('Document health', c.good+' compliant of '+c.total, docChart, "showSub('documents','gaps')", 'Review gaps')+
+    chartCard('Controls by function', fw.controls+' controls across four functions', fnChart, "showSub('frameworks','functions')", 'Function breakdown')+
   '</div>';
 
   var DUE=['Sep 1','Sep 15','Sep 30','Oct 15','Oct 31'];
   var attn=DATA.docs.filter(function(d){return d.status!=='good';}).sort(function(x,y){return (x.status==='crit'?0:1)-(y.status==='crit'?0:1);}).slice(0,5);
   var attnRows=attn.length?attn.map(function(d,i){return '<div class="grc-attn-row" onclick="openDoc(\''+d.id+'\')"><span class="grc-dot" style="background:'+dotColor(d.status)+'"></span><span class="grc-attn-name">'+esc(d.name)+'</span><span class="grc-attn-meta">'+esc(d.owner||'Unassigned')+' &middot; due '+DUE[i]+'</span><span class="rep-sev '+d.status+'">'+statusWord(d.status)+'</span></div>';}).join(''):'<div class="grc-headline" style="padding:8px 2px">Nothing needs attention right now.</div>';
-
-  var actions=[['Review open items',"showSub('documents','gaps')"],['Open control register',"showSub('frameworks','register')"],['Rulemaking lifecycle',"showSub('monitoring','lifecycle')"],['Ownership &amp; RACI',"showSub('ownership','matrix')"],['Analytics',"showSub('overview','maturity')"]];
+  var actions=[['Review open items',"showSub('documents','gaps')"],['Open control register',"openRegister('ALL')"],['Rulemaking lifecycle',"showSub('monitoring','lifecycle')"],['Ownership &amp; RACI',"showSub('ownership','matrix')"],['Browse frameworks',"showSub('frameworks','all')"]];
   var actionBtns='<div class="grc-actions">'+actions.map(function(a){return '<button class="grc-action" onclick="'+a[1]+'">'+a[0]+' &rarr;</button>';}).join('')+'</div>';
 
-  return '<div class="section grc-wrap">'+hero+gauges+'<div class="grid-2 grc-lower">'+panel('Needs your attention', c.crit+' high &middot; '+c.warn+' to update', attnRows)+panel('Quick actions','Jump straight to a task', actionBtns)+'</div></div>';
+  return '<div class="section grc-wrap">'+hero+cards+charts+'<div class="grid-2 grc-lower">'+panel('Needs your attention', c.crit+' high &middot; '+c.warn+' to update', attnRows)+panel('Quick actions','Jump straight to a task', actionBtns)+'</div></div>';
 };
 
 function sparkSVG(vals,color,w,h){ w=w||150;h=h||40; var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),rng=(mx-mn)||1; var pts=vals.map(function(v,i){var x=(i/(vals.length-1))*(w-6)+3;var y=h-3-((v-mn)/rng)*(h-8);return x.toFixed(1)+','+y.toFixed(1);}).join(' '); var lv=vals[vals.length-1],lx=w-3,ly=h-3-((lv-mn)/rng)*(h-8); return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" class="spark"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="2.8" fill="'+color+'"/></svg>'; }
