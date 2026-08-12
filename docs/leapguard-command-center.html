@@ -1622,7 +1622,7 @@ function bodyCardHTML(b){
 function fwCov(el,which){ var row=el.closest('.fw-row'); if(!row)return; var cls=which==='cov'?'only-cov':'only-open'; var was=row.classList.contains(cls); row.classList.remove('only-cov','only-open'); if(!was)row.classList.add(cls); }
 function fwDetailHTML(f){
   var open=f.controls-f.mapped;
-  var stat='<div class="fw-stat">'+(f.flagship?(covPill('done',f.mapped+' covered','ALL','covered',true)+covPill('gap',open+' open','ALL','open',true)):('<span class="fw-stat-pill done clk" onclick="event.stopPropagation();fwCov(this,\'cov\')" title="Show only covered">'+f.mapped+' covered</span><span class="fw-stat-pill gap clk" onclick="event.stopPropagation();fwCov(this,\'open\')" title="Show only open items">'+open+' open</span>'))+'<span class="fw-stat-of">of '+f.controls+' controls · target '+f.target+'%</span></div>';
+  var stat='<div class="fw-stat">'+(f.flagship?(covPill('done',f.mapped+' covered','ALL','covered',true)+covPill('gap',open+' open','ALL','open',true)):('<span class="fw-stat-pill done clk" onclick="event.stopPropagation();showSub(\'documents\',\'compliant\')" title="See compliant governance documents">'+f.mapped+' covered</span><span class="fw-stat-pill gap clk" onclick="event.stopPropagation();showSub(\'documents\',\'gaps\')" title="See open governance gaps">'+open+' open</span>'))+'<span class="fw-stat-of">of '+f.controls+' controls · target '+f.target+'%</span></div>';
   if(f.flagship){
     var fnb=DATA.functions.map(function(fn){
       var o=fn.total-fn.mapped, p=Math.round(fn.mapped/fn.total*100);
