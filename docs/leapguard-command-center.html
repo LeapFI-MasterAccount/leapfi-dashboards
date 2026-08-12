@@ -1304,6 +1304,7 @@ function renderContent(){
   document.getElementById('views').innerHTML= fn?fn():'<div class="card">Coming soon.</div>';
   document.body.setAttribute('data-view',curView);
   (function(){var sb=document.getElementById('ph-sub');if(sb){if(window.__PHSUB__==null)window.__PHSUB__=sb.innerHTML;sb.innerHTML=(curView==='overview'&&(curSub==='summary'||curSub==='tower'))?'NorthWinds Credit Union':window.__PHSUB__;}})();
+  (function(){/*PAGE_TITLES*/var tt=document.getElementById('ph-title');if(tt){var T={overview:'Regulatory Command Center',frameworks:'Frameworks',documents:'Documents & Policies',monitoring:'Regulatory Feed',ownership:'Ownership & RACI',reports:'Reports'};tt.textContent=T[curView]||'Regulatory Command Center';}})();
   if(curView==='frameworks'&&curSub==='register') setTimeout(renderControlList,0);
 }
 
