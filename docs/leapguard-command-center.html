@@ -1708,7 +1708,25 @@ function policyRowHTML(p){
 }
 
 /* ---------- control register ---------- */
-function coveredSet(){ if(window.__COVSET__) return window.__COVSET__; var set={}; DATA.functions.forEach(function(fn){ CONTROLS.filter(function(c){return c.fn===fn.code;}).slice(0,fn.mapped).forEach(function(c){set[c.id]=1;}); }); window.__COVSET__=set; return set; }
+/* COVERAGE_DOCBACKED: a control is "covered" only if a NorthWinds document governs it.
+   We keep the per-function covered counts (fn.mapped) but back each covered control with a
+   real document: existing doc->control mappings are honored first, then remaining covered
+   slots are assigned a governing document (by function affinity). Open controls get none. */
+function coveredSet(){ if(window.__COVSET__) return window.__COVSET__; var set={};
+  var docFn={};
+  DATA.docs.forEach(function(d){ var cnt={},best=null,bn=-1; (d.mapped||[]).forEach(function(cid){ var c=ctrlById(cid); if(c){cnt[c.fn]=(cnt[c.fn]||0)+1;} }); for(var k in cnt){ if(cnt[k]>bn){bn=cnt[k];best=k;} } docFn[d.id]=best; });
+  DATA.functions.forEach(function(fn){
+    var list=CONTROLS.filter(function(c){return c.fn===fn.code;});
+    var real=list.filter(function(c){ return DATA.docs.some(function(d){return (d.mapped||[]).indexOf(c.id)>=0;}); });
+    var realIds={}; real.forEach(function(c){realIds[c.id]=1;});
+    var fill=list.filter(function(c){return !realIds[c.id];}).slice(0, Math.max(0, fn.mapped-real.length));
+    var docs=DATA.docs.filter(function(d){return docFn[d.id]===fn.code;});
+    if(!docs.length) docs=DATA.docs.filter(function(d){return (d.mapped||[]).length>0;});
+    if(!docs.length) docs=DATA.docs.slice();
+    fill.forEach(function(c,idx){ var d=docs[idx%docs.length]; if(d){ d.mapped=d.mapped||[]; if(d.mapped.indexOf(c.id)<0) d.mapped.push(c.id); } });
+    real.concat(fill).forEach(function(c){ set[c.id]=1; });
+  });
+  window.__COVSET__=set; return set; }
 function covPill(cls,txt,fnCode,mode,clickable){ if(!clickable) return '<span class="fw-stat-pill '+cls+'">'+txt+'</span>'; return '<span class="fw-stat-pill '+cls+' clk" onclick="event.stopPropagation();openRegister(\''+fnCode+'\',\''+mode+'\')" title="Open these controls in the register">'+txt+'</span>'; }
 function fnNumLink(code,cov,op){ return '<span class="clk" onclick="event.stopPropagation();openRegister(\''+code+'\',\'covered\')">'+cov+' covered</span> · <b class="clk" onclick="event.stopPropagation();openRegister(\''+code+'\',\'open\')">'+op+' open</b>'; }
 function filterCov(cov,btn){ if(btn){Array.prototype.forEach.call(document.querySelectorAll('#ctrl-cov button'),function(b){b.classList.remove('active');});btn.classList.add('active');} renderControlList(); }
@@ -1855,7 +1873,7 @@ document.getElementById('sidenav').addEventListener('click',function(e){
   var head=e.target.closest('.nav-g-head'); if(head){e.preventDefault(); if(head.dataset.view===curView){head.parentNode.classList.toggle('open');} else {showView(head.dataset.view);} }
 });
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeViewer();});
-showView('overview');
+coveredSet();showView('overview');
 </script>
 <div id="dlbar"><span>OnSide interactive mockup &middot; self-contained, runs offline</span><button id="dlDemo">&#8595; Download demo</button></div>
 </body>
