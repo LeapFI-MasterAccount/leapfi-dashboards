@@ -1631,10 +1631,10 @@ function fwDetailHTML(f){
       '<button class="fw-open-reg" onclick="event.stopPropagation();showSub(\'frameworks\',\'register\')">Open full control register &rarr;</button>';
   }
   var d=DATA.fwDetail[f.id]||{covered:[],open:[]};
-  var chips=d.covered.map(function(c){return '<span class="fw-cov-chip">'+icon('check')+esc(c)+'</span>';}).join('');
+  var chips=d.covered.map(function(c){return '<span class="fw-cov-chip" style="cursor:pointer" onclick="event.stopPropagation();showSub(\'documents\',\'compliant\')" title="See compliant governance documents">'+icon('check')+esc(c)+'</span>';}).join('');
   var moreN=f.mapped-d.covered.length;
-  var more=moreN>0?'<span class="fw-cov-more">+ '+moreN+' more covered</span>':'';
-  var opens=d.open.map(function(o){return '<div class="fw-gap-item"><span class="fw-gap-dot"></span><div class="fw-gap-body"><div class="fw-gap-name">'+esc(o.n)+'</div><div class="fw-gap-note">'+esc(o.note)+'</div></div><span class="fw-body-tag">'+esc(o.body)+'</span></div>';}).join('');
+  var more=moreN>0?'<span class="fw-cov-more" style="cursor:pointer" onclick="event.stopPropagation();showSub(\'documents\',\'compliant\')" title="See all covered governance">+ '+moreN+' more covered</span>':'';
+  var opens=d.open.map(function(o){return '<div class="fw-gap-item" style="cursor:pointer" onclick="event.stopPropagation();showSub(\'documents\',\'gaps\')" title="Open the gaps list"><span class="fw-gap-dot"></span><div class="fw-gap-body"><div class="fw-gap-name">'+esc(o.n)+'</div><div class="fw-gap-note">'+esc(o.note)+'</div></div><span class="fw-body-tag" style="cursor:pointer" onclick="event.stopPropagation();filterByBody(\''+o.body+'\')" title="Filter documents by this regulator">'+esc(o.body)+'</span></div>';}).join('');
   return '<p>'+esc(f.desc)+'</p>'+stat+
     '<div class="fw-cov-sec"><div class="fw-sub-lab">Covered ('+f.mapped+')</div><div class="fw-cov-wrap">'+chips+more+'</div></div>'+
     '<div class="fw-open-sec"><div class="fw-sub-lab">Open items ('+d.open.length+')</div><div class="fw-gap-list">'+opens+'</div></div>';
