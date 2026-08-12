@@ -538,6 +538,7 @@ footer.page{padding:22px 0 48px 0;font-size:12px;color:var(--grey2);text-align:c
 
 </style>
 <style id="clickpills-css">
+/* COLORS_UNIFIED */
 .fw-row.only-open .fw-cov-sec{display:none}
 .fw-row.only-cov .fw-open-sec{display:none}
 .fw-row.only-cov .fw-stat-pill.gap,.fw-row.only-open .fw-stat-pill.done{opacity:.45}
@@ -1349,23 +1350,23 @@ RENDER.overview.summary=function(){
     '<button class="grc-band-act" onclick="showSub(\'documents\',\'gaps\')">Review open items &rarr;</button>'+
   '</div>';
 
-  var fwBars=tBars(DATA.frameworks.map(function(f){var p=Math.round(f.mapped/f.controls*100);return {p:p,c:(p>=f.target?'var(--sem5)':(p>=f.target-15?'var(--sem2)':'var(--sem1)')),t:f.name+' '+p+'%'};}));
+  var fwBars=tBars(DATA.frameworks.map(function(f){var p=Math.round(f.mapped/f.controls*100);return {p:p,c:covColor(p),t:f.name+' '+p+'%'};}));
   var ctrlSeg=tSeg(DATA.functions.map(function(f){return {pct:f.total/fw.controls*100,color:f.color};}));
   var docSeg=tSeg([{pct:c.good/c.total*100,color:'var(--sem5)'},{pct:c.warn/c.total*100,color:'var(--sem2)'},{pct:c.crit/c.total*100,color:'var(--sem1)'}]);
   var stageCounts=[0,0,0,0];DATA.lifecycle.forEach(function(l){stageCounts[l.stageIdx]++;});
   var stageCols=['#3a4553','#0A8FA3','#00F2FF','#557A61'];
   var regSeg=tSeg(stageCounts.map(function(n,i){return {pct:(n/DATA.lifecycle.length*100)||0,color:stageCols[i]};}));
   var assigned=DATA.docs.filter(function(d){return d.owner;}).length;
-  var ownSeg=tSeg([{pct:assigned/c.total*100,color:'var(--cyan)'},{pct:(c.total-assigned)/c.total*100,color:'rgba(255,255,255,.08)'}]);
-  var riskBars=tBars(DATA.functions.map(function(f){var p=Math.round(f.mapped/f.total*100);return {p:p,c:f.color,t:f.name+' '+p+'%'};}));
+  var ownSeg=tSeg([{pct:assigned/c.total*100,color:covColor(Math.round(assigned/c.total*100))},{pct:(c.total-assigned)/c.total*100,color:'rgba(255,255,255,.08)'}]);
+  var riskBars=tBars(DATA.functions.map(function(f){var p=Math.round(f.mapped/f.total*100);return {p:p,c:covColor(p),t:f.name+' '+p+'%'};}));
   var nextRule=DATA.lifecycle[0];
   var cards='<div class="tower-grid">'+
-    towerCard('layers','Frameworks', below>0?'warn':'good', DATA.frameworks.length, 'tracked', fwBars, atTarget+' of '+DATA.frameworks.length+' at target &middot; avg '+progAvg+'% coverage', 'View frameworks', "showSub('frameworks','all')")+
-    towerCard('grid','Controls', flagCov<fw.target?'warn':'good', flagCov+'%', 'mapped &middot; '+fw.mapped+'/'+fw.controls, ctrlSeg, 'CRI FS AI RMF &middot; goal '+fw.target+'% &middot; '+(fw.controls-fw.mapped)+' open', 'Open register', "openRegister('ALL')")+
-    towerCard('doc','Documents &amp; policies', c.crit>0?'crit':(c.warn>0?'warn':'good'), c.good+'/'+c.total, 'compliant', docSeg, (firstGap?('Top gap: '+esc(firstGap.name)):'All policies compliant'), 'Review documents', "showSub('documents','gaps')")+
-    towerCard('radar','Regulatory feed', 'warn', DATA.lifecycle.length, 'rulemakings', regSeg, 'Next: '+esc(nextRule.status), 'Open lifecycle', "showSub('monitoring','lifecycle')")+
-    towerCard('users','Ownership', assigned>=c.total?'good':'warn', assigned+'/'+c.total, 'assigned', ownSeg, DATA.roles.length+' roles in the RACI matrix', 'Open RACI', "showSub('ownership','matrix')")+
-    towerCard('alert','Risk &amp; gaps', wfPct<70?'crit':'warn', wfPct+'%', esc(wf.name)+' &middot; weakest', riskBars, (fw.controls-fw.mapped)+' open controls across four functions', 'View functions', "showSub('frameworks','functions')")+
+    towerCard('layers','Frameworks', covColor(progAvg), DATA.frameworks.length, 'tracked', fwBars, atTarget+' of '+DATA.frameworks.length+' at target &middot; avg '+progAvg+'% coverage', 'View frameworks', "showSub('frameworks','all')")+
+    towerCard('grid','Controls', covColor(flagCov), flagCov+'%', 'mapped &middot; '+fw.mapped+'/'+fw.controls, ctrlSeg, 'CRI FS AI RMF &middot; goal '+fw.target+'% &middot; '+(fw.controls-fw.mapped)+' open', 'Open register', "openRegister('ALL')")+
+    towerCard('doc','Documents &amp; policies', covColor(docPct), c.good+'/'+c.total, 'compliant', docSeg, (firstGap?('Top gap: '+esc(firstGap.name)):'All policies compliant'), 'Review documents', "showSub('documents','gaps')")+
+    towerCard('radar','Regulatory feed', 'var(--sem2)', DATA.lifecycle.length, 'rulemakings', regSeg, 'Next: '+esc(nextRule.status), 'Open lifecycle', "showSub('monitoring','lifecycle')")+
+    towerCard('users','Ownership', covColor(Math.round(assigned/c.total*100)), assigned+'/'+c.total, 'assigned', ownSeg, DATA.roles.length+' roles in the RACI matrix', 'Open RACI', "showSub('ownership','matrix')")+
+    towerCard('alert','Risk &amp; gaps', covColor(wfPct), wfPct+'%', esc(wf.name)+' &middot; weakest', riskBars, (fw.controls-fw.mapped)+' open controls across four functions', 'View functions', "showSub('frameworks','functions')")+
   '</div>';
 
   var ringChart='<div class="chart-center">'+ringSVG(flagCov, covColor(flagCov), {size:150,stroke:16,label:flagCov+'%',sub:'mapped'})+'<div style="width:100%;margin-top:12px">'+gaugeHTML(fw.stage)+'</div></div>';
@@ -1392,7 +1393,7 @@ RENDER.overview.summary=function(){
 function sparkSVG(vals,color,w,h){ w=w||150;h=h||40; var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),rng=(mx-mn)||1; var pts=vals.map(function(v,i){var x=(i/(vals.length-1))*(w-6)+3;var y=h-3-((v-mn)/rng)*(h-8);return x.toFixed(1)+','+y.toFixed(1);}).join(' '); var lv=vals[vals.length-1],lx=w-3,ly=h-3-((lv-mn)/rng)*(h-8); return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" class="spark"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="2.8" fill="'+color+'"/></svg>'; }
 function tSeg(items){ return '<div class="tower-seg">'+items.map(function(it){return '<span style="width:'+it.pct+'%;background:'+it.color+'"></span>';}).join('')+'</div>'; }
 function tBars(vals){ return '<div class="tower-bars">'+vals.map(function(v){return '<span class="tb" style="height:'+Math.max(14,v.p)+'%;background:'+v.c+'" title="'+(v.t||'')+'"></span>';}).join('')+'</div>'; }
-function towerCard(ico,name,statusS,num,unit,mini,topLine,cta,js){ return '<div class="tower-card" onclick="'+js+'"><div class="tower-head"><span class="tower-ico">'+icon(ico)+'</span><span class="tower-name">'+name+'</span><span class="grc-dot" style="margin-left:auto;background:'+dotColor(statusS)+'"></span></div><div class="tower-num">'+num+'<span class="tower-unit">'+unit+'</span></div><div class="tower-mini">'+mini+'</div><div class="tower-top">'+topLine+'</div><div class="tower-cta">'+cta+' &rarr;</div></div>'; }
+function towerCard(ico,name,statusS,num,unit,mini,topLine,cta,js){ return '<div class="tower-card" onclick="'+js+'"><div class="tower-head"><span class="tower-ico">'+icon(ico)+'</span><span class="tower-name">'+name+'</span><span class="grc-dot" style="margin-left:auto;background:'+((statusS==='good'||statusS==='warn'||statusS==='crit')?dotColor(statusS):statusS)+'"></span></div><div class="tower-num">'+num+'<span class="tower-unit">'+unit+'</span></div><div class="tower-mini">'+mini+'</div><div class="tower-top">'+topLine+'</div><div class="tower-cta">'+cta+' &rarr;</div></div>'; }
 function trendSVG(vals,target,w,h){ w=w||220;h=h||70; var all=vals.concat([target]); var mn=Math.min.apply(null,all),mx=Math.max.apply(null,all); var pad=((mx-mn)*0.15)||4; mn-=pad;mx+=pad; var rng=(mx-mn)||1; var top=8,bot=h-10; function Y(v){return (bot-((v-mn)/rng)*(bot-top)).toFixed(1);} function X(i){return (6+(i/(vals.length-1))*(w-34)).toFixed(1);} var ty=Y(target); var pts=vals.map(function(v,i){return X(i)+','+Y(v);}).join(' '); var area=X(0)+','+bot+' '+pts+' '+X(vals.length-1)+','+bot; var lx=X(vals.length-1),ly=Y(vals[vals.length-1]); return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"><line x1="6" y1="'+ty+'" x2="'+(w-26)+'" y2="'+ty+'" stroke="#ffffff" stroke-opacity=".25" stroke-width="1" stroke-dasharray="3 3"/><text x="'+(w-22)+'" y="'+(parseFloat(ty)+3)+'" fill="#8b93a0" font-size="9">'+target+'%</text><polygon points="'+area+'" fill="#00F2FF" fill-opacity=".08"/><polyline points="'+pts+'" fill="none" stroke="#00F2FF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+lx+'" cy="'+ly+'" r="3.2" fill="#00F2FF"/><text x="'+(parseFloat(lx)-6)+'" y="'+(parseFloat(ly)-7)+'" fill="#ffffff" font-size="11" font-weight="700" text-anchor="end">'+vals[vals.length-1]+'%</text></svg>'; }
 RENDER.overview.tower=function(){
   var c=counts();
@@ -1425,25 +1426,25 @@ RENDER.overview.tower=function(){
     '<button class="grc-band-act" onclick="showSub(\'documents\',\'gaps\')">Review open items &rarr;</button>'+
   '</div>';
 
-  var fwBars=tBars(DATA.frameworks.map(function(f){var p=Math.round(f.mapped/f.controls*100);return {p:p,c:(p>=f.target?'var(--sem5)':(p>=f.target-15?'var(--sem2)':'var(--sem1)')),t:f.name+' '+p+'%'};}));
+  var fwBars=tBars(DATA.frameworks.map(function(f){var p=Math.round(f.mapped/f.controls*100);return {p:p,c:covColor(p),t:f.name+' '+p+'%'};}));
   var ctrlSeg=tSeg(DATA.functions.map(function(f){return {pct:f.total/fw.controls*100,color:f.color};}));
   var docSeg=tSeg([{pct:c.good/c.total*100,color:'var(--sem5)'},{pct:c.warn/c.total*100,color:'var(--sem2)'},{pct:c.crit/c.total*100,color:'var(--sem1)'}]);
   var stageCounts=[0,0,0,0];DATA.lifecycle.forEach(function(l){stageCounts[l.stageIdx]++;});
   var stageCols=['#3a4553','#0A8FA3','#00F2FF','#557A61'];
   var regSeg=tSeg(stageCounts.map(function(n,i){return {pct:(n/DATA.lifecycle.length*100)||0,color:stageCols[i]};}));
   var assigned=DATA.docs.filter(function(d){return d.owner;}).length;
-  var ownSeg=tSeg([{pct:assigned/c.total*100,color:'var(--cyan)'},{pct:(c.total-assigned)/c.total*100,color:'rgba(255,255,255,.08)'}]);
-  var riskBars=tBars(DATA.functions.map(function(f){var p=Math.round(f.mapped/f.total*100);return {p:p,c:f.color,t:f.name+' '+p+'%'};}));
+  var ownSeg=tSeg([{pct:assigned/c.total*100,color:covColor(Math.round(assigned/c.total*100))},{pct:(c.total-assigned)/c.total*100,color:'rgba(255,255,255,.08)'}]);
+  var riskBars=tBars(DATA.functions.map(function(f){var p=Math.round(f.mapped/f.total*100);return {p:p,c:covColor(p),t:f.name+' '+p+'%'};}));
   var firstGap=DATA.docs.filter(function(d){return d.status!=='good';}).sort(function(x,y){return (x.status==='crit'?0:1)-(y.status==='crit'?0:1);})[0];
   var nextRule=DATA.lifecycle[0];
 
   var cards='<div class="tower-grid">'+
-    towerCard('layers','Frameworks', below>0?'warn':'good', DATA.frameworks.length, 'tracked', fwBars, atTarget+' of '+DATA.frameworks.length+' at target &middot; avg '+progAvg+'% coverage', 'View frameworks', "showSub('frameworks','all')")+
-    towerCard('grid','Controls', flagCov<fw.target?'warn':'good', flagCov+'%', 'mapped &middot; '+fw.mapped+'/'+fw.controls, ctrlSeg, 'CRI FS AI RMF &middot; goal '+fw.target+'% &middot; '+(fw.controls-fw.mapped)+' open', 'Open register', "openRegister('ALL')")+
-    towerCard('doc','Documents &amp; policies', c.crit>0?'crit':(c.warn>0?'warn':'good'), c.good+'/'+c.total, 'compliant', docSeg, (firstGap?('Top gap: '+esc(firstGap.name)):'All policies compliant'), 'Review documents', "showSub('documents','gaps')")+
-    towerCard('radar','Regulatory feed', 'warn', DATA.lifecycle.length, 'rulemakings', regSeg, 'Next: '+esc(nextRule.status), 'Open lifecycle', "showSub('monitoring','lifecycle')")+
-    towerCard('users','Ownership', assigned>=c.total?'good':'warn', assigned+'/'+c.total, 'assigned', ownSeg, DATA.roles.length+' roles in the RACI matrix', 'Open RACI', "showSub('ownership','matrix')")+
-    towerCard('alert','Risk &amp; gaps', wfPct<70?'crit':'warn', wfPct+'%', esc(wf.name)+' &middot; weakest', riskBars, (fw.controls-fw.mapped)+' open controls across four functions', 'View functions', "showSub('frameworks','functions')")+
+    towerCard('layers','Frameworks', covColor(progAvg), DATA.frameworks.length, 'tracked', fwBars, atTarget+' of '+DATA.frameworks.length+' at target &middot; avg '+progAvg+'% coverage', 'View frameworks', "showSub('frameworks','all')")+
+    towerCard('grid','Controls', covColor(flagCov), flagCov+'%', 'mapped &middot; '+fw.mapped+'/'+fw.controls, ctrlSeg, 'CRI FS AI RMF &middot; goal '+fw.target+'% &middot; '+(fw.controls-fw.mapped)+' open', 'Open register', "openRegister('ALL')")+
+    towerCard('doc','Documents &amp; policies', covColor(docPct), c.good+'/'+c.total, 'compliant', docSeg, (firstGap?('Top gap: '+esc(firstGap.name)):'All policies compliant'), 'Review documents', "showSub('documents','gaps')")+
+    towerCard('radar','Regulatory feed', 'var(--sem2)', DATA.lifecycle.length, 'rulemakings', regSeg, 'Next: '+esc(nextRule.status), 'Open lifecycle', "showSub('monitoring','lifecycle')")+
+    towerCard('users','Ownership', covColor(Math.round(assigned/c.total*100)), assigned+'/'+c.total, 'assigned', ownSeg, DATA.roles.length+' roles in the RACI matrix', 'Open RACI', "showSub('ownership','matrix')")+
+    towerCard('alert','Risk &amp; gaps', covColor(wfPct), wfPct+'%', esc(wf.name)+' &middot; weakest', riskBars, (fw.controls-fw.mapped)+' open controls across four functions', 'View functions', "showSub('frameworks','functions')")+
   '</div>';
 
   return '<div class="section grc-wrap">'+hero+cards+'</div>';
@@ -1642,7 +1643,7 @@ function fwRowHTML(f){
   return '<div class="fw-row '+['stage-initial','stage-minimal','stage-evolving','stage-embedded'][f.stage]+'" onclick="this.classList.toggle(\'open\')">'+
     '<div class="fw-top">'+chevSvg+'<div class="fw-name"><span class="fw-ico">'+icon(FWICON[f.id]||'layers')+'</span>'+esc(f.name)+(f.flagship?' <span class="fw-body-tag" style="color:var(--cyan);border-color:rgba(0,242,255,0.3)">FLAGSHIP</span>':'')+'</div>'+
     '<span class="fw-body-tag">'+esc(f.body)+'</span><div class="fw-count">'+f.mapped+' of '+f.controls+'</div><div class="fw-stage-lab">'+DATA.stages[f.stage]+'</div></div>'+
-    '<div class="fw-bar-track"><div class="fw-bar-fill" style="width:'+f.pct+'%"></div><div class="fw-tick" style="left:25%"></div><div class="fw-tick" style="left:50%"></div><div class="fw-tick" style="left:75%"></div><div class="fw-target" style="left:'+f.target+'%" title="Target"></div></div>'+
+    '<div class="fw-bar-track"><div class="fw-bar-fill" style="width:'+f.pct+'%;background:'+covColor(f.pct)+'"></div><div class="fw-tick" style="left:25%"></div><div class="fw-tick" style="left:50%"></div><div class="fw-tick" style="left:75%"></div><div class="fw-target" style="left:'+f.target+'%" title="Target"></div></div>'+
     '<div class="fw-detail">'+fwDetailHTML(f)+'</div></div>';
 }
 function fnRowHTML(fn){
