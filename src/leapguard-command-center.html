@@ -538,6 +538,28 @@ footer.page{padding:22px 0 48px 0;font-size:12px;color:var(--grey2);text-align:c
 
 </style>
 <style id="clickpills-css">
+.tower-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:16px}
+.tower-card{position:relative;display:flex;flex-direction:column;padding:20px 20px 18px;border-radius:14px;background:var(--panel,#13171d);border:1px solid var(--line,#262b31);cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;min-height:212px}
+.tower-card:hover{transform:translateY(-3px);border-color:rgba(0,242,255,.5);box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.tower-head{display:flex;align-items:center;gap:9px}
+.tower-ico{color:var(--cyan);display:flex}
+.tower-ico svg{width:18px;height:18px}
+.tower-name{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#9aa3ad)}
+.tower-num{font-size:34px;font-weight:800;line-height:1;margin-top:14px;display:flex;align-items:baseline;gap:8px}
+.tower-unit{font-size:12.5px;font-weight:600;color:var(--muted,#9aa3ad)}
+.tower-mini{margin-top:15px;min-height:34px;display:flex;align-items:flex-end}
+.tower-seg{display:flex;width:100%;height:9px;border-radius:5px;overflow:hidden;gap:2px}
+.tower-seg span{display:block;height:100%}
+.tower-bars{display:flex;align-items:flex-end;gap:4px;width:100%;height:34px}
+.tower-bars .tb{flex:1;border-radius:2px;min-height:4px}
+.tower-top{font-size:12.5px;color:var(--muted,#9aa3ad);margin-top:15px;line-height:1.4;flex:1}
+.tower-cta{color:var(--cyan);font-weight:700;font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-top:12px}
+.tower-spark{min-width:160px;flex:0 0 auto}
+.tower-spark-lab{font-size:11px;color:var(--muted,#9aa3ad);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.grc-dot.good{background:var(--sem5)}
+.grc-dot.warn{background:var(--sem2)}
+.grc-dot.crit{background:var(--sem1)}
+
 /* LINKALL_DONE */
 .gauge-fn-line[onclick]:hover,.fw-gap-item[onclick]:hover{background:rgba(0,242,255,.05);border-radius:8px}
 .fw-cov-chip[onclick]:hover{filter:brightness(1.25)}
@@ -1217,7 +1239,7 @@ function panel(title,sub,body,foot){ return '<div class="panel"><div class="pane
 
 /* ================= NAV ================= */
 var NAV=[
-  {v:'overview',  label:'Overview',        ico:'grid',   subs:[['summary','Summary'],['maturity','Analytics']]},
+  {v:'overview',  label:'Overview',        ico:'grid',   subs:[['summary','Summary'],['tower','Control Tower'],['maturity','Analytics']]},
   {v:'frameworks',label:'Frameworks',      ico:'layers', subs:[['all','All Frameworks'],['functions','Function Breakdown'],['register','Control Register']]},
   {v:'documents', label:'Documents',       ico:'doc',    subs:[['all','All'],['gaps','Open Gaps'],['compliant','Compliant']]},
   {v:'monitoring',label:'Regulatory Feed', ico:'radar',  subs:[['lifecycle','Rulemaking Lifecycle'],['bodies','Governing Bodies'],['inforce','In Force']]},
@@ -1255,7 +1277,7 @@ function renderContent(){
   var fn=(RENDER[curView]&&RENDER[curView][curSub]);
   document.getElementById('views').innerHTML= fn?fn():'<div class="card">Coming soon.</div>';
   document.body.setAttribute('data-view',curView);
-  (function(){var sb=document.getElementById('ph-sub');if(sb){if(window.__PHSUB__==null)window.__PHSUB__=sb.innerHTML;sb.innerHTML=(curView==='overview'&&curSub==='summary')?'NorthWinds Credit Union':window.__PHSUB__;}})();
+  (function(){var sb=document.getElementById('ph-sub');if(sb){if(window.__PHSUB__==null)window.__PHSUB__=sb.innerHTML;sb.innerHTML=(curView==='overview'&&(curSub==='summary'||curSub==='tower'))?'NorthWinds Credit Union':window.__PHSUB__;}})();
   if(curView==='frameworks'&&curSub==='register') setTimeout(renderControlList,0);
 }
 
@@ -1326,6 +1348,63 @@ RENDER.overview.summary=function(){
   return '<div class="section grc-wrap">'+hero+gauges+'<div class="grid-2 grc-lower">'+panel('Needs your attention', c.crit+' high &middot; '+c.warn+' to update', attnRows)+panel('Quick actions','Jump straight to a task', actionBtns)+'</div></div>';
 };
 
+function sparkSVG(vals,color,w,h){ w=w||150;h=h||40; var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),rng=(mx-mn)||1; var pts=vals.map(function(v,i){var x=(i/(vals.length-1))*(w-6)+3;var y=h-3-((v-mn)/rng)*(h-8);return x.toFixed(1)+','+y.toFixed(1);}).join(' '); var lv=vals[vals.length-1],lx=w-3,ly=h-3-((lv-mn)/rng)*(h-8); return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" class="spark"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="2.8" fill="'+color+'"/></svg>'; }
+function tSeg(items){ return '<div class="tower-seg">'+items.map(function(it){return '<span style="width:'+it.pct+'%;background:'+it.color+'"></span>';}).join('')+'</div>'; }
+function tBars(vals){ return '<div class="tower-bars">'+vals.map(function(v){return '<span class="tb" style="height:'+Math.max(14,v.p)+'%;background:'+v.c+'" title="'+(v.t||'')+'"></span>';}).join('')+'</div>'; }
+function towerCard(ico,name,statusS,num,unit,mini,topLine,cta,js){ return '<div class="tower-card" onclick="'+js+'"><div class="tower-head"><span class="tower-ico">'+icon(ico)+'</span><span class="tower-name">'+name+'</span><span class="grc-dot" style="margin-left:auto;background:'+dotColor(statusS)+'"></span></div><div class="tower-num">'+num+'<span class="tower-unit">'+unit+'</span></div><div class="tower-mini">'+mini+'</div><div class="tower-top">'+topLine+'</div><div class="tower-cta">'+cta+' &rarr;</div></div>'; }
+RENDER.overview.tower=function(){
+  var c=counts();
+  var fw=DATA.frameworks[0];
+  var flagCov=Math.round(fw.mapped/fw.controls*100);
+  var covs=DATA.frameworks.map(function(f){return f.mapped/f.controls*100;});
+  var progAvg=Math.round(covs.reduce(function(x,y){return x+y;},0)/covs.length);
+  var atTarget=DATA.frameworks.filter(function(f){return Math.round(f.mapped/f.controls*100)>=f.target;}).length;
+  var below=DATA.frameworks.length-atTarget;
+  var docPct=Math.round(c.good/c.total*100);
+  var wf=DATA.functions.slice().sort(function(x,y){return (x.mapped/x.total)-(y.mapped/y.total);})[0];
+  var wfPct=Math.round(wf.mapped/wf.total*100);
+  var readiness=Math.round(0.45*flagCov+0.30*progAvg+0.25*docPct);
+  var rTarget=90,rDelta=6;
+  var overall=c.crit>0?'crit':((c.warn>0||below>0||flagCov<fw.target)?'warn':'good');
+  var verdict=overall==='crit'?'Action required':(overall==='warn'?'Attention needed':'On track');
+  var headline=c.crit+' high-priority '+(c.crit===1?'gap':'gaps')+' &middot; '+(c.warn+c.crit)+' open items &middot; '+DATA.lifecycle.length+' rulemakings tracked';
+  var series=[64,67,69,71,73,readiness];
+
+  var hero='<div class="grc-hero '+overall+'">'+
+    '<div class="grc-hero-score"><div class="grc-hero-label">Exam readiness</div>'+
+      '<div class="grc-hero-num">'+readiness+'%<span class="grc-delta up">&#9650; '+rDelta+'</span></div>'+
+      '<div class="grc-hero-bar"><div class="grc-hero-fill" style="width:'+readiness+'%"></div><div class="grc-hero-target" style="left:'+rTarget+'%"></div></div>'+
+      '<div class="grc-hero-target-lbl">Up '+rDelta+' pts since last scan &middot; target '+rTarget+'% by Q4 2026</div></div>'+
+    '<div class="grc-hero-mid"><div class="grc-hero-verdict"><span class="grc-light"></span>'+verdict+'</div>'+
+      '<div class="grc-hero-sub">'+headline+'</div>'+
+      '<div class="grc-hero-fresh">As of Aug 9, 2026 &middot; 6:12 AM ET &middot; next scan in 6h</div></div>'+
+    '<div class="tower-spark"><div class="tower-spark-lab">Readiness &middot; last 6 scans</div>'+sparkSVG(series,'var(--cyan)',160,46)+'</div>'+
+    '<button class="grc-band-act" onclick="showSub(\'documents\',\'gaps\')">Review open items &rarr;</button>'+
+  '</div>';
+
+  var fwBars=tBars(DATA.frameworks.map(function(f){var p=Math.round(f.mapped/f.controls*100);return {p:p,c:(p>=f.target?'var(--sem5)':(p>=f.target-15?'var(--sem2)':'var(--sem1)')),t:f.name+' '+p+'%'};}));
+  var ctrlSeg=tSeg(DATA.functions.map(function(f){return {pct:f.total/fw.controls*100,color:f.color};}));
+  var docSeg=tSeg([{pct:c.good/c.total*100,color:'var(--sem5)'},{pct:c.warn/c.total*100,color:'var(--sem2)'},{pct:c.crit/c.total*100,color:'var(--sem1)'}]);
+  var stageCounts=[0,0,0,0];DATA.lifecycle.forEach(function(l){stageCounts[l.stageIdx]++;});
+  var stageCols=['#3a4553','#0A8FA3','#00F2FF','#557A61'];
+  var regSeg=tSeg(stageCounts.map(function(n,i){return {pct:(n/DATA.lifecycle.length*100)||0,color:stageCols[i]};}));
+  var assigned=DATA.docs.filter(function(d){return d.owner;}).length;
+  var ownSeg=tSeg([{pct:assigned/c.total*100,color:'var(--cyan)'},{pct:(c.total-assigned)/c.total*100,color:'rgba(255,255,255,.08)'}]);
+  var riskBars=tBars(DATA.functions.map(function(f){var p=Math.round(f.mapped/f.total*100);return {p:p,c:f.color,t:f.name+' '+p+'%'};}));
+  var firstGap=DATA.docs.filter(function(d){return d.status!=='good';}).sort(function(x,y){return (x.status==='crit'?0:1)-(y.status==='crit'?0:1);})[0];
+  var nextRule=DATA.lifecycle[0];
+
+  var cards='<div class="tower-grid">'+
+    towerCard('layers','Frameworks', below>0?'warn':'good', DATA.frameworks.length, 'tracked', fwBars, atTarget+' of '+DATA.frameworks.length+' at target &middot; avg '+progAvg+'% coverage', 'View frameworks', "showSub('frameworks','all')")+
+    towerCard('grid','Controls', flagCov<fw.target?'warn':'good', flagCov+'%', 'mapped &middot; '+fw.mapped+'/'+fw.controls, ctrlSeg, 'CRI FS AI RMF &middot; goal '+fw.target+'% &middot; '+(fw.controls-fw.mapped)+' open', 'Open register', "openRegister('ALL')")+
+    towerCard('doc','Documents &amp; policies', c.crit>0?'crit':(c.warn>0?'warn':'good'), c.good+'/'+c.total, 'compliant', docSeg, (firstGap?('Top gap: '+esc(firstGap.name)):'All policies compliant'), 'Review documents', "showSub('documents','gaps')")+
+    towerCard('radar','Regulatory feed', 'warn', DATA.lifecycle.length, 'rulemakings', regSeg, 'Next: '+esc(nextRule.status), 'Open lifecycle', "showSub('monitoring','lifecycle')")+
+    towerCard('users','Ownership', assigned>=c.total?'good':'warn', assigned+'/'+c.total, 'assigned', ownSeg, DATA.roles.length+' roles in the RACI matrix', 'Open RACI', "showSub('ownership','matrix')")+
+    towerCard('alert','Risk &amp; gaps', wfPct<70?'crit':'warn', wfPct+'%', esc(wf.name)+' &middot; weakest', riskBars, (fw.controls-fw.mapped)+' open controls across four functions', 'View functions', "showSub('frameworks','functions')")+
+  '</div>';
+
+  return '<div class="section grc-wrap">'+hero+cards+'</div>';
+};
 RENDER.overview.maturity=function(){
   var c=counts();
   // maturity ring (AI RMF flagship)
