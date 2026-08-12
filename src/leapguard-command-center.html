@@ -538,6 +538,27 @@ footer.page{padding:22px 0 48px 0;font-size:12px;color:var(--grey2);text-align:c
 
 </style>
 <style id="clickpills-css">
+.news-item{padding:14px 4px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;transition:background .15s}
+.news-item:hover{background:rgba(0,242,255,.03)}
+.news-item:last-child{border-bottom:0}
+.news-top{display:flex;align-items:flex-start;gap:12px}
+.news-jur{flex:0 0 auto;font-size:10.5px;font-weight:800;letter-spacing:.05em;color:var(--muted,#9aa3ad);border:1px solid var(--line,#262b31);border-radius:6px;padding:4px 8px;background:rgba(255,255,255,.03)}
+.news-titles{flex:1;min-width:0}
+.news-title{font-size:14px;font-weight:700;line-height:1.3}
+.news-meta{font-size:11.5px;color:var(--muted,#9aa3ad);margin-top:2px}
+.news-stage{flex:0 0 auto;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:4px 9px;border-radius:20px;white-space:nowrap}
+.news-stage.stage0{background:rgba(217,155,67,.16);color:#D99B43}
+.news-stage.stage1{background:rgba(0,242,255,.12);color:#00F2FF}
+.news-stage.stage2{background:rgba(127,167,116,.18);color:#8fbf84}
+.news-stage.stage3{background:rgba(85,122,97,.22);color:#8fbf84}
+.news-impact{font-size:12.5px;color:var(--ink,#c9d0d7);margin-top:9px;line-height:1.5}
+.news-impact b{color:var(--cyan);font-weight:700}
+.news-affects{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:9px}
+.news-aff-lab{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#9aa3ad)}
+.news-doc{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;background:rgba(255,255,255,.04);border:1px solid var(--line,#262b31);border-radius:16px;padding:4px 10px;cursor:pointer;transition:border-color .15s,color .15s}
+.news-doc:hover{border-color:var(--cyan);color:#fff}
+.news-status{font-size:11.5px;color:var(--muted,#9aa3ad);margin-top:8px;font-style:italic}
+
 /* COLORS_UNIFIED */
 .fw-row.only-open .fw-cov-sec{display:none}
 .fw-row.only-cov .fw-open-sec{display:none}
@@ -1387,8 +1408,10 @@ RENDER.overview.summary=function(){
   var attnRows=attn.length?attn.map(function(d,i){return '<div class="grc-attn-row" onclick="openDoc(\''+d.id+'\')"><span class="grc-dot" style="background:'+dotColor(d.status)+'"></span><span class="grc-attn-name">'+esc(d.name)+'</span><span class="grc-attn-meta">'+esc(d.owner||'Unassigned')+' &middot; due '+DUE[i]+'</span><span class="rep-sev '+d.status+'">'+statusWord(d.status)+'</span></div>';}).join(''):'<div class="grc-headline" style="padding:8px 2px">Nothing needs attention right now.</div>';
   var actions=[['Review open items',"showSub('documents','gaps')"],['Open control register',"openRegister('ALL')"],['Rulemaking lifecycle',"showSub('monitoring','lifecycle')"],['Ownership &amp; RACI',"showSub('ownership','matrix')"],['Browse frameworks',"showSub('frameworks','all')"]];
   var actionBtns='<div class="grc-actions">'+actions.map(function(a){return '<button class="grc-action" onclick="'+a[1]+'">'+a[0]+' &rarr;</button>';}).join('')+'</div>';
+  function newsRow(l){ var stage=DATA.lifeStages[l.stageIdx]; var chips=(l.affects||[]).map(function(aid){var dd=docById(aid);return dd?'<span class="news-doc" onclick="event.stopPropagation();openDoc(\''+aid+'\')">'+statusIcon(dd.status)+esc(dd.name)+'</span>':'';}).join(''); return '<div class="news-item" onclick="showSub(\'monitoring\',\'lifecycle\')"><div class="news-top"><span class="news-jur">'+esc(l.jur)+'</span><div class="news-titles"><div class="news-title">'+esc(l.title)+'</div><div class="news-meta">'+esc(l.num)+' &middot; '+esc(l.body)+'</div></div><span class="news-stage stage'+l.stageIdx+'">'+esc(stage)+'</span></div><div class="news-impact"><b>Impact on NorthWinds</b> &middot; '+esc(l.impact)+'</div>'+(chips?'<div class="news-affects"><span class="news-aff-lab">Affects</span>'+chips+'</div>':'')+'<div class="news-status">'+esc(l.status)+'</div></div>'; }
+  var news='<div class="ov-sec-lab">Regulatory horizon &middot; impending legislation &amp; impact</div>'+panel('What&rsquo;s coming for NorthWinds', DATA.lifecycle.length+' pending rules &amp; bills tracked, and the documents each one touches', DATA.lifecycle.slice(0,4).map(newsRow).join(''), '<span class="hl-link" onclick="showSub(\'monitoring\',\'lifecycle\')">Open the full rulemaking lifecycle &rarr;</span>');
 
-  return '<div class="section grc-wrap">'+hero+cards+charts+'<div class="grid-2 grc-lower">'+panel('Needs your attention', c.crit+' high &middot; '+c.warn+' to update', attnRows)+panel('Quick actions','Jump straight to a task', actionBtns)+'</div></div>';
+  return '<div class="section grc-wrap">'+hero+cards+charts+news+'<div class="grid-2 grc-lower">'+panel('Needs your attention', c.crit+' high &middot; '+c.warn+' to update', attnRows)+panel('Quick actions','Jump straight to a task', actionBtns)+'</div></div>';
 };
 
 function sparkSVG(vals,color,w,h){ w=w||150;h=h||40; var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),rng=(mx-mn)||1; var pts=vals.map(function(v,i){var x=(i/(vals.length-1))*(w-6)+3;var y=h-3-((v-mn)/rng)*(h-8);return x.toFixed(1)+','+y.toFixed(1);}).join(' '); var lv=vals[vals.length-1],lx=w-3,ly=h-3-((lv-mn)/rng)*(h-8); return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" class="spark"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="'+lx.toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="2.8" fill="'+color+'"/></svg>'; }
@@ -1809,7 +1832,7 @@ function repTable(headers,rows){
     rows.map(function(r){return '<tr>'+r.map(function(cell){return '<td>'+cell+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></div>';
 }
 function sevTag(s){ return '<span class="rep-sev '+s+'">'+statusWord(s)+'</span>'; }
-function docNamesFrom(ids){ return ids.map(function(id){var d=docById(id);return d?esc(d.name):'';}).filter(Boolean).join('; ')||'·'; }
+function docNamesFrom(ids){ return ids.map(function(id){var d=docById(id);return d?'<span style="cursor:pointer;color:var(--cyan)" onclick="openDoc(\''+id+'\')">'+esc(d.name)+'</span>':'';}).filter(Boolean).join('; ')||'·'; }
 
 function repBoard(){
   var c=counts();

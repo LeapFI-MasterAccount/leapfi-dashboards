@@ -1,5 +1,5 @@
 {
-  "revision": 9,
+  "revision": 10,
   "updated": "2026-08-12",
   "dashboards": [
     {
@@ -8,7 +8,7 @@
       "title": "LeapGuard Regulatory Command Center",
       "order": 1,
       "url": "https://leapfi-admin.github.io/leapfi-dashboards/leapguard-command-center.html",
-      "kb": 339.2
+      "kb": 342.3
     },
     {
       "file": "onside-plan-timeline.html",
