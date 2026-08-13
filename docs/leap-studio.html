@@ -34,6 +34,21 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,'Se
 .lever .ln{font-size:13.5px;font-weight:600}
 .lever .lv{font-size:13px;font-weight:800;color:var(--cyan)}
 .lever .lh{font-size:11px;color:var(--grey);margin-top:5px}
+.lgh{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);margin:20px 0 2px}
+.lgh .lgs{font-size:10px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--grey)}
+.ticks{display:flex;justify-content:space-between;margin-top:6px}
+.ticks span{font-size:9.5px;color:var(--grey);font-weight:600}
+.ticks span.on{color:var(--cyan)}
+.lmean{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45}
+.lmean b{color:var(--ink)}
+.lfeed{font-size:10.5px;color:var(--grey);margin-top:6px}
+.lfeed b{color:var(--cyan);font-weight:700}
+.stance{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0 6px}
+.stance .st-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--grey);margin-bottom:5px}
+.stance .st-v{font-size:12.5px;line-height:1.45;color:var(--muted)}
+.stance .st-v .hl{color:var(--cyan);font-weight:700}
+.stance.tension{border-color:rgba(217,155,67,.4)}
+.stance.tension .st-v .hl{color:var(--sem2)}
 input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:5px;background:#222831;outline:none}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 0 4px rgba(0,242,255,.15)}
 input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radius:50%;background:var(--cyan);cursor:pointer}
@@ -184,37 +199,51 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
     <!-- LEVERS -->
     <div class="card">
       <h2>Your levers</h2>
-      <div class="csub">Drag to model. Everything on the right recomputes live.</div>
+      <div class="csub">You&rsquo;re designing two things: how <b style="color:var(--ink)">aggressively</b> you want to pursue AI, and how much <b style="color:var(--ink)">risk</b> you&rsquo;ll carry to get there. Everything on the right recomputes live.</div>
+
+      <div class="lgh">Your appetite <span class="lgs">&mdash; reach vs. risk, the core trade-off</span></div>
+      <div class="stance"><div class="st-l">Your stance</div><div class="st-v" id="stance"></div></div>
 
       <div class="lever">
-        <div class="lt"><span class="ln">Ambition &middot; target maturity</span><span class="lv" id="amb-v">Embedded</span></div>
+        <div class="lt"><span class="ln">Ambition &middot; how aggressive with AI</span><span class="lv" id="amb-v">Embedded</span></div>
         <input type="range" id="amb" min="0" max="3" step="1" value="3">
-        <div class="lh">How far you want to take AI across the institution.</div>
+        <div class="ticks" id="amb-t"><span>Initial</span><span>Minimal</span><span>Evolving</span><span>Embedded</span></div>
+        <div class="lmean" id="amb-m"></div>
+        <div class="lfeed" id="amb-f"></div>
       </div>
       <div class="lever">
-        <div class="lt"><span class="ln">Risk tolerance</span><span class="lv" id="tol-v">Balanced</span></div>
+        <div class="lt"><span class="ln">Risk tolerance &middot; how strict the gate</span><span class="lv" id="tol-v">Balanced</span></div>
         <input type="range" id="tol" min="0" max="100" step="1" value="52">
-        <div class="lh">How green a control must be before a play unlocks.</div>
+        <div class="ticks" id="tol-t"><span>Conservative</span><span>Balanced</span><span>Aggressive</span></div>
+        <div class="lmean" id="tol-m"></div>
+        <div class="lfeed" id="tol-f"></div>
       </div>
+
+      <div class="lgh">Constraints &amp; targets <span class="lgs">&mdash; shape the plan within that appetite</span></div>
+
       <div class="lever">
         <div class="lt"><span class="ln">Investment horizon</span><span class="lv" id="speed-v">Balanced</span></div>
         <input type="range" id="speed" min="0" max="2" step="1" value="1">
-        <div class="lh">Quick wins now, or foundational bets that compound.</div>
+        <div class="ticks" id="speed-t"><span>Quick wins</span><span>Balanced</span><span>Strategic</span></div>
+        <div class="lmean" id="speed-m"></div>
       </div>
       <div class="lever">
         <div class="lt"><span class="ln">Annual budget</span><span class="lv" id="budget-v">$450k</span></div>
         <input type="range" id="budget" min="100000" max="1500000" step="25000" value="450000">
-        <div class="lh">What you can put toward AI this year.</div>
+        <div class="ticks"><span>$100k</span><span>$800k</span><span>$1.5M</span></div>
+        <div class="lfeed" id="budget-f"></div>
       </div>
       <div class="lever">
         <div class="lt"><span class="ln">Target ROI &middot; 3-year</span><span class="lv" id="roi-v">2.5&times;</span></div>
         <input type="range" id="roi" min="0.8" max="5" step="0.1" value="2.5">
-        <div class="lh">Your bar for return. We flag when the plan clears it.</div>
+        <div class="ticks"><span>0.8&times;</span><span>3&times;</span><span>5&times;</span></div>
+        <div class="lfeed" id="roi-f"></div>
       </div>
       <div class="lever">
-        <div class="lt"><span class="ln">Adoption / efficacy</span><span class="lv" id="eff-v">55%</span></div>
+        <div class="lt"><span class="ln">Adoption / efficacy &middot; the multiplier</span><span class="lv" id="eff-v">55%</span></div>
         <input type="range" id="eff" min="20" max="80" step="5" value="55">
-        <div class="lh">How fully the team will actually use each tool. The multiplier that swings every dollar.</div>
+        <div class="ticks"><span>20%</span><span>50%</span><span>80%</span></div>
+        <div class="lmean" id="eff-m"></div>
       </div>
     </div>
 
@@ -344,6 +373,16 @@ var $=function(id){return document.getElementById(id);};
 function fmt(n){return n>=1e6?'$'+(n/1e6).toFixed(2)+'M':'$'+Math.round(n/1000)+'k';}
 function riskOrder(r){return r==='low'?0:r==='med'?1:2;}
 function riskLabel(r){return r==='low'?'Low':r==='med'?'Med':'High';}
+function setTicks(id,idx){var c=$(id); if(!c)return; for(var i=0;i<c.children.length;i++){c.children[i].className=(i===idx?'on':'');}}
+function stanceText(L,gap,ready,gated){
+  var reach=gap>=2?'far':gap===1?'moderate':'modest', gate=L.tol<34?'tight':L.tol<67?'balanced':'loose', lead, tension=false;
+  if(gap>=2&&L.tol>66){lead='Aggressive on both fronts — reaching far past your posture and unlocking on thin control coverage.';tension=true;}
+  else if(gap>=2&&L.tol<34){lead='Ambitious but cautious — you want the full roadmap, but tight gating funds only well-controlled plays first.';tension=true;}
+  else if(gap<=0&&L.tol<34){lead='Conservative — modest reach and tight gating. Lowest risk, slowest value.';}
+  else if(gap<=0&&L.tol>66){lead='Opportunistic — a modest target, unlocked quickly on loose gating.';}
+  else{lead='Balanced — a '+reach+' reach with '+gate+' gating.';}
+  return {html:'<span class="hl">'+lead+'</span> '+ready+' of '+OPPS.length+' plays clear today; '+gated+' stay sequence-gated.',tension:tension};
+}
 
 function readLevers(){
   var speedV=+$('speed').value, tolV=+$('tol').value;
@@ -433,6 +472,20 @@ function recompute(){
   $('benchlist').innerHTML = bench.length? bench.slice(0,6).map(function(o){
     return '<div class="gated-row" data-play="'+o.n+'" style="border-left-color:var(--cyan)"><span style="color:var(--cyan)">○</span><div class="gn">'+o.n+'<div class="pcat">'+fmt(o.val*L.eff)+'/yr · build '+fmt(o.cost)+'</div></div><span class="gu" style="color:var(--cyan)">+'+fmt(o.cost)+' to add</span></div>';
   }).join('') : '<div class="pill-soft">Everything ready is funded.</div>';
+
+  // ---- lever explanation + fine-tuning feedback ----
+  var appetite=L.allowRisk<=1?'Low-risk only':L.allowRisk===2?'up to Medium-risk':'up to High-risk';
+  setTicks('amb-t',L.amb); setTicks('tol-t',L.tol<34?0:L.tol<67?1:2); setTicks('speed-t',L.speed);
+  $('amb-m').innerHTML='Target <b>'+BANDS[L.amb]+'</b> vs. your current <b>'+BANDS[CUR]+'</b> posture — '+(gap<=0?'conservative; only what your controls already support':gap===1?'a measured one-band stretch':'aggressive, reaching <b>'+gap+' bands</b> past your posture')+'.';
+  $('amb-f').innerHTML='Risk appetite <b>'+appetite+'</b> &middot; puts <b>'+pool.length+' of '+OPPS.length+'</b> plays in scope';
+  $('tol-m').innerHTML='Sets the gate: a control must be at least <b>'+L.threshold+'% green</b> before a play it governs can unlock. '+(L.tol<34?'Conservative — only well-controlled plays clear.':L.tol<67?'Balanced coverage required.':'Aggressive — thinner coverage still clears, so more residual risk.');
+  $('tol-f').innerHTML='At a <b>'+L.threshold+'%</b> gate, <b>'+ready.length+' of '+OPPS.length+'</b> plays clear &middot; '+gated.length+' stay sequence-gated';
+  $('speed-m').innerHTML=['Orders the plan by <b>fastest payback</b> first — near-term wins before big bets.','Balances payback against total value.','Puts <b>foundational bets first</b> (the data spine), then the plays that compound on them.'][L.speed];
+  $('budget-f').innerHTML='Funds <b>'+funded.length+'</b> plays now &middot; <b>'+fmt(spent)+'</b> committed of '+fmt(L.budget);
+  $('roi-f').innerHTML='Plan returns <b>'+roi.toFixed(1)+'&times;</b> — '+(meets?'clears':'below')+' your '+L.roiTgt.toFixed(1)+'&times; bar';
+  $('eff-m').innerHTML='The multiplier on every play. At <b>'+Math.round(L.eff*100)+'%</b> adoption the portfolio is worth <b>'+fmt(annual)+'/yr</b>; low adoption is where most AI ROI quietly dies, so we make it an explicit input.';
+  var stn=stanceText(L,gap,ready.length,gated.length);
+  $('stance').innerHTML=stn.html; $('stance').parentNode.className='stance'+(stn.tension?' tension':'');
 }
 
 /* ============ ADVISOR ============ */

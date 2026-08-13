@@ -1,6 +1,6 @@
 {
-  "revision": 13,
-  "updated": "2026-08-12",
+  "revision": 14,
+  "updated": "2026-08-13",
   "dashboards": [
     {
       "file": "leapguard-command-center.html",
@@ -80,7 +80,7 @@
       "title": "Leap Studio",
       "order": 999,
       "url": "https://leapfi-admin.github.io/leapfi-dashboards/leap-studio.html",
-      "kb": 51.7
+      "kb": 56.8
     }
   ]
 }
