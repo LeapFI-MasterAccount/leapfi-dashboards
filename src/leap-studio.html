@@ -93,7 +93,72 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
 .vv{font-size:13.5px;color:var(--ink);line-height:1.5}
 .vv .g-open{color:var(--sem2);font-weight:700}.vv .g-green{color:var(--sem4);font-weight:700}
 .foot{color:var(--grey);font-size:11.5px;border-top:1px solid var(--line);margin-top:40px;padding:20px 0 60px}
-@media(max-width:980px){.grid{grid-template-columns:1fr}.eco{grid-template-columns:1fr 1fr}.pgrid{grid-template-columns:1fr}}
+/* play detail drawer */
+.phint{font-size:12px;color:var(--grey);margin:-6px 2px 12px}
+.prow{cursor:pointer;transition:.12s}
+.ptbl tr.prow:hover td{background:#191f27}
+.gated-row[data-play]{cursor:pointer;transition:.12s}
+.gated-row[data-play]:hover{border-color:var(--cyan)}
+.g-open{color:var(--sem2);font-weight:700}.g-green{color:var(--sem4);font-weight:700}
+.scrim{position:fixed;inset:0;background:rgba(4,7,10,.62);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.2s;z-index:40}
+.scrim.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(580px,95vw);background:var(--panel);border-left:1px solid var(--line);transform:translateX(101%);transition:transform .26s cubic-bezier(.4,0,.2,1);z-index:50;overflow-y:auto;box-shadow:-24px 0 60px rgba(0,0,0,.55)}
+.drawer.open{transform:translateX(0)}
+.dwrap{padding:22px 26px 70px}
+.dclose{float:right;background:#151a20;color:var(--muted);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;cursor:pointer}
+.dclose:hover{color:#fff;border-color:var(--cyan)}
+.dcat{font-size:12px;color:var(--grey);margin-bottom:6px}
+.dtitle{font-size:22px;font-weight:800;letter-spacing:-.01em;margin-bottom:8px;max-width:90%}
+.dsum{font-size:13.5px;color:var(--muted);line-height:1.55;margin-bottom:18px}
+.decon{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.dt{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+.dtl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--grey)}
+.dtv{font-size:20px;font-weight:800;margin-top:5px}
+.dts{font-size:10px;color:var(--grey);margin-top:3px}
+.okline{font-size:12.5px;color:var(--sem4);background:rgba(127,167,116,.1);border:1px solid rgba(127,167,116,.3);border-radius:10px;padding:10px 13px;margin-bottom:16px}
+.warnline{font-size:12.5px;color:var(--sem2);background:rgba(217,155,67,.1);border:1px solid rgba(217,155,67,.32);border-radius:10px;padding:10px 13px;margin-bottom:16px}
+.dsec{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}
+.dh{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:12px}
+.dlist{list-style:none;display:flex;flex-direction:column;gap:9px}
+.dlist li{font-size:12.5px;color:var(--ink);line-height:1.45;padding-left:18px;position:relative}
+.dlist.work li:before{content:'';position:absolute;left:0;top:6px;width:7px;height:7px;border-radius:2px;background:var(--cyan)}
+.dlist li:before{content:'';position:absolute;left:2px;top:6px;width:5px;height:5px;border-radius:50%;background:var(--grey)}
+.dlist.gov li{padding-left:0}
+.dlist.gov li:before{display:none}
+.dsub{font-size:11px;color:var(--grey);margin-top:2px}
+.dep-grid{display:grid;grid-template-columns:1fr;gap:16px}
+.dcolh{font-size:11px;font-weight:700;color:var(--cyan);margin-bottom:9px}
+.dconnh{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--grey);margin:10px 0 8px}
+.dchips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.dchip{font-size:12px;font-weight:600;color:var(--ink);background:#151a20;border:1px solid var(--line);border-radius:8px;padding:7px 11px;cursor:pointer;transition:.12s}
+.dchip:hover{border-color:var(--cyan);color:#fff}
+/* reports */
+.rep-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.repcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;transition:.14s;display:flex;flex-direction:column;gap:8px}
+.repcard:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.repcard .ri{width:34px;height:34px;border-radius:9px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px}
+.repcard .rt{font-size:14px;font-weight:800}
+.repcard .rd{font-size:12px;color:var(--grey);line-height:1.45;flex:1}
+.repcard .rg{font-size:12px;font-weight:700;color:var(--cyan)}
+.drawer.wide{width:min(920px,97vw)}
+.repbar{display:flex;gap:10px;margin:2px 0 16px}
+.repprint{background:var(--cyan);color:#04121a;border:0;border-radius:8px;font-family:inherit;font-weight:800;font-size:12px;padding:8px 14px;cursor:pointer}
+.replink{background:#151a20;color:var(--ink);border:1px solid var(--line);border-radius:8px;font-family:inherit;font-weight:700;font-size:12px;padding:8px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.replink:hover{border-color:var(--cyan)}
+.repmeta{font-size:11.5px;color:var(--grey);margin-bottom:16px}
+.rgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:14px 0}
+.rgrid .dt .dtv{font-size:18px}
+.rtbl{width:100%;border-collapse:collapse;margin:6px 0 4px;font-size:12.5px}
+.rtbl th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--grey);font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line)}
+.rtbl td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.rtbl tr:last-child td{border-bottom:0}
+.rtbl .tot td{font-weight:800;border-top:1px solid var(--cyan);border-bottom:0}
+.rlist{list-style:none;display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.rlist li{font-size:12.5px;line-height:1.45;padding-left:16px;position:relative}
+.rlist li:before{content:'';position:absolute;left:2px;top:6px;width:5px;height:5px;border-radius:50%;background:var(--cyan)}
+.rrec{font-size:13px;line-height:1.6;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--cyan);border-radius:10px;padding:14px 16px;margin-top:8px}
+@media print{body *{visibility:hidden}.drawer,.drawer *{visibility:visible}.drawer{position:absolute;top:0;left:0;width:100%!important;height:auto;box-shadow:none;border:0;overflow:visible;transform:none!important;background:#fff!important;color:#111!important}.drawer .dtitle,.drawer .dtv,.drawer b{color:#111!important}.scrim{display:none!important}.dclose,.repbar{display:none!important}}
+@media(max-width:980px){.grid{grid-template-columns:1fr}.eco{grid-template-columns:1fr 1fr}.pgrid{grid-template-columns:1fr}.decon{grid-template-columns:1fr 1fr}.rep-row{grid-template-columns:1fr 1fr}.rgrid{grid-template-columns:1fr 1fr 1fr}}
 </style>
 </head>
 <body>
@@ -181,6 +246,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
 
   <!-- PORTFOLIO -->
   <div class="sect-lab">Your funded portfolio</div>
+  <div class="phint">Click any play for its full scope, dependencies (technical &middot; governance &middot; financial), sequencing, and economics.</div>
   <table class="ptbl">
     <thead><tr><th style="width:30%">Play</th><th>Category</th><th>Build</th><th>Annual value</th><th>Payback</th><th>Risk</th><th>Gate</th></tr></thead>
     <tbody id="ptbody"></tbody>
@@ -210,10 +276,23 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
     <div id="verdict"></div>
   </div>
 
+  <!-- REPORTS -->
+  <div class="sect-lab">Board-ready reports</div>
+  <div class="phint">Generated live from your current lever settings &mdash; each opens formatted and ready to print or save as PDF.</div>
+  <div class="rep-row">
+    <div class="repcard" onclick="openReport('board')"><div class="ri">📊</div><div class="rt">Board Presentation</div><div class="rd">One-page executive read: posture, the funded portfolio, expected return, and the recommendation.</div><div class="rg">Generate →</div></div>
+    <div class="repcard" onclick="openReport('compliance')"><div class="ri">🛡️</div><div class="rt">Compliance &mdash; Open Items</div><div class="rd">Every open control, its gap to green, the plays it blocks, and the action to close it.</div><div class="rg">Generate →</div></div>
+    <div class="repcard" onclick="openReport('plan')"><div class="ri">💷</div><div class="rt">Investment Plan</div><div class="rd">The funded portfolio with build cost, annual value, payback, plus what's on the bench and gated.</div><div class="rg">Generate →</div></div>
+    <div class="repcard" onclick="openReport('roadmap')"><div class="ri">🗺️</div><div class="rt">Sequencing Roadmap</div><div class="rd">What to do now, what unlocks after the data spine, and what waits on controls closing.</div><div class="rg">Generate →</div></div>
+  </div>
+
   <div class="foot">
     Leap Studio &middot; illustrative model on sample data &middot; NorthWinds Credit Union. Figures are planning envelopes, not commitments; build estimates draw on comparable implementations and carry confidence, not precision. Governance gating reflects the current control posture. Not legal or investment advice.
   </div>
 </div>
+
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
 
 <script>
 /* ============ DATA ============ */
@@ -239,6 +318,27 @@ var OPPS=[
  {n:'Complaint analytics',c:'Member service',cost:25000,val:90000,h:'quick',r:'low',g:['UDAAP']}
 ];
 OPPS.forEach(function(o){o.minGate=Math.min.apply(null,o.g.map(function(x){return CTRL[x];}));o.weakGate=o.g.slice().sort(function(a,b){return CTRL[a]-CTRL[b];})[0];});
+
+/* ---- per-play detail: scope, dependencies, interrelations ---- */
+var GOV={'Govern':'AI governance charter + board sign-off','Model Risk':'Model validation & ongoing performance monitoring (SR 11-7 style)','UDAAP':'Fair-treatment review of all member-facing language','Fair Lending':'Disparate-impact / fair-lending testing on outcomes','BSA/AML':'BSA officer review + immutable audit-trail retention','Privacy':'GLBA / data-privacy review + PII-handling sign-off','InfoSec':'Security architecture review + least-privilege access','TPRM':'Third-party / vendor risk assessment','Adverse Action':'ECOA adverse-action reason-code accuracy testing'};
+var DETAIL={
+'Member secure-message triage':{sum:'Classifies and routes inbound secure messages, drafts suggested replies for agent approval, and auto-resolves the common requests.',work:['Connect the secure-messaging queue via API with a PII-redaction layer','Train an intent classifier on the historical message corpus','Generate suggested replies with mandatory human-in-the-loop approval','Build routing rules + escalation thresholds','Wire the agent console and capture accept/edit feedback'],tech:['Read access to the secure-messaging platform','Historical message corpus for training + evaluation','SSO and role-based agent console','DLP / PII redaction in the pipeline'],deps:[]},
+'AI adverse-action letter drafting':{sum:'Drafts ECOA-compliant adverse-action notices from the decisioning record, with reason codes verified before anything reaches a member.',work:['Map decision-engine outputs to ECOA reason codes','Draft generation with locked regulatory templates','Reason-code accuracy testing harness','Compliance-reviewer approval gate','Delivery + retention / audit logging'],tech:['Structured access to loan-decision records','Reason-code taxonomy + approved letter templates','Document delivery + records-retention system'],deps:[]},
+'Transaction-monitoring tuning assist':{sum:'Recommends threshold and scenario tuning for the BSA/AML monitoring system and explains each change for the BSA officer.',work:['Ingest alert + case-disposition history','Model false-positive / productivity analysis','Threshold + scenario tuning recommendations with rationale','BSA-officer review + change-control workflow','Back-testing and model-monitoring loop'],tech:['Access to the transaction-monitoring alert history','Case-disposition / SAR outcome data','Model-change control + versioning'],deps:['Unified data spine']},
+'Loan-document summarization':{sum:'Summarizes loan files and flags missing or inconsistent documents to speed processing.',work:['Document ingestion + OCR for scanned files','Summarization + key-term extraction','Missing-doc / inconsistency flags','Reviewer UI in the loan-ops workflow'],tech:['Access to the loan-document repository','OCR for scanned documents','Loan-origination system integration'],deps:[]},
+'Member FAQ chatbot':{sum:'Answers common member questions in the digital channels from approved sources, with a clean handoff to a human.',work:['Curate an approved knowledge base','Retrieval-grounded answering (no open generation)','Human-handoff + containment rules','Digital-channel integration + analytics'],tech:['Approved knowledge-base content','Web / mobile channel integration','Escalation path to live agents'],deps:['Member secure-message triage']},
+'Unified data spine':{sum:'The shared, governed data foundation every downstream model draws on — the single dependency that unlocks the strategic plays.',work:['Stand up the warehouse / lakehouse + ingestion','Model the core + conformed dimensions (member, account, transaction)','Data-quality + lineage controls','Access governance + PII tagging','Feature layer the models consume'],tech:['Warehouse / lakehouse platform','Source-system connectors (core, LOS, cards, digital)','Data catalog + lineage tooling'],deps:[]},
+'Fraud model refresh':{sum:'Retrains and recalibrates the fraud models on current patterns, with validation and monitoring.',work:['Assemble a labeled fraud / non-fraud training set','Model retraining + calibration','Champion / challenger validation','Real-time scoring integration','Ongoing drift monitoring'],tech:['Unified, current transaction + fraud-label data','Real-time scoring infrastructure','Model registry + monitoring'],deps:['Unified data spine']},
+'Marketing personalization':{sum:'Targets offers by predicted member need, with fair-lending guardrails on every audience.',work:['Propensity / next-best-offer modeling','Fair-lending review of segments + offers','Campaign-platform integration','Outcome measurement + suppression rules'],tech:['Unified member + product data','Marketing / campaign platform','Consent + suppression management'],deps:['Unified data spine']},
+'Call-center copilot':{sum:'Gives agents real-time answers and after-call summaries from approved sources during member calls.',work:['Real-time transcription + retrieval','Approved-source answer surfacing','After-call summary + disposition draft','Telephony / CRM integration'],tech:['Telephony + CRM integration','Approved knowledge base','Real-time transcription'],deps:[]},
+'SAR narrative drafting':{sum:'Drafts SAR narratives from case evidence for BSA-analyst review — never auto-filed.',work:['Assemble case evidence into a structured record','Narrative drafting against FinCEN expectations','Analyst review + edit gate','Filing-system handoff + retention'],tech:['Access to case-management evidence','FinCEN narrative templates','Immutable audit trail + retention'],deps:['Transaction-monitoring tuning assist']},
+'Vendor-risk automation':{sum:'Automates intake, questionnaire scoring, and monitoring for third-party risk.',work:['Digitize the vendor questionnaire + intake','Automated document / score analysis','Risk-tier assignment + review workflow','Continuous monitoring signals'],tech:['Vendor inventory + document store','Risk-rating framework','Alerting / monitoring feeds'],deps:[]},
+'Deposit pricing optimization':{sum:'Recommends deposit rates by segment against elasticity and liquidity targets, with model governance.',work:['Elasticity + balance-behavior modeling','Scenario / optimization engine','ALCO + model-risk review','Pricing-system integration + monitoring'],tech:['Unified deposit + rate history','ALM / liquidity targets','Pricing-system integration'],deps:['Unified data spine']},
+'Underwriting assist':{sum:'Assists credit decisions with explainable models under strict fair-lending and adverse-action governance.',work:['Explainable credit-risk modeling','Fair-lending + disparate-impact testing','Adverse-action reason-code alignment','Model validation + human decisioning gate','LOS integration + monitoring'],tech:['Unified credit + bureau data','Loan-origination system integration','Model validation + monitoring stack'],deps:['Unified data spine','AI adverse-action letter drafting']},
+'Complaint analytics':{sum:'Classifies and trends member complaints to surface UDAAP and product risks early.',work:['Aggregate complaints across channels','Classification + root-cause tagging','UDAAP trend + early-warning dashboard','Routing to owners + closure tracking'],tech:['Complaint data across channels','Taxonomy + tagging model','Reporting / dashboard layer'],deps:['Unified data spine']}
+};
+Object.keys(DETAIL).forEach(function(n){DETAIL[n].unlocks=[];});
+Object.keys(DETAIL).forEach(function(n){(DETAIL[n].deps||[]).forEach(function(d){if(DETAIL[d])DETAIL[d].unlocks.push(n);});});
 
 var $=function(id){return document.getElementById(id);};
 function fmt(n){return n>=1e6?'$'+(n/1e6).toFixed(2)+'M':'$'+Math.round(n/1000)+'k';}
@@ -317,7 +417,7 @@ function recompute(){
   // funded table
   var tb=funded.map(function(o){
     var pay=Math.round(o.cost/(o.val*L.eff)*12);
-    return '<tr><td><div class="pname">'+o.n+(o.found?' <span class="pill-soft">foundational</span>':'')+'</div></td>'
+    return '<tr class="prow" data-play="'+o.n+'"><td><div class="pname">'+o.n+(o.found?' <span class="pill-soft">foundational</span>':'')+'</div></td>'
       +'<td class="pcat">'+o.c+'</td><td>'+fmt(o.cost)+'</td><td>'+fmt(o.val*L.eff)+'</td><td>'+pay+' mo</td>'
       +'<td><span class="rtag '+o.r+'">'+riskLabel(o.r)+'</span></td>'
       +'<td><span class="gate-ok">✓ clear</span></td></tr>';
@@ -326,12 +426,12 @@ function recompute(){
 
   // gated list
   $('gatedlist').innerHTML = gated.length? gated.slice(0,6).map(function(o){
-    return '<div class="gated-row"><span class="gate-wait">●</span><div class="gn">'+o.n+'<div class="pcat">'+fmt(o.val*L.eff)+'/yr · '+o.c+'</div></div><span class="gu">unlocks after '+o.weakGate+' ('+CTRL[o.weakGate]+'%)</span></div>';
+    return '<div class="gated-row" data-play="'+o.n+'"><span class="gate-wait">●</span><div class="gn">'+o.n+'<div class="pcat">'+fmt(o.val*L.eff)+'/yr · '+o.c+'</div></div><span class="gu">unlocks after '+o.weakGate+' ('+CTRL[o.weakGate]+'%)</span></div>';
   }).join('') : '<div class="pill-soft">Nothing gated at this tolerance.</div>';
 
   // bench (ready, unfunded)
   $('benchlist').innerHTML = bench.length? bench.slice(0,6).map(function(o){
-    return '<div class="gated-row" style="border-left-color:var(--cyan)"><span style="color:var(--cyan)">○</span><div class="gn">'+o.n+'<div class="pcat">'+fmt(o.val*L.eff)+'/yr · build '+fmt(o.cost)+'</div></div><span class="gu" style="color:var(--cyan)">+'+fmt(o.cost)+' to add</span></div>';
+    return '<div class="gated-row" data-play="'+o.n+'" style="border-left-color:var(--cyan)"><span style="color:var(--cyan)">○</span><div class="gn">'+o.n+'<div class="pcat">'+fmt(o.val*L.eff)+'/yr · build '+fmt(o.cost)+'</div></div><span class="gu" style="color:var(--cyan)">+'+fmt(o.cost)+' to add</span></div>';
   }).join('') : '<div class="pill-soft">Everything ready is funded.</div>';
 }
 
@@ -365,6 +465,120 @@ function ask(q){
   $('verdict').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
+/* ============ PLAY DETAIL DRAWER ============ */
+function playByName(n){return OPPS.filter(function(o){return o.n===n;})[0];}
+function depChip(n){return '<span class="dchip" data-play="'+n+'">'+n+' →</span>';}
+function openPlay(n){
+  var o=playByName(n), d=DETAIL[n]; if(!o||!d) return;
+  var L=readLevers();
+  var annual=o.val*L.eff, pay=Math.round(o.cost/annual*12), v3=annual*3, roiC=v3/o.cost;
+  var ready=o.minGate>=L.threshold;
+  var openG=o.g.filter(function(k){return CTRL[k]<GREEN;});
+  var ongoing=Math.round(o.cost*0.15/1000)*1000;
+  var gov=o.g.map(function(k){var ok=CTRL[k]>=GREEN;return '<li><span class="'+(ok?'g-green':'g-open')+'">'+k+' '+CTRL[k]+'%'+(ok?' ✓':' — open')+'</span><div class="dsub">'+GOV[k]+'</div></li>';}).join('');
+  var deps=(d.deps&&d.deps.length)?d.deps.map(depChip).join(''):'<span class="pill-soft">No prerequisites — can start immediately.</span>';
+  var unlocks=(d.unlocks&&d.unlocks.length)?d.unlocks.map(depChip).join(''):'<span class="pill-soft">Standalone — nothing downstream depends on it.</span>';
+  var seqNote = ready
+    ? '<div class="okline">✓ Ready now at your current risk tolerance — cleared to enter the funded portfolio.</div>'
+    : '<div class="warnline">Sequence-gated — blocked until <b>'+o.weakGate+'</b> reaches 80% (now '+CTRL[o.weakGate]+'%). Close it first, then this unlocks.</div>';
+  var html=''
+   +'<div class="dwrap">'
+   +'<button class="dclose" onclick="closeDrawer()">✕ Close</button>'
+   +'<div class="dcat">'+o.c+' &middot; <span class="rtag '+o.r+'">'+riskLabel(o.r)+' risk</span>'+(o.found?' &middot; <span class="pill-soft">foundational</span>':'')+'</div>'
+   +'<h3 class="dtitle">'+o.n+'</h3>'
+   +'<div class="dsum">'+d.sum+'</div>'
+   +'<div class="decon">'
+     +'<div class="dt"><div class="dtl">Build cost</div><div class="dtv">'+fmt(o.cost)+'</div><div class="dts">one-time</div></div>'
+     +'<div class="dt"><div class="dtl">Annual value</div><div class="dtv">'+fmt(annual)+'</div><div class="dts">at '+Math.round(L.eff*100)+'% adoption</div></div>'
+     +'<div class="dt"><div class="dtl">Payback</div><div class="dtv">'+pay+' mo</div><div class="dts">blended</div></div>'
+     +'<div class="dt"><div class="dtl">3-yr return</div><div class="dtv">'+roiC.toFixed(1)+'×</div><div class="dts">on build cost</div></div>'
+   +'</div>'
+   +seqNote
+   +'<div class="dsec"><div class="dh">Scope of work</div><ul class="dlist work">'+d.work.map(function(w){return '<li>'+w+'</li>';}).join('')+'</ul></div>'
+   +'<div class="dsec"><div class="dh">Dependencies</div><div class="dep-grid">'
+     +'<div class="dep-col"><div class="dcolh">Technical</div><ul class="dlist">'+d.tech.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>'
+     +'<div class="dep-col"><div class="dcolh">Governance</div><ul class="dlist gov">'+gov+'</ul></div>'
+     +'<div class="dep-col"><div class="dcolh">Financial</div><ul class="dlist"><li>Build <b>'+fmt(o.cost)+'</b> one-time'+(ready?', in the ready set at your tolerance':' — sequence-gated (+'+fmt(o.cost)+' once unlocked)')+'</li><li>Run cost ≈ <b>'+fmt(ongoing)+'/yr</b> (est.)</li><li>Value scales with adoption — every point of the efficacy lever moves it</li><li>Payback ≈ <b>'+pay+' mo</b> · 3-yr return <b>'+roiC.toFixed(1)+'×</b></li></ul></div>'
+   +'</div></div>'
+   +'<div class="dsec"><div class="dh">Controls to close first</div>'+(openG.length?'<ul class="dlist gov">'+openG.map(function(k){return '<li><span class="g-open">'+k+' '+CTRL[k]+'% — open</span><div class="dsub">'+GOV[k]+'</div></li>';}).join('')+'</ul>':'<span class="pill-soft">All gating controls are green.</span>')+'</div>'
+   +'<div class="dsec"><div class="dh">How it connects</div>'
+     +'<div class="dconnh">Depends on</div><div class="dchips">'+deps+'</div>'
+     +'<div class="dconnh">Unlocks / shares data with</div><div class="dchips">'+unlocks+'</div>'
+   +'</div>'
+   +'</div>';
+  var dr=$('drawer'); dr.innerHTML=html; dr.classList.add('open'); dr.classList.remove('wide'); dr.setAttribute('aria-hidden','false');
+  $('scrim').classList.add('open'); dr.scrollTop=0;
+}
+function closeDrawer(){$('drawer').classList.remove('open');$('drawer').setAttribute('aria-hidden','true');$('scrim').classList.remove('open');}
+
+/* ============ REPORT GENERATOR ============ */
+var ONSIDE_URL='https://leapfi-admin.github.io/leapfi-dashboards/onside-command-center.html';
+function computePlan(){
+  var L=readLevers();
+  var pool=OPPS.filter(function(o){return riskOrder(o.r)+1<=L.allowRisk;});
+  pool.sort(function(a,b){
+    if(L.speed===0){var pa=a.cost/(a.val*L.eff),pb=b.cost/(b.val*L.eff);return (a.h==='quick'?0:1)-(b.h==='quick'?0:1)||pa-pb;}
+    else if(L.speed===2){return (b.found?1:0)-(a.found?1:0)||b.val-a.val;}
+    return (b.val*L.eff/b.cost)-(a.val*L.eff/a.cost);
+  });
+  var ready=[],gated=[];
+  pool.forEach(function(o){(o.minGate>=L.threshold?ready:gated).push(o);});
+  var funded=[],bench=[],spent=0,annual=0;
+  ready.forEach(function(o){if(spent+o.cost<=L.budget){funded.push(o);spent+=o.cost;annual+=o.val*L.eff;}else bench.push(o);});
+  var roi=spent>0?annual*3/spent:0, payM=annual>0?Math.round(spent/annual*12):0;
+  var toClose=Object.keys(CTRL).filter(function(k){return CTRL[k]<GREEN;}).sort(function(a,b){return CTRL[a]-CTRL[b];});
+  return {L:L,ready:ready,gated:gated,funded:funded,bench:bench,spent:spent,annual:annual,roi:roi,payM:payM,toClose:toClose};
+}
+function playsGatedBy(k){return OPPS.filter(function(o){return o.g.indexOf(k)>=0;}).map(function(o){return o.n;});}
+function tile(l,v,s){return '<div class="dt"><div class="dtl">'+l+'</div><div class="dtv">'+v+'</div><div class="dts">'+s+'</div></div>';}
+function repChip(n){return '<span class="dchip" data-play="'+n+'">'+n+' →</span>';}
+
+function openReport(kind){
+  var P=computePlan(), L=P.L, h='';
+  var head=function(title,sub){return '<div class="dwrap"><button class="dclose" onclick="closeDrawer()">✕ Close</button>'
+    +'<div class="dcat">LEAPFI · Leap Studio — auto-generated report</div><h3 class="dtitle">'+title+'</h3>'
+    +'<div class="repmeta">'+sub+' · NorthWinds Credit Union · illustrative model on sample data</div>'
+    +'<div class="repbar"><button class="repprint" onclick="window.print()">🖨 Print / Save as PDF</button>'
+    +'<a class="replink" href="'+ONSIDE_URL+'" target="_blank" rel="noopener">Open full governance detail — OnSide Command Center →</a></div>';};
+
+  if(kind==='board'){
+    var top=P.funded.slice().sort(function(a,b){return b.val*L.eff-a.val*L.eff;}).slice(0,3);
+    h=head('Board Presentation','AI investment posture & recommendation')
+     +'<div class="rrec">At a <b>'+ (L.tol<34?'conservative':L.tol<67?'balanced':'aggressive') +'</b> risk tolerance and a <b>'+fmt(L.budget)+'</b> annual budget, the plan funds <b>'+P.funded.length+' of '+OPPS.length+'</b> AI plays for a one-time build of <b>'+fmt(P.spent)+'</b>, returning an expected <b>'+P.roi.toFixed(1)+'× over three years</b> ('+fmt(P.annual)+'/yr at '+Math.round(L.eff*100)+'% adoption, ~'+P.payM+'-month payback). Ambition is set to <b>'+BANDS[L.amb]+'</b> against a current <b>'+BANDS[CUR]+'</b> posture; closing <b>'+P.toClose.length+' controls</b> unlocks the remaining '+P.gated.length+' higher-value plays.</div>'
+     +'<div class="rgrid">'+tile('Plays funded',P.funded.length+' / '+OPPS.length,'of the library')+tile('Build cost',fmt(P.spent),'one-time')+tile('Annual value',fmt(P.annual),'at adoption')+tile('3-yr ROI',P.roi.toFixed(1)+'×','on build')+tile('Payback',P.payM+' mo','blended')+'</div>'
+     +'<div class="dsec"><div class="dh">Recommended first moves</div><ul class="rlist">'+top.map(function(o){return '<li><b>'+o.n+'</b> — '+fmt(o.val*L.eff)+'/yr at '+fmt(o.cost)+' build, '+Math.round(o.cost/(o.val*L.eff)*12)+'-mo payback.</li>';}).join('')+'</ul></div>'
+     +'<div class="dsec"><div class="dh">Governance to close ('+P.toClose.length+')</div><ul class="rlist">'+P.toClose.map(function(k){return '<li><b>'+k+'</b> — '+CTRL[k]+'% today, '+(GREEN-CTRL[k])+' points to green. '+GOV[k]+'.</li>';}).join('')+'</ul></div>'
+     +(P.gated.length?'<div class="dsec"><div class="dh">Gated until controls close ('+P.gated.length+')</div><ul class="rlist">'+P.gated.slice(0,6).map(function(o){return '<li><b>'+o.n+'</b> — waits on '+o.weakGate+' ('+CTRL[o.weakGate]+'%).</li>';}).join('')+'</ul></div>':'')
+     +'</div>';
+  } else if(kind==='compliance'){
+    h=head('Compliance — Open Items','Control gaps blocking the portfolio')
+     +'<div class="dsec"><div class="dh">'+P.toClose.length+' open controls</div><table class="rtbl"><thead><tr><th>Control</th><th>Now</th><th>Gap to 80</th><th>Plays it blocks</th><th>Action to close</th></tr></thead><tbody>'
+     +P.toClose.map(function(k){return '<tr><td><b>'+k+'</b></td><td><span class="g-open">'+CTRL[k]+'%</span></td><td>'+(GREEN-CTRL[k])+' pts</td><td>'+playsGatedBy(k).join('<br>')+'</td><td>'+GOV[k]+'</td></tr>';}).join('')
+     +'</tbody></table></div>'
+     +'<div class="dsec"><div class="dh">Already green</div><ul class="rlist">'+Object.keys(CTRL).filter(function(k){return CTRL[k]>=GREEN;}).map(function(k){return '<li><span class="g-green">'+k+' '+CTRL[k]+'% ✓</span></li>';}).join('')+'</ul></div>'
+     +'</div>';
+  } else if(kind==='plan'){
+    var rows=P.funded.map(function(o){return '<tr><td><b>'+o.n+'</b></td><td>'+o.c+'</td><td>'+fmt(o.cost)+'</td><td>'+fmt(o.val*L.eff)+'</td><td>'+Math.round(o.cost/(o.val*L.eff)*12)+' mo</td><td>'+riskLabel(o.r)+'</td></tr>';}).join('');
+    h=head('Investment Plan','Funded portfolio & backlog')
+     +'<div class="dsec"><div class="dh">Funded now ('+P.funded.length+')</div><table class="rtbl"><thead><tr><th>Play</th><th>Category</th><th>Build</th><th>Annual value</th><th>Payback</th><th>Risk</th></tr></thead><tbody>'+rows+'<tr class="tot"><td>Total</td><td></td><td>'+fmt(P.spent)+'</td><td>'+fmt(P.annual)+'</td><td>'+P.payM+' mo</td><td></td></tr></tbody></table></div>'
+     +'<div class="dsec"><div class="dh">Ready, not yet funded ('+P.bench.length+')</div>'+(P.bench.length?'<ul class="rlist">'+P.bench.map(function(o){return '<li><b>'+o.n+'</b> — +'+fmt(o.cost)+' to add, '+fmt(o.val*L.eff)+'/yr.</li>';}).join('')+'</ul>':'<span class="pill-soft">Everything ready is funded.</span>')+'</div>'
+     +'<div class="dsec"><div class="dh">Gated by controls ('+P.gated.length+')</div>'+(P.gated.length?'<ul class="rlist">'+P.gated.map(function(o){return '<li><b>'+o.n+'</b> — unlocks after '+o.weakGate+' ('+CTRL[o.weakGate]+'%).</li>';}).join('')+'</ul>':'<span class="pill-soft">Nothing gated at this tolerance.</span>')+'</div>'
+     +'</div>';
+  } else if(kind==='roadmap'){
+    var spineOpen=CTRL['InfoSec']<GREEN; // data spine gate proxy
+    var afterSpine=P.gated.filter(function(o){return (DETAIL[o.n].deps||[]).indexOf('Unified data spine')>=0;});
+    var afterCtrl=P.gated.filter(function(o){return (DETAIL[o.n].deps||[]).indexOf('Unified data spine')<0;});
+    h=head('Sequencing Roadmap','What to do, in what order')
+     +'<div class="dsec"><div class="dh">▶ Now — ready & funded ('+P.funded.length+')</div><ul class="rlist">'+(P.funded.length?P.funded.map(function(o){return '<li><b>'+o.n+'</b> — '+o.c+', '+fmt(o.cost)+'.</li>';}).join(''):'<li>None at this budget.</li>')+'</ul></div>'
+     +'<div class="dsec"><div class="dh">▷ Next — ready, raise budget to add ('+P.bench.length+')</div><ul class="rlist">'+(P.bench.length?P.bench.map(function(o){return '<li><b>'+o.n+'</b> — +'+fmt(o.cost)+'.</li>';}).join(''):'<li>Nothing waiting on budget.</li>')+'</ul></div>'
+     +'<div class="dsec"><div class="dh">◔ Later — after the data spine ('+afterSpine.length+')</div><ul class="rlist">'+(afterSpine.length?afterSpine.map(function(o){return '<li><b>'+o.n+'</b> — depends on Unified data spine + '+o.weakGate+' ('+CTRL[o.weakGate]+'%).</li>';}).join(''):'<li>None.</li>')+'</ul></div>'
+     +'<div class="dsec"><div class="dh">○ Blocked — waiting on controls ('+afterCtrl.length+')</div><ul class="rlist">'+(afterCtrl.length?afterCtrl.map(function(o){return '<li><b>'+o.n+'</b> — unlocks after '+o.weakGate+' ('+CTRL[o.weakGate]+'%).</li>';}).join(''):'<li>None.</li>')+'</ul></div>'
+     +'</div>';
+  }
+  var dr=$('drawer'); dr.innerHTML=h; dr.classList.add('open'); dr.classList.add('wide'); dr.setAttribute('aria-hidden','false');
+  $('scrim').classList.add('open'); dr.scrollTop=0;
+}
+
 /* preset chips */
 ['AI adverse-action letters','Auto-answer member messages','Deposit pricing optimization','Fraud model refresh'].forEach(function(q){
   var el=document.createElement('span'); el.className='qchip'; el.textContent=q; el.onclick=function(){$('cq').value=q;ask(q);};
@@ -372,6 +586,16 @@ function ask(q){
 });
 
 ['amb','tol','speed','budget','roi','eff'].forEach(function(id){$(id).addEventListener('input',recompute);});
+
+/* open the detail drawer from any play row/chip (event delegation) */
+['ptbody','gatedlist','benchlist','drawer'].forEach(function(id){
+  document.getElementById(id).addEventListener('click',function(e){
+    var el=e.target.closest?e.target.closest('[data-play]'):null;
+    if(el){ openPlay(el.getAttribute('data-play')); }
+  });
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDrawer();});
+
 recompute();
 </script>
 </body>

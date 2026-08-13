@@ -1,5 +1,5 @@
 {
-  "revision": 12,
+  "revision": 13,
   "updated": "2026-08-12",
   "dashboards": [
     {
@@ -80,7 +80,7 @@
       "title": "Leap Studio",
       "order": 999,
       "url": "https://leapfi-admin.github.io/leapfi-dashboards/leap-studio.html",
-      "kb": 24.1
+      "kb": 51.7
     }
   ]
 }
