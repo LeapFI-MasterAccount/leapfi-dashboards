@@ -1,5 +1,5 @@
 {
-  "revision": 11,
+  "revision": 12,
   "updated": "2026-08-12",
   "dashboards": [
     {
@@ -73,6 +73,14 @@
       "order": 9,
       "url": "https://leapfi-admin.github.io/leapfi-dashboards/engine-operator-console.html",
       "kb": 78.1
+    },
+    {
+      "file": "leap-studio.html",
+      "slug": "leap-studio",
+      "title": "Leap Studio",
+      "order": 999,
+      "url": "https://leapfi-admin.github.io/leapfi-dashboards/leap-studio.html",
+      "kb": 24.1
     }
   ]
 }

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leap Studio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+:root{
+  --bg:#0a0c10;--panel:#13171d;--panel2:#171c23;--line:#262b31;--muted:#9aa3ad;--grey:#7f878f;
+  --ink:#e8ecf1;--cyan:#00F2FF;--teal:#0A8FA3;
+  --sem1:#C94A4A;--sem2:#D99B43;--sem3:#E4C662;--sem4:#7FA774;--sem5:#557A61;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin:0 auto;padding:0 26px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 26px;border-bottom:1px solid var(--line);background:rgba(10,12,16,.9)}
+.brand{font-weight:800;letter-spacing:.02em}.brand .b{color:var(--cyan)}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:6px 13px}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 9px var(--cyan)}
+.hero{padding:30px 0 8px}
+.hero h1{font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
+.hero p{color:var(--muted);font-size:15px;margin-top:8px;max-width:760px}
+.postrip{display:inline-flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.postrip .chip{font-size:12.5px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 12px}
+.postrip .chip b{color:var(--ink)}
+.grid{display:grid;grid-template-columns:400px 1fr;gap:18px;margin-top:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+.card h2{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.card .csub{font-size:12.5px;color:var(--grey);margin-bottom:16px}
+/* levers */
+.lever{margin:16px 0}
+.lever .lt{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.lever .ln{font-size:13.5px;font-weight:600}
+.lever .lv{font-size:13px;font-weight:800;color:var(--cyan)}
+.lever .lh{font-size:11px;color:var(--grey);margin-top:5px}
+input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:5px;background:#222831;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 0 4px rgba(0,242,255,.15)}
+input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radius:50%;background:var(--cyan);cursor:pointer}
+/* economics */
+.eco{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:14px}
+.eco .big{grid-column:1;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:20px}
+.eco .k{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.eco .lab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.eco .num{font-size:40px;font-weight:800;line-height:1;margin-top:8px;letter-spacing:-.02em}
+.eco .knum{font-size:24px;font-weight:800;margin-top:8px}
+.eco .sub{font-size:12px;color:var(--grey);margin-top:6px}
+.tgt-ok{color:var(--sem4)}.tgt-lo{color:var(--sem2)}
+/* posture band */
+.posture{margin-top:16px;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.pbar{display:flex;gap:6px;margin-top:12px}
+.pseg{flex:1;text-align:center;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--grey);padding:9px 4px;border-radius:8px;background:#151a20;border:1px solid var(--line);position:relative}
+.pseg.cur{color:var(--ink);border-color:var(--cyan)}
+.pseg.tgt{color:#04121a;background:var(--cyan);border-color:var(--cyan)}
+.pseg.between{color:var(--muted);background:rgba(0,242,255,.07)}
+.pnote{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.5}
+.warnflag{margin-top:12px;font-size:12.5px;color:var(--sem2);background:rgba(217,155,67,.1);border:1px solid rgba(217,155,67,.35);border-radius:10px;padding:10px 13px;display:none}
+.warnflag.on{display:block}
+/* portfolio */
+.sect-lab{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:26px 2px 12px}
+.ptbl{width:100%;border-collapse:separate;border-spacing:0 7px}
+.ptbl th{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--grey);text-align:left;padding:0 14px 4px;font-weight:700}
+.ptbl td{background:var(--panel);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:13px 14px;font-size:13px;vertical-align:middle}
+.ptbl td:first-child{border-left:1px solid var(--line);border-radius:11px 0 0 11px}
+.ptbl td:last-child{border-right:1px solid var(--line);border-radius:0 11px 11px 0}
+.ptbl .pname{font-weight:700}.ptbl .pcat{font-size:11.5px;color:var(--grey)}
+.rtag{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:6px}
+.rtag.low{color:var(--sem4);background:rgba(127,167,116,.14)}
+.rtag.med{color:var(--sem2);background:rgba(217,155,67,.14)}
+.rtag.high{color:var(--sem1);background:rgba(201,74,74,.14)}
+.gate-ok{font-size:11.5px;font-weight:700;color:var(--sem4)}
+.gate-wait{font-size:11.5px;font-weight:700;color:var(--sem2)}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.gated-row{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--sem2);border-radius:11px;padding:12px 14px;margin-bottom:8px}
+.gated-row .gn{flex:1;font-size:13px;font-weight:700}
+.gated-row .gu{font-size:11.5px;color:var(--sem2);font-weight:700;white-space:nowrap}
+.pill-soft{display:inline-block;font-size:11px;color:var(--muted);background:#151a20;border:1px solid var(--line);border-radius:20px;padding:3px 10px}
+/* chat */
+.chat{margin-top:10px}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}
+.qchip{font-size:12.5px;font-weight:600;color:var(--ink);background:#151a20;border:1px solid var(--line);border-radius:20px;padding:8px 14px;cursor:pointer;transition:.15s}
+.qchip:hover{border-color:var(--cyan);color:#fff}
+.cinput{display:flex;gap:10px;margin-bottom:16px}
+.cinput input{flex:1;background:#0f141a;border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:inherit;font-size:13.5px;padding:12px 14px}
+.cinput input:focus{outline:none;border-color:var(--cyan)}
+.cinput button{background:var(--cyan);color:#04121a;border:0;border-radius:10px;font-family:inherit;font-weight:800;font-size:13px;padding:0 20px;cursor:pointer}
+.verdict{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:6px}
+.verdict .vq{font-size:12px;color:var(--grey);margin-bottom:4px}
+.verdict .vt{font-size:18px;font-weight:800;margin-bottom:14px}
+.vrow{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.vrow:first-of-type{border-top:0}
+.vk{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.vv{font-size:13.5px;color:var(--ink);line-height:1.5}
+.vv .g-open{color:var(--sem2);font-weight:700}.vv .g-green{color:var(--sem4);font-weight:700}
+.foot{color:var(--grey);font-size:11.5px;border-top:1px solid var(--line);margin-top:40px;padding:20px 0 60px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}.eco{grid-template-columns:1fr 1fr}.pgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">LEAP<span class="b">FI</span> &middot; Leap Studio</div>
+  <span class="pill"><span class="dot"></span> LIVE MODEL &middot; illustrative</span>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>Design your AI investment.</h1>
+    <p>Set how far and how fast you want to go with AI. Leap Studio weighs your ambition against your current risk posture, then hands back the portfolio that fits your budget, the return you can expect, and exactly which controls have to close first.</p>
+    <div class="postrip">
+      <span class="chip">Institution &middot; <b>NorthWinds Credit Union</b></span>
+      <span class="chip">Current posture &middot; <b id="curband">Minimal</b></span>
+      <span class="chip">Governance readiness &middot; <b id="curready">72%</b></span>
+      <span class="chip">Opportunities in library &middot; <b>14</b></span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- LEVERS -->
+    <div class="card">
+      <h2>Your levers</h2>
+      <div class="csub">Drag to model. Everything on the right recomputes live.</div>
+
+      <div class="lever">
+        <div class="lt"><span class="ln">Ambition &middot; target maturity</span><span class="lv" id="amb-v">Embedded</span></div>
+        <input type="range" id="amb" min="0" max="3" step="1" value="3">
+        <div class="lh">How far you want to take AI across the institution.</div>
+      </div>
+      <div class="lever">
+        <div class="lt"><span class="ln">Risk tolerance</span><span class="lv" id="tol-v">Balanced</span></div>
+        <input type="range" id="tol" min="0" max="100" step="1" value="52">
+        <div class="lh">How green a control must be before a play unlocks.</div>
+      </div>
+      <div class="lever">
+        <div class="lt"><span class="ln">Investment horizon</span><span class="lv" id="speed-v">Balanced</span></div>
+        <input type="range" id="speed" min="0" max="2" step="1" value="1">
+        <div class="lh">Quick wins now, or foundational bets that compound.</div>
+      </div>
+      <div class="lever">
+        <div class="lt"><span class="ln">Annual budget</span><span class="lv" id="budget-v">$450k</span></div>
+        <input type="range" id="budget" min="100000" max="1500000" step="25000" value="450000">
+        <div class="lh">What you can put toward AI this year.</div>
+      </div>
+      <div class="lever">
+        <div class="lt"><span class="ln">Target ROI &middot; 3-year</span><span class="lv" id="roi-v">2.5&times;</span></div>
+        <input type="range" id="roi" min="0.8" max="5" step="0.1" value="2.5">
+        <div class="lh">Your bar for return. We flag when the plan clears it.</div>
+      </div>
+      <div class="lever">
+        <div class="lt"><span class="ln">Adoption / efficacy</span><span class="lv" id="eff-v">55%</span></div>
+        <input type="range" id="eff" min="20" max="80" step="5" value="55">
+        <div class="lh">How fully the team will actually use each tool. The multiplier that swings every dollar.</div>
+      </div>
+    </div>
+
+    <!-- ECONOMICS -->
+    <div class="card">
+      <h2>What that gets you</h2>
+      <div class="csub" id="eco-sub">A funded portfolio, weighed against your posture.</div>
+      <div class="eco">
+        <div class="big">
+          <div class="lab">Expected 3-year ROI</div>
+          <div class="num" id="roi-out">2.4&times;</div>
+          <div class="sub" id="roi-note">on your adoption assumption</div>
+        </div>
+        <div class="k"><div class="lab">Payback</div><div class="knum" id="pay-out">14 mo</div><div class="sub">blended</div></div>
+        <div class="k"><div class="lab">Plays funded</div><div class="knum" id="cnt-out">6</div><div class="sub" id="cnt-sub">of 14</div></div>
+        <div class="k"><div class="lab">Build cost</div><div class="knum" id="cost-out">$430k</div><div class="sub">one-time</div></div>
+        <div class="k"><div class="lab">Annual value</div><div class="knum" id="val-out">$690k</div><div class="sub">at adoption</div></div>
+        <div class="k"><div class="lab">Controls to close</div><div class="knum" id="ctc-out">6</div><div class="sub" id="ctc-sub">to reach target</div></div>
+      </div>
+
+      <div class="posture">
+        <div class="lab" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">Posture vs ambition</div>
+        <div class="pbar" id="pbar"></div>
+        <div class="pnote" id="pnote"></div>
+        <div class="warnflag" id="warn">You&rsquo;re reaching past your controls. At this tolerance, several high-value plays stay gated until you close the controls below &mdash; the sequence puts those first.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PORTFOLIO -->
+  <div class="sect-lab">Your funded portfolio</div>
+  <table class="ptbl">
+    <thead><tr><th style="width:30%">Play</th><th>Category</th><th>Build</th><th>Annual value</th><th>Payback</th><th>Risk</th><th>Gate</th></tr></thead>
+    <tbody id="ptbody"></tbody>
+  </table>
+
+  <div class="pgrid">
+    <div>
+      <div class="sect-lab">Sequence-gated &middot; unlocks after controls close</div>
+      <div id="gatedlist"></div>
+    </div>
+    <div>
+      <div class="sect-lab">Ready, not yet funded &middot; raise budget to add</div>
+      <div id="benchlist"></div>
+    </div>
+  </div>
+
+  <!-- ADVISOR -->
+  <div class="sect-lab">Ask the advisor</div>
+  <div class="card chat">
+    <h2>Posture &amp; feasibility, on any AI idea</h2>
+    <div class="csub">Describe a play, or ask &ldquo;should we do X?&rdquo; &mdash; the engine answers with build cost, the controls that gate it, where it slots, and the return at your adoption setting.</div>
+    <div class="cinput">
+      <input id="cq" placeholder="e.g. Can we use AI to draft adverse-action letters?" onkeydown="if(event.key==='Enter')ask(this.value)">
+      <button onclick="ask(document.getElementById('cq').value)">Ask</button>
+    </div>
+    <div class="chips" id="qchips"></div>
+    <div id="verdict"></div>
+  </div>
+
+  <div class="foot">
+    Leap Studio &middot; illustrative model on sample data &middot; NorthWinds Credit Union. Figures are planning envelopes, not commitments; build estimates draw on comparable implementations and carry confidence, not precision. Governance gating reflects the current control posture. Not legal or investment advice.
+  </div>
+</div>
+
+<script>
+/* ============ DATA ============ */
+var CTRL={'Govern':84,'Model Risk':70,'UDAAP':62,'Fair Lending':68,'BSA/AML':74,'Privacy':80,'InfoSec':90,'TPRM':66,'Adverse Action':55};
+var BANDS=['Initial','Minimal','Evolving','Embedded'];
+var CUR=1; // current band = Minimal
+var GREEN=80; // a control is "closed/green" at >=80
+
+var OPPS=[
+ {n:'Member secure-message triage',c:'Member service',cost:45000,val:180000,h:'quick',r:'low',g:['UDAAP','Model Risk']},
+ {n:'AI adverse-action letter drafting',c:'Lending',cost:60000,val:150000,h:'quick',r:'high',g:['Adverse Action','UDAAP','Fair Lending']},
+ {n:'Transaction-monitoring tuning assist',c:'BSA / AML',cost:120000,val:330000,h:'strategic',r:'med',g:['BSA/AML','Model Risk']},
+ {n:'Loan-document summarization',c:'Lending ops',cost:35000,val:150000,h:'quick',r:'low',g:['Privacy']},
+ {n:'Member FAQ chatbot',c:'Member service',cost:40000,val:120000,h:'quick',r:'med',g:['UDAAP','Model Risk']},
+ {n:'Unified data spine',c:'Foundation',cost:250000,val:120000,h:'strategic',r:'low',g:['InfoSec'],found:true},
+ {n:'Fraud model refresh',c:'Fraud',cost:90000,val:260000,h:'strategic',r:'med',g:['Model Risk']},
+ {n:'Marketing personalization',c:'Growth',cost:30000,val:110000,h:'quick',r:'med',g:['Fair Lending','UDAAP']},
+ {n:'Call-center copilot',c:'Member service',cost:50000,val:200000,h:'quick',r:'low',g:['Privacy']},
+ {n:'SAR narrative drafting',c:'BSA / AML',cost:40000,val:130000,h:'quick',r:'med',g:['BSA/AML']},
+ {n:'Vendor-risk automation',c:'Governance',cost:35000,val:90000,h:'quick',r:'low',g:['TPRM']},
+ {n:'Deposit pricing optimization',c:'Treasury',cost:80000,val:240000,h:'strategic',r:'med',g:['Model Risk']},
+ {n:'Underwriting assist',c:'Lending',cost:150000,val:400000,h:'strategic',r:'high',g:['Fair Lending','Adverse Action','Model Risk']},
+ {n:'Complaint analytics',c:'Member service',cost:25000,val:90000,h:'quick',r:'low',g:['UDAAP']}
+];
+OPPS.forEach(function(o){o.minGate=Math.min.apply(null,o.g.map(function(x){return CTRL[x];}));o.weakGate=o.g.slice().sort(function(a,b){return CTRL[a]-CTRL[b];})[0];});
+
+var $=function(id){return document.getElementById(id);};
+function fmt(n){return n>=1e6?'$'+(n/1e6).toFixed(2)+'M':'$'+Math.round(n/1000)+'k';}
+function riskOrder(r){return r==='low'?0:r==='med'?1:2;}
+function riskLabel(r){return r==='low'?'Low':r==='med'?'Med':'High';}
+
+function readLevers(){
+  var speedV=+$('speed').value, tolV=+$('tol').value;
+  return {
+    amb:+$('amb').value, tol:tolV, speed:speedV,
+    budget:+$('budget').value, roiTgt:+$('roi').value, eff:+$('eff').value/100,
+    threshold:Math.round(88 - tolV*0.45),   // conservative(high) -> aggressive(low)
+    allowRisk:(+$('amb').value)<=0?1:(+$('amb').value)==1?2:3   // max risk order allowed
+  };
+}
+
+function recompute(){
+  var L=readLevers();
+  // lever labels
+  $('amb-v').textContent=BANDS[L.amb];
+  $('tol-v').textContent=L.tol<34?'Conservative':L.tol<67?'Balanced':'Aggressive';
+  $('speed-v').textContent=['Quick wins','Balanced','Strategic'][L.speed];
+  $('budget-v').textContent=fmt(L.budget);
+  $('roi-v').innerHTML=L.roiTgt.toFixed(1)+'&times;';
+  $('eff-v').textContent=Math.round(L.eff*100)+'%';
+
+  // candidate pool: risk within ambition
+  var pool=OPPS.filter(function(o){return riskOrder(o.r)+1<=L.allowRisk;});
+  // sort by horizon preference
+  pool.sort(function(a,b){
+    if(L.speed===0){ // quick wins: shortest payback, quick first
+      var pa=a.cost/(a.val*L.eff), pb=b.cost/(b.val*L.eff);
+      return (a.h==='quick'?0:1)-(b.h==='quick'?0:1) || pa-pb;
+    } else if(L.speed===2){ // strategic: foundational first, then value
+      return (b.found?1:0)-(a.found?1:0) || b.val-a.val;
+    }
+    return (b.val*L.eff/b.cost)-(a.val*L.eff/a.cost); // balanced: efficiency
+  });
+
+  var ready=[], gated=[];
+  pool.forEach(function(o){ (o.minGate>=L.threshold?ready:gated).push(o); });
+
+  // fund ready within budget
+  var funded=[], bench=[], spent=0, annual=0;
+  ready.forEach(function(o){
+    if(spent+o.cost<=L.budget){ funded.push(o); spent+=o.cost; annual+=o.val*L.eff; }
+    else bench.push(o);
+  });
+
+  var val3=annual*3, roi=spent>0?val3/spent:0, payM=annual>0?Math.round(spent/annual*12):0;
+
+  // economics out
+  $('roi-out').innerHTML=roi.toFixed(1)+'&times;';
+  var meets=roi>=L.roiTgt;
+  $('roi-out').className='num '+(meets?'tgt-ok':'tgt-lo');
+  $('roi-note').textContent=meets?('clears your '+L.roiTgt.toFixed(1)+'× bar'):('below your '+L.roiTgt.toFixed(1)+'× bar — raise budget or adoption');
+  $('pay-out').textContent=payM?payM+' mo':'—';
+  $('cnt-out').textContent=funded.length; $('cnt-sub').textContent='of '+OPPS.length;
+  $('cost-out').textContent=fmt(spent);
+  $('val-out').textContent=fmt(annual);
+
+  // posture / controls to close
+  var toClose=Object.keys(CTRL).filter(function(k){return CTRL[k]<GREEN;});
+  $('ctc-out').textContent=toClose.length;
+  $('ctc-sub').textContent='to reach '+BANDS[L.amb];
+
+  // posture band bar
+  var pb=''; for(var i=0;i<4;i++){ var cls='pseg'; if(i===CUR)cls+=' cur'; if(i===L.amb)cls+=' tgt'; else if(i>CUR&&i<L.amb)cls+=' between'; pb+='<div class="'+cls+'">'+BANDS[i]+(i===CUR?' • now':'')+(i===L.amb&&i!==CUR?' • goal':'')+'</div>'; }
+  $('pbar').innerHTML=pb;
+  var gap=L.amb-CUR;
+  $('pnote').innerHTML = gap<=0
+    ? 'You&rsquo;re targeting your current band. '+funded.length+' plays fit today with '+gated.length+' still gated.'
+    : 'Moving from <b>'+BANDS[CUR]+'</b> to <b>'+BANDS[L.amb]+'</b> means closing <b>'+toClose.length+' controls</b>: '+toClose.join(', ')+'. Until then, '+gated.length+' higher-value plays stay sequence-gated.';
+  $('warn').className='warnflag'+((L.tol>66&&gap>=2&&gated.length>0)?' on':'');
+
+  // funded table
+  var tb=funded.map(function(o){
+    var pay=Math.round(o.cost/(o.val*L.eff)*12);
+    return '<tr><td><div class="pname">'+o.n+(o.found?' <span class="pill-soft">foundational</span>':'')+'</div></td>'
+      +'<td class="pcat">'+o.c+'</td><td>'+fmt(o.cost)+'</td><td>'+fmt(o.val*L.eff)+'</td><td>'+pay+' mo</td>'
+      +'<td><span class="rtag '+o.r+'">'+riskLabel(o.r)+'</span></td>'
+      +'<td><span class="gate-ok">✓ clear</span></td></tr>';
+  }).join('') || '<tr><td colspan="7" style="color:var(--grey)">No plays fit at this budget and tolerance. Raise the budget or loosen tolerance.</td></tr>';
+  $('ptbody').innerHTML=tb;
+
+  // gated list
+  $('gatedlist').innerHTML = gated.length? gated.slice(0,6).map(function(o){
+    return '<div class="gated-row"><span class="gate-wait">●</span><div class="gn">'+o.n+'<div class="pcat">'+fmt(o.val*L.eff)+'/yr · '+o.c+'</div></div><span class="gu">unlocks after '+o.weakGate+' ('+CTRL[o.weakGate]+'%)</span></div>';
+  }).join('') : '<div class="pill-soft">Nothing gated at this tolerance.</div>';
+
+  // bench (ready, unfunded)
+  $('benchlist').innerHTML = bench.length? bench.slice(0,6).map(function(o){
+    return '<div class="gated-row" style="border-left-color:var(--cyan)"><span style="color:var(--cyan)">○</span><div class="gn">'+o.n+'<div class="pcat">'+fmt(o.val*L.eff)+'/yr · build '+fmt(o.cost)+'</div></div><span class="gu" style="color:var(--cyan)">+'+fmt(o.cost)+' to add</span></div>';
+  }).join('') : '<div class="pill-soft">Everything ready is funded.</div>';
+}
+
+/* ============ ADVISOR ============ */
+function gateHTML(o){
+  return o.g.map(function(k){var ok=CTRL[k]>=GREEN;return '<span class="'+(ok?'g-green':'g-open')+'">'+k+' '+CTRL[k]+'%'+(ok?' ✓':' — open')+'</span>';}).join(' &middot; ');
+}
+function verdict(o){
+  var L=readLevers(); var pay=Math.round(o.cost/(o.val*L.eff)*12); var ready=o.minGate>=L.threshold;
+  var openG=o.g.filter(function(k){return CTRL[k]<GREEN;});
+  return '<div class="verdict"><div class="vq">You asked</div><div class="vt">'+o.n+'</div>'
+   +'<div class="vrow"><div class="vk">Feasibility</div><div class="vv">Build ≈ <b>'+fmt(o.cost)+'</b> · from comparable implementations (planning envelope, '+(o.found?'foundational':o.h)+'). '+riskLabel(o.r)+' risk.</div></div>'
+   +'<div class="vrow"><div class="vk">Posture</div><div class="vv">Gated by: '+gateHTML(o)+'.</div></div>'
+   +'<div class="vrow"><div class="vk">Placement</div><div class="vv">'+(ready?'<span class="g-green">Ready now</span> at your current tolerance — fits the funded portfolio.':'<span class="g-open">Sequence-gated</span> — unlocks after <b>'+o.weakGate+'</b> closes ('+CTRL[o.weakGate]+'% → 80%). '+(openG.length?'Open controls: '+openG.join(', ')+'.':''))+'</div></div>'
+   +'<div class="vrow"><div class="vk">Return</div><div class="vv"><b>'+fmt(o.val*L.eff)+'/yr</b> at your '+Math.round(L.eff*100)+'% adoption · payback ≈ <b>'+pay+' mo</b>.</div></div></div>';
+}
+function intake(q){
+  return '<div class="verdict"><div class="vq">New idea &middot; intake</div><div class="vt">'+(q||'Your AI idea')+'</div>'
+   +'<div class="vv" style="margin-bottom:10px">I don&rsquo;t have a comparable for this yet, so let me capture it. A few quick questions and I&rsquo;ll draft the feasibility, risk, and roadmap slot:</div>'
+   +'<div class="vrow"><div class="vk">Effort today</div><div class="vv">How many people do this now, and how many hours a week?</div></div>'
+   +'<div class="vrow"><div class="vk">Volume</div><div class="vv">How many items/month, and how many complaints or errors does it generate?</div></div>'
+   +'<div class="vrow"><div class="vk">Exposure</div><div class="vv">Is it member-facing, and does it touch a lending or fair-treatment decision?</div></div>'
+   +'<div class="vrow"><div class="vk">Data</div><div class="vv">What sensitivity of data does it use (public, internal, member PII)?</div></div>'
+   +'<div class="vv" style="margin-top:12px;color:var(--muted)">Answer those and I&rsquo;ll return a build estimate, the controls that gate it, and where it slots on your roadmap.</div></div>';
+}
+function ask(q){
+  q=(q||'').toLowerCase().trim();
+  if(!q){return;}
+  var hit=OPPS.find(function(o){var t=o.n.toLowerCase();return q.split(/\s+/).some(function(w){return w.length>3&&t.indexOf(w)>=0;})||t.split(/\s+/).some(function(w){return w.length>3&&q.indexOf(w)>=0;});});
+  $('verdict').innerHTML = hit? verdict(hit) : intake(q);
+  $('verdict').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* preset chips */
+['AI adverse-action letters','Auto-answer member messages','Deposit pricing optimization','Fraud model refresh'].forEach(function(q){
+  var el=document.createElement('span'); el.className='qchip'; el.textContent=q; el.onclick=function(){$('cq').value=q;ask(q);};
+  document.getElementById('qchips').appendChild(el);
+});
+
+['amb','tol','speed','budget','roi','eff'].forEach(function(id){$(id).addEventListener('input',recompute);});
+recompute();
+</script>
+</body>
+</html>
