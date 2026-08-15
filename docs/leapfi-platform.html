@@ -586,7 +586,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.035</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.036</b></div>
   </div>
 </aside>
 
@@ -710,7 +710,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
             <div class="ticks"><span>$100k</span><span>$800k</span><span>$1.5M</span></div>
           </div>
           <div class="lever">
-            <div class="lt"><span class="ln">Target ROI · 3-year <span class="tip" data-tip="The hurdle every plan must clear. If the computed portfolio return falls below this bar, Studio flags it: raise budget, raise adoption, or lower the bar.">i</span></span><span class="lv" id="roi-v">2.5&times;</span></div>
+            <div class="lt"><span class="ln">Target ROI · 3-year <span class="tip" data-tip="The hurdle to judge the plan against, not a constraint the engine optimizes to. Plays fund best-first, so a bigger budget reaches deeper into the register and the blended return falls even as total value rises. When the blend dips below the bar, trim the budget to the highest-yield plays, raise adoption, or lower the bar.">i</span></span><span class="lv" id="roi-v">2.5&times;</span></div>
             <input type="range" id="roi" min="0.8" max="5" step="0.1" value="2.5">
             <div class="ticks"><span>0.8&times;</span><span>3&times;</span><span>5&times;</span></div>
           </div>
@@ -848,6 +848,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.036</span> · <span class="cd">Aug 15, 2026</span><br>The ROI guidance now explains the diminishing-returns math instead of contradicting it. Plays fund best-first, so a larger budget reaches deeper into the register and the blended return falls even as total value rises. When the blend is below the bar, the note shows the marginal return of the last play funded and points at the moves that actually help: trim to the best plays, raise adoption, or lower the bar. The Target ROI tooltip carries the same explanation.</li>
             <li><span class="cv">v 1.035</span> · <span class="cd">Aug 15, 2026</span><br>Design studio levers gained real granularity. Investment horizon is a continuous dial: every notch shifts the weighting between fastest-payback and foundational-first sequencing instead of snapping between three modes. Risk appetite now shows the exact unlock gate its position produces (each notch moves the gate). Budget moves in $5k steps and adoption in single points. Ambition stays a five-stop lever on purpose: it maps to the five maturity bands the domain targets are judged against.</li>
             <li><span class="cv">v 1.034</span> · <span class="cd">Aug 15, 2026</span><br>The target-lever rationale is live. At the approved target it shows the board-approved appetite statement. Move the slider and it becomes a what-if: the new bar&rsquo;s obligation math, what would be open against it today, and the approved statement it departs from, with one-click paths to reset to the approved target or adopt the new one (stamped with approver, date, and a route to the Board Risk Committee).</li>
             <li><span class="cv">v 1.033</span> · <span class="cd">Aug 15, 2026</span><br>The redline approval workflow is live. Approve &amp; adopt bumps the document version, flips its status to Current, seals the new language as in force, archives the prior text, and writes the audit entry with approver and date. Route to consultancy queues the draft with the engagement team while approval authority stays with the owner. Reject returns it to OnSide to redraft, with a restore path. State carries across the document viewer and the obligation drawer, and every action lands in the document&rsquo;s activity log.</li>
@@ -887,7 +888,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.035</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.036</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1018,7 +1019,10 @@ function recompute(){
   $('roi-out').innerHTML=roi.toFixed(1)+'&times;';
   var meets=roi>=L.roiTgt;
   $('roi-out').className='num '+(meets?'tgt-ok':'tgt-lo');
-  $('roi-note').textContent=meets?('clears your '+L.roiTgt.toFixed(1)+'× bar'):('below your '+L.roiTgt.toFixed(1)+'× bar; raise budget or adoption');
+  var lastP=funded[funded.length-1], marg=lastP?(lastP.val*L.eff*3/lastP.cost):0;
+  $('roi-note').textContent=meets?('clears your '+L.roiTgt.toFixed(1)+'× bar · blended across '+funded.length+' plays')
+   :(lastP&&marg<L.roiTgt)?('below your '+L.roiTgt.toFixed(1)+'× bar · the last play funded returns '+marg.toFixed(1)+'× and dilutes the blend · trim budget to the best plays, raise adoption, or lower the bar')
+   :('below your '+L.roiTgt.toFixed(1)+'× bar · foundational builds in the mix pay off in later years · raise adoption, tilt the horizon toward quick wins, or lower the bar');
   $('pay-out').textContent=payM?payM+' mo':'·';
   $('cnt-out').textContent=funded.length; $('cnt-sub').textContent='of '+OPPS.length;
   $('cost-out').textContent=fmt(spent);
