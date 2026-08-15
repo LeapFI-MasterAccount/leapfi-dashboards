@@ -586,7 +586,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.034</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.035</b></div>
   </div>
 </aside>
 
@@ -700,13 +700,13 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
             <div class="ticks" id="tol-t"><span>Conservative</span><span>Balanced</span><span>Aggressive</span></div>
           </div>
           <div class="lever">
-            <div class="lt"><span class="ln">Investment horizon <span class="tip" data-tip="How the funded plays are sequenced across the year. Quick wins orders by fastest payback, value landing in months. Strategic funds foundational bets first (the data foundation), accepting slower early returns for compounding later years. Balanced weighs both.">i</span></span><span class="lv" id="speed-v">Balanced</span></div>
-            <input type="range" id="speed" min="0" max="2" step="1" value="1">
+            <div class="lt"><span class="ln">Investment horizon <span class="tip" data-tip="A dial, not three choices. Toward Quick wins the plan orders by fastest payback, value landing in months. Toward Strategic it funds foundational bets first (the data foundation), accepting slower early returns for compounding later years. Every notch shifts the weighting between the two.">i</span></span><span class="lv" id="speed-v">Balanced</span></div>
+            <input type="range" id="speed" min="0" max="100" step="1" value="50">
             <div class="ticks" id="speed-t"><span>Quick wins</span><span>Balanced</span><span>Strategic</span></div>
           </div>
           <div class="lever">
             <div class="lt"><span class="ln">Annual budget <span class="tip" data-tip="The funding envelope. Plays are funded in sequence until the envelope is spent. The rest wait on the bench.">i</span></span><span class="lv" id="budget-v">$450k</span></div>
-            <input type="range" id="budget" min="100000" max="1500000" step="25000" value="450000">
+            <input type="range" id="budget" min="100000" max="1500000" step="5000" value="450000">
             <div class="ticks"><span>$100k</span><span>$800k</span><span>$1.5M</span></div>
           </div>
           <div class="lever">
@@ -716,7 +716,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           </div>
           <div class="lever">
             <div class="lt"><span class="ln">Adoption / efficacy <span class="tip" data-tip="The share of eligible work that actually flows through each tool once live. Measured after launch from usage telemetry and outcome sampling; set it here from your change-management confidence. Every value figure scales linearly with it, because low adoption is where most ROI quietly dies.">i</span></span><span class="lv" id="eff-v">55%</span></div>
-            <input type="range" id="eff" min="20" max="80" step="5" value="55">
+            <input type="range" id="eff" min="20" max="80" step="1" value="55">
             <div class="ticks"><span>20%</span><span>50%</span><span>80%</span></div>
           </div>
         </div>
@@ -848,6 +848,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.035</span> · <span class="cd">Aug 15, 2026</span><br>Design studio levers gained real granularity. Investment horizon is a continuous dial: every notch shifts the weighting between fastest-payback and foundational-first sequencing instead of snapping between three modes. Risk appetite now shows the exact unlock gate its position produces (each notch moves the gate). Budget moves in $5k steps and adoption in single points. Ambition stays a five-stop lever on purpose: it maps to the five maturity bands the domain targets are judged against.</li>
             <li><span class="cv">v 1.034</span> · <span class="cd">Aug 15, 2026</span><br>The target-lever rationale is live. At the approved target it shows the board-approved appetite statement. Move the slider and it becomes a what-if: the new bar&rsquo;s obligation math, what would be open against it today, and the approved statement it departs from, with one-click paths to reset to the approved target or adopt the new one (stamped with approver, date, and a route to the Board Risk Committee).</li>
             <li><span class="cv">v 1.033</span> · <span class="cd">Aug 15, 2026</span><br>The redline approval workflow is live. Approve &amp; adopt bumps the document version, flips its status to Current, seals the new language as in force, archives the prior text, and writes the audit entry with approver and date. Route to consultancy queues the draft with the engagement team while approval authority stays with the owner. Reject returns it to OnSide to redraft, with a restore path. State carries across the document viewer and the obligation drawer, and every action lands in the document&rsquo;s activity log.</li>
             <li><span class="cv">v 1.032</span> · <span class="cd">Aug 15, 2026</span><br>Home is clickable everywhere: panel titles (Risk posture, Investments, Return, Your queue, Legislation &amp; rulemaking) open their sections, and every list row responds to a click anywhere on it, name included, with the name lighting up on hover. The Open and Review labels stay as the visual cue.</li>
@@ -886,7 +887,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.034</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.035</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -984,11 +985,14 @@ function readLevers(){
     threshold:Math.round(88 - tolV*0.45), allowRisk:(+$('amb').value)<=1?1:(+$('amb').value)==2?2:3};
 }
 function sortPool(pool,L){
-  pool.sort(function(a,b){
-    if(L.speed===0){var pa=a.cost/(a.val*L.eff),pb=b.cost/(b.val*L.eff);return (a.h==='quick'?0:1)-(b.h==='quick'?0:1)||pa-pb;}
-    else if(L.speed===2){return (b.found?1:0)-(a.found?1:0)||b.val-a.val;}
-    return (b.val*L.eff/b.cost)-(a.val*L.eff/a.cost);
-  });
+  var w=Math.max(0,Math.min(1,L.speed/100));
+  function score(o){
+    var pay=o.cost/(o.val*L.eff);
+    var quick=-pay+(o.h==='quick'?0.4:0);
+    var strat=(o.found?2:0)+o.val/500000;
+    return (1-w)*quick+w*strat;
+  }
+  pool.sort(function(a,b){return score(b)-score(a);});
   return pool;
 }
 function computePlan(){
@@ -1005,8 +1009,8 @@ function computePlan(){
 function recompute(){
   var L=readLevers();
   $('amb-v').textContent=BANDS[L.amb];
-  $('tol-v').textContent=L.tol<34?'Conservative':L.tol<67?'Balanced':'Aggressive';
-  $('speed-v').textContent=['Quick wins','Balanced','Strategic'][L.speed];
+  $('tol-v').textContent=(L.tol<34?'Conservative':L.tol<67?'Balanced':'Aggressive')+' · gate '+L.threshold+'%';
+  $('speed-v').textContent=(L.speed<34?'Quick wins':L.speed<67?'Balanced':'Strategic')+' · '+L.speed;
   $('budget-v').textContent=fmt(L.budget);
   $('roi-v').innerHTML=L.roiTgt.toFixed(1)+'&times;';
   $('eff-v').textContent=Math.round(L.eff*100)+'%';
@@ -1042,7 +1046,7 @@ function recompute(){
   $('benchlist').innerHTML = bench.length? bench.slice(0,6).map(function(o){
     return '<div class="gated-row" data-play="'+o.n+'" style="border-left-color:var(--cyan)"><span style="color:var(--cyan)">○</span><div class="gn">'+o.n+'<div class="pcat">'+fmt(o.val*L.eff)+'/yr · build '+fmt(o.cost)+'</div></div><span class="gu" style="color:var(--cyan)">+'+fmt(o.cost)+' to add</span></div>';
   }).join('') : '<div class="pill-soft">Everything ready is funded.</div>';
-  setTicks('amb-t',L.amb); setTicks('tol-t',L.tol<34?0:L.tol<67?1:2); setTicks('speed-t',L.speed);
+  setTicks('amb-t',L.amb); setTicks('tol-t',L.tol<34?0:L.tol<67?1:2); setTicks('speed-t',L.speed<34?0:L.speed<67?1:2);
   var stn=stanceText(L,gap,ready.length,gated.length);
   $('stance').innerHTML=stn.html; $('stance').parentNode.className='stance'+(stn.tension?' tension':'');
   renderGantt(P); renderRegister(); renderPipe();
