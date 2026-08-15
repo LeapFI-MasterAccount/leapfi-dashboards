@@ -586,7 +586,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.033</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.034</b></div>
   </div>
 </aside>
 
@@ -848,6 +848,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.034</span> · <span class="cd">Aug 15, 2026</span><br>The target-lever rationale is live. At the approved target it shows the board-approved appetite statement. Move the slider and it becomes a what-if: the new bar&rsquo;s obligation math, what would be open against it today, and the approved statement it departs from, with one-click paths to reset to the approved target or adopt the new one (stamped with approver, date, and a route to the Board Risk Committee).</li>
             <li><span class="cv">v 1.033</span> · <span class="cd">Aug 15, 2026</span><br>The redline approval workflow is live. Approve &amp; adopt bumps the document version, flips its status to Current, seals the new language as in force, archives the prior text, and writes the audit entry with approver and date. Route to consultancy queues the draft with the engagement team while approval authority stays with the owner. Reject returns it to OnSide to redraft, with a restore path. State carries across the document viewer and the obligation drawer, and every action lands in the document&rsquo;s activity log.</li>
             <li><span class="cv">v 1.032</span> · <span class="cd">Aug 15, 2026</span><br>Home is clickable everywhere: panel titles (Risk posture, Investments, Return, Your queue, Legislation &amp; rulemaking) open their sections, and every list row responds to a click anywhere on it, name included, with the name lighting up on hover. The Open and Review labels stay as the visual cue.</li>
             <li><span class="cv">v 1.031</span> · <span class="cd">Aug 15, 2026</span><br>Removed the always-on compliance loop explainer from the bottom of the OnSide overview. The overview ends on the objectives driving scope.</li>
@@ -885,7 +886,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.033</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.034</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1372,6 +1373,25 @@ var DOMAINS=[
 var DOCS_TOTAL=517, DOC_CATS=[['Policies & procedures',214],['Evidence artifacts',183],['Committee & board records',66],['Training & attestations',54]];
 var SCOPE_EVENTS=[];
 function domByKey(k){return DOMAINS.filter(function(d){return d.key===k;})[0];}
+DOMAINS.forEach(function(d){d.t0=d.target;d.why0=d.why;});
+function whyText(d){
+  if(d.target===d.t0)return d.why0;
+  var need=Math.ceil(d.target/5*d.appl), need0=Math.ceil(d.t0/5*d.appl), toClose=oblToClose(d);
+  var dir=d.target>d.t0?'raised':'lowered';
+  return '<b>What-if · target '+dir+' from '+d.t0+' · '+BANDS[d.t0-1]+' to '+d.target+' · '+BANDS[d.target-1]+'.</b> '
+   +'This bar requires <b>'+need+'</b> of '+d.appl+' obligations at required maturity'
+   +(need>need0?' ('+(need-need0)+' more than the approved bar). ':need<need0?' ('+(need0-need)+' fewer than the approved bar). ':'. ')
+   +(toClose>0?'<b>'+toClose+'</b> would be open against it today. ':'Nothing would be open against it today. ')
+   +'The board-approved appetite still reads: '+d.why0+'<div style="margin-top:7px"><span class="doclink" onclick="event.stopPropagation();setTarget(\''+d.key+'\','+d.t0+')">Reset to the approved target ('+d.t0+')</span> &nbsp;·&nbsp; <span class="doclink" onclick="event.stopPropagation();adoptTarget(\''+d.key+'\')">Adopt '+d.target+' as the new target →</span></div>';
+}
+function adoptTarget(key){
+  var d=domByKey(key); if(!d)return;
+  d.t0=d.target;
+  d.why0='Target <b>'+d.target+' · '+BANDS[d.target-1]+'</b>: adopted Aug 15, 2026 by '+CURRENT.first+(CURRENT.role?' ('+CURRENT.role+')':'')+', routed to the Board Risk Committee for ratification. Determination provenance re-stamped, prior rationale archived.';
+  if(onsideView==='domains'){var el=$('onside-views');if(el)el.innerHTML=osDomainsMaster();}
+  else onsideShow(onsideView);
+  renderHome();
+}
 function curOf(d){return d.met/d.appl*5;}
 function oblToClose(d){return Math.max(0,Math.round(d.target/5*d.appl - d.met));}
 function statusOf(d){if(oblToClose(d)>0)return 'below';return curOf(d)>=d.target+0.5?'above':'at';}
@@ -1793,7 +1813,7 @@ function osTargets(){
     return '<div class="tgt-row"><div><div class="tn doclink" onclick="onsideShow(\'dom-'+d.key+'\')">'+d.name+' →</div><div class="tb">'+d.bodies+' · '+d.owner+'</div></div>'
      +'<div>'+lv5(d)+'</div>'
      +'<div><input type="range" min="1" max="5" step="1" value="'+d.target+'" onchange="setTarget(\''+d.key+'\',this.value)"><div class="tgt-lab"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div><div style="margin-top:5px">'+statusChip(d)+' <span style="font-size:10.5px;color:var(--grey)">'+oblToClose(d)+' obligations to close</span></div></div>'
-     +'<div class="why">'+d.why+'</div></div>';
+     +'<div class="why">'+whyText(d)+'</div></div>';
   }).join('');
   return '<div class="card"><h2>Posture &amp; targets · the institution sets the bar</h2><div class="csub">Not every institution needs the same level of compliance. Each domain target is set from risk appetite and the use cases in the portfolio; posture is the gap to <b>your</b> target. Move any slider and the judgment recomputes.</div>'+rows+'</div>'
    +'<div class="card" style="margin-top:14px"><h2>Determination provenance</h2><div class="csub">Every inclusion, exclusion, and target carries its rationale: the appetite statement or use case that drove it, who approved it, and when. Examiners see the reasoning behind the score.</div></div>';
@@ -1816,7 +1836,7 @@ function osDomain(key){
   var head='<div class="card"><div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap"><div><h2 style="font-size:16px;text-transform:none;letter-spacing:0;color:var(--ink)">'+d.name+'</h2><div class="csub" style="margin-bottom:6px">'+d.bodies+' · '+(key==='mrm'?instrLink('2026-13',d.inst):key==='tprm'?instrLink('88 FR 37920',d.inst):key==='bsa'?instrLink('31 CFR Ch. X',d.inst):key==='aigov'?instrLink('CRI',d.inst):d.inst)+' · Owner: '+d.owner+'</div></div>'+statusChip(d)+'</div>'
    +'<div style="max-width:520px">'+lv5(d)+'</div>'
    +'<div class="csub" style="margin-top:10px">'+d.appl+(d.tot>d.appl?' of '+d.tot:'')+' obligations in scope · '+d.met+' at required maturity · '+oblToClose(d)+' to close for target '+d.target+' · <span class="doclink" onclick="onsideShow(\'docs\')">'+d.docs+' documents</span> · <span class="doclink" onclick="onsideShow(\'docs\')">'+d.ev+' evidence artifacts</span></div>'
-   +'<div class="why" style="font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--cyan);border-radius:10px;padding:11px 14px;margin-top:8px">'+d.why+'</div></div>';
+   +'<div class="why" style="font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--cyan);border-radius:10px;padding:11px 14px;margin-top:8px">'+whyText(d)+'</div></div>';
   var body='';
   if(d.deep&&OBL[key]){
     body='<div class="sect-lab">Obligation register · '+OBL[key].length+' of '+d.appl+' shown · click any row for provenance &amp; evidence</div>'
@@ -2188,7 +2208,7 @@ function domBody(d){
    +'<div style="font-size:11px;color:var(--grey);margin-top:2px">'+d.met+' of '+d.appl+' obligations met at required maturity · tick marks your target</div>'+how+'</div></div>';
   var lever='<div class="tgt-row" style="grid-template-columns:1fr 1.4fr;border-bottom:0;padding-top:4px">'
    +'<div><div class="tb" style="margin-bottom:4px">TARGET · THE LEVER</div><input type="range" min="1" max="5" step="1" value="'+d.target+'" onchange="setTarget(\''+key+'\',this.value)"><div class="tgt-lab"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div><div style="margin-top:6px">'+statusChip(d)+' <span style="font-size:10.5px;color:var(--grey)">'+oblToClose(d)+' obligations to close for target '+d.target+'</span></div></div>'
-   +'<div class="why">'+d.why+'</div></div>';
+   +'<div class="why">'+whyText(d)+'</div></div>';
   var gaps='';
   if(d.deep&&OBL[key]){
     var open=OBL[key].filter(function(o){return o.st!=='met';});
