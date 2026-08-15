@@ -586,7 +586,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.032</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.033</b></div>
   </div>
 </aside>
 
@@ -848,6 +848,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.033</span> · <span class="cd">Aug 15, 2026</span><br>The redline approval workflow is live. Approve &amp; adopt bumps the document version, flips its status to Current, seals the new language as in force, archives the prior text, and writes the audit entry with approver and date. Route to consultancy queues the draft with the engagement team while approval authority stays with the owner. Reject returns it to OnSide to redraft, with a restore path. State carries across the document viewer and the obligation drawer, and every action lands in the document&rsquo;s activity log.</li>
             <li><span class="cv">v 1.032</span> · <span class="cd">Aug 15, 2026</span><br>Home is clickable everywhere: panel titles (Risk posture, Investments, Return, Your queue, Legislation &amp; rulemaking) open their sections, and every list row responds to a click anywhere on it, name included, with the name lighting up on hover. The Open and Review labels stay as the visual cue.</li>
             <li><span class="cv">v 1.031</span> · <span class="cd">Aug 15, 2026</span><br>Removed the always-on compliance loop explainer from the bottom of the OnSide overview. The overview ends on the objectives driving scope.</li>
             <li><span class="cv">v 1.030</span> · <span class="cd">Aug 14, 2026</span><br>Ask the platform and the Opportunity register merged into one page. The conversation sits on top, the pipeline strip and the register it feeds sit directly below, so a scoped idea lands in view the moment it is added. The separate register nav item is gone, and every old register link routes to the merged page and scrolls to the register.</li>
@@ -884,7 +885,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.032</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.033</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1588,7 +1589,54 @@ function showDrawer(html,wide){
 }
 function mockSha(seed){var s=0;for(var i=0;i<seed.length;i++)s=(s*31+seed.charCodeAt(i))>>>0;return ('00000000'+s.toString(16)).slice(-8)+'…'+('00000000'+((s*2654435761)>>>0).toString(16)).slice(-8);}
 function statusTag(st){return st==='good'?'<span class="tag good">Current</span>':st==='warn'?'<span class="tag warn">Update</span>':st==='crit'?'<span class="tag crit">High</span>':'<span class="tag grey">'+st+'</span>';}
+function rlAction(id,act){
+  var d=DOCLIB[id]; if(!d||!d.redline)return;
+  var who=CURRENT.first+' '+(CURRENT.role?'('+CURRENT.role+')':'');
+  d.rlLog=d.rlLog||[];
+  if(act==='adopted'){
+    var m=(d.v||'').match(/^v(\d+)\.(\d+)/);
+    if(m)d.v='v'+m[1]+'.'+(+m[2]+1);
+    d.status='good';
+    d.rlState={act:'adopted',who:who,when:'Aug 15, 2026'};
+    d.rlLog.unshift('Redline approved and adopted as '+d.v+' by '+who+' · Aug 15, 2026 · prior text archived · connected systems notified');
+  } else if(act==='routed'){
+    d.rlState={act:'routed',who:who,when:'Aug 15, 2026'};
+    d.rlLog.unshift('Routed to LeapFI consultancy by '+who+' · Aug 15, 2026 · engagement queue notified');
+  } else if(act==='rejected'){
+    d.rlState={act:'rejected',who:who,when:'Aug 15, 2026'};
+    d.rlLog.unshift('Redline rejected by '+who+' · Aug 15, 2026 · returned to OnSide to redraft');
+  } else if(act==='restore'){
+    d.rlState=null;
+    d.rlLog.unshift('Draft restored for review by '+who+' · Aug 15, 2026');
+  }
+}
+function rlSection(id,reopen){
+  var d=DOCLIB[id]; if(!d||!d.redline)return '';
+  var r=d.redline, st=d.rlState;
+  function btn(act,label,cls){return '<button class="btn'+(cls?' '+cls:'')+'"'+(cls==='rej'?' style="color:var(--sem1);border-color:rgba(201,74,74,.4);background:transparent"':'')+' onclick="rlAction(\''+id+'\',\''+act+'\');'+reopen+'">'+label+'</button>';}
+  if(st&&st.act==='adopted'){
+    return '<div class="dsec"><div class="dh">Adopted language · in force as of '+st.when+'</div>'
+     +'<div class="okline" style="margin-bottom:12px">✓ Approved and adopted as <b>'+d.v+'</b> by '+st.who+'. Prior text archived, the SHA-256 fingerprint re-sealed, connected systems notified, and the evidence chain updated. The exam answer is already written.</div>'
+     +'<div class="rl-new">'+r.nw+'</div>'
+     +'<div style="margin-top:10px"><span class="pill-soft">Prior text archived · available in version history</span></div></div>';
+  }
+  var out='<div class="dsec"><div class="dh">Proposed redline · drafted by OnSide</div>'
+   +'<div class="warnline" style="margin-bottom:12px">'+r.note+'</div>'
+   +'<div class="rl-old">'+r.old+'</div>'
+   +'<div class="rl-new">'+r.nw+'</div>';
+  if(st&&st.act==='routed'){
+    out+='<div class="okline" style="margin-top:12px">Routed to LeapFI consultancy by '+st.who+' · '+st.when+'. The engagement team reviews the draft with '+d.owner.split(' · ')[0]+' and returns a recommendation. Approval authority stays here.</div>'
+     +'<div class="actions" style="display:flex;gap:8px;margin-top:12px">'+btn('adopted','Approve &amp; adopt')+btn('rejected','Reject','rej')+'</div>';
+  } else if(st&&st.act==='rejected'){
+    out+='<div class="warnline" style="margin-top:12px">Rejected by '+st.who+' · '+st.when+'. Returned to OnSide to redraft against the owner&rsquo;s notes. Nothing changes in the in-force document until a draft is approved.</div>'
+     +'<div class="actions" style="display:flex;gap:8px;margin-top:12px">'+btn('restore','Restore draft for review')+'</div>';
+  } else {
+    out+='<div class="actions" style="display:flex;gap:8px;margin-top:14px">'+btn('adopted','Approve &amp; adopt')+'<button class="btn ghost" onclick="rlAction(\''+id+'\',\'routed\');'+reopen+'">Route to consultancy</button>'+btn('rejected','Reject','rej')+'</div>';
+  }
+  return out+'</div>';
+}
 function openDocView(id,back){
+  window.__docBack=back;
   var d=DOCLIB[id]; if(!d)return;
   var dom=domByKey(d.dom);
   var obls=(d.obl||[]).map(function(oid){
@@ -1597,11 +1645,8 @@ function openDocView(id,back){
     return deep?'<span class="dchip" onclick="openObl(\''+domKey+'\',\''+oid+'\')">'+oid+' →</span>':'<span class="pill-soft">'+oid+'</span>';
   }).join('');
   var secs=(d.secs||[]).map(function(s){return '<div class="dsec"><div class="dh">'+s[0]+'</div><div style="font-size:13px;color:var(--muted);line-height:1.6">'+s[1]+'</div></div>';}).join('');
-  var rl=d.redline?('<div class="dsec"><div class="dh">Proposed redline · drafted by OnSide</div>'
-    +'<div class="warnline" style="margin-bottom:12px">'+d.redline.note+'</div>'
-    +'<div class="rl-old">'+d.redline.old+'</div>'
-    +'<div class="rl-new">'+d.redline.nw+'</div>'
-    +'<div class="actions" style="display:flex;gap:8px;margin-top:14px"><button class="btn">Approve &amp; adopt</button><button class="btn ghost">Route to consultancy</button><button class="btn ghost" style="color:var(--sem1)">Reject</button></div></div>'):'';
+  var reopen="openDocView('"+id+"',window.__docBack)";
+  var rl=rlSection(id,reopen);
   showDrawer('<div class="dwrap">'
    +'<button class="dclose" onclick="closeDrawer()">✕ Close</button>'
    +(back?'<button class="dclose" style="margin-right:8px" onclick="'+back+'">← Back</button>':'')
@@ -1615,7 +1660,7 @@ function openDocView(id,back){
    +'</div>'
    +secs+rl
    +'<div class="dsec"><div class="dh">Obligations this document evidences</div><div class="dchips">'+(obls||'<span class="pill-soft">Mapped at obligation level in the full register</span>')+'</div></div>'
-   +'<div class="dsec"><div class="dh">Activity</div><ul class="dlist"><li>Verified against current obligations · Aug 14, 2026 scan</li><li>'+(d.redline?'Redline drafted and routed to owner':'No changes proposed this cycle')+'</li><li>Every access and export logged for audit</li></ul></div>'
+   +'<div class="dsec"><div class="dh">Activity</div><ul class="dlist">'+(d.rlLog||[]).map(function(x){return '<li><b style="color:var(--cyan)">'+x+'</b></li>';}).join('')+'<li>Verified against current obligations · Aug 14, 2026 scan</li><li>'+(d.redline?(d.rlState?'Redline drafted by OnSide · actioned above':'Redline drafted and routed to owner'):'No changes proposed this cycle')+'</li><li>Every access and export logged for audit</li></ul></div>'
    +'</div>',false);
 }
 function openInstr(k){
@@ -1655,9 +1700,20 @@ function openObl(domKey,oid){
       var rlDoc=(o.docs||[]).filter(function(did){return DOCLIB[did]&&DOCLIB[did].redline;})[0];
       var out='<div class="dsec"><div class="dh">The remediation</div>';
       out+='<div style="font-size:13px;color:var(--ink);line-height:1.6;margin-bottom:10px">'+(o.fx||'Remediation being scoped by the domain owner.')+'</div>';
-      if(rlDoc){var r=DOCLIB[rlDoc].redline;
-        out+='<div class="csub" style="margin-bottom:8px">'+r.note+'</div><div class="rl-old">'+r.old+'</div><div class="rl-new">'+r.nw+'</div>'
-          +'<div class="actions" style="display:flex;gap:8px;margin-top:12px"><button class="btn">Approve &amp; adopt</button><button class="btn ghost">Route to consultancy</button><button class="btn ghost" onclick="openDocView(\''+rlDoc+'\',\'openObl(&quot;'+d.key+'&quot;,&quot;'+o.id+'&quot;)\')">Open full document</button></div>';}
+      if(rlDoc){var r=DOCLIB[rlDoc].redline, rst=DOCLIB[rlDoc].rlState;
+        var reopenO="openObl('"+domKey+"','"+o.id+"')";
+        if(rst&&rst.act==='adopted'){
+          out+='<div class="okline" style="margin-bottom:10px">✓ Adopted as <b>'+DOCLIB[rlDoc].v+'</b> by '+rst.who+' · '+rst.when+' · the evidence chain now carries the new language.</div><div class="rl-new">'+r.nw+'</div>';
+        } else {
+          out+='<div class="csub" style="margin-bottom:8px">'+r.note+'</div><div class="rl-old">'+r.old+'</div><div class="rl-new">'+r.nw+'</div>';
+          if(rst&&rst.act==='routed')out+='<div class="okline" style="margin-top:10px">Routed to LeapFI consultancy by '+rst.who+' · '+rst.when+'</div>';
+          if(rst&&rst.act==='rejected')out+='<div class="warnline" style="margin-top:10px">Rejected by '+rst.who+' · '+rst.when+' · OnSide is redrafting</div>';
+          out+='<div class="actions" style="display:flex;gap:8px;margin-top:12px">'
+           +((!rst||rst.act==='routed')?'<button class="btn" onclick="rlAction(\''+rlDoc+'\',\'adopted\');'+reopenO+'">Approve &amp; adopt</button>':'')
+           +(!rst?'<button class="btn ghost" onclick="rlAction(\''+rlDoc+'\',\'routed\');'+reopenO+'">Route to consultancy</button>':'')
+           +(rst&&rst.act==='rejected'?'<button class="btn" onclick="rlAction(\''+rlDoc+'\',\'restore\');'+reopenO+'">Restore draft</button>':'')
+           +'<button class="btn ghost" onclick="openDocView(\''+rlDoc+'\',\'openObl(&quot;'+d.key+'&quot;,&quot;'+o.id+'&quot;)\')">Open full document</button></div>';
+        }}
       return out+'</div>';
    })()
    +(o.uc?'<div class="dsec"><div class="dh">Triggered into scope by</div><div class="dchips"><span class="dchip" onclick="closeDrawer();openPlay(\''+o.uc+'\')">'+o.uc+' →</span></div></div>':'')
