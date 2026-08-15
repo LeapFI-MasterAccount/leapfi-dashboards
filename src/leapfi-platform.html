@@ -110,6 +110,20 @@ b{color:var(--ink)}
 .tag.grey{color:var(--muted);background:var(--panel3)}
 .tbl{width:100%;border-collapse:collapse;font-size:12.5px}
 .tbl th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--grey);font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line)}
+/* RACI matrix */
+.raci-wrap{overflow-x:auto}
+table.raci{border-collapse:collapse;width:100%;font-size:12.5px;min-width:680px}
+table.raci th,table.raci td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:middle}
+table.raci thead th{background:var(--panel2);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--grey);font-weight:700;position:sticky;top:0;z-index:1}
+table.raci td.doc{font-weight:700;white-space:nowrap}
+table.raci tr.dgroup td{background:var(--panel2);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--grey);font-weight:700;padding:6px 10px}
+.raci-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;font-size:11px;font-weight:800}
+.raci-R{background:rgba(0,242,255,.14);color:var(--cyan);border:1px solid rgba(0,242,255,.4)}
+.raci-A{background:rgba(0,107,255,.22);color:#7fb8ff;border:1px solid rgba(0,107,255,.55)}
+.raci-C{background:rgba(1,223,217,.08);color:#01dfd9;border:1px solid rgba(1,223,217,.32)}
+.raci-I{background:var(--panel2);color:var(--grey);border:1px solid var(--line)}
+.raci-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;color:var(--grey);align-items:center}
+.raci-legend .raci-badge{width:auto;padding:0 7px;margin-right:5px}
 .tbl td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
 .tbl tr:last-child td{border-bottom:0}
 .bar{height:7px;border-radius:4px;background:#1b2027;position:relative;overflow:visible;min-width:90px}
@@ -535,7 +549,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.021</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.022</b></div>
   </div>
 </aside>
 
@@ -809,6 +823,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.022</span> · <span class="cd">Aug 14, 2026</span><br>The full RACI policy ownership matrix returns to OnSide · RACI &amp; owners: every governance document mapped to Responsible, Accountable, Consulted, and Informed across the eight named roles, grouped by domain, with each document opening its viewer and each domain linking to its gaps and levers. The domain-owner table stays alongside it.</li>
             <li><span class="cv">v 1.021</span> · <span class="cd">Aug 14, 2026</span><br>Every Partial and Gap obligation now opens one view with the whole story, from anywhere on the row: the difference (what the obligation requires vs what exists today) and the remediation (the action, with any drafted language rendered inline as a redline with approve and route actions), shown whether the item is Approved or still in the HITL queue.</li>
             <li><span class="cv">v 1.020</span> · <span class="cd">Aug 14, 2026</span><br>Domains · gaps &amp; levers now links everything. Every open item in every domain links its evidence document, pin-cites open the instrument, and wherever OnSide has drafted proposed language an amber chip opens the redline directly, in both the accordion gap lists and the deep obligation registers. Added the Member Messaging Disclosure Standard draft with its proposed disclosure language.</li>
             <li><span class="cv">v 1.019</span> · <span class="cd">Aug 14, 2026</span><br>Ask page reworked. Headline now reads One conversation with your platform. The greeting bubble is gone, the highlighted input sits directly under the headline with the prompt chips beneath it, and the conversation thread only appears once there is one.</li>
@@ -834,7 +849,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.021</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.022</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1707,10 +1722,80 @@ function osInforce(){
    +'<table class="tbl"><thead><tr><th>Jur.</th><th>Instrument</th><th>Effective</th><th>Domains</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 function osRaci(){
-  var rows=[['R. Fischer','Chief Risk Officer','AI Governance · enterprise risk appetite · target-setting','aigov'],['M. Okafor','Chief Compliance Officer','Consumer / UDAAP · Fair Lending','consumer'],['T. Whitfield','BSA / AML Officer','BSA / AML Program','bsa'],['A. Kaur','Model Risk Manager','Model Risk Management','mrm'],['P. Nguyen','Information Security Director','InfoSec / GLBA · Third-Party Risk','infosec'],['S. Delgado','Business Resiliency Officer','Continuity &amp; operational resilience',null],['D. Reyes','General Counsel','Contracts · regulatory interpretation sign-off',null],['Board Risk Committee','Board','Approves targets, appetite, and material policy changes',null]]
+  var ROLES=[
+    ['CRO','Chief Risk Officer','R. Fischer'],
+    ['CCO','Chief Compliance Officer','M. Okafor'],
+    ['BSA','BSA / AML Officer','T. Whitfield'],
+    ['MRM','Model Risk Manager','A. Kaur'],
+    ['ISD','Information Security Director','P. Nguyen'],
+    ['BRO','Business Resiliency Officer','S. Delgado'],
+    ['GC','General Counsel','D. Reyes'],
+    ['BOARD','Board Risk Committee','Board']
+  ];
+  /* per document: [docId, accountable, responsible, consulted[], informed[]] */
+  var M=[
+    ['aigov','AI Governance',[
+      ['gov-charter','BOARD','CRO',['GC','CCO'],['ISD']]]],
+    ['mrm','Model Risk Management',[
+      ['mrm-policy','CRO','MRM',['GC'],['BOARD','CCO']],
+      ['mrm-validation-fraud','CRO','MRM',['ISD'],['CCO']],
+      ['tiering','CRO','MRM',[],['CCO']],
+      ['inv-log','CRO','MRM',[],['ISD']],
+      ['outcomes','CRO','MRM',['CCO'],['BOARD']],
+      ['doc-standard','CRO','MRM',[],['CCO']],
+      ['mrm-minutes','CRO','MRM',[],['BOARD']],
+      ['board-mrm','BOARD','MRM',['CRO'],['CCO']],
+      ['gen-ai-draft','CRO','MRM',['GC','ISD'],['BOARD']],
+      ['mrm-change-draft','CRO','MRM',['ISD'],['CCO']]]],
+    ['tprm','Third-Party Risk',[
+      ['tprm-program','CRO','ISD',['GC'],['BOARD']],
+      ['vendor-inventory','CRO','ISD',[],['CCO']],
+      ['tprm-critical','CRO','ISD',['BRO'],['BOARD']],
+      ['dd-standard','CRO','ISD',['BSA'],['CCO']],
+      ['contract-rider','CRO','ISD',['GC','MRM'],['CCO']],
+      ['vendor-reviews','CRO','ISD',[],['BRO']],
+      ['tprm-records','CRO','ISD',[],['CCO']],
+      ['exit-draft','CRO','ISD',['BRO','GC'],['BOARD']],
+      ['soc2-core','CRO','ISD',['BRO'],['MRM']],
+      ['board-tprm','BOARD','ISD',['CRO'],['GC']]]],
+    ['bsa','BSA / AML',[
+      ['bsa-policy','BOARD','BSA',['CCO','GC'],['CRO']],
+      ['bsa-training','CRO','BSA',[],['CCO']]]],
+    ['fairlend','Fair Lending',[
+      ['fl-review','CRO','CCO',['GC'],['BOARD']],
+      ['aa-procedure','CRO','CCO',['MRM','GC'],['BOARD']]]],
+    ['consumer','Consumer / UDAAP',[
+      ['complaint-proc','CRO','CCO',[],['GC','BOARD']],
+      ['msg-disclosure','CRO','CCO',['GC'],['ISD']]]],
+    ['infosec','InfoSec / GLBA',[
+      ['irp','CRO','ISD',['BRO','GC'],['BOARD']],
+      ['glba-program','CRO','ISD',['BSA'],['BOARD']]]],
+    ['capital','Capital Adequacy',[
+      ['capital-narr','BOARD','CRO',['GC'],['CCO']]]]
+  ];
+  var head='<tr><th style="min-width:220px">Governance document</th>'+ROLES.map(function(r){return '<th style="text-align:center" title="'+r[1]+' &middot; '+r[2]+'">'+r[0]+'</th>';}).join('')+'</tr>';
+  var rows=M.map(function(g){
+    var domRow='<tr class="dgroup"><td colspan="'+(ROLES.length+1)+'"><span class="doclink" onclick="onsideShow(\'dom-'+g[0]+'\')">'+g[1]+' →</span></td></tr>';
+    var docRows=g[2].map(function(d){
+      var cells=ROLES.map(function(r){
+        var code=r[0],v='';
+        if(d[1]===code)v='A'; else if(d[2]===code)v='R';
+        else if(d[3].indexOf(code)>=0)v='C'; else if(d[4].indexOf(code)>=0)v='I';
+        return '<td style="text-align:center">'+(v?'<span class="raci-badge raci-'+v+'">'+v+'</span>':'<span style="color:var(--line2)">&middot;</span>')+'</td>';
+      }).join('');
+      return '<tr><td class="doc">'+docLink(d[0])+'</td>'+cells+'</tr>';
+    }).join('');
+    return domRow+docRows;
+  }).join('');
+  var roleKey=ROLES.map(function(r){return '<div><b style="color:var(--ink)">'+r[0]+'</b> · '+r[1]+' <span style="color:var(--grey)">('+r[2]+')</span></div>';}).join('');
+  var domOwners=[['R. Fischer','Chief Risk Officer','AI Governance · enterprise risk appetite · target-setting','aigov'],['M. Okafor','Chief Compliance Officer','Consumer / UDAAP · Fair Lending','consumer'],['T. Whitfield','BSA / AML Officer','BSA / AML Program','bsa'],['A. Kaur','Model Risk Manager','Model Risk Management','mrm'],['P. Nguyen','Information Security Director','InfoSec / GLBA · Third-Party Risk','infosec'],['S. Delgado','Business Resiliency Officer','Continuity &amp; operational resilience',null],['D. Reyes','General Counsel','Contracts · regulatory interpretation sign-off',null],['Board Risk Committee','Board','Approves targets, appetite, and material policy changes',null]]
    .map(function(r){return '<tr'+(r[3]?' class="prow" onclick="onsideShow(\'dom-'+r[3]+'\')"':'')+'><td><b'+(r[3]?' class="doclink"':'')+'>'+r[0]+'</b></td><td class="pcat">'+r[1]+'</td><td class="pcat">'+r[2]+'</td></tr>';}).join('');
-  return '<div class="card"><h2>Ownership · who owns each domain</h2><div class="csub">Approval authority stays with named human owners at every gate, matched to the risk tier of the decision. Click an owner to open their domain.</div>'
-   +'<table class="tbl"><thead><tr><th>Owner</th><th>Role</th><th>Owns</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  return '<div class="card"><h2>RACI · policy ownership matrix</h2><div class="csub">Every governance document mapped to who is Responsible, Accountable, Consulted, and Informed, even where one person wears several hats. Click a document to open it, or a domain to see its gaps and levers. Approval authority stays with named human owners at every gate.</div>'
+   +'<div class="raci-wrap"><table class="raci"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>'
+   +'<div class="raci-legend"><span><span class="raci-badge raci-R">R</span>Responsible · does the work</span><span><span class="raci-badge raci-A">A</span>Accountable · owns the outcome</span><span><span class="raci-badge raci-C">C</span>Consulted · input before decisions</span><span><span class="raci-badge raci-I">I</span>Informed · kept current</span></div>'
+   +'<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(2,1fr);gap:7px;font-size:12px;color:var(--muted)">'+roleKey+'</div></div>'
+   +'<div class="card" style="margin-top:14px"><h2>Domain owners</h2><div class="csub">The named owner for each domain on the platform. Click an owner to open their domain.</div>'
+   +'<table class="tbl"><thead><tr><th>Owner</th><th>Role</th><th>Owns</th></tr></thead><tbody>'+domOwners+'</tbody></table></div>';
 }
 
 /* ---- thesis v13 views: board reporting · knowledge copilot · onboarding ---- */
