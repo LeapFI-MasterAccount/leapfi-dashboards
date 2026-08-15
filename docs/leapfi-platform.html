@@ -186,7 +186,8 @@ table.raci tr.dgroup td{background:var(--panel2);font-size:10.5px;text-transform
 .chat-input input{flex:1;background:#0b0f14;border:1px solid var(--line);border-radius:10px;color:var(--ink);font-family:inherit;font-size:13px;padding:12px 14px}
 .chat-input input:focus{outline:none;border-color:var(--cyan)}
 .uc-list{display:flex;flex-direction:column;gap:9px;max-height:378px;overflow-y:auto;padding-right:4px}
-.uc{display:flex;align-items:center;gap:11px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:10px 13px;transition:.13s}
+.uc{display:flex;align-items:center;gap:11px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:10px 13px;transition:.13s;cursor:pointer}
+.uc:hover{border-color:rgba(0,242,255,.5);background:var(--panel3)}
 .uc.new{border-color:rgba(0,242,255,.45);box-shadow:0 0 0 1px rgba(0,242,255,.12)}
 .uc .un{flex:1;min-width:0}
 .uc .un .n{font-size:12.5px;font-weight:700}
@@ -581,7 +582,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.026</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.027</b></div>
   </div>
 </aside>
 
@@ -753,7 +754,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         <div class="disc-grid">
           <div class="card" id="disc-register">
             <h2>Opportunity register</h2>
-            <div class="csub">Every documented opportunity, scored and tracked. Fed by the Discovery engine: 412 documents ingested through the SharePoint connector and direct upload, leadership interviews 11 of 12 complete. New entries arrive from the advisor conversation or the form.</div>
+            <div class="csub">Every documented opportunity, scored and tracked · click any row for its full detail. Fed by the Discovery engine: 412 documents ingested through the SharePoint connector and direct upload, leadership interviews 11 of 12 complete. New entries arrive from the advisor conversation.</div>
             <div class="uc-list" id="uc-list" style="max-height:560px"></div>
           </div>
           <div>
@@ -853,6 +854,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.027</span> · <span class="cd">Aug 14, 2026</span><br>Opportunity register rows are fully interactive: every opportunity highlights on hover and opens its full detail drawer on click, anywhere on the row. Catalog entries without a drafted deep-dive open with a standard scoping envelope instead of doing nothing.</li>
             <li><span class="cv">v 1.026</span> · <span class="cd">Aug 14, 2026</span><br>Vantage nav badge changed from V3 to Soon, matching Connect and AllRailz.</li>
             <li><span class="cv">v 1.025</span> · <span class="cd">Aug 14, 2026</span><br>All reporting collapsed to one screen. The Reporting nav item opens a single page of eight standing reports spanning every audience: Board Pack, Regulatory Change Briefing (the standing board view now lives inside it, updates still logged in place), Risk Posture &amp; Targets with per-domain gauges, Compliance Open Items, Model Risk Report with the validation calendar, Third-Party &amp; Vendor Risk with SOC 2 and exit-plan status, IT &amp; Information Security with the IRP priority and connector health, and Investment &amp; ROI, which now carries the funded portfolio behind the number. Each card names its audience, every figure links back to the register it came from, and all eight generate from the same live data model.</li>
             <li><span class="cv">v 1.024</span> · <span class="cd">Aug 14, 2026</span><br>Rachel&rsquo;s dashboard review, worked through end to end. Home: every KPI tile now opens the work behind it, the risk-posture tiles carry gauges showing score against the target tick, and a Customize control lets each executive choose which panels their page shows. Scoring transparency: every domain opens with a gauge and a plain-language &ldquo;how this score is calculated&rdquo; walk-through of applicable obligations, the target math, and the met count. OnSide: a scope filter on Overview, Open gaps, and Documents so each officer sees what they oversee; all overview boxes clickable; the gaps view reconciles its full count by domain; documents get search and status filters. Regulatory feed: every source row opens its dated activity, and the lifecycle leads with a Newly Proposed section (the Fed/FDIC Reg O NPRM and peers) with area filters. Studio: intake distinguishes internal work that feeds financial reporting (GL / SOX named, moderate risk) and splits sensitive-financial from PII; new use cases land in the register through the same four questions (the direct-entry form is retired); risk tolerance is now risk appetite with fuller definitions and a link to calibrate from the adoption questionnaire; play economics state what the build number includes. Board reporting defines Tracking vs Open, open items carry target compliance dates, and updates can be logged in place. Obligations accept attached evidence pending reviewer sign-off, and provenance reads in plain language.</li>
@@ -883,7 +885,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.026</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.027</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1132,7 +1134,8 @@ function verdictHTML(o,dup){
 function playByName(n){return OPPS.filter(function(o){return o.n===n;})[0];}
 function depChip(n){return '<span class="dchip" data-play="'+n+'">'+n+' →</span>';}
 function openPlay(n){
-  var o=playByName(n), d=DETAIL[n]; if(!o||!d) return;
+  var o=playByName(n); if(!o) return;
+  var d=DETAIL[n]||{sum:o.c+' play from the Studio catalog. The envelope below prices from comparable implementations; full scope drafts during the deep-dive.',work:['Confirm the current-state workflow with the owning team','Data access + integration assessment','Pilot build with human-in-the-loop review','Controls evidence + OnSide mapping','Production hardening + adoption plan'],tech:['Source-system access to be confirmed','Historical volume data for evaluation'],deps:[],unlocks:[]};
   goStudio('design');
   var L=readLevers();
   var annual=o.val*L.eff, pay=Math.round(o.cost/annual*12), roiC=annual*3/o.cost;
@@ -2397,7 +2400,8 @@ function renderRegister(){
   el.innerHTML=OPPS.slice().reverse().map(function(o){
     var st = fset[o.n]?'<span class="tag good">Funded</span>' : gset[o.n]?'<span class="tag warn">Gated</span>' : '<span class="tag grey">Ready · bench</span>';
     if(o.disc) st='<span class="tag info">New</span> '+st;
-    return '<div class="uc'+(o.disc?' new':'')+'"><div class="un"><div class="n">'+o.n+'</div><div class="s">'+o.c+' · '+fmt(o.val*L.eff)+'/yr at adoption · build '+fmt(o.cost)+'</div></div>'+st+(DETAIL[o.n]?'<span class="go" style="font-size:11px;font-weight:700;color:var(--cyan);cursor:pointer;white-space:nowrap" onclick="openPlay(\''+o.n+'\')">Detail →</span>':'')+'</div>';
+    var esc=o.n.replace(/'/g,"\\'");
+    return '<div class="uc'+(o.disc?' new':'')+'" onclick="openPlay(\''+esc+'\')"><div class="un"><div class="n">'+o.n+'</div><div class="s">'+o.c+' · '+fmt(o.val*L.eff)+'/yr at adoption · build '+fmt(o.cost)+'</div></div>'+st+'<span class="go" style="font-size:11px;font-weight:700;color:var(--cyan);white-space:nowrap">Detail →</span></div>';
   }).join('');
 }
 var chatState={mode:'idle',pending:null,answers:[]};
