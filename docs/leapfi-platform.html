@@ -139,6 +139,11 @@ table.raci tr.dgroup td{background:var(--panel2);font-size:10.5px;text-transform
 /* ============ HOME ============ */
 .home-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-top:16px}
 .list-row{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--line)}
+.list-row.lrc{cursor:pointer;transition:background .12s}
+.list-row.lrc:hover{background:var(--panel2)}
+.list-row.lrc:hover .t .n{color:var(--cyan)}
+.panel-h h2.hl2{cursor:pointer;transition:color .12s}
+.panel-h h2.hl2:hover{color:var(--cyan)}
 .list-row:last-child{border-bottom:0}
 .list-row .t{flex:1;min-width:0}
 .list-row .t .n{font-size:13px;font-weight:700}
@@ -581,7 +586,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.031</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.032</b></div>
   </div>
 </aside>
 
@@ -627,14 +632,14 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
       <div class="cust-bar" id="cust-bar" style="display:none"></div>
       <div class="kpis" id="home-kpis"></div>
       <div class="grid2" style="margin-top:16px">
-        <div class="card" id="hp-posture"><div class="panel-h"><h2>Risk posture</h2><span class="go2" onclick="goOnside('domains')">Gaps &amp; levers →</span></div><div class="csub" style="margin-bottom:0">Judged against the targets you set, never a generic bar.</div><div id="home-posture"></div></div>
-        <div class="card" id="hp-invest"><div class="panel-h"><h2>Investments</h2><span class="go2" onclick="goStudio('design')">Work the levers →</span></div><div class="csub" id="home-inv-sub" style="margin-bottom:8px"></div><div id="home-invest"></div></div>
+        <div class="card" id="hp-posture"><div class="panel-h"><h2 class="hl2" onclick="goOnside('domains')">Risk posture</h2><span class="go2" onclick="goOnside('domains')">Gaps &amp; levers →</span></div><div class="csub" style="margin-bottom:0">Judged against the targets you set, never a generic bar.</div><div id="home-posture"></div></div>
+        <div class="card" id="hp-invest"><div class="panel-h"><h2 class="hl2" onclick="goStudio('design')">Investments</h2><span class="go2" onclick="goStudio('design')">Work the levers →</span></div><div class="csub" id="home-inv-sub" style="margin-bottom:8px"></div><div id="home-invest"></div></div>
       </div>
       <div class="grid2" style="margin-top:16px">
-        <div class="card" id="hp-value"><div class="panel-h"><h2>Return</h2><span class="go2" onclick="openReport('roi')">Platform ROI →</span></div><div class="csub" id="home-val-sub" style="margin-bottom:8px"></div><div id="home-value"></div></div>
-        <div class="card" id="hp-queue"><div class="panel-h"><h2 id="home-q-title">Your queue</h2><span class="go2" onclick="goOnside('gaps')">All open items →</span></div><div class="csub" id="home-q-sub" style="margin-bottom:4px"></div><div id="home-queue"></div></div>
+        <div class="card" id="hp-value"><div class="panel-h"><h2 class="hl2" onclick="openReport('roi')">Return</h2><span class="go2" onclick="openReport('roi')">Platform ROI →</span></div><div class="csub" id="home-val-sub" style="margin-bottom:8px"></div><div id="home-value"></div></div>
+        <div class="card" id="hp-queue"><div class="panel-h"><h2 id="home-q-title" class="hl2" onclick="goOnside('gaps')">Your queue</h2><span class="go2" onclick="goOnside('gaps')">All open items →</span></div><div class="csub" id="home-q-sub" style="margin-bottom:4px"></div><div id="home-queue"></div></div>
       </div>
-      <div class="card" id="hp-legis" style="margin-top:16px"><div class="panel-h"><h2>Legislation &amp; rulemaking in consideration</h2><span class="go2" onclick="goOnside('feed-lifecycle')">Full lifecycle →</span></div><div class="csub" style="margin-bottom:4px">Federal, state, and local, monitored separately because obligations stack.</div><div id="home-legis"></div></div>
+      <div class="card" id="hp-legis" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('feed-lifecycle')">Legislation &amp; rulemaking in consideration</h2><span class="go2" onclick="goOnside('feed-lifecycle')">Full lifecycle →</span></div><div class="csub" style="margin-bottom:4px">Federal, state, and local, monitored separately because obligations stack.</div><div id="home-legis"></div></div>
       <div class="qa-row" id="home-qa"></div>
       <div class="foot-note">LeapFI Platform demo · illustrative customer data for NorthWinds Credit Union · role-based homepage rendered for the signed-in user · Not legal advice · © 2026 LeapFI LLC</div>
     </section>
@@ -843,6 +848,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.032</span> · <span class="cd">Aug 15, 2026</span><br>Home is clickable everywhere: panel titles (Risk posture, Investments, Return, Your queue, Legislation &amp; rulemaking) open their sections, and every list row responds to a click anywhere on it, name included, with the name lighting up on hover. The Open and Review labels stay as the visual cue.</li>
             <li><span class="cv">v 1.031</span> · <span class="cd">Aug 15, 2026</span><br>Removed the always-on compliance loop explainer from the bottom of the OnSide overview. The overview ends on the objectives driving scope.</li>
             <li><span class="cv">v 1.030</span> · <span class="cd">Aug 14, 2026</span><br>Ask the platform and the Opportunity register merged into one page. The conversation sits on top, the pipeline strip and the register it feeds sit directly below, so a scoped idea lands in view the moment it is added. The separate register nav item is gone, and every old register link routes to the merged page and scrolls to the register.</li>
             <li><span class="cv">v 1.029</span> · <span class="cd">Aug 14, 2026</span><br>Design studio: fixed the garbled calibration line under Your levers and rewrote the intro. The panel now opens with the two questions the levers answer, and grounds them in the onboarding questionnaire result: NorthWinds starts at Developing, and ambition reaches from there.</li>
@@ -878,7 +884,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.031</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.032</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -2269,7 +2275,7 @@ function applyHomePanels(){
   HP.forEach(function(p){var el=$(p[1]);if(el)el.style.display=hid[p[0]]?'none':'';});
 }
 function kpi(lab,num,cls,sub,go){return '<div class="kpi'+(go?' click':'')+'"'+(go?' onclick="'+go+'"':'')+'><div class="lab">'+lab+'</div><div class="num '+(cls||'')+'">'+num+'</div><div class="sub">'+sub+(go?' →':'')+'</div></div>';}
-function lrow(n,s,goLab,goFn){return '<div class="list-row"><div class="t"><div class="n">'+n+'</div><div class="s">'+s+'</div></div><span class="go" onclick="'+goFn+'">'+goLab+' →</span></div>';}
+function lrow(n,s,goLab,goFn){return '<div class="list-row lrc" onclick="'+goFn+'"><div class="t"><div class="n">'+n+'</div><div class="s">'+s+'</div></div><span class="go">'+goLab+' →</span></div>';}
 function qa(icon,t,d,goFn){return '<div class="qa" onclick="'+goFn+'"><div class="qi">'+icon+'</div><div class="qt">'+t+'</div><div class="qd">'+d+'</div><div class="ql">Open →</div></div>';}
 function renderHome(){
   var P=computePlan(), L=P.L;
