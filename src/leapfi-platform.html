@@ -435,21 +435,33 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
 .tip:hover::after{content:attr(data-tip);position:absolute;left:-8px;bottom:150%;width:300px;background:#10151c;border:1px solid rgba(0,242,255,.4);color:var(--muted);font-size:11.5px;font-weight:500;line-height:1.55;padding:11px 13px;border-radius:10px;z-index:200;box-shadow:0 14px 40px rgba(0,0,0,.6);white-space:normal;text-align:left;letter-spacing:0;text-transform:none;pointer-events:none}
 .tip:hover::before{content:'';position:absolute;left:2px;bottom:118%;border:6px solid transparent;border-top-color:rgba(0,242,255,.4);z-index:201;pointer-events:none}
 .tip:hover{color:var(--cyan);border-color:var(--cyan)}
-.gantt{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px}
-.gy{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
-.gy .gh{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:baseline}
-.gy .gh .gs{font-size:10px;color:var(--grey);text-transform:none;letter-spacing:0;font-weight:600}
-.gq{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:10px}
-.gqc{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px;min-height:74px}
-.gqc .ql{font-size:9px;font-weight:800;color:var(--grey);letter-spacing:.06em}
-.gplay{font-size:10.5px;font-weight:600;background:var(--panel3);border:1px solid var(--line2);border-radius:7px;padding:4px 7px;margin-top:6px;line-height:1.3;cursor:pointer}
+.rm-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0 16px}
+.rmk{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.rmk .rl{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--grey)}
+.rmk .rn{font-size:26px;font-weight:800;color:var(--ink);margin-top:6px}
+.rmk .rs{font-size:10.5px;color:var(--grey);margin-top:3px;font-weight:600}
+.gantt{display:flex;flex-direction:column;gap:14px}
+.gy{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.gy .gh{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px}
+.gy .ghy{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.gy .gh .gs{font-size:11px;color:var(--grey);font-weight:600}
+.gbar{height:3px;border-radius:2px;background:linear-gradient(90deg,#01DFD9,#00B8FF,#0092FF,#006BFF,#002BFF);margin:10px 0 14px;opacity:.85}
+.gq{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.gqc{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;min-height:180px;display:flex;flex-direction:column;gap:8px}
+.gqc .qh{display:flex;justify-content:space-between;align-items:baseline}
+.gqc .ql{font-size:11px;font-weight:800;color:var(--cyan);letter-spacing:.08em}
+.gqc .qspend{font-size:10.5px;color:var(--grey);font-weight:700}
+.gqc .qm{margin-top:auto;font-size:10.5px;color:var(--grey);border-top:1px dashed var(--line);padding-top:8px;line-height:1.45}
+.gplay{font-size:12.5px;font-weight:700;background:var(--panel3);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;line-height:1.35;cursor:pointer;transition:border-color .15s}
 .gplay:hover{border-color:var(--cyan)}
-.gplay .gc2{font-size:9px;color:var(--grey);font-weight:600}
-.gy.ghost{opacity:.55}
-.gy.ghost .gplay{cursor:default}
-.gy .gnote{font-size:10px;color:var(--grey);margin-top:9px;line-height:1.4}
-.gstack{display:flex;flex-direction:column;gap:7px;margin-top:10px}
-@media(max-width:1080px){.dom-grid{grid-template-columns:1fr}.gantt{grid-template-columns:1fr}.doc-cats{grid-template-columns:1fr 1fr}.tgt-row{grid-template-columns:1fr 1fr}}
+.gplay .gfound{font-size:9px;font-weight:800;color:var(--cyan);border:1px solid rgba(0,242,255,.35);border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:1px;letter-spacing:.04em;text-transform:uppercase}
+.gplay .gcat{font-size:10px;color:var(--grey);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+.gplay .gc2{font-size:11px;color:var(--muted);font-weight:600;margin-top:5px}
+.gy.ghost{opacity:.82}
+.grow{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.gy .gnote{font-size:11px;color:var(--grey);margin-top:12px;line-height:1.5}
+.glink{text-align:center;font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:.04em;padding:0}
+@media(max-width:1080px){.dom-grid{grid-template-columns:1fr}.gq{grid-template-columns:1fr 1fr}.rm-kpis{grid-template-columns:1fr 1fr}.doc-cats{grid-template-columns:1fr 1fr}.tgt-row{grid-template-columns:1fr 1fr}}
 
 /* ============ SPLASH ============ */
 .splash{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:480px;background:radial-gradient(ellipse at 50% 0%,rgba(0,146,255,.08),transparent 60%),var(--panel);border:1px solid var(--line);border-radius:18px;padding:50px 30px}
@@ -549,7 +561,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.022</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.023</b></div>
   </div>
 </aside>
 
@@ -741,7 +753,8 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
       <!-- ============ STUDIO SUB VIEW: ROADMAP ============ -->
       <div class="st-view" id="st-view-roadmap">
       <div class="sect-lab" id="st-roadmap" style="margin-top:4px">Three-year roadmap</div>
-      <div class="phint">Year 1 is tactical and detailed. Years 2 and 3 are placeholders that firm up as Year 1 lands. The numbers deliberately fade.</div>
+      <div class="phint">Every step across the horizon: the next four quarters in detail, then the Year 2 and Year 3 sequence they unlock. The whole view moves live with the Design studio levers, and every play opens its full scope.</div>
+      <div class="rm-kpis" id="rm-kpis"></div>
       <div class="gantt" id="gantt-body"></div>
       </div>
 
@@ -823,6 +836,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.023</span> · <span class="cd">Aug 14, 2026</span><br>Three-year roadmap rebuilt at full width: a KPI band (investment, annual value, ROI against hurdle, payback), then Year 1 as four tall quarter columns with per-quarter spend, larger play cards, and a running value-online marker, a visual link where the data foundation unlocks Year 2, and full-width Year 2 and Year 3 lanes showing every queued play with what it waits on. Everything still recomputes live from the Design studio levers, and every card opens its play.</li>
             <li><span class="cv">v 1.022</span> · <span class="cd">Aug 14, 2026</span><br>The full RACI policy ownership matrix returns to OnSide · RACI &amp; owners: every governance document mapped to Responsible, Accountable, Consulted, and Informed across the eight named roles, grouped by domain, with each document opening its viewer and each domain linking to its gaps and levers. The domain-owner table stays alongside it.</li>
             <li><span class="cv">v 1.021</span> · <span class="cd">Aug 14, 2026</span><br>Every Partial and Gap obligation now opens one view with the whole story, from anywhere on the row: the difference (what the obligation requires vs what exists today) and the remediation (the action, with any drafted language rendered inline as a redline with approve and route actions), shown whether the item is Approved or still in the HITL queue.</li>
             <li><span class="cv">v 1.020</span> · <span class="cd">Aug 14, 2026</span><br>Domains · gaps &amp; levers now links everything. Every open item in every domain links its evidence document, pin-cites open the instrument, and wherever OnSide has drafted proposed language an amber chip opens the redline directly, in both the accordion gap lists and the deep obligation registers. Added the Member Messaging Disclosure Standard draft with its proposed disclosure language.</li>
@@ -849,7 +863,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.022</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.023</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1014,17 +1028,52 @@ function recompute(){
 /* ---- roadmap (Y1 tactical, Y2/3 placeholders) ---- */
 function renderGantt(P){
   var L=P.L;
-  var y1=P.funded.slice(); var qs=[[],[],[],[]];
-  y1.forEach(function(o,i){qs[Math.min(3,Math.floor(i/Math.ceil(y1.length/4||1)))].push(o);});
+  var k=$('rm-kpis');
+  if(k)k.innerHTML=
+    '<div class="rmk"><div class="rl">Year 1 investment</div><div class="rn">'+fmt(P.spent)+'</div><div class="rs">of '+fmt(L.budget)+' envelope · '+P.funded.length+' plays funded</div></div>'
+   +'<div class="rmk"><div class="rl">Annual value</div><div class="rn">'+fmt(P.annual)+'</div><div class="rs">at '+Math.round(L.eff*100)+'% adoption, full ramp</div></div>'
+   +'<div class="rmk"><div class="rl">Expected 3-yr ROI</div><div class="rn '+(P.roi>=L.roiTgt?'tgt-ok':'tgt-lo')+'">'+P.roi.toFixed(1)+'&times;</div><div class="rs">'+(P.roi>=L.roiTgt?'clears':'below')+' your '+L.roiTgt.toFixed(1)+'&times; hurdle</div></div>'
+   +'<div class="rmk"><div class="rl">Blended payback</div><div class="rn">'+(P.payM||'&middot;')+(P.payM?' mo':'')+'</div><div class="rs">across the funded portfolio</div></div>';
+
+  var y1=P.funded.slice().sort(function(a,b){
+    var f=(b.found?1:0)-(a.found?1:0); if(f)return f;
+    return (a.cost/(a.val||1))-(b.cost/(b.val||1));
+  });
+  var per=Math.ceil(y1.length/4)||1, qs=[[],[],[],[]];
+  y1.forEach(function(o,i){qs[Math.min(3,Math.floor(i/per))].push(o);});
+
+  function chip(o,note){
+    var pay=Math.round(o.cost/(o.val*L.eff)*12);
+    return '<div class="gplay" data-play="'+o.n+'"><div class="gpn">'+o.n+(o.found?'<span class="gfound">foundational</span>':'')+'</div>'
+     +'<div class="gcat">'+o.c+'</div>'
+     +'<div class="gc2">'+(note||fmt(o.cost)+' build · '+fmt(o.val*L.eff)+'/yr · payback '+pay+' mo')+'</div></div>';
+  }
+
+  var cum=0;
+  var h='<div class="gy"><div class="gh"><span class="ghy">Year 1 · tactical</span><span class="gs">'+P.funded.length+' plays · '+fmt(P.spent)+' committed · sequenced by your horizon lever</span></div><div class="gbar"></div><div class="gq">';
+  for(var q=0;q<4;q++){
+    var qspend=0,qval=0;
+    qs[q].forEach(function(o){qspend+=o.cost;qval+=o.val*L.eff;});
+    cum+=qval;
+    h+='<div class="gqc"><div class="qh"><span class="ql">Q'+(q+1)+'</span><span class="qspend">'+(qs[q].length?fmt(qspend):'&middot;')+'</span></div>'
+     +qs[q].map(function(o){return chip(o);}).join('')
+     +'<div class="qm">'+(cum>0?'&asymp; '+fmt(cum)+'/yr running by end of Q'+(q+1):'Capacity held for scoping')+'</div></div>';
+  }
+  h+='</div><div class="gnote">Foundational work leads, quick paybacks follow. Every play carries its cost, value at your adoption setting, and payback. Click one for full scope.</div></div>';
+
   var spine=P.gated.filter(function(o){return DETAIL[o.n]&&(DETAIL[o.n].deps||[]).indexOf('Unified data foundation')>=0;});
-  var y2=P.bench.concat(spine);
-  var y3=P.gated.filter(function(o){return y2.indexOf(o)<0;});
-  function chip(o,ghost){return '<div class="gplay"'+(ghost?'':' data-play="'+o.n+'"')+'>'+o.n+'<div class="gc2">'+(ghost?'placeholder':fmt(o.cost)+' · '+Math.round(o.cost/(o.val*L.eff)*12)+' mo payback')+'</div></div>';}
-  var h='<div class="gy"><div class="gh">Year 1 · tactical <span class="gs">'+P.funded.length+' plays · '+fmt(P.spent)+' committed</span></div><div class="gq">';
-  for(var q=0;q<4;q++){h+='<div class="gqc"><div class="ql">Q'+(q+1)+'</div>'+qs[q].map(function(o){return chip(o,false);}).join('')+'</div>';}
-  h+='</div><div class="gnote">Sequenced by your horizon lever. Every play carries its cost and payback; click one for full scope.</div></div>';
-  h+='<div class="gy ghost"><div class="gh">Year 2 <span class="gs">vision</span></div><div class="gstack">'+(y2.length?y2.slice(0,5).map(function(o){return chip(o,true);}).join(''):'<span class="pill-soft">Opens as controls close</span>')+'</div><div class="gnote">Placeholders: mostly plays waiting on budget or the data foundation. Detail firms up as Year 1 lands.</div></div>';
-  h+='<div class="gy ghost"><div class="gh">Year 3 <span class="gs">vision</span></div><div class="gstack">'+(y3.length?y3.slice(0,5).map(function(o){return chip(o,true);}).join(''):'<span class="pill-soft">Shaped by Year 1 results</span>')+'</div><div class="gnote">Direction the board can steer. Detail waits on Year 1 results.</div></div>';
+  var y2=P.bench.concat(spine).sort(function(a,b){return (b.n==='Unified data foundation'?1:0)-(a.n==='Unified data foundation'?1:0);});
+  var y3=P.gated.filter(function(o){return spine.indexOf(o)<0;});
+  var udfY1=P.funded.some(function(o){return o.n==='Unified data foundation';});
+  var udfY2=y2.some(function(o){return o.n==='Unified data foundation';});
+
+  if(spine.length)h+='<div class="glink">&#9662; &nbsp;'+(udfY1?'The Unified data foundation lands in Year 1 and unlocks the Year 2 sequence':'The Unified data foundation leads Year 2 · the plays that depend on it sequence behind it')+'&nbsp; &#9662;</div>';
+  h+='<div class="gy ghost"><div class="gh"><span class="ghy">Year 2 · expansion</span><span class="gs">'+y2.length+' plays queued · firms up as Year 1 lands</span></div><div class="gbar" style="opacity:.45"></div><div class="grow">'
+   +(y2.length?y2.map(function(o){return chip(o,fmt(o.cost)+' est &middot; '+(o.n==='Unified data foundation'?'leads the year · first call on the envelope':spine.indexOf(o)>=0?'unlocked by the data foundation':'waits on budget headroom'));}).join(''):'<span class="pill-soft">Opens as controls close</span>')
+   +'</div><div class="gnote">Planning envelopes rather than commitments. Each play opens with its scope, value case, and what it waits on.</div></div>';
+  h+='<div class="gy ghost"><div class="gh"><span class="ghy">Year 3 · vision</span><span class="gs">'+y3.length+' plays · direction the board can steer</span></div><div class="gbar" style="opacity:.3"></div><div class="grow">'
+   +(y3.length?y3.map(function(o){return chip(o,fmt(o.cost)+' est &middot; waits on '+((o.g&&o.g.length)?o.g.slice(0,2).join(', '):'Year 1 results'));}).join(''):'<span class="pill-soft">Shaped by Year 1 results</span>')
+   +'</div><div class="gnote">Higher-value plays that stay sequence-gated until their control families close in OnSide. Detail waits on Year 1 results.</div></div>';
   var g=$('gantt-body'); if(g)g.innerHTML=h;
 }
 
@@ -1172,7 +1221,7 @@ var ST_HEADS={
   ask:['Ask the platform','one conversation with the system'],
   design:['Design studio','move the levers, watch the plan recompute'],
   register:['Opportunity register','every idea, scored and tracked'],
-  roadmap:['Three-year roadmap','year one detailed, years two and three sketched']
+  roadmap:['Three-year roadmap','every step across the horizon, live from the levers']
 };
 function setCrumb(mod,page,hint){
   var c=$('crumb'); if(!c)return;
