@@ -581,7 +581,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.030</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.031</b></div>
   </div>
 </aside>
 
@@ -843,6 +843,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.031</span> · <span class="cd">Aug 15, 2026</span><br>Removed the always-on compliance loop explainer from the bottom of the OnSide overview. The overview ends on the objectives driving scope.</li>
             <li><span class="cv">v 1.030</span> · <span class="cd">Aug 14, 2026</span><br>Ask the platform and the Opportunity register merged into one page. The conversation sits on top, the pipeline strip and the register it feeds sit directly below, so a scoped idea lands in view the moment it is added. The separate register nav item is gone, and every old register link routes to the merged page and scrolls to the register.</li>
             <li><span class="cv">v 1.029</span> · <span class="cd">Aug 14, 2026</span><br>Design studio: fixed the garbled calibration line under Your levers and rewrote the intro. The panel now opens with the two questions the levers answer, and grounds them in the onboarding questionnaire result: NorthWinds starts at Developing, and ambition reaches from there.</li>
             <li><span class="cv">v 1.028</span> · <span class="cd">Aug 14, 2026</span><br>RACI matrix: the Informed badge is brighter so the I reads clearly at a glance, while staying visually quieter than Responsible, Accountable, and Consulted.</li>
@@ -877,7 +878,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.030</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.031</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1723,15 +1724,7 @@ function osOverview(){
    +'<div class="chipstrip" style="margin-top:2px">'+OPPS.slice(0,8).map(function(o){return '<span class="chip doclink" style="cursor:pointer" onclick="openPlay(\''+o.n+'\')">'+o.n+'</span>';}).join('')+'<span class="chip doclink" style="cursor:pointer" onclick="goStudio(\'register\')">+ '+(OPPS.length-8)+' more in the register</span></div></div>';
   return osScopeBar()+osKpis()
    +'<div class="sect-lab">Posture by domain · judged against your own targets</div><div class="dom-grid">'+doms+'</div>'
-   +ev+ucs
-   +'<div class="card" style="margin-top:16px"><h2>The always-on compliance loop</h2><div class="loop">'
-   +'<div class="lp"><div class="l1">Monitor</div><div class="l2">every source, three layers, around the clock</div></div><span class="arr">→</span>'
-   +'<div class="lp"><div class="l1">Detect</div><div class="l2">flags gaps &amp; strategic shifts the day they open</div></div><span class="arr">→</span>'
-   +'<div class="lp"><div class="l1">Propose</div><div class="l2">drafts language, routes the right approval chain</div></div><span class="arr">→</span>'
-   +'<div class="lp"><div class="l1">Version</div><div class="l2">prior text archived · connected systems notified</div></div><span class="arr">→</span>'
-   +'<div class="lp"><div class="l1">Enforce</div><div class="l2">APIs &amp; MCP serve current policy only</div></div><span class="arr">→</span>'
-   +'<div class="lp"><div class="l1">Report</div><div class="l2">board-ready · the exam answer by default</div></div></div>'
-   +'<div class="csub" style="margin-top:10px">Underneath: acquire → extract (pin-cite + hash) → crosswalk onto one data model → apply your profile → human review → judged against your targets. See <span class="doclink" onclick="onsideShow(\'feed-sources\')">Sources &amp; connectors</span>.</div></div>';
+   +ev+ucs;
 }
 function osTargets(){
   var rows=DOMAINS.map(function(d){
