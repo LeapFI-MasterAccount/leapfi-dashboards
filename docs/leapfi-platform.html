@@ -461,6 +461,30 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
 .grow{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
 .gy .gnote{font-size:11px;color:var(--grey);margin-top:12px;line-height:1.5}
 .glink{text-align:center;font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:.04em;padding:0}
+/* gauges + customization + scope filters (v1.024) */
+.kpi.click{cursor:pointer;transition:border-color .12s}
+.kpi.click:hover{border-color:rgba(0,242,255,.45)}
+.gg{flex:none;display:block}
+.pdg{display:flex;align-items:center;gap:12px;margin-top:6px}
+.pdgt .pgv{font-size:11px;font-weight:700;color:var(--muted)}
+.pdgt .pgs{font-size:10.5px;color:var(--grey);margin-top:2px}
+.home-cust{display:flex;justify-content:flex-end;margin:-6px 0 8px}
+.cust-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px}
+.cust-bar .cust-lab{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);margin-right:2px}
+.cust-bar .qchip{opacity:.55}
+.cust-bar .qchip.on{opacity:1;border-color:rgba(0,242,255,.4);color:var(--cyan)}
+.cust-bar .cust-note{font-size:10.5px;color:var(--grey);margin-left:auto}
+.scopebar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:14px}
+.scopebar .sb-l{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);margin-right:2px}
+.sbc{font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line2);border-radius:20px;padding:4px 11px;cursor:pointer;transition:.12s}
+.sbc:hover{color:var(--ink);border-color:var(--grey)}
+.sbc.on{color:var(--cyan);border-color:rgba(0,242,255,.45);background:rgba(0,242,255,.07)}
+.scopebar .sb-note{font-size:10.5px;color:var(--grey);margin-left:auto}
+.sh-b{font-size:12px;color:var(--muted);line-height:1.65;background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--cyan);border-radius:10px;padding:11px 14px;margin-top:8px}
+.docbar{display:flex;gap:10px;margin:2px 0 12px}
+.docbar input{flex:1;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 13px;color:var(--ink);font-size:12.5px;font-family:inherit}
+.docbar input:focus{outline:none;border-color:rgba(0,242,255,.45)}
+.docbar select{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 11px;color:var(--muted);font-size:12px;font-family:inherit}
 @media(max-width:1080px){.dom-grid{grid-template-columns:1fr}.gq{grid-template-columns:1fr 1fr}.rm-kpis{grid-template-columns:1fr 1fr}.doc-cats{grid-template-columns:1fr 1fr}.tgt-row{grid-template-columns:1fr 1fr}}
 
 /* ============ SPLASH ============ */
@@ -561,7 +585,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.023</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.024</b></div>
   </div>
 </aside>
 
@@ -603,16 +627,18 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         <div class="mod-title" id="home-title">Good morning, Rachel.</div>
         <div class="mod-sub" id="home-sub"></div>
       </div>
+      <div class="home-cust"><span class="go2" onclick="toggleHomeCust()">⚙ Customize this page →</span></div>
+      <div class="cust-bar" id="cust-bar" style="display:none"></div>
       <div class="kpis" id="home-kpis"></div>
       <div class="grid2" style="margin-top:16px">
-        <div class="card"><div class="panel-h"><h2>Risk posture</h2><span class="go2" onclick="goOnside('domains')">Gaps &amp; levers →</span></div><div class="csub" style="margin-bottom:0">Judged against the targets you set, never a generic bar.</div><div id="home-posture"></div></div>
-        <div class="card"><div class="panel-h"><h2>Investments</h2><span class="go2" onclick="goStudio('design')">Work the levers →</span></div><div class="csub" id="home-inv-sub" style="margin-bottom:8px"></div><div id="home-invest"></div></div>
+        <div class="card" id="hp-posture"><div class="panel-h"><h2>Risk posture</h2><span class="go2" onclick="goOnside('domains')">Gaps &amp; levers →</span></div><div class="csub" style="margin-bottom:0">Judged against the targets you set, never a generic bar.</div><div id="home-posture"></div></div>
+        <div class="card" id="hp-invest"><div class="panel-h"><h2>Investments</h2><span class="go2" onclick="goStudio('design')">Work the levers →</span></div><div class="csub" id="home-inv-sub" style="margin-bottom:8px"></div><div id="home-invest"></div></div>
       </div>
       <div class="grid2" style="margin-top:16px">
-        <div class="card"><div class="panel-h"><h2>Return</h2><span class="go2" onclick="openReport('roi')">Platform ROI →</span></div><div class="csub" id="home-val-sub" style="margin-bottom:8px"></div><div id="home-value"></div></div>
-        <div class="card"><div class="panel-h"><h2 id="home-q-title">Your queue</h2><span class="go2" onclick="goOnside('gaps')">All open items →</span></div><div class="csub" id="home-q-sub" style="margin-bottom:4px"></div><div id="home-queue"></div></div>
+        <div class="card" id="hp-value"><div class="panel-h"><h2>Return</h2><span class="go2" onclick="openReport('roi')">Platform ROI →</span></div><div class="csub" id="home-val-sub" style="margin-bottom:8px"></div><div id="home-value"></div></div>
+        <div class="card" id="hp-queue"><div class="panel-h"><h2 id="home-q-title">Your queue</h2><span class="go2" onclick="goOnside('gaps')">All open items →</span></div><div class="csub" id="home-q-sub" style="margin-bottom:4px"></div><div id="home-queue"></div></div>
       </div>
-      <div class="card" style="margin-top:16px"><div class="panel-h"><h2>Legislation &amp; rulemaking in consideration</h2><span class="go2" onclick="goOnside('feed-lifecycle')">Full lifecycle →</span></div><div class="csub" style="margin-bottom:4px">Federal, state, and local, monitored separately because obligations stack.</div><div id="home-legis"></div></div>
+      <div class="card" id="hp-legis" style="margin-top:16px"><div class="panel-h"><h2>Legislation &amp; rulemaking in consideration</h2><span class="go2" onclick="goOnside('feed-lifecycle')">Full lifecycle →</span></div><div class="csub" style="margin-bottom:4px">Federal, state, and local, monitored separately because obligations stack.</div><div id="home-legis"></div></div>
       <div class="qa-row" id="home-qa"></div>
       <div class="foot-note">LeapFI Platform demo · illustrative customer data for NorthWinds Credit Union · role-based homepage rendered for the signed-in user · Not legal advice · © 2026 LeapFI LLC</div>
     </section>
@@ -652,6 +678,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         <div class="card">
           <h2>Your levers</h2>
           <div class="csub">Two things: how <b>aggressively</b> to pursue the portfolio, and how much <b>risk</b> to carry. Hover any <span class="tip" data-tip="Each lever has a plain-language explanation on hover.">i</span> for what a lever does. Everything recomputes live.</div>
+          <div class="csub" style="margin-top:-4px">Not sure where to set these? <span class="doclink" onclick="goOnside('onboarding')">Calibrate with the adoption questionnaire →</span> · the same instrument that placed you at '''+"'"+'Developing'+"'"+''' during onboarding.</div>
           <div class="stance"><div class="st-l">Your stance</div><div class="st-v" id="stance"></div></div>
           <div class="lever">
             <div class="lt"><span class="ln">Ambition <span class="tip" data-tip="Where you want the program to be on the five-point scale, against where you are today. Higher ambition puts more plays in scope and raises the domain targets OnSide judges you against.">i</span></span><span class="lv" id="amb-v">Managed</span></div>
@@ -659,12 +686,12 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
             <div class="ticks" id="amb-t"><span>Aware</span><span>Developing</span><span>Established</span><span>Managed</span><span>Embedded</span></div>
           </div>
           <div class="lever">
-            <div class="lt"><span class="ln">Risk tolerance <span class="tip" data-tip="How strict the gate: a control family must reach the gate percentage before a play it governs can unlock. Conservative funds only well-controlled plays; aggressive accepts thinner coverage and more residual risk.">i</span></span><span class="lv" id="tol-v">Balanced</span></div>
+            <div class="lt"><span class="ln">Risk appetite <span class="tip" data-tip="How much residual risk the institution will carry, in line with its risk-appetite statement. It sets the gate: a control family must reach the gate percentage before a play it governs can unlock. Conservative funds only well-controlled plays; aggressive accepts thinner coverage and more residual risk.">i</span></span><span class="lv" id="tol-v">Balanced</span></div>
             <input type="range" id="tol" min="0" max="100" step="1" value="52">
             <div class="ticks" id="tol-t"><span>Conservative</span><span>Balanced</span><span>Aggressive</span></div>
           </div>
           <div class="lever">
-            <div class="lt"><span class="ln">Investment horizon <span class="tip" data-tip="Quick wins orders the plan by fastest payback. Strategic puts foundational bets first (the data foundation), then the plays that compound on them. Balanced weighs both.">i</span></span><span class="lv" id="speed-v">Balanced</span></div>
+            <div class="lt"><span class="ln">Investment horizon <span class="tip" data-tip="How the funded plays are sequenced across the year. Quick wins orders by fastest payback, value landing in months. Strategic funds foundational bets first (the data foundation), accepting slower early returns for compounding later years. Balanced weighs both.">i</span></span><span class="lv" id="speed-v">Balanced</span></div>
             <input type="range" id="speed" min="0" max="2" step="1" value="1">
             <div class="ticks" id="speed-t"><span>Quick wins</span><span>Balanced</span><span>Strategic</span></div>
           </div>
@@ -679,7 +706,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
             <div class="ticks"><span>0.8&times;</span><span>3&times;</span><span>5&times;</span></div>
           </div>
           <div class="lever">
-            <div class="lt"><span class="ln">Adoption / efficacy <span class="tip" data-tip="The multiplier on every play's value. Low adoption is where most ROI quietly dies, so it is an input you set.">i</span></span><span class="lv" id="eff-v">55%</span></div>
+            <div class="lt"><span class="ln">Adoption / efficacy <span class="tip" data-tip="The share of eligible work that actually flows through each tool once live. Measured after launch from usage telemetry and outcome sampling; set it here from your change-management confidence. Every value figure scales linearly with it, because low adoption is where most ROI quietly dies.">i</span></span><span class="lv" id="eff-v">55%</span></div>
             <input type="range" id="eff" min="20" max="80" step="5" value="55">
             <div class="ticks"><span>20%</span><span>50%</span><span>80%</span></div>
           </div>
@@ -717,7 +744,8 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <div id="gatedlist"></div>
         </div>
         <div>
-          <div class="sect-lab">Ready, not yet funded · raise budget to add</div>
+          <div class="sect-lab">Cleared governance · outside the current budget</div>
+          <div class="phint" style="margin-top:-2px">These plays pass your risk gate; the annual envelope is spent before they fund. Raise the budget lever or swap a play.</div>
           <div id="benchlist"></div>
         </div>
       </div>
@@ -734,17 +762,10 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           </div>
           <div>
             <div class="card" id="disc-intake">
-              <h2>Log a use case directly</h2>
-              <div class="csub">Prefer a form? Capture it here and the advisor picks it up for scoping.</div>
-              <div class="uc-form">
-                <input id="ucf-name" placeholder="Use case title · e.g. Indirect lending dealer-portal assistant">
-                <div class="frow">
-                  <select id="ucf-cat"><option>Member service</option><option>Lending</option><option>Lending ops</option><option>BSA / AML</option><option>Fraud</option><option>Treasury</option><option>Growth</option><option>Governance</option><option>Foundation</option><option>Other</option></select>
-                  <select id="ucf-eff"><option>Effort today: low</option><option selected>Effort today: moderate</option><option>Effort today: heavy</option></select>
-                </div>
-                <textarea id="ucf-notes" placeholder="What does the process look like today? Who does it, how often, what goes wrong?"></textarea>
-                <div style="display:flex;align-items:center;gap:12px"><button class="btn" onclick="formAdd()">Add to register</button><span id="ucf-status" class="pill-soft" style="display:none">Added · the advisor picked it up</span></div>
-              </div>
+              <h2>Add a new use case</h2>
+              <div class="csub">Every entry goes through the same four-question scoping, so every estimate in this register is built the same way: effort, volume, exposure, and data drive the envelope, the controls, and the regulations. No side door with made-up numbers.</div>
+              <button class="btn" onclick="goStudio('ask');setTimeout(function(){var i=document.getElementById('chat-in');if(i){i.value='Something new entirely';userSend();}},250)">Scope a new use case →</button>
+              <div class="csub" style="margin-top:10px">Or just describe it in <span class="doclink" onclick="goStudio('ask')">Ask the platform</span>: known ideas price from the catalog instantly, new ones get the four questions.</div>
             </div>
           </div>
         </div>
@@ -836,6 +857,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.024</span> · <span class="cd">Aug 14, 2026</span><br>Rachel&rsquo;s dashboard review, worked through end to end. Home: every KPI tile now opens the work behind it, the risk-posture tiles carry gauges showing score against the target tick, and a Customize control lets each executive choose which panels their page shows. Scoring transparency: every domain opens with a gauge and a plain-language &ldquo;how this score is calculated&rdquo; walk-through of applicable obligations, the target math, and the met count. OnSide: a scope filter on Overview, Open gaps, and Documents so each officer sees what they oversee; all overview boxes clickable; the gaps view reconciles its full count by domain; documents get search and status filters. Regulatory feed: every source row opens its dated activity, and the lifecycle leads with a Newly Proposed section (the Fed/FDIC Reg O NPRM and peers) with area filters. Studio: intake distinguishes internal work that feeds financial reporting (GL / SOX named, moderate risk) and splits sensitive-financial from PII; new use cases land in the register through the same four questions (the direct-entry form is retired); risk tolerance is now risk appetite with fuller definitions and a link to calibrate from the adoption questionnaire; play economics state what the build number includes. Board reporting defines Tracking vs Open, open items carry target compliance dates, and updates can be logged in place. Obligations accept attached evidence pending reviewer sign-off, and provenance reads in plain language.</li>
             <li><span class="cv">v 1.023</span> · <span class="cd">Aug 14, 2026</span><br>Three-year roadmap rebuilt at full width: a KPI band (investment, annual value, ROI against hurdle, payback), then Year 1 as four tall quarter columns with per-quarter spend, larger play cards, and a running value-online marker, a visual link where the data foundation unlocks Year 2, and full-width Year 2 and Year 3 lanes showing every queued play with what it waits on. Everything still recomputes live from the Design studio levers, and every card opens its play.</li>
             <li><span class="cv">v 1.022</span> · <span class="cd">Aug 14, 2026</span><br>The full RACI policy ownership matrix returns to OnSide · RACI &amp; owners: every governance document mapped to Responsible, Accountable, Consulted, and Informed across the eight named roles, grouped by domain, with each document opening its viewer and each domain linking to its gaps and levers. The domain-owner table stays alongside it.</li>
             <li><span class="cv">v 1.021</span> · <span class="cd">Aug 14, 2026</span><br>Every Partial and Gap obligation now opens one view with the whole story, from anywhere on the row: the difference (what the obligation requires vs what exists today) and the remediation (the action, with any drafted language rendered inline as a redline with approve and route actions), shown whether the item is Approved or still in the HITL queue.</li>
@@ -863,7 +885,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.023</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.024</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -944,7 +966,7 @@ Object.keys(DETAIL).forEach(function(n){DETAIL[n].unlocks=[];});
 Object.keys(DETAIL).forEach(function(n){(DETAIL[n].deps||[]).forEach(function(d){if(DETAIL[d])DETAIL[d].unlocks.push(n);});});
 
 function riskOrder(r){return r==='low'?0:r==='med'?1:2;}
-function riskLabel(r){return r==='low'?'Low':r==='med'?'Med':'High';}
+function riskLabel(r){return r==='low'?'Low':r==='med'?'Moderate':'High';}
 function setTicks(id,idx){var c=$(id); if(!c)return; for(var i=0;i<c.children.length;i++){c.children[i].className=(i===idx?'on':'');}}
 function stanceText(L,gap,ready,gated){
   var reach=gap>=2?'far':gap===1?'moderate':'modest', gate=L.tol<34?'tight':L.tol<67?'balanced':'loose', lead, tension=false;
@@ -1141,7 +1163,7 @@ function openPlay(n){
    +'<div class="dsec"><div class="dh">Dependencies</div>'
      +'<div><div class="dcolh">Technical</div><ul class="dlist">'+d.tech.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul></div>'
      +'<div style="margin-top:14px"><div class="dcolh">Governance &amp; regulations</div><ul class="dlist gov">'+gov+'</ul></div>'
-     +'<div style="margin-top:14px"><div class="dcolh">Financial</div><ul class="dlist"><li>Build <b>'+fmt(o.cost)+'</b> one-time'+(ready?', in the ready set at your tolerance':'; sequence-gated (+'+fmt(o.cost)+' once unlocked)')+'</li><li>Run cost ≈ <b>'+fmt(ongoing)+'/yr</b> (est.)</li><li>Payback ≈ <b>'+pay+' mo</b> · 3-yr return <b>'+roiC.toFixed(1)+'×</b></li></ul></div>'
+     +'<div style="margin-top:14px"><div class="dcolh">Financial</div><ul class="dlist"><li>Build <b>'+fmt(o.cost)+'</b> one-time'+(ready?', in the ready set at your tolerance':'; sequence-gated (+'+fmt(o.cost)+' once unlocked)')+'</li><li>Run cost ≈ <b>'+fmt(ongoing)+'/yr</b> (est. · model consumption + hosting at scoped volume)</li><li style="color:var(--grey)">The build number includes control build-out for the gating families, OnSide evidence mapping, and first-year model consumption. Not licence-only.</li><li>Payback ≈ <b>'+pay+' mo</b> · 3-yr return <b>'+roiC.toFixed(1)+'×</b></li></ul></div>'
    +'</div>'
    +'<div class="dsec"><div class="dh">Controls to close first</div>'+(openG.length?'<ul class="dlist gov">'+openG.map(function(k){return '<li>'+ctrlLink(k,'g-open',k+' '+CTRL[k]+'% · open')+'<div class="dsub">'+GOV[k]+'</div></li>';}).join('')+'</ul>':'<span class="pill-soft">All gating controls are green.</span>')+'</div>'
    +'<div class="dsec"><div class="dh">How it connects</div>'
@@ -1529,7 +1551,7 @@ function openDocView(id,back){
    +'<div class="decon" style="grid-template-columns:1fr 1fr 1fr">'
      +'<div class="dt"><div class="dtl">Version</div><div class="dtv" style="font-size:15px">'+d.v+'</div><div class="dts">prior versions archived</div></div>'
      +'<div class="dt"><div class="dtl">Evidence chain</div><div class="dtv" style="font-size:15px">'+((d.obl||[]).length||'·')+'</div><div class="dts">mapped obligations</div></div>'
-     +'<div class="dt"><div class="dtl">Integrity</div><div class="dtv" style="font-size:12px;font-family:monospace">'+mockSha(d.t)+'</div><div class="dts">SHA-256 · verified on scan</div></div>'
+     +'<div class="dt"><div class="dtl">Verified copy</div><div class="dtv" style="font-size:12px;font-family:monospace">'+mockSha(d.t)+'</div><div class="dts">SHA-256 fingerprint · re-checked on every scan</div></div>'
    +'</div>'
    +secs+rl
    +'<div class="dsec"><div class="dh">Obligations this document evidences</div><div class="dchips">'+(obls||'<span class="pill-soft">Mapped at obligation level in the full register</span>')+'</div></div>'
@@ -1547,8 +1569,8 @@ function openInstr(k){
    +'<div style="font-size:13.5px;color:var(--muted);line-height:1.65;margin-bottom:16px">'+it.sum+'</div>'
    +'<div class="prov"><div class="dh" style="margin-bottom:8px">Provenance</div>'
      +'<div class="pm-row"><span class="k" style="width:80px">Source</span><span>'+it.src+'</span></div>'
-     +'<div class="pm-row"><span class="k" style="width:80px">Integrity</span><span style="font-family:monospace;font-size:11px">'+mockSha(it.n)+' · text_sha256, re-verified on every fetch</span></div>'
-     +'<div class="pm-row"><span class="k" style="width:80px">Review</span><span>Extractions from this instrument require human approval before becoming authoritative</span></div>'
+     +'<div class="pm-row"><span class="k" style="width:80px">Verified copy</span><span style="font-family:monospace;font-size:11px">'+mockSha(it.n)+'</span> <span class="tip" data-tip="A SHA-256 fingerprint of the captured text, re-checked on every fetch. If the source changes, the fingerprint stops matching and the item is re-captured and re-reviewed.">i</span></div>'
+     +'<div class="pm-row"><span class="k" style="width:80px">Review</span><span>Nothing read from this instrument becomes authoritative before a qualified human approves it</span></div>'
    +'</div>'
    +'<div class="dsec"><div class="dh">Domains this instrument drives</div><div class="dchips">'+doms+'</div></div>'
    +'</div>',false);
@@ -1564,8 +1586,8 @@ function openObl(domKey,oid){
    +'<div class="prov" style="margin:14px 0"><div class="dh" style="margin-bottom:8px">Provenance · verbatim source span</div>'
      +'<div style="font-size:13px;color:var(--ink);line-height:1.6;border-left:3px solid var(--cyan);padding-left:12px;font-style:italic">&ldquo;'+o.s+'&rdquo;</div>'
      +'<div class="pm-row" style="margin-top:10px"><span class="k" style="width:80px">Pin-cite</span><span>'+citeLink(o.cite)+'</span></div>'
-     +'<div class="pm-row"><span class="k" style="width:80px">Integrity</span><span style="font-family:monospace;font-size:11px">'+mockSha(o.id+o.s)+' · text_sha256</span></div>'
-     +'<div class="pm-row"><span class="k" style="width:80px">Extraction</span><span>Schema extractor v1 · confidence 0.97 · '+(o.rev==='ok'?'human-approved (compliance reviewer)':'awaiting human review · not yet authoritative')+'</span></div>'
+     +'<div class="pm-row"><span class="k" style="width:80px">Verified copy</span><span style="font-family:monospace;font-size:11px">'+mockSha(o.id+o.s)+'</span> <span class="tip" data-tip="A SHA-256 fingerprint of the captured source text. If the regulator&rsquo;s text ever changes, the fingerprint stops matching and OnSide re-captures and re-reviews it. It proves the words above are exactly what the source said.">i</span></div>'
+     +'<div class="pm-row"><span class="k" style="width:80px">Capture</span><span>Read from the source automatically · '+(o.rev==='ok'?'then approved by a compliance reviewer':'awaiting human review · not yet authoritative')+'</span></div>'
    +'</div>'
    +(o.st!=='met'&&o.gp?'<div class="dsec"><div class="dh">The difference · required vs today</div><div class="warnline" style="margin-bottom:0">'+o.gp+'</div></div>':'')
    +(function(){
@@ -1579,13 +1601,30 @@ function openObl(domKey,oid){
       return out+'</div>';
    })()
    +(o.uc?'<div class="dsec"><div class="dh">Triggered into scope by</div><div class="dchips"><span class="dchip" onclick="closeDrawer();openPlay(\''+o.uc+'\')">'+o.uc+' →</span></div></div>':'')
-   +'<div class="dsec"><div class="dh">Evidence documents</div><div class="dchips">'+docs+'</div></div>'
+   +'<div class="dsec"><div class="dh">Evidence documents</div><div class="dchips">'+docs+'</div>'
+     +(o.st!=='met'?(o.evAtt?'<div class="okline" style="margin-top:10px">✓ Evidence attached · pending reviewer sign-off · will close this item once approved</div>':'<div class="actions" style="margin-top:10px"><button class="btn ghost" onclick="attachEvidence(\''+domKey+'\',\''+oid+'\')">⇪ Attach evidence to close this item</button></div>'):'')
+   +'</div>'
    +'<div class="dsec"><div class="dh">Owner &amp; status</div><ul class="dlist"><li>Domain owner: '+d.owner+'</li><li>Status: '+(o.st==='met'?'Met at required maturity for target '+d.target:o.st==='partial'?'Partially met; remediation in flight':'Open gap; counted against the domain target')+'</li></ul></div>'
    +'</div>',false);
 }
 
+function attachEvidence(domKey,oid){
+  var o=oblByld(domKey,oid); if(!o)return;
+  o.evAtt=true;
+  openObl(domKey,oid);
+}
 /* ---- OnSide renderers ---- */
 var onsideView='overview';
+var OS_SCOPE='all';
+var DOM_SHORT={bsa:'BSA / AML',mrm:'Model Risk',tprm:'Third-Party',consumer:'Consumer',fairlend:'Fair Lending',infosec:'InfoSec',aigov:'AI Governance',capital:'Capital'};
+function scopedDoms(){return OS_SCOPE==='all'?DOMAINS:DOMAINS.filter(function(d){return d.key===OS_SCOPE;});}
+function setOsScope(k){OS_SCOPE=k;onsideShow(onsideView);}
+function osScopeBar(){
+  var chips=[['all','All domains']].concat(DOMAINS.map(function(d){return [d.key,DOM_SHORT[d.key]||d.name];}));
+  return '<div class="scopebar"><span class="sb-l">Scope</span>'+chips.map(function(c){
+    return '<span class="sbc'+(OS_SCOPE===c[0]?' on':'')+'" onclick="setOsScope(\''+c[0]+'\')">'+c[1]+'</span>';
+  }).join('')+'<span class="sb-note">Officers scope to what they oversee · the CRO sees everything</span></div>';
+}
 function goOnside(v){go('onside');onsideShow(v||'overview');}
 function onsideShow(v){
   var el=$('onside-views'); if(!el)return;
@@ -1607,27 +1646,29 @@ function onsideShow(v){
   else window.scrollTo({top:0});
 }
 function osKpis(){
-  var appl=0,met=0,gaps=0,atOr=0;
-  DOMAINS.forEach(function(d){appl+=d.appl;met+=d.met;gaps+=oblToClose(d);if(statusOf(d)!=='below')atOr++;});
+  var list=scopedDoms();
+  var appl=0,met=0,gaps=0,atOr=0,docs=0;
+  list.forEach(function(d){appl+=d.appl;met+=d.met;gaps+=oblToClose(d);docs+=d.docs;if(statusOf(d)!=='below')atOr++;});
+  var scoped=OS_SCOPE!=='all';
   return '<div class="kpis">'
-   +'<div class="kpi" style="cursor:pointer" onclick="onsideShow(\'docs\')"><div class="lab">Documents monitored</div><div class="num cy">'+DOCS_TOTAL+'</div><div class="sub">policies · evidence · minutes · training →</div></div>'
-   +'<div class="kpi"><div class="lab">Obligations in scope</div><div class="num">'+appl+'</div><div class="sub">applicable to NorthWinds’ profile &amp; use cases</div></div>'
-   +'<div class="kpi"><div class="lab">Obligations met</div><div class="num ok">'+met+'</div><div class="sub">at required maturity · human-approved</div></div>'
-   +'<div class="kpi" style="cursor:pointer" onclick="onsideShow(\'gaps\')"><div class="lab">Gaps to your targets</div><div class="num warn">'+gaps+'</div><div class="sub">judged against your bar →</div></div>'
-   +'<div class="kpi" style="cursor:pointer" onclick="onsideShow(\'targets\')"><div class="lab">Domains at / above target</div><div class="num'+(atOr>=DOMAINS.length/2?' ok':'')+'">'+atOr+' / '+DOMAINS.length+'</div><div class="sub">targets set by appetite &amp; use cases →</div></div>'
-   +'<div class="kpi" style="cursor:pointer" onclick="onsideShow(\'feed-lifecycle\')"><div class="lab">Change events · 7 days</div><div class="num">4</div><div class="sub">same-day detection · 9 bodies →</div></div>'
+   +kpi('Documents monitored',scoped?docs:DOCS_TOTAL,'cy',scoped?'in this domain':'policies · evidence · minutes · training',"onsideShow('docs')")
+   +kpi('Obligations in scope',''+appl,'',scoped?'applicable in this domain':'applicable to NorthWinds’ profile &amp; use cases',"onsideShow('domains')")
+   +kpi('Obligations met',''+met,'ok','at required maturity · human-approved',"onsideShow('domains')")
+   +kpi('Gaps to your targets',''+gaps,'warn','judged against your bar',"onsideShow('gaps')")
+   +kpi(scoped?'At / above target':'Domains at / above target',atOr+' / '+list.length,atOr>=list.length/2?'ok':'','targets set by appetite &amp; use cases',"onsideShow('targets')")
+   +kpi('Change events · 7 days','4','','same-day detection · 9 bodies',"onsideShow('feed-lifecycle')")
    +'</div>';
 }
 function osOverview(){
-  var doms=DOMAINS.map(function(d){
+  var doms=scopedDoms().map(function(d){
     return '<div class="dom" onclick="onsideShow(\'dom-'+d.key+'\')"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div><div class="dn">'+d.name+'</div><div class="db">'+d.bodies+' · '+d.appl+(d.tot>d.appl?' of '+d.tot:'')+' obligations in scope</div></div>'+statusChip(d)+'</div>'
      +'<div class="drow">'+lv5(d)+'</div>'
      +'<div class="dfoot"><span>'+d.met+' at required maturity · '+oblToClose(d)+' to close for target</span><span style="color:var(--cyan);font-weight:700">Open →</span></div></div>';
   }).join('');
-  var ev=SCOPE_EVENTS.length?('<div class="sect-lab">Scope changes this session</div>'+SCOPE_EVENTS.map(function(e){return '<div class="scope-ev"><span>◈</span><div><b>'+e.uc+'</b> entered the portfolio: pulls <b>'+e.obl+' obligations</b> into scope across '+e.doms.map(domLink).join(', ')+'. Targets re-evaluated.</div></div>';}).join('')):'';
+  var ev=SCOPE_EVENTS.length?('<div class="sect-lab" id="scope-events">Scope changes this session</div>'+SCOPE_EVENTS.map(function(e){return '<div class="scope-ev"><span>◈</span><div><b>'+e.uc+'</b> entered the portfolio: pulls <b>'+e.obl+' obligations</b> into scope across '+e.doms.map(domLink).join(', ')+'. Targets re-evaluated.<div style="margin-top:6px" class="dchips">'+e.doms.map(function(dn){var k=DOMKEYS[dn]||null;return k?'<span class="dchip" onclick="goOnside(\'dom-'+k+'\')">'+dn+' · see the new scope rows →</span>':'';}).join('')+'</div></div></div>';}).join('')):'';
   var ucs='<div class="card" style="margin-top:16px"><h2>Objectives driving scope</h2><div class="csub">Applicability is derived from the use cases the institution has declared, with determination provenance on every inclusion and exclusion. Click one to open it in Studio.</div>'
    +'<div class="chipstrip" style="margin-top:2px">'+OPPS.slice(0,8).map(function(o){return '<span class="chip doclink" style="cursor:pointer" onclick="openPlay(\''+o.n+'\')">'+o.n+'</span>';}).join('')+'<span class="chip doclink" style="cursor:pointer" onclick="goStudio(\'register\')">+ '+(OPPS.length-8)+' more in the register</span></div></div>';
-  return osKpis()
+  return osScopeBar()+osKpis()
    +'<div class="sect-lab">Posture by domain · judged against your own targets</div><div class="dom-grid">'+doms+'</div>'
    +ev+ucs
    +'<div class="card" style="margin-top:16px"><h2>The always-on compliance loop</h2><div class="loop">'
@@ -1684,16 +1725,28 @@ function osDomain(key){
   }
   return head+body;
 }
+function docFilter(){
+  var q=($('doc-q')?$('doc-q').value:'').toLowerCase(), st=$('doc-st')?$('doc-st').value:'';
+  var rows=document.querySelectorAll('#doc-rows tr');
+  for(var i=0;i<rows.length;i++){
+    var okQ=!q||(rows[i].getAttribute('data-q')||'').indexOf(q)>=0;
+    var okS=!st||rows[i].getAttribute('data-st')===st;
+    rows[i].style.display=(okQ&&okS)?'':'none';
+  }
+}
 function osDocs(){
   var cats=DOC_CATS.map(function(c){return '<div class="kpi"><div class="lab">'+c[0]+'</div><div class="num">'+c[1]+'</div></div>';}).join('')
    +'<div class="kpi"><div class="lab">Total monitored</div><div class="num cy">'+DOCS_TOTAL+'</div><div class="sub">across '+DOMAINS.length+' domains</div></div>';
-  var rows=SAMPLE_DOCS.map(function(id){
+  var list=SAMPLE_DOCS.filter(function(id){return OS_SCOPE==='all'||DOCLIB[id].dom===OS_SCOPE;});
+  var rows=list.map(function(id){
     var d=DOCLIB[id]; var dom=domByKey(d.dom);
-    return '<tr class="prow" onclick="openDocView(\''+id+'\')"><td><b class="doclink">'+d.t+'</b></td><td class="pcat">'+(dom?dom.name:'')+'</td><td class="pcat">'+d.type+'</td><td class="pcat">'+d.owner.split(' · ')[0]+'</td><td>'+statusTag(d.status)+'</td><td class="pcat">'+d.v+'</td></tr>';
+    var q=(d.t+' '+(dom?dom.name:'')+' '+d.type+' '+d.owner).toLowerCase();
+    return '<tr class="prow" data-q="'+q+'" data-st="'+d.status+'" onclick="openDocView(\''+id+'\')"><td><b class="doclink">'+d.t+'</b></td><td class="pcat">'+(dom?dom.name:'')+'</td><td class="pcat">'+d.type+'</td><td class="pcat">'+d.owner.split(' · ')[0]+'</td><td>'+statusTag(d.status)+'</td><td class="pcat">'+d.v+'</td></tr>';
   }).join('');
-  return '<div class="doc-cats">'+cats+'</div>'
+  return osScopeBar()+'<div class="doc-cats">'+cats+'</div>'
    +'<div class="card"><h2>Document universe · representative sample · click any document to open it</h2><div class="csub">Each monitored document maps to the obligations it evidences. Policies and procedures are only part of it: evidence artifacts, committee minutes, validations, and training records carry the exam.</div>'
-   +'<table class="tbl"><thead><tr><th>Document</th><th>Domain</th><th>Type</th><th>Owner</th><th>Status</th><th>Version / verified</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+   +'<div class="docbar"><input id="doc-q" placeholder="Search by title, domain, type, or owner…" oninput="docFilter()"><select id="doc-st" onchange="docFilter()"><option value="">All statuses</option><option value="good">Current</option><option value="warn">Update proposed</option><option value="crit">High priority</option></select></div>'
+   +'<table class="tbl"><thead><tr><th>Document</th><th>Domain</th><th>Type</th><th>Owner</th><th>Status</th><th>Version / verified</th></tr></thead><tbody id="doc-rows">'+(rows||'<tr><td colspan="6" style="color:var(--grey)">No sample documents in this scope; the full universe covers it.</td></tr>')+'</tbody></table></div>'
    +'<div class="card" style="margin-top:14px"><h2>Bring your own repository</h2><div class="csub">SharePoint, network folders, or a GRC platform: OnSide connects to where documents already live through LeapFI · Connect (MCP), keeps the evidence chain intact, and never forces a migration. Coming with the Connect module.</div></div>';
 }
 function osGaps(){
@@ -1710,11 +1763,67 @@ function osGaps(){
     var open=r[4]?('openObl(\''+r[4][0]+'\',\''+r[4][1]+'\')'):(r[3]?('openDocView(\''+r[3]+'\')'):'');
     return '<tr class="prow"'+(open?' onclick="'+open+'"':'')+'><td><span class="tag '+(r[0]==='crit'?'crit':'warn')+'">'+(r[0]==='crit'?'High':'Open')+'</span></td><td><b class="doclink">'+r[1]+'</b><div class="cite">'+r[2]+'</div></td><td class="pcat">'+r[5]+'</td><td class="pcat">'+r[6]+(r[3]?' · '+docLink(r[3],'open document'):'')+'</td><td><span class="hitl '+(r[7]==='ok'?'ok':'q')+'">'+(r[7]==='ok'?'Approved':'HITL queue')+'</span></td></tr>';
   }).join('');
-  return '<div class="card"><h2>Open gaps · judged against your targets · click any row</h2><div class="csub">Every gap is live work: routed to its owner with proposed language drafted, and only counted where the obligation applies to NorthWinds’ profile and target.</div>'
-   +'<table class="tbl"><thead><tr><th>Sev.</th><th>Item</th><th>Owner</th><th>Proposed action</th><th>Review</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  var GAP_DOM={'AI Governance':'aigov','Third-Party Risk':'tprm','Model Risk':'mrm','Fair Lending':'fairlend','Consumer / UDAAP':'consumer','BSA / AML':'bsa'};
+  var shown=G.filter(function(r){return OS_SCOPE==='all'||GAP_DOM[r[2]]===OS_SCOPE;});
+  var rows2=shown.map(function(r){
+    var open=r[4]?('openObl(\''+r[4][0]+'\',\''+r[4][1]+'\')'):(r[3]?('openDocView(\''+r[3]+'\')'):'');
+    return '<tr class="prow"'+(open?' onclick="'+open+'"':'')+'><td><span class="tag '+(r[0]==='crit'?'crit':'warn')+'">'+(r[0]==='crit'?'High':'Open')+'</span></td><td><b class="doclink">'+r[1]+'</b><div class="cite">'+r[2]+'</div></td><td class="pcat">'+r[5]+'</td><td class="pcat">'+r[6]+(r[3]?' · '+docLink(r[3],'open document'):'')+'</td><td><span class="hitl '+(r[7]==='ok'?'ok':'q')+'">'+(r[7]==='ok'?'Approved':'HITL queue')+'</span></td></tr>';
+  }).join('');
+  var total=0; var recon=scopedDoms().filter(function(d){return oblToClose(d)>0;}).map(function(d){
+    total+=oblToClose(d);
+    return '<tr class="prow" onclick="goOnside(\'dom-'+d.key+'\')"><td><b class="doclink">'+d.name+'</b></td><td>'+oblToClose(d)+'</td><td class="pcat">'+d.owner+'</td><td class="pcat" style="text-align:right">Open the register →</td></tr>';
+  }).join('');
+  return osScopeBar()
+   +'<div class="card"><h2>Priority queue · routed with proposed language · click any row</h2><div class="csub">The worked set: each item routed to its owner with the difference and the remediation drafted.</div>'
+   +'<table class="tbl"><thead><tr><th>Sev.</th><th>Item</th><th>Owner</th><th>Proposed action</th><th>Review</th></tr></thead><tbody>'+(rows2||'<tr><td colspan="5" style="color:var(--grey)">No priority items in this scope.</td></tr>')+'</tbody></table></div>'
+   +'<div class="card" style="margin-top:14px"><h2>Where the '+total+' gaps sit · the number reconciles</h2><div class="csub">Every obligation still to close for the targets in scope, by domain. Open a register for the row-level detail; the priority queue above is the subset already in flight.</div>'
+   +'<table class="tbl"><thead><tr><th>Domain</th><th>To close</th><th>Owner</th><th></th></tr></thead><tbody>'+(recon||'<tr><td colspan="4" style="color:var(--grey)">Nothing to close in this scope.</td></tr>')+'</tbody></table></div>';
+}
+var SRC_ITEMS={
+ 'White House Executive Orders':{d:'Presidential actions touching financial services, captured from the Federal Register the day they publish.',items:[
+   [6,'Aug 8, 2026','Executive order · sanctions program modernization','Screening configuration re-verified same day',"onsideShow('feed-inforce')"],
+   [23,'Jul 22, 2026','Executive order · digital-asset custody review directive','Tracking · no obligation change yet',"onsideShow('feed-lifecycle')"],
+   [98,'May 8, 2026','Executive order · AI use in federal financial oversight','Mapped to AI Governance watchlist',"goOnside('dom-aigov')"]]},
+ 'Federal Reserve · 12 CFR Ch. II':{d:'Binding lettered regulations, versioned through the eCFR API with same-day change detection.',items:[
+   [14,'Jul 31, 2026','Joint NPRM with FDIC · Regulation O · extensions of credit to insiders','<span class="tag info">New</span> Comment period open',"onsideShow('feed-lifecycle')"],
+   [45,'Jun 30, 2026','RFI 2026-04 · generative &amp; agentic AI in model risk','Comments due Sep 30',"openInstr('rfi2026')"],
+   [119,'Apr 17, 2026','Interagency Guidance 2026-13 in force','Mapped to the Model Risk register',"goOnside('dom-mrm')"]]},
+ 'FinCEN · 31 CFR Ch. X':{d:'BSA program rules, CDD, and SAR/CTR requirements, versioned through the eCFR API.',items:[
+   [9,'Aug 5, 2026','CTA / BOI scope update · litigation cycle','Lifecycle status tracked, never hard-coded',"onsideShow('feed-lifecycle')"],
+   [60,'Jun 2026','SAR e-filing schema revision','Filing procedures verified current',"goOnside('dom-bsa')"]]},
+ 'CFPB · 12 CFR Ch. X':{d:'Consumer regulations B through Z plus §1071 and §1033 rulemakings.',items:[
+   [8,'Aug 6, 2026','§1033 staged compliance dates · tier confirmation','Applies at our asset tier',"openInstr('1033')"],
+   [60,'Jun 15, 2026','Circular 2026-C1 in force · adverse-action specificity','2 items open in Fair Lending',"goOnside('dom-fairlend')"]]},
+ 'State banking regulators':{d:'NYDFS Part 500/504, CA DFPI, and CSBS/NMLS state actions for the TX · OK · NM footprint.',items:[
+   [5,'Aug 9, 2026','NM HB 210 · passed Senate 34&ndash;6','Vendor disclosure clause pre-drafted',"openInstr('nmai')"],
+   [20,'Jul 25, 2026','TX HB 149 · awaiting floor vote','TRAIGA clarification tracked',"onsideShow('feed-lifecycle')"]]}
+};
+function openSource(name){
+  var s=SRC_ITEMS[name];
+  var body;
+  if(s){
+    body='<div class="dsum">'+s.d+'</div>'
+     +'<div class="dchips" style="margin:12px 0 6px">'+[[30,'Last 30 days'],[120,'Last 120 days'],[9999,'All activity']].map(function(f,i){
+        return '<span class="dchip'+(i===2?'':'')+'" onclick="srcFilter(this,'+f[0]+')">'+f[1]+'</span>';}).join('')+'</div>'
+     +'<div id="src-items">'+s.items.map(function(it){
+        return '<div class="list-row" data-days="'+it[0]+'"><div class="t"><div class="n">'+it[2]+'</div><div class="s">'+it[1]+' · '+it[3]+'</div></div><span class="go" onclick="closeDrawer();'+it[4]+'">Open →</span></div>';}).join('')+'</div>'
+     +'<div class="csub" style="margin-top:12px">Every item carries a verbatim source span, pin-cite, and SHA-256 on capture. Nothing becomes authoritative without human approval.</div>';
+  } else {
+    body='<div class="dsum">This source activates with its connector phase. Once live, this view lists everything captured from it, dated, with the obligation and document mapping behind each item.</div>'
+     +'<div style="margin-top:12px"><span class="pill-soft">Feed detail lands with the phase build-out</span></div>';
+  }
+  showDrawer('<div class="dwrap"><button class="dclose" onclick="closeDrawer()">✕ Close</button>'
+   +'<div class="dcat">Regulatory feed · source</div><h3 class="dtitle">'+name+'</h3>'+body+'</div>',false);
+}
+function srcFilter(el,days){
+  var chips=el.parentNode.querySelectorAll('.dchip');
+  for(var i=0;i<chips.length;i++)chips[i].style.borderColor='';
+  el.style.borderColor='rgba(0,242,255,.5)';
+  var rows=document.querySelectorAll('#src-items .list-row');
+  for(var j=0;j<rows.length;j++)rows[j].style.display=(parseInt(rows[j].getAttribute('data-days'),10)<=days)?'':'none';
 }
 function osSources(){
-  function row(r){var name=r[0]?instrLink(r[0],r[1]):r[1];return '<tr><td><b>'+name+'</b></td><td class="pcat">'+r[2]+'</td><td class="pcat">'+r[3]+'</td><td><span class="ph-tag '+r[4]+'">'+r[5]+'</span></td></tr>';}
+  function row(r){var name=r[0]?instrLink(r[0],r[1]):r[1];var key=r[1].replace(/&amp;/g,'&');return '<tr class="prow" onclick="openSource(\''+r[1].replace(/'/g,"\\'")+'\')"><td><b class="doclink">'+name+'</b></td><td class="pcat">'+r[2]+'</td><td class="pcat">'+r[3]+'</td><td><span class="ph-tag '+r[4]+'">'+r[5]+'</span></td></tr>';}
   var fin=[
    [null,'OCC · 12 CFR Ch. I','Binding rules','eCFR Versioner API','live','Live'],
    [null,'FDIC · 12 CFR Ch. III','Binding rules','eCFR Versioner API','live','Live'],
@@ -1736,13 +1845,29 @@ function osSources(){
    [null,'State governments &amp; laws','TX · OK · NM statutes and 50-state tracking','LegiScan · Open States · authoritative-site fallback','p5','Phase 5'],
    [null,'Municipal governments','Local ordinances in footprint','Municipal sources','p5','Phase 5']
   ].map(row).join('');
-  function layer(t,d,rows){return '<div class="sect-lab">'+t+'</div><div class="card"><div class="csub">'+d+'</div><table class="tbl conn-tbl"><thead><tr><th>Source</th><th>Covers</th><th>Method</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>';}
+  function layer(t,d,rows){return '<div class="sect-lab">'+t+'</div><div class="card"><div class="csub">'+d+'</div><table class="tbl conn-tbl"><thead><tr><th>Source · click for its activity</th><th>Covers</th><th>Method</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>';}
   return '<div class="card"><h2>Our sources · three layers, monitored separately</h2><div class="csub">Obligations stack: a federal rule, a state law, and a municipal ordinance can all touch the same policy, and the institution has to satisfy every one of them. Each layer is monitored separately, and every obligation carries a verbatim source span, a resolvable pin-cite, and a SHA-256 hash. Nothing becomes authoritative until a qualified human approves it. New sources are added as your charter, footprint, or business lines require them: enter a new state, acquire a fintech, or take on a product line and the sources come with it.</div></div>'
    +layer('Financial · banking regulators','The prudential and consumer core: your chartering regulator and the agencies that examine you.',fin)
    +layer('Systemic · governing agencies','The agencies whose programs cut across every institution: sanctions, financial crimes, exam standards, markets.',sys)
    +layer('Regional · national, state &amp; local','Where obligations are born: executive action, bills in flight, state law, and the ordinances of your footprint.',reg);
 }
+var LC_SCOPE='all';
+function setLcScope(k){LC_SCOPE=k;onsideShow('feed-lifecycle');}
+function lcBar(){
+  var areas=[['all','All areas'],['Model Risk','Model Risk'],['Third-Party','Third-Party Risk'],['BSA','BSA / AML'],['Fair Lending','Fair Lending'],['Consumer','Consumer / UDAAP'],['InfoSec','InfoSec'],['AI Governance','AI Governance'],['Capital','Capital']];
+  return '<div class="scopebar"><span class="sb-l">Area</span>'+areas.map(function(a){
+    return '<span class="sbc'+(LC_SCOPE===a[0]?' on':'')+'" onclick="setLcScope(\''+a[0]+'\')">'+a[1]+'</span>';
+  }).join('')+'<span class="sb-note">Filtered to what each officer oversees</span></div>';
+}
+function lcMatch(domTxt){return LC_SCOPE==='all'||domTxt.indexOf(LC_SCOPE)>=0;}
 function osLifecycle(){
+  var NEW_RULES=[
+   ['FED · FDIC','Joint NPRM · Regulation O · extensions of credit to insiders','Proposed Jul 31, 2026 · comment period open','AI Governance · Capital','Insider-credit and board policies would need conforming updates. The comment window is the strategy moment.'],
+   ['NCUA','NPRM · third-party due-diligence expectations for AI-assisted services','Proposed Aug 5, 2026 · comments due Oct 4','Third-Party Risk','Would raise evidence expectations on TPRM-04 and TPRM-08 for critical AI vendors.'],
+   ['CFPB','§1071 small-business lending data · re-proposal signals','Pre-rule · SBREFA panel announced','Fair Lending','Data-collection build enters scope the day a proposal posts.']
+  ].filter(function(r){return lcMatch(r[3]);}).map(function(r){
+    return '<tr class="prow" onclick="onsideShow(\'feed-sources\')"><td><span class="tag grey">'+r[0]+'</span></td><td><b class="doclink">'+r[1]+'</b><div class="cite">'+r[4]+'</div></td><td class="pcat"><span class="tag info">New</span> '+r[2]+'</td><td class="pcat">'+r[3]+'</td></tr>';
+  }).join('');
   var rows=[
    ['FED','RFI 2026-04','Interagency RFI 2026-04 · Generative &amp; Agentic AI in Model Risk','Comment period open · due Sep 30, 2026','Model Risk · AI Governance'],
    ['CFPB','1033','§1033 Personal Financial Data Rights · staged compliance dates','Compliance dates tracked by tier','Consumer / UDAAP · InfoSec'],
@@ -1752,9 +1877,12 @@ function osLifecycle(){
    ['TX','TRAIGA','HB 149 · AI Governance Rules Clarification Act','Awaiting floor vote','AI Governance'],
    ['OK',null,'SB 1822 · AI Consumer Protection Act','In committee','Consumer / UDAAP · Fair Lending'],
    ['CFPB','2026-C1','Reg B Guidance 2026-C1 · adverse-action specificity','<span style="color:var(--sem2);font-weight:700">Effective now</span>','Fair Lending']
-  ].map(function(r){var t=r[1]?instrLink(r[1],r[2]):r[2];return '<tr><td><span class="tag grey">'+r[0]+'</span></td><td><b>'+t+'</b></td><td class="pcat">'+r[3]+'</td><td class="pcat">'+r[4]+'</td></tr>';}).join('');
-  return '<div class="card"><h2>Rulemaking lifecycle · pending &amp; tracked · click any instrument</h2><div class="csub">Proposal through effect, tracked to the domains and documents each item would touch. 2026 volatility (CFPB posture, CTA/BOI, §1033, §1071, CAT sunset) is first-class lifecycle status, never a hard-coded assumption.</div>'
-   +'<table class="tbl"><thead><tr><th>Source</th><th>Item</th><th>Status</th><th>Domains touched</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  ].filter(function(r){return lcMatch(r[4]);}).map(function(r){var t=r[1]?instrLink(r[1],r[2]):r[2];return '<tr><td><span class="tag grey">'+r[0]+'</span></td><td><b>'+t+'</b></td><td class="pcat">'+r[3]+'</td><td class="pcat">'+r[4]+'</td></tr>';}).join('');
+  return lcBar()
+   +'<div class="card" style="border-color:rgba(0,242,255,.3)"><h2>Newly proposed · the strategy signal</h2><div class="csub">New proposed rulemakings are the biggest impact to strategy, so they surface here the day they post: captured while the comment window is open and positions can still be shaped, before they harden into obligations.</div>'
+   +'<table class="tbl"><thead><tr><th>Source</th><th>Proposal</th><th>Status</th><th>Would touch</th></tr></thead><tbody>'+(NEW_RULES||'<tr><td colspan="4" style="color:var(--grey)">No new proposals in this area.</td></tr>')+'</tbody></table></div>'
+   +'<div class="card" style="margin-top:14px"><h2>Pending &amp; tracked · click any instrument</h2><div class="csub">Proposal through effect, tracked to the domains and documents each item would touch, including held-up-in-court and back-for-comment states. 2026 volatility (CFPB posture, CTA/BOI, §1033, §1071, CAT sunset) is first-class lifecycle status, never a hard-coded assumption.</div>'
+   +'<table class="tbl"><thead><tr><th>Source</th><th>Item</th><th>Status</th><th>Domains touched</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4" style="color:var(--grey)">Nothing tracked in this area.</td></tr>')+'</tbody></table></div>';
 }
 function osInforce(){
   var rows=[
@@ -1848,11 +1976,29 @@ function osRaci(){
 }
 
 /* ---- thesis v13 views: board reporting · knowledge copilot · onboarding ---- */
+var BOARD_LOG={};
+function boardUpdate(id){
+  var prior=(BOARD_LOG[id]||[]).map(function(u){return '<div class="list-row"><div class="t"><div class="n">'+u.txt+'</div><div class="s">Logged '+u.when+' · '+u.who+(u.date?' · target '+u.date:'')+'</div></div></div>';}).join('');
+  showDrawer('<div class="dwrap"><button class="dclose" onclick="closeDrawer()">✕ Close</button>'
+   +'<div class="dcat">Board reporting · open item</div><h3 class="dtitle">Log an update · '+id+'</h3>'
+   +'<div class="dsum">Progress logged here lands on the standing board view and in the exam record, with the author and date attached.</div>'
+   +'<div class="uc-form" style="margin-top:12px">'
+   +'<input id="bu-date" placeholder="Expected compliance date · e.g. Q1 2027">'
+   +'<textarea id="bu-txt" placeholder="What has been done, what is in progress, what is blocked…"></textarea>'
+   +'<div style="display:flex;align-items:center;gap:12px"><button class="btn" onclick="boardSave(\''+id+'\')">Save update</button><span id="bu-ok" class="pill-soft" style="display:none">Saved to the standing view</span></div></div>'
+   +(prior?'<div class="dsec"><div class="dh">Update history</div>'+prior+'</div>':'')
+   +'</div>',false);
+}
+function boardSave(id){
+  var txt=$('bu-txt').value.trim(); if(!txt){$('bu-txt').focus();return;}
+  (BOARD_LOG[id]=BOARD_LOG[id]||[]).unshift({txt:txt,when:'Aug 14, 2026',who:CURRENT.first+' '+(CURRENT.role||''),date:$('bu-date').value.trim()});
+  var ok=$('bu-ok'); if(ok){ok.style.display='';setTimeout(function(){closeDrawer();onsideShow('board');},900);}
+}
 function osBoard(){
   var rows=[
-   ['2026-13','Interagency Guidance 2026-13 · Model Risk Management','Financial','Applies: model program in scope for all decisioning models','Policy updated Apr 2026 · validation clauses rolling into 9 legacy contracts','<span class="tag warn">2 items open</span>'],
-   ['2026-C1','Reg B Circular 2026-C1 · adverse-action specificity','Financial','Applies: model-assisted denials in consumer lending','Attribution-to-code matrix redlined · quarterly accuracy testing drafted','<span class="tag warn">Open</span>'],
-   ['NM AI Act','New Mexico Artificial Intelligence Act','Regional','Applies: NM footprint · automated decision systems','Vendor disclosure clause pre-drafted · HB 210 extension tracked','<span class="tag warn">Monitoring</span>'],
+   ['2026-13','Interagency Guidance 2026-13 · Model Risk Management','Financial','Applies: model program in scope for all decisioning models','Policy updated Apr 2026 · validation clauses rolling into 9 legacy contracts<div class="cite" style="margin-top:4px">Target compliance <b>Q1 2027</b> · last update Aug 12 · <span class="doclink" onclick="event.stopPropagation();boardUpdate(\'2026-13\')">Log an update →</span></div>','<span class="tag warn">2 items open</span>'],
+   ['2026-C1','Reg B Circular 2026-C1 · adverse-action specificity','Financial','Applies: model-assisted denials in consumer lending','Attribution-to-code matrix redlined · quarterly accuracy testing drafted<div class="cite" style="margin-top:4px">Target compliance <b>Nov 2026</b> · last update Aug 9 · <span class="doclink" onclick="event.stopPropagation();boardUpdate(\'2026-C1\')">Log an update →</span></div>','<span class="tag warn">Open</span>'],
+   ['NM AI Act','New Mexico Artificial Intelligence Act','Regional','Applies: NM footprint · automated decision systems','Vendor disclosure clause pre-drafted · HB 210 extension tracked','<span class="tag grey">Tracking</span>'],
    ['1033','CFPB §1033 · Personal Financial Data Rights','Financial','Applies at our asset tier · compliance date tracked','Data-sharing interface assessment scheduled Q4','<span class="tag grey">Tracking</span>'],
    ['CDD Rule','CTA / BOI reporting volatility','Systemic','Applies: beneficial-ownership program','Lifecycle status watched · no policy change until scope settles','<span class="tag grey">Tracking</span>'],
    [null,'OFAC · sanctions list update (Aug 8)','Systemic','Applies: screening program','Screening configuration re-verified same day via Connect','<span class="tag good">Closed</span>'],
@@ -1862,6 +2008,7 @@ function osBoard(){
     return '<tr><td><b>'+name+'</b></td><td><span class="tag grey">'+r[2]+'</span></td><td class="pcat">'+r[3]+'</td><td class="pcat">'+r[4]+'</td><td>'+r[5]+'</td></tr>';
   }).join('');
   return '<div class="card"><h2>Board &amp; regulatory reporting · the standing view</h2><div class="csub">Boards carry the obligation to govern a regulatory environment that changes faster than any quarterly pack can track. This is the standing, sourced view: what changed, which changes apply to this institution given its charter, size, and business lines, what the institution is doing about each one, and what remains open. No deck assembled the week before the meeting.</div>'
+   +'<div class="csub" style="margin-top:-4px"><b style="color:var(--ink)">Tracking</b> = watching an item that has not become relevant yet · <b style="color:var(--ink)">Open</b> = it applies, work is in progress with a target compliance date · <b style="color:var(--ink)">Closed</b> = done and evidenced.</div>'
    +'<table class="tbl"><thead><tr><th>What changed</th><th>Layer</th><th>Applies to us?</th><th>What we are doing</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>'
    +'<div style="margin-top:14px"><span class="pill-soft">The same record answers the examiner asking how the board stayed informed</span> <button class="btn ghost" style="margin-left:10px" onclick="window.print()">🖨 Export board pack</button></div></div>'
    +'<div class="card" style="margin-top:14px"><h2>Determination provenance</h2><div class="csub">Each &ldquo;applies / does not apply&rdquo; call above records the charter, footprint, or business-line fact that drove it, at determination time. Directors get the reasoning along with the conclusion it led to.</div></div>';
@@ -1922,6 +2069,15 @@ var expandedDoms={};
 function osToggleDom(key){expandedDoms[key]=!expandedDoms[key];var el=$('onside-views');if(el){el.innerHTML=osDomainsMaster();var acc=$('dom-acc-'+key);if(acc&&expandedDoms[key])acc.scrollIntoView({behavior:'smooth',block:'nearest'});}}
 function domBody(d){
   var key=d.key;
+  var need=Math.ceil(d.target/5*d.appl), cur=curOf(d), toClose=oblToClose(d);
+  var how='<div style="margin-top:6px"><span class="doclink" style="font-size:11.5px" onclick="event.stopPropagation();var b=document.getElementById(\'sh-'+key+'\');b.style.display=b.style.display===\'none\'?\'\':\'none\'">How this score is calculated ▸</span>'
+   +'<div id="sh-'+key+'" class="sh-b" style="display:none"><b>'+d.appl+'</b> obligations apply to NorthWinds&rsquo; profile and use cases'+(d.tot>d.appl?' ('+(d.tot-d.appl)+' excluded with documented rationale)':'')+'. '
+   +'Your target of <b>'+d.target+' · '+BANDS[d.target-1]+'</b> requires <b>'+need+'</b> of them at required maturity ('+d.target+'&frasl;5 &times; '+d.appl+'). '
+   +'<b>'+d.met+'</b> are met and human-approved today. Score = '+d.met+' &divide; '+d.appl+' &times; 5 = <b>'+cur.toFixed(1)+'</b>. '
+   +(toClose>0?'Closing <b>'+toClose+'</b> more reaches your bar. Judged against your target, never a perfect 5.':'You are at your bar. Judged against your target, never a perfect 5.')+'</div></div>';
+  var gaugeRow='<div style="display:flex;align-items:flex-start;gap:16px;margin:4px 0 10px">'+gaugeSVG(cur,d.target,84)
+   +'<div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">'+cur.toFixed(1)+' of target '+d.target+' · '+BANDS[d.target-1]+'</div>'
+   +'<div style="font-size:11px;color:var(--grey);margin-top:2px">'+d.met+' of '+d.appl+' obligations met at required maturity · tick marks your target</div>'+how+'</div></div>';
   var lever='<div class="tgt-row" style="grid-template-columns:1fr 1.4fr;border-bottom:0;padding-top:4px">'
    +'<div><div class="tb" style="margin-bottom:4px">TARGET · THE LEVER</div><input type="range" min="1" max="5" step="1" value="'+d.target+'" onchange="setTarget(\''+key+'\',this.value)"><div class="tgt-lab"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div><div style="margin-top:6px">'+statusChip(d)+' <span style="font-size:10.5px;color:var(--grey)">'+oblToClose(d)+' obligations to close for target '+d.target+'</span></div></div>'
    +'<div class="why">'+d.why+'</div></div>';
@@ -1937,7 +2093,7 @@ function domBody(d){
     gaps='<div class="dh" style="margin:14px 0 8px">Top open items · documents &amp; proposed language linked</div>'+(DOM_OPEN[key]||[]).map(openItemRow).join('');
   }
   var foot='<div class="csub" style="margin-top:12px">'+d.appl+(d.tot>d.appl?' of '+d.tot:'')+' obligations in scope · '+d.met+' at required maturity · <span class="doclink" onclick="event.stopPropagation();onsideShow(\'docs\')">'+d.docs+' documents</span> · Owner: '+d.owner+' · '+d.inst+'</div>';
-  return lever+gaps+foot;
+  return gaugeRow+lever+gaps+foot;
 }
 function osDomainsMaster(){
   var rows=DOMAINS.map(function(d){
@@ -2029,7 +2185,39 @@ function switchUser(id){
 }
 
 /* ============ ROLE-BASED HOME ============ */
-function kpi(lab,num,cls,sub){return '<div class="kpi"><div class="lab">'+lab+'</div><div class="num '+(cls||'')+'">'+num+'</div><div class="sub">'+sub+'</div></div>';}
+function gaugeSVG(cur,tgt,px){
+  px=px||70;
+  var r=(px-14)/2, cx=px/2, cy=px/2+r/2+4, C=Math.PI*r;
+  var pct=Math.max(0,Math.min(1,cur/5)), tp=Math.max(0,Math.min(1,tgt/5));
+  var below=cur<tgt-0.001, col=below?'#D99B43':'#00F2FF';
+  var ta=Math.PI*(1-tp);
+  var x1=cx+(r-6)*Math.cos(ta), y1=cy-(r-6)*Math.sin(ta);
+  var x2=cx+(r+5)*Math.cos(ta), y2=cy-(r+5)*Math.sin(ta);
+  return '<svg class="gg" width="'+px+'" height="'+Math.ceil(cy+6)+'" viewBox="0 0 '+px+' '+Math.ceil(cy+6)+'">'
+   +'<path d="M '+(cx-r)+' '+cy+' A '+r+' '+r+' 0 0 1 '+(cx+r)+' '+cy+'" fill="none" stroke="var(--line2)" stroke-width="7" stroke-linecap="round"/>'
+   +'<path d="M '+(cx-r)+' '+cy+' A '+r+' '+r+' 0 0 1 '+(cx+r)+' '+cy+'" fill="none" stroke="'+col+'" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+(C*pct).toFixed(1)+' '+Math.ceil(C)+'"/>'
+   +'<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="var(--muted)" stroke-width="2"/>'
+   +'<text x="'+cx+'" y="'+(cy-2)+'" text-anchor="middle" font-size="'+Math.round(px*0.23)+'" font-weight="800" fill="'+(below?'#D99B43':'var(--ink)')+'" font-family="Inter,sans-serif">'+cur.toFixed(1)+'</text></svg>';
+}
+var HOME_HIDE={};
+var HP=[['kpis','home-kpis','Top metrics'],['posture','hp-posture','Risk posture'],['invest','hp-invest','Investments'],['value','hp-value','Return'],['queue','hp-queue','Your queue'],['legis','hp-legis','Legislation &amp; rulemaking'],['qa','home-qa','Quick actions']];
+function toggleHomeCust(){var b=$('cust-bar');var open=b.style.display==='none';b.style.display=open?'flex':'none';if(open)renderCustBar();}
+function renderCustBar(){
+  var hid=HOME_HIDE[CURRENT.roleKey]||{};
+  $('cust-bar').innerHTML='<span class="cust-lab">Show on your home</span>'+HP.map(function(p){
+    var on=!hid[p[0]];
+    return '<span class="qchip'+(on?' on':'')+'" onclick="homePanelToggle(\''+p[0]+'\')">'+(on?'✓ ':'')+p[2]+'</span>';
+  }).join('')+'<span class="cust-note">Saved for '+CURRENT.first+' · each executive shapes their own page</span>';
+}
+function homePanelToggle(k){
+  var hid=HOME_HIDE[CURRENT.roleKey]||(HOME_HIDE[CURRENT.roleKey]={});
+  hid[k]=!hid[k]; renderCustBar(); applyHomePanels();
+}
+function applyHomePanels(){
+  var hid=HOME_HIDE[CURRENT.roleKey]||{};
+  HP.forEach(function(p){var el=$(p[1]);if(el)el.style.display=hid[p[0]]?'none':'';});
+}
+function kpi(lab,num,cls,sub,go){return '<div class="kpi'+(go?' click':'')+'"'+(go?' onclick="'+go+'"':'')+'><div class="lab">'+lab+'</div><div class="num '+(cls||'')+'">'+num+'</div><div class="sub">'+sub+(go?' →':'')+'</div></div>';}
 function lrow(n,s,goLab,goFn){return '<div class="list-row"><div class="t"><div class="n">'+n+'</div><div class="s">'+s+'</div></div><span class="go" onclick="'+goFn+'">'+goLab+' →</span></div>';}
 function qa(icon,t,d,goFn){return '<div class="qa" onclick="'+goFn+'"><div class="qi">'+icon+'</div><div class="qt">'+t+'</div><div class="qd">'+d+'</div><div class="ql">Open →</div></div>';}
 function renderHome(){
@@ -2042,15 +2230,18 @@ function renderHome(){
   $('home-sub').innerHTML='The state of the institution at a glance: where risk posture stands against the targets you set, what is funded, and what it returns. Every tile links to the work behind it.';
 
   $('home-kpis').innerHTML=
-   kpi('Domains at / above target',(DOMAINS.length-below.length)+' / '+DOMAINS.length,(DOMAINS.length-below.length)>=5?'ok':'warn','measured against the bar you set')
-   +kpi('Gaps to your targets',''+gapsTotal,'warn','obligations to close, all domains')
-   +kpi('Expected 3-yr ROI',P.roi.toFixed(1)+'&times;',P.roi>=L.roiTgt?'ok':'warn','against your '+L.roiTgt.toFixed(1)+'&times; hurdle')
-   +kpi('Annual value',fmt(P.annual),'','at '+Math.round(L.eff*100)+'% adoption')
-   +kpi('Committed',fmt(P.spent),'cy','of '+fmt(L.budget)+' envelope · '+P.funded.length+' plays')
-   +kpi('High priority','1','crit','Incident Response Plan escalation');
+   kpi('Domains at / above target',(DOMAINS.length-below.length)+' / '+DOMAINS.length,(DOMAINS.length-below.length)>=5?'ok':'warn','measured against the bar you set',"goOnside('domains')")
+   +kpi('Gaps to your targets',''+gapsTotal,'warn','obligations to close, all domains',"goOnside('gaps')")
+   +kpi('Expected 3-yr ROI',P.roi.toFixed(1)+'&times;',P.roi>=L.roiTgt?'ok':'warn','against your '+L.roiTgt.toFixed(1)+'&times; hurdle',"openReport('roi')")
+   +kpi('Annual value',fmt(P.annual),'','at '+Math.round(L.eff*100)+'% adoption',"goStudio('design')")
+   +kpi('Committed',fmt(P.spent),'cy','of '+fmt(L.budget)+' envelope · '+P.funded.length+' plays',"goStudio('design')")
+   +kpi('High priority','1','crit','Incident Response Plan escalation',"goOnside('gaps')");
 
   $('home-posture').innerHTML=DOMAINS.map(function(d){
-    return '<div class="pd" onclick="goOnside(\'dom-'+d.key+'\')"><div class="pdh"><span class="pdn">'+d.name+'</span>'+statusChip(d)+'</div>'+lv5(d)+'</div>';
+    var c=curOf(d), toClose=oblToClose(d);
+    return '<div class="pd" onclick="goOnside(\'dom-'+d.key+'\')"><div class="pdh"><span class="pdn">'+d.name+'</span>'+statusChip(d)+'</div>'
+     +'<div class="pdg">'+gaugeSVG(c,d.target,62)
+     +'<div class="pdgt"><div class="pgv">target '+d.target+' · '+BANDS[d.target-1]+'</div><div class="pgs">'+(toClose>0?toClose+' obligations to close':'at your bar')+'</div></div></div></div>';
   }).join('');
 
   var top=P.funded.slice().sort(function(a,b){return b.val-a.val;}).slice(0,4);
@@ -2098,6 +2289,7 @@ function renderHome(){
   $('home-queue').innerHTML=q;
 
   var LEGIS=[
+   ['FEDERAL',null,'Fed &amp; FDIC joint NPRM · Regulation O · insider credit','<span class="tag info">New</span> Proposed Jul 31 · comment open','AI Gov · Capital'],
    ['FEDERAL','RFI 2026-04','Interagency RFI 2026-04 · Generative &amp; Agentic AI in Model Risk','Comment period open · due Sep 30, 2026','Model Risk · AI Governance'],
    ['FEDERAL','1033','CFPB §1033 · Personal Financial Data Rights','Staged compliance dates by tier','Consumer · InfoSec'],
    ['FEDERAL','CDD Rule','CTA / BOI reporting scope','Litigation cycle tracked','BSA / AML'],
@@ -2117,6 +2309,7 @@ function renderHome(){
    qa('◎','Ask the platform','Ideas priced, policy cited, new use cases scoped. One conversation.',"goStudio('ask')")
    +qa('▣','Domains · gaps &amp; levers','Every category, its target, and the gaps behind the score.',"goOnside('domains')")
    +qa('📊','Board pack','The standing view plus the generated report library.',"goOnside('board')");
+  applyHomePanels();
 }
 
 /* ============ DISCOVERY ============ */
@@ -2173,8 +2366,8 @@ function userSend(){
 var INTAKE=[
  {q:'Roughly how much effort does this consume today?',chips:['2 people · ~15 hrs/wk','A team · 30+ hrs/wk','A whole department']},
  {q:'What volume does it run at?',chips:['Under 500 items / mo','500–5,000 / mo','5,000+ / mo']},
- {q:'What is the exposure? This decides which controls and regulations gate it.',chips:['Internal only','Member-facing','Touches lending decisions']},
- {q:'Last one: what data does it touch?',chips:['Public / internal only','Member PII','Sensitive financial + PII']}
+ {q:'What is the exposure? This decides which controls and regulations gate it. Internal work that feeds financial reporting carries a different risk profile than a simple workflow.',chips:['Internal · simple workflow','Internal · feeds financial reporting (GL / SOX)','Member-facing','Touches lending decisions']},
+ {q:'Last one: what data does it touch?',chips:['Public / internal only','Member PII','Sensitive financial · no PII','Sensitive financial + PII']}
 ];
 function startIntake(name){
   chatState.mode='intake'; chatState.pending={name:name,step:0}; chatState.answers=[];
@@ -2186,14 +2379,18 @@ function finishIntake(){
   var a=chatState.answers, name=chatState.pending.name;
   var effT=a[0].indexOf('depart')>=0?2:a[0].indexOf('30+')>=0?1:0;
   var volT=a[1].indexOf('5,000+')>=0?2:a[1].indexOf('500–')>=0?1:0;
-  var lending=a[2].toLowerCase().indexOf('lending')>=0, memberFacing=a[2].toLowerCase().indexOf('member')>=0;
-  var pii=a[3].toLowerCase().indexOf('pii')>=0;
+  var a2=a[2].toLowerCase(), a3=a[3].toLowerCase();
+  var lending=a2.indexOf('lending')>=0, memberFacing=a2.indexOf('member')>=0;
+  var finrep=a2.indexOf('financial reporting')>=0||a2.indexOf('gl')>=0||a2.indexOf('sox')>=0;
+  var pii=a3.indexOf('pii')>=0&&a3.indexOf('no pii')<0;
+  var sensfin=a3.indexOf('sensitive financial')>=0;
   var g,risk,cat;
   if(lending){g=['Fair Lending','Adverse Action','Model Risk'];risk='high';cat='Lending';}
   else if(memberFacing){g=['UDAAP','Model Risk'];risk='med';cat='Member service';}
+  else if(finrep){g=['Model Risk','Privacy'];risk='med';cat='Operations';}
   else{g=['Privacy'];risk='low';cat='Operations';}
   if(pii&&g.indexOf('Privacy')<0)g.push('Privacy');
-  var cost=40000+volT*20000+(lending?60000:0)+(pii?15000:0);
+  var cost=40000+volT*20000+(lending?60000:0)+(finrep?15000:0)+(pii?15000:0)+(sensfin?10000:0);
   var val=80000+effT*60000+volT*40000;
   var o={n:name,c:cat,cost:cost,val:val,h:volT>1?'strategic':'quick',r:risk,g:g,disc:true};
   gateCalc(o);
@@ -2204,7 +2401,7 @@ function finishIntake(){
    +vrow('Build','≈ <b>'+fmt(cost)+'</b> one-time · '+riskLabel(risk)+' risk profile ('+cat+')')
    +vrow('Value','≈ <b>'+fmt(val*L.eff)+'/yr</b> at your '+Math.round(L.eff*100)+'% adoption setting')
    +vrow('Controls','OnSide flags: '+g.map(function(k){var ok=CTRL[k]>=GREEN;return ctrlLink(k,(ok?'g-green':'g-open'),k+' '+CTRL[k]+'%'+(ok?' ✓':' · open'));}).join(' · '))
-   +vrow('Regulations','Impacted: '+domainsFor(g).map(domLink).join(' · ')+' ('+g.map(function(k){return REGMAP[k];}).filter(function(v,i,arr){return arr.indexOf(v)===i;}).join(' · ')+')')
+   +vrow('Regulations','Impacted: '+domainsFor(g).map(domLink).join(' · ')+' ('+g.map(function(k){return REGMAP[k];}).filter(function(v,i,arr){return arr.indexOf(v)===i;}).join(' · ')+(finrep?' · <b>SOX 404 / ICFR</b>: controls over financial reporting must be evidenced through the tool':'')+(sensfin&&!pii?' · sensitive financial, no PII: GLBA safeguards without privacy-notice triggers':'')+')')
    +vrow('Placement',(o.minGate>=L.threshold?'<span class="g-green">Would be ready now</span> at your current tolerance.':'<span class="g-open">Would start sequence-gated</span>. Unlocks after '+ctrlLink(o.weakGate)+' closes ('+CTRL[o.weakGate]+'% → 80%).'))
    +'</div>'
    +'<div class="actions"><button class="btn" onclick="acceptProposed()">Add to the opportunity register</button><button class="btn ghost" onclick="discardProposed()">Discard</button></div>',900);
@@ -2219,7 +2416,7 @@ function acceptProposed(){
   SCOPE_EVENTS.push({uc:o.n,doms:doms,obl:3+o.g.length*2});
   recompute(); renderHome();
   botSay('Added. <b>'+o.n+'</b> is in the register'+(o.minGate>=readLevers().threshold?' and clears the gate at your current tolerance. Studio has picked it up for funding consideration.':', currently sequence-gated. Studio shows it with the control that unlocks it.')+' It pulls <b>'+(3+o.g.length*2)+' obligations</b> into scope across '+doms.join(', ')+'; OnSide has re-evaluated those domain targets. The library is at <b>'+OPPS.length+'</b>.'
-   +'<div class="actions"><button class="btn" onclick="go(\'studio\')">See it in Studio</button><button class="btn ghost" onclick="goOnside(\'overview\')">See the scope change in OnSide</button><button class="btn ghost" onclick="resetChips()">Capture another</button></div>',700);
+   +'<div class="actions"><button class="btn" onclick="goStudio(\'register\')">See it in the register</button><button class="btn ghost" onclick="goOnside(\'overview\');setTimeout(function(){var el=document.getElementById(\'scope-events\');if(el)el.scrollIntoView({behavior:\'smooth\'});},200)">See the scope change in OnSide</button><button class="btn ghost" onclick="resetChips()">Capture another</button></div>',700);
 }
 function discardProposed(){chatState.proposed=null;botSay('Discarded. Nothing was added to the register. What else is on your mind?',500);resetChips();}
 function resetChips(){chips(['What do I do about after-hours loan decisioning?','How do we handle a dormant account?','Can we build an auto loan origination platform?','Can we share member data with a fintech partner?','Something new entirely']);}
