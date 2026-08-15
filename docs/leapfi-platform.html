@@ -485,6 +485,8 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
 .docbar input{flex:1;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 13px;color:var(--ink);font-size:12.5px;font-family:inherit}
 .docbar input:focus{outline:none;border-color:rgba(0,242,255,.45)}
 .docbar select{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 11px;color:var(--muted);font-size:12px;font-family:inherit}
+.repcard .ra{font-size:9px;color:var(--cyan);font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin:2px 0 3px}
+@media(max-width:1080px){.rep-row{grid-template-columns:1fr 1fr !important}}
 @media(max-width:1080px){.dom-grid{grid-template-columns:1fr}.gq{grid-template-columns:1fr 1fr}.rm-kpis{grid-template-columns:1fr 1fr}.doc-cats{grid-template-columns:1fr 1fr}.tgt-row{grid-template-columns:1fr 1fr}}
 
 /* ============ SPLASH ============ */
@@ -548,13 +550,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
       <div class="nav-subwrap">
         <span class="os-sub" data-os="overview" onclick="goOnside('overview')">Overview</span>
         <span class="os-sub" data-os="domains" onclick="goOnside('domains')">Domains · gaps &amp; levers</span>
-        <div class="os-nest" id="nest-reporting">
-          <div class="os-nest-h" onclick="toggleNest('reporting')">Reporting <span class="caret">▸</span></div>
-          <div class="os-nest-body">
-            <span class="os-sub" data-os="board" onclick="goOnside('board')">Board reporting</span>
-            <span class="os-sub" data-os="reports" onclick="goOnside('reports')">Report library</span>
-          </div>
-        </div>
+        <span class="os-sub" data-os="reports" onclick="goOnside('reports')">Reporting</span>
         <div class="os-nest" id="nest-documents">
           <div class="os-nest-h" onclick="toggleNest('documents')">Documents <span class="caret">▸</span></div>
           <div class="os-nest-body">
@@ -585,7 +581,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.024</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.025</b></div>
   </div>
 </aside>
 
@@ -857,6 +853,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.025</span> · <span class="cd">Aug 14, 2026</span><br>All reporting collapsed to one screen. The Reporting nav item opens a single page of eight standing reports spanning every audience: Board Pack, Regulatory Change Briefing (the standing board view now lives inside it, updates still logged in place), Risk Posture &amp; Targets with per-domain gauges, Compliance Open Items, Model Risk Report with the validation calendar, Third-Party &amp; Vendor Risk with SOC 2 and exit-plan status, IT &amp; Information Security with the IRP priority and connector health, and Investment &amp; ROI, which now carries the funded portfolio behind the number. Each card names its audience, every figure links back to the register it came from, and all eight generate from the same live data model.</li>
             <li><span class="cv">v 1.024</span> · <span class="cd">Aug 14, 2026</span><br>Rachel&rsquo;s dashboard review, worked through end to end. Home: every KPI tile now opens the work behind it, the risk-posture tiles carry gauges showing score against the target tick, and a Customize control lets each executive choose which panels their page shows. Scoring transparency: every domain opens with a gauge and a plain-language &ldquo;how this score is calculated&rdquo; walk-through of applicable obligations, the target math, and the met count. OnSide: a scope filter on Overview, Open gaps, and Documents so each officer sees what they oversee; all overview boxes clickable; the gaps view reconciles its full count by domain; documents get search and status filters. Regulatory feed: every source row opens its dated activity, and the lifecycle leads with a Newly Proposed section (the Fed/FDIC Reg O NPRM and peers) with area filters. Studio: intake distinguishes internal work that feeds financial reporting (GL / SOX named, moderate risk) and splits sensitive-financial from PII; new use cases land in the register through the same four questions (the direct-entry form is retired); risk tolerance is now risk appetite with fuller definitions and a link to calibrate from the adoption questionnaire; play economics state what the build number includes. Board reporting defines Tracking vs Open, open items carry target compliance dates, and updates can be logged in place. Obligations accept attached evidence pending reviewer sign-off, and provenance reads in plain language.</li>
             <li><span class="cv">v 1.023</span> · <span class="cd">Aug 14, 2026</span><br>Three-year roadmap rebuilt at full width: a KPI band (investment, annual value, ROI against hurdle, payback), then Year 1 as four tall quarter columns with per-quarter spend, larger play cards, and a running value-online marker, a visual link where the data foundation unlocks Year 2, and full-width Year 2 and Year 3 lanes showing every queued play with what it waits on. Everything still recomputes live from the Design studio levers, and every card opens its play.</li>
             <li><span class="cv">v 1.022</span> · <span class="cd">Aug 14, 2026</span><br>The full RACI policy ownership matrix returns to OnSide · RACI &amp; owners: every governance document mapped to Responsible, Accountable, Consulted, and Informed across the eight named roles, grouped by domain, with each document opening its viewer and each domain linking to its gaps and levers. The domain-owner table stays alongside it.</li>
@@ -885,7 +882,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.024</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.025</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1217,6 +1214,59 @@ function openReport(kind){
      +'<div class="dsec"><div class="dh">◔ Later · after the data foundation ('+afterSpine.length+')</div><ul class="rlist">'+(afterSpine.length?afterSpine.map(function(o){return '<li><b>'+playLink(o.n)+'</b>: depends on the data foundation + '+ctrlLink(o.weakGate)+' ('+CTRL[o.weakGate]+'%).</li>';}).join(''):'<li>None.</li>')+'</ul></div>'
      +'<div class="dsec"><div class="dh">○ Blocked · waiting on controls ('+afterCtrl.length+')</div><ul class="rlist">'+(afterCtrl.length?afterCtrl.map(function(o){return '<li><b>'+playLink(o.n)+'</b>: unlocks after '+ctrlLink(o.weakGate)+' ('+CTRL[o.weakGate]+'%).</li>';}).join(''):'<li>None.</li>')+'</ul></div>'
      +'</div>';
+  } else if(kind==='regchange'){
+    h=head('Regulatory Change Briefing','The standing view · what changed, what applies, what we are doing')
+     +'<div style="margin-top:14px">'+boardStandingHTML()+'</div>'
+     +'</div>';
+  } else if(kind==='posture'){
+    var below2=DOMAINS.filter(function(d){return statusOf(d)==='below';});
+    var gapsT=0; DOMAINS.forEach(function(d){gapsT+=oblToClose(d);});
+    var worst=below2.slice().sort(function(a,b){return oblToClose(b)-oblToClose(a);})[0];
+    var prow2=DOMAINS.map(function(d){
+      return '<div class="list-row" style="cursor:pointer" onclick="closeDrawer();goOnside(\'dom-'+d.key+'\')">'+gaugeSVG(curOf(d),d.target,46)
+       +'<div class="t" style="margin-left:6px"><div class="n">'+d.name+'</div><div class="s">target '+d.target+' · '+BANDS[d.target-1]+' · '+d.met+' of '+d.appl+' met · '+(oblToClose(d)>0?oblToClose(d)+' to close':'at the bar')+'</div></div>'+statusChip(d)+'</div>';
+    }).join('');
+    h=head('Risk Posture & Targets','Every domain against the bar the institution set')
+     +'<div class="rgrid">'+tile('At / above target',(DOMAINS.length-below2.length)+' / '+DOMAINS.length,'judged against your own bar')+tile('Gaps to targets',''+gapsT,'obligations to close')+tile('Largest gap',worst?worst.name.split(' · ')[0]:'None',worst?oblToClose(worst)+' obligations':'')+tile('High priority','1','IRP escalation')+'</div>'
+     +'<div class="dsec"><div class="dh">Posture by domain · click any row for its register</div>'+prow2+'</div>'
+     +'<div class="dsec"><div class="rrec">Targets are set from risk appetite and the use cases in the portfolio, with determination provenance on every inclusion. A 3.7 against a target of 4 means the institution chose Managed, not that it failed a generic bar.</div></div>'
+     +'</div>';
+  } else if(kind==='mrm'){
+    var dm=domByKey('mrm'), openM=OBL.mrm.filter(function(o){return o.st!=='met';});
+    var mrows=openM.map(function(o){return '<tr class="prow" onclick="openObl(\'mrm\',\''+o.id+'\')"><td><span class="obl-id">'+o.id+'</span></td><td><b class="doclink">'+o.s+'</b></td><td>'+(o.st==='partial'?'<span class="tag warn">Partial</span>':'<span class="tag crit">Gap</span>')+'</td><td><span class="hitl '+(o.rev==='ok'?'ok':'q')+'">'+(o.rev==='ok'?'Approved':'HITL queue')+'</span></td></tr>';}).join('');
+    h=head('Model Risk Report','Register status · '+dm.owner+' · Interagency Guidance 2026-13')
+     +'<div class="rgrid">'+tile('Score',curOf(dm).toFixed(1)+' / '+dm.target,BANDS[dm.target-1]+' target')+tile('Obligations',dm.met+' of '+dm.appl,'met at required maturity')+tile('To close',''+oblToClose(dm),'for the target')+tile('Models in inventory','23','14 internal · 9 vendor')+'</div>'
+     +'<div class="dsec"><div class="dh">Open register items · click any row</div><table class="rtbl"><tbody>'+mrows+'</tbody></table></div>'
+     +'<div class="dsec"><div class="dh">Validation calendar</div><ul class="rlist">'
+     +'<li><b>Fraud model refresh</b>: independent validation slot booked Q4 with '+docLink('mrm-validation-fraud','the current validation report')+' as baseline.</li>'
+     +'<li><b>AI-assisted transaction monitoring</b>: independent validation scheduled · evidence lands against MRM-08.</li>'
+     +'<li><b>Generative &amp; agentic models</b>: '+docLink('gen-ai-draft','interim governance language pre-staged')+' pending RFI 2026-04 final scope.</li>'
+     +'</ul></div>'
+     +'</div>';
+  } else if(kind==='tprm'){
+    var dt=domByKey('tprm'), openT=OBL.tprm.filter(function(o){return o.st!=='met';});
+    var trows=openT.map(function(o){return '<tr class="prow" onclick="openObl(\'tprm\',\''+o.id+'\')"><td><span class="obl-id">'+o.id+'</span></td><td><b class="doclink">'+o.s+'</b></td><td>'+(o.st==='partial'?'<span class="tag warn">Partial</span>':'<span class="tag crit">Gap</span>')+'</td><td><span class="hitl '+(o.rev==='ok'?'ok':'q')+'">'+(o.rev==='ok'?'Approved':'HITL queue')+'</span></td></tr>';}).join('');
+    h=head('Third-Party & Vendor Risk','Register status · '+dt.owner+' · 2023 Interagency Guidance')
+     +'<div class="rgrid">'+tile('Score',curOf(dt).toFixed(1)+' / '+dt.target,BANDS[dt.target-1]+' target')+tile('Obligations',dt.met+' of '+dt.appl,'met at required maturity')+tile('Critical vendors','12','of 87 in inventory')+tile('SOC 2 on file','11 of 12','core processor reviewed')+'</div>'
+     +'<div class="dsec"><div class="dh">Open register items · click any row</div><table class="rtbl"><tbody>'+trows+'</tbody></table></div>'
+     +'<div class="dsec"><div class="dh">Program notes</div><ul class="rlist">'
+     +'<li><b>Exit planning</b>: '+docLink('exit-draft','draft exit-plan standard')+' in HITL review · closes TPRM-08 for the four critical vendors without one.</li>'
+     +'<li><b>Contract riders</b>: '+docLink('contract-rider','model-risk clauses')+' rolling into 9 legacy contracts · 4 executed.</li>'
+     +'<li><b>Core processor</b>: '+docLink('soc2-core','SOC 2 Type II reviewed')+' · two CUECs mapped to internal controls.</li>'
+     +'</ul></div>'
+     +'</div>';
+  } else if(kind==='infosec'){
+    var di=domByKey('infosec');
+    h=head('IT & Information Security','GLBA safeguards & security posture · '+di.owner)
+     +'<div class="rgrid">'+tile('Score',curOf(di).toFixed(1)+' / '+di.target,'above the bar')+tile('Obligations',di.met+' of '+di.appl,'met · 9 excluded with rationale')+tile('High priority','1','IRP escalation gap')+tile('Connector health','4 live','eCFR · FinCEN · Fed Register · WH EO')+'</div>'
+     +'<div class="dsec"><div class="dh">Priority item</div><div class="warnline">Incident Response Plan: escalation path for member-facing automation is not yet defined. Redline drafted, awaiting '+di.owner.split(' · ')[0]+'. '+docLink('irp','Open the document')+'.</div></div>'
+     +'<div class="dsec"><div class="dh">Program status</div><ul class="rlist">'
+     +'<li><b>GLBA Safeguards</b>: '+docLink('glba-program','program document')+' current · access reviews and MFA evidence on file for the quarter.</li>'
+     +'<li><b>FFIEC CAT sunset</b>: mapping to successor frameworks in progress · tracked in the <span class="doclink" onclick="closeDrawer();goOnside(\'feed-lifecycle\')">rulemaking lifecycle</span>.</li>'
+     +'<li><b>Vendor security</b>: core processor '+docLink('soc2-core','SOC 2 reviewed')+' · no open complementary-control exceptions.</li>'
+     +'<li><b>Platform feeds</b>: all live connectors healthy, same-day change detection verified · <span class="doclink" onclick="closeDrawer();goOnside(\'feed-sources\')">sources &amp; connectors</span>.</li>'
+     +'</ul></div>'
+     +'</div>';
   } else if(kind==='roi'){
     var opex=45000000, compPct=0.10, comp=opex*compPct;
     var platCost=180000, save=Math.round(comp*0.12), net=save+P.annual-platCost;
@@ -1229,6 +1279,10 @@ function openReport(kind){
      +'<li><b>Exam preparation</b>: evidence exports assembled on demand from the obligation registers instead of weeks of document assembly.</li>'
      +'<li><b>Judged against your own bar</b>: effort goes only to the obligations your use cases and appetite actually trigger.</li>'
      +'</ul></div>'
+     +'<div class="dsec"><div class="dh">The funded portfolio behind the number</div><table class="rtbl"><thead><tr><th>Play</th><th>Category</th><th>Build</th><th>Annual value</th><th>Payback</th></tr></thead><tbody>'
+     +P.funded.map(function(o){return '<tr><td><b>'+playLink(o.n)+'</b></td><td>'+o.c+'</td><td>'+fmt(o.cost)+'</td><td>'+fmt(o.val*L.eff)+'</td><td>'+Math.round(o.cost/(o.val*L.eff)*12)+' mo</td></tr>';}).join('')
+     +'<tr class="tot"><td>Total</td><td></td><td>'+fmt(P.spent)+'</td><td>'+fmt(P.annual)+'</td><td>'+P.payM+' mo</td></tr></tbody></table>'
+     +'<div class="csub" style="margin-top:8px">'+P.bench.length+' plays cleared and waiting on budget · '+P.gated.length+' sequence-gated on controls · full sequencing lives in the <span class="doclink" onclick="closeDrawer();goStudio(\'roadmap\')">three-year roadmap</span>.</div></div>'
      +'<div class="dsec"><div class="dh">Read</div><div class="rrec">The platform pays for itself on compliance capacity alone. The funded portfolio return ('+P.roi.toFixed(1)+'× over three years) is upside on top. Figures are planning envelopes for discussion.</div></div>'
      +'</div>';
   }
@@ -1628,18 +1682,18 @@ function osScopeBar(){
 function goOnside(v){go('onside');onsideShow(v||'overview');}
 function onsideShow(v){
   var el=$('onside-views'); if(!el)return;
-  var R={overview:osOverview,domains:osDomainsMaster,docs:osDocs,gaps:osGaps,'feed-sources':osSources,'feed-lifecycle':osLifecycle,'feed-inforce':osInforce,raci:osRaci,board:osBoard,reports:osReports,onboarding:osOnboarding};
+  var R={overview:osOverview,domains:osDomainsMaster,docs:osDocs,gaps:osGaps,'feed-sources':osSources,'feed-lifecycle':osLifecycle,'feed-inforce':osInforce,raci:osRaci,board:osReports,reports:osReports,onboarding:osOnboarding};
   var orig=v;
   if(v==='targets')v='domains';
   var domKey=null;
   if(v.indexOf('dom-')===0){domKey=v.slice(4);expandedDoms[domKey]=true;v='domains';}
   onsideView=v;
-  var OS_HEADS={overview:'Overview',domains:'Domains · gaps & levers',board:'Board reporting',reports:'Report library',docs:'Document universe',gaps:'Open gaps','feed-sources':'Sources & connectors','feed-lifecycle':'Rulemaking lifecycle','feed-inforce':'In force',raci:'RACI & owners',onboarding:'How onboarding works'};
+  var OS_HEADS={overview:'Overview',domains:'Domains · gaps & levers',board:'Reporting',reports:'Reporting',docs:'Document universe',gaps:'Open gaps','feed-sources':'Sources & connectors','feed-lifecycle':'Rulemaking lifecycle','feed-inforce':'In force',raci:'RACI & owners',onboarding:'How onboarding works'};
   setCrumb('OnSide',OS_HEADS[v]||'Overview','');
   el.innerHTML=(R[v]||osOverview)();
   var subs=document.querySelectorAll('#ng-onside .os-sub');
   for(var i=0;i<subs.length;i++)subs[i].classList.toggle('active',subs[i].getAttribute('data-os')===v);
-  var NEST_OF={board:'reporting',reports:'reporting',docs:'documents',gaps:'documents','feed-sources':'feed','feed-lifecycle':'feed','feed-inforce':'feed',raci:'setup',onboarding:'setup'};
+  var NEST_OF={docs:'documents',gaps:'documents','feed-sources':'feed','feed-lifecycle':'feed','feed-inforce':'feed',raci:'setup',onboarding:'setup'};
   var nests=document.querySelectorAll('#ng-onside .os-nest');
   for(var j=0;j<nests.length;j++)nests[j].classList.toggle('open',nests[j].id==='nest-'+NEST_OF[v]);
   if(domKey){var acc=document.getElementById('dom-acc-'+domKey); if(acc)setTimeout(function(){acc.scrollIntoView({behavior:'smooth',block:'start'});},80);}
@@ -1992,9 +2046,9 @@ function boardUpdate(id){
 function boardSave(id){
   var txt=$('bu-txt').value.trim(); if(!txt){$('bu-txt').focus();return;}
   (BOARD_LOG[id]=BOARD_LOG[id]||[]).unshift({txt:txt,when:'Aug 14, 2026',who:CURRENT.first+' '+(CURRENT.role||''),date:$('bu-date').value.trim()});
-  var ok=$('bu-ok'); if(ok){ok.style.display='';setTimeout(function(){closeDrawer();onsideShow('board');},900);}
+  var ok=$('bu-ok'); if(ok){ok.style.display='';setTimeout(function(){closeDrawer();openReport('regchange');},900);}
 }
-function osBoard(){
+function boardStandingHTML(){
   var rows=[
    ['2026-13','Interagency Guidance 2026-13 · Model Risk Management','Financial','Applies: model program in scope for all decisioning models','Policy updated Apr 2026 · validation clauses rolling into 9 legacy contracts<div class="cite" style="margin-top:4px">Target compliance <b>Q1 2027</b> · last update Aug 12 · <span class="doclink" onclick="event.stopPropagation();boardUpdate(\'2026-13\')">Log an update →</span></div>','<span class="tag warn">2 items open</span>'],
    ['2026-C1','Reg B Circular 2026-C1 · adverse-action specificity','Financial','Applies: model-assisted denials in consumer lending','Attribution-to-code matrix redlined · quarterly accuracy testing drafted<div class="cite" style="margin-top:4px">Target compliance <b>Nov 2026</b> · last update Aug 9 · <span class="doclink" onclick="event.stopPropagation();boardUpdate(\'2026-C1\')">Log an update →</span></div>','<span class="tag warn">Open</span>'],
@@ -2111,14 +2165,19 @@ function osDomainsMaster(){
   return '<div class="card" style="margin-bottom:14px"><h2>Domains · gaps &amp; levers on one page</h2><div class="csub" style="margin-bottom:0">Every domain the institution monitors, judged against the target it set. Open any category to work its lever and see the gaps behind the score. Move a slider and everything recomputes.</div></div>'+rows;
 }
 function osReports(){
-  return '<div class="card"><h2>Report library · generated from the live model</h2><div class="csub">Built from the current Studio dials and the governance record. Each opens formatted, ready to print or save as PDF.</div>'
-   +'<div class="rep-row" style="grid-template-columns:repeat(5,1fr);margin-top:6px">'
-   +'<div class="repcard" onclick="openReport(\'board\')"><div class="ri">📊</div><div class="rt">Board Presentation</div><div class="rd">One-page executive read: posture, the funded portfolio, expected return, and the recommendation.</div><div class="rg">Generate →</div></div>'
-   +'<div class="repcard" onclick="openReport(\'compliance\')"><div class="ri">🛡️</div><div class="rt">Compliance · Open Items</div><div class="rd">Every open control, its gap to green, the plays it blocks, and the action to close it.</div><div class="rg">Generate →</div></div>'
-   +'<div class="repcard" onclick="openReport(\'plan\')"><div class="ri">📋</div><div class="rt">Investment Plan</div><div class="rd">The funded portfolio with build cost, annual value, payback, plus bench and gated.</div><div class="rg">Generate →</div></div>'
-   +'<div class="repcard" onclick="openReport(\'roadmap\')"><div class="ri">🗺️</div><div class="rt">Sequencing Roadmap</div><div class="rd">What to do now, what the data foundation makes possible, and what waits on controls.</div><div class="rg">Generate →</div></div>'
-   +'<div class="repcard" onclick="openReport(\'roi\')"><div class="ri">💠</div><div class="rt">Platform ROI</div><div class="rd">Why the investment pays for itself against the compliance spend you already carry.</div><div class="rg">Generate →</div></div>'
-   +'</div></div>';
+  function rc(kind,icon,aud,title,desc){return '<div class="repcard" onclick="openReport(\''+kind+'\')"><div class="ri">'+icon+'</div><div class="ra">'+aud+'</div><div class="rt">'+title+'</div><div class="rd">'+desc+'</div><div class="rg">Generate →</div></div>';}
+  return '<div class="card"><h2>Reporting · one screen, every audience</h2><div class="csub">Eight standing reports generated live from the governance record and the Studio dials, from what the board needs down to what IT runs on. One data model underneath, so the numbers always agree. Each opens formatted, ready to print or save as PDF, with every figure linking back to the work behind it.</div>'
+   +'<div class="rep-row" style="grid-template-columns:repeat(4,1fr);margin-top:6px">'
+   +rc('board','📊','For the board','Board Pack','One-page executive read: posture, the funded portfolio, expected return, and the recommendation.')
+   +rc('regchange','🏛','For the board','Regulatory Change Briefing','The standing view: what changed, what applies to this institution, what we are doing, what remains open. Updates logged in place.')
+   +rc('posture','◔','For the CRO','Risk Posture &amp; Targets','Every domain against the bar the institution set, with the gauge, the target, and the gaps behind each score.')
+   +rc('compliance','🛡️','For the CCO','Compliance · Open Items','Every open control family, its gap to green, the plays it blocks, and the action that closes it.')
+   +rc('mrm','⚖️','For model risk','Model Risk Report','The 2026-13 register: inventory, validation status, open obligations, and the validation calendar.')
+   +rc('tprm','⇄','For vendor mgmt','Third-Party &amp; Vendor Risk','Critical vendors, due-diligence and SOC 2 status, exit planning, and the open register items.')
+   +rc('infosec','🖥️','For IT','IT &amp; Information Security','GLBA safeguards posture, the incident-response escalation item, CAT sunset transition, and connector health.')
+   +rc('roi','💠','For the CEO / CFO','Investment &amp; ROI','Why the platform pays for itself against compliance spend, with the funded portfolio behind the number.')
+   +'</div>'
+   +'<div class="csub" style="margin-top:14px">Cadence: the board pack and regulatory briefing refresh continuously and print for each meeting; the rest generate on demand. <button class="btn ghost" style="margin-left:8px" onclick="openReport(\'board\')">🖨 Print this month&rsquo;s board pack</button></div></div>';
 }
 function setTarget(key,v){
   var d=domByKey(key); if(!d)return;
@@ -2308,7 +2367,7 @@ function renderHome(){
   $('home-qa').innerHTML=
    qa('◎','Ask the platform','Ideas priced, policy cited, new use cases scoped. One conversation.',"goStudio('ask')")
    +qa('▣','Domains · gaps &amp; levers','Every category, its target, and the gaps behind the score.',"goOnside('domains')")
-   +qa('📊','Board pack','The standing view plus the generated report library.',"goOnside('board')");
+   +qa('📊','Reporting','Eight standing reports on one screen, from IT to the board.',"goOnside('reports')");
   applyHomePanels();
 }
 
