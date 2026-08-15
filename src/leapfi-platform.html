@@ -582,7 +582,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.028</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.029</b></div>
   </div>
 </aside>
 
@@ -674,8 +674,8 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
       <div class="st-grid" id="st-levers">
         <div class="card">
           <h2>Your levers</h2>
-          <div class="csub">Two things: how <b>aggressively</b> to pursue the portfolio, and how much <b>risk</b> to carry. Hover any <span class="tip" data-tip="Each lever has a plain-language explanation on hover.">i</span> for what a lever does. Everything recomputes live.</div>
-          <div class="csub" style="margin-top:-4px">Not sure where to set these? <span class="doclink" onclick="goOnside('onboarding')">Calibrate with the adoption questionnaire →</span> · the same instrument that placed you at '''+"'"+'Developing'+"'"+''' during onboarding.</div>
+          <div class="csub">Two questions drive the plan: how far you want to reach, and how much risk you will carry to get there. Hover any <span class="tip" data-tip="Each lever has a plain-language explanation on hover.">i</span> for what a lever does, and everything on this page recomputes as you move it.</div>
+          <div class="csub" style="margin-top:-4px">Your onboarding questionnaire placed NorthWinds at <b>Developing</b>. Start the levers there, then reach as far as your appetite allows. <span class="doclink" onclick="goOnside('onboarding')">Revisit the questionnaire →</span></div>
           <div class="stance"><div class="st-l">Your stance</div><div class="st-v" id="stance"></div></div>
           <div class="lever">
             <div class="lt"><span class="ln">Ambition <span class="tip" data-tip="Where you want the program to be on the five-point scale, against where you are today. Higher ambition puts more plays in scope and raises the domain targets OnSide judges you against.">i</span></span><span class="lv" id="amb-v">Managed</span></div>
@@ -854,6 +854,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.029</span> · <span class="cd">Aug 14, 2026</span><br>Design studio: fixed the garbled calibration line under Your levers and rewrote the intro. The panel now opens with the two questions the levers answer, and grounds them in the onboarding questionnaire result: NorthWinds starts at Developing, and ambition reaches from there.</li>
             <li><span class="cv">v 1.028</span> · <span class="cd">Aug 14, 2026</span><br>RACI matrix: the Informed badge is brighter so the I reads clearly at a glance, while staying visually quieter than Responsible, Accountable, and Consulted.</li>
             <li><span class="cv">v 1.027</span> · <span class="cd">Aug 14, 2026</span><br>Opportunity register rows are fully interactive: every opportunity highlights on hover and opens its full detail drawer on click, anywhere on the row. Catalog entries without a drafted deep-dive open with a standard scoping envelope instead of doing nothing.</li>
             <li><span class="cv">v 1.026</span> · <span class="cd">Aug 14, 2026</span><br>Vantage nav badge changed from V3 to Soon, matching Connect and AllRailz.</li>
@@ -886,7 +887,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.028</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.029</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -972,11 +973,11 @@ function setTicks(id,idx){var c=$(id); if(!c)return; for(var i=0;i<c.children.le
 function stanceText(L,gap,ready,gated){
   var reach=gap>=2?'far':gap===1?'moderate':'modest', gate=L.tol<34?'tight':L.tol<67?'balanced':'loose', lead, tension=false;
   if(gap>=2&&L.tol>66){lead='Aggressive on both fronts: reaching far past your posture and unlocking on thin control coverage.';tension=true;}
-  else if(gap>=2&&L.tol<34){lead='Ambitious but cautious: you want the full roadmap, but tight gating funds only well-controlled plays first.';tension=true;}
+  else if(gap>=2&&L.tol<34){lead='Ambitious and careful: you want the full roadmap, and tight gating funds the well-controlled plays first.';tension=true;}
   else if(gap<=0&&L.tol<34){lead='Conservative: modest reach and tight gating. Lowest risk, slowest value.';}
   else if(gap<=0&&L.tol>66){lead='Opportunistic: a modest target, unlocked quickly on loose gating.';}
   else{lead='Balanced: a '+reach+' reach with '+gate+' gating.';}
-  return {html:'<span class="hl">'+lead+'</span> '+ready+' of '+OPPS.length+' plays clear today; '+gated+' stay sequence-gated.',tension:tension};
+  return {html:'<span class="hl">'+lead+'</span> '+ready+' of '+OPPS.length+' plays clear today. '+gated+' wait on controls.',tension:tension};
 }
 function readLevers(){
   var tolV=+$('tol').value;
