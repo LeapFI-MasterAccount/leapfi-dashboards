@@ -542,7 +542,6 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
       <div class="nav-subwrap">
         <span class="os-sub" data-st="ask" onclick="goStudio('ask')">Ask the platform</span>
         <span class="os-sub" data-st="design" onclick="goStudio('design')">Design studio</span>
-        <span class="os-sub" data-st="register" onclick="goStudio('register')">Opportunity register</span>
         <span class="os-sub" data-st="roadmap" onclick="goStudio('roadmap')">Three-year roadmap</span>
       </div>
     </div>
@@ -582,7 +581,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.029</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.030</b></div>
   </div>
 </aside>
 
@@ -667,6 +666,14 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         <div class="chat-chips" id="chat-chips"></div>
         <div class="chat-log" id="chat-log"></div>
       </div>
+
+      <div class="sect-lab" id="st-reg-anchor" style="margin-top:22px">Opportunity register · what the conversation builds</div>
+      <div class="pipe" id="disc-pipe" style="margin-top:2px"></div>
+      <div class="card" id="disc-register">
+        <h2>Every documented opportunity · click any row for its full detail</h2>
+        <div class="csub">Scored and tracked on one model. Fed by the Discovery engine: 412 documents ingested through the SharePoint connector and direct upload, leadership interviews 11 of 12 complete. New entries arrive from the conversation above: known ideas price from the catalog instantly, new ones get the four-question scoping, and either way they land here.</div>
+        <div class="uc-list" id="uc-list" style="max-height:560px"></div>
+      </div>
       </div>
 
       <!-- ============ STUDIO SUB VIEW: DESIGN ============ -->
@@ -749,24 +756,6 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
       </div>
 
       <!-- ============ STUDIO SUB VIEW: REGISTER ============ -->
-      <div class="st-view" id="st-view-register">
-        <div class="pipe" id="disc-pipe" style="margin-top:4px"></div>
-        <div class="disc-grid">
-          <div class="card" id="disc-register">
-            <h2>Opportunity register</h2>
-            <div class="csub">Every documented opportunity, scored and tracked · click any row for its full detail. Fed by the Discovery engine: 412 documents ingested through the SharePoint connector and direct upload, leadership interviews 11 of 12 complete. New entries arrive from the advisor conversation.</div>
-            <div class="uc-list" id="uc-list" style="max-height:560px"></div>
-          </div>
-          <div>
-            <div class="card" id="disc-intake">
-              <h2>Add a new use case</h2>
-              <div class="csub">Every entry goes through the same four-question scoping, so every estimate in this register is built the same way: effort, volume, exposure, and data drive the envelope, the controls, and the regulations. No side door with made-up numbers.</div>
-              <button class="btn" onclick="goStudio('ask');setTimeout(function(){var i=document.getElementById('chat-in');if(i){i.value='Something new entirely';userSend();}},250)">Scope a new use case →</button>
-              <div class="csub" style="margin-top:10px">Or just describe it in <span class="doclink" onclick="goStudio('ask')">Ask the platform</span>: known ideas price from the catalog instantly, new ones get the four questions.</div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- ============ STUDIO SUB VIEW: ROADMAP ============ -->
       <div class="st-view" id="st-view-roadmap">
@@ -854,6 +843,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.030</span> · <span class="cd">Aug 14, 2026</span><br>Ask the platform and the Opportunity register merged into one page. The conversation sits on top, the pipeline strip and the register it feeds sit directly below, so a scoped idea lands in view the moment it is added. The separate register nav item is gone, and every old register link routes to the merged page and scrolls to the register.</li>
             <li><span class="cv">v 1.029</span> · <span class="cd">Aug 14, 2026</span><br>Design studio: fixed the garbled calibration line under Your levers and rewrote the intro. The panel now opens with the two questions the levers answer, and grounds them in the onboarding questionnaire result: NorthWinds starts at Developing, and ambition reaches from there.</li>
             <li><span class="cv">v 1.028</span> · <span class="cd">Aug 14, 2026</span><br>RACI matrix: the Informed badge is brighter so the I reads clearly at a glance, while staying visually quieter than Responsible, Accountable, and Consulted.</li>
             <li><span class="cv">v 1.027</span> · <span class="cd">Aug 14, 2026</span><br>Opportunity register rows are fully interactive: every opportunity highlights on hover and opens its full detail drawer on click, anywhere on the row. Catalog entries without a drafted deep-dive open with a standard scoping envelope instead of doing nothing.</li>
@@ -887,7 +877,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.029</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.030</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1300,9 +1290,9 @@ function openReport(kind){
 var studioView='ask';
 function goStudio(v){go('studio');studioShow(v||studioView);}
 var ST_HEADS={
-  ask:['Ask the platform','one conversation with the system'],
+  ask:['Ask the platform','one conversation · the register it builds lives below'],
   design:['Design studio','move the levers, watch the plan recompute'],
-  register:['Opportunity register','every idea, scored and tracked'],
+  register:['Ask the platform','one conversation · the register it builds lives below'],
   roadmap:['Three-year roadmap','every step across the horizon, live from the levers']
 };
 function setCrumb(mod,page,hint){
@@ -1312,12 +1302,15 @@ function setCrumb(mod,page,hint){
   c.innerHTML='<b>'+mod+'</b> · '+page+(hint?' <span class="cs">· '+hint+'</span>':'');
 }
 function studioShow(v){
+  var toReg=(v==='register');
+  if(toReg)v='ask';
   studioView=v;
   var hd=ST_HEADS[v]; if(hd)setCrumb('Studio',hd[0],hd[1]);
-  ['ask','design','register','roadmap'].forEach(function(x){var el=$('st-view-'+x);if(el)el.classList.toggle('active',x===v);});
+  ['ask','design','roadmap'].forEach(function(x){var el=$('st-view-'+x);if(el)el.classList.toggle('active',x===v);});
   var subs=document.querySelectorAll('#ng-studio .os-sub');
   for(var i=0;i<subs.length;i++)subs[i].classList.toggle('active',subs[i].getAttribute('data-st')===v);
-  window.scrollTo({top:0});
+  if(toReg){setTimeout(function(){var a=$('st-reg-anchor');if(a)a.scrollIntoView({behavior:'smooth',block:'start'});},120);}
+  else window.scrollTo({top:0});
 }
 function toggleStudioNav(){
   var g=$('ng-studio');
