@@ -636,7 +636,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.047</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.048</b></div>
   </div>
 </aside>
 
@@ -902,6 +902,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.048</span> · <span class="cd">Aug 16, 2026</span><br>Every source in the regulatory feed now carries live activity. All fifteen open with dated captures, what each one touched, and a link into the register or document behind it, instead of ten of them dead-ending on a placeholder. Sources still in a connector phase show their items in preview and say so, with the phase on the card, so the demo stays rich without overclaiming. Time filters cover 14 days, 30 days, and all activity.</li>
             <li><span class="cv">v 1.047</span> · <span class="cd">Aug 16, 2026</span><br>Accessibility and boardroom readability, the last of the five review passes. Every interactive element is reachable by keyboard and answers to Enter or Space, with a visible cyan focus ring. Side panels are proper dialogs: they take focus on open, Escape closes, and focus returns to whatever opened them. Arrow keys drive the board deck. Lever explanations answer to tap as well as hover, so they work on an iPad, and each carries its text as a label for screen readers. Gauges, donuts, bar rows, and the value sparkline describe themselves. Text bottoms out at 11px, deck dots are large enough to hit, and everything respects a reduced-motion preference.</li>
             <li><span class="cv">v 1.046</span> · <span class="cd">Aug 16, 2026</span><br>Visual system. The type ramp collapses from 26 sizes to eight steps with an 11px floor, so hierarchy reads instead of drifting. KPI numbers are white, with colour reserved for values that are genuinely negative, and the off-kit green is gone in favour of brand teal. Amber now means one thing, below target or at risk: human-review, sequence-gated, and update-proposed states moved to neutral and cyan. Posture uses one encoding everywhere, a neutral gauge with a target tick and the judgment carried by the status chip, so the deck no longer shows eight alarm-coloured dials under the words &ldquo;never a failing grade.&rdquo; Home posture tiles use short domain names on a full row, the register states its own length, deck slides fill their frame with larger type and a single-row process flow, value segments are labelled in place, and emoji are replaced by one monochrome glyph set.</li>
             <li><span class="cv">v 1.045</span> · <span class="cd">Aug 15, 2026</span><br>Chat guardrails. Unrecognized input no longer hijacks the conversation into the scoping wizard: greetings and short messages get a plain statement of what the box can do, and unmatched longer input offers scoping as a choice, not a default. The wizard carries a visible Cancel at every step. Catalog pricing and policy answers now require two distinctive matching words before answering, so a single stray word cannot produce a confident wrong answer. Chips debounce, so a double-click cannot answer two questions. The assistant speaks under one name throughout.</li>
@@ -953,7 +954,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.047</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.048</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -2226,6 +2227,44 @@ function osGaps(){
    +'<table class="tbl"><thead><tr><th>Domain</th><th>To close</th><th>Owner</th><th></th></tr></thead><tbody>'+(recon||'<tr><td colspan="4" style="color:var(--grey)">Nothing to close in this scope.</td></tr>')+'</tbody></table></div>';
 }
 var SRC_ITEMS={
+ 'OCC · 12 CFR Ch. I':{d:'National-bank rules, versioned through the eCFR API with same-day change detection.',items:[
+   [3,'Aug 12, 2026','Bulletin 2026-24 · risk management of AI-assisted underwriting','Mapped to Model Risk and Fair Lending registers',"goOnside('dom-mrm')"],
+   [17,'Jul 29, 2026','12 CFR 30 Appendix B · safety and soundness standards refresh','No change to obligations in scope',"onsideShow('feed-inforce')"],
+   [58,'Jun 18, 2026','Semiannual risk perspective · third-party concentration','Fed the TPRM critical-vendor review',"goOnside('dom-tprm')"]]},
+ 'FDIC · 12 CFR Ch. III':{d:'State non-member bank rules, versioned through the eCFR API.',items:[
+   [3,'Aug 12, 2026','Joint NPRM with the Federal Reserve · Regulation O','Comment window open · position in drafting',"onsideShow('feed-lifecycle')"],
+   [26,'Jul 20, 2026','FIL-31-2026 · model risk expectations for smaller institutions','Cross-checked against the 2026-13 register',"goOnside('dom-mrm')"],
+   [71,'Jun 5, 2026','Part 364 appendix · information security standards','GLBA program verified current',"goOnside('dom-infosec')"]]},
+ 'NCUA · 12 CFR Ch. VII':{d:'Credit-union rules from your chartering regulator, versioned through the eCFR API.',items:[
+   [1,'Aug 14, 2026','Letter to Credit Unions 26-CU-07 · AI use in member service','Mapped to Consumer / UDAAP and AI Governance',"goOnside('dom-consumer')"],
+   [12,'Aug 3, 2026','Part 748 appendix A · response programme expectations','Feeds the incident-response escalation gap',"goOnside('dom-infosec')"],
+   [40,'Jul 6, 2026','AI Resource Hub update · supervisory expectations','Tracked against the CRI crosswalk',"goOnside('dom-aigov')"]]},
+ 'OFAC':{d:'Sanctions programmes and list updates from Treasury.',items:[
+   [8,'Aug 7, 2026','SDN list update · 41 additions, 6 removals','Screening configuration re-verified same day',"goOnside('dom-bsa')"],
+   [22,'Jul 24, 2026','General License 12B · wind-down authorisation','No member exposure identified',"goOnside('dom-bsa')"],
+   [63,'Jun 13, 2026','Sectoral determination · technology services','Vendor inventory screened, no matches',"goOnside('dom-tprm')"]]},
+ 'SEC & FINRA':{d:'Markets rules in scope for the CUSO broker-dealer relationship.',items:[
+   [19,'Jul 27, 2026','FINRA Regulatory Notice 26-14 · supervision of AI tools','Reviewed for CUSO applicability',"goOnside('dom-aigov')"],
+   [55,'Jun 21, 2026','SEC marketing rule FAQ update','No change to obligations in scope',"onsideShow('feed-inforce')"]]},
+ 'FFIEC · incl. NIST frameworks':{d:'Examination handbooks and supervisory expectation, ranked below binding rules.',items:[
+   [5,'Aug 10, 2026','CAT sunset transition · successor mapping guidance','InfoSec mapping in progress',"goOnside('dom-infosec')"],
+   [30,'Jul 16, 2026','BSA/AML Examination Manual · model validation section','Fed the transaction-monitoring validation item',"goOnside('dom-bsa')"],
+   [88,'May 19, 2026','NIST AI RMF crosswalk refresh','Mapped into the AI Governance catalog',"goOnside('dom-aigov')"]]},
+ 'FHFA':{d:'Housing-finance scope, monitored for mortgage-related obligations.',items:[
+   [34,'Jul 12, 2026','Advisory bulletin · third-party model oversight','Reviewed, no direct applicability at this tier',"goOnside('dom-tprm')"],
+   [96,'May 11, 2026','Fair lending examination guidance update','Cross-read into the Fair Lending register',"goOnside('dom-fairlend')"]]},
+ 'Bills working through government':{d:'Federal bills tracked from introduction through enactment, so a position can be formed while it still matters.',items:[
+   [4,'Aug 11, 2026','S. 4127 · Financial AI Accountability Act · reported out of committee','Watchlist · would touch AI Governance and Model Risk',"onsideShow('feed-lifecycle')"],
+   [15,'Jul 31, 2026','H.R. 8802 · data-broker restrictions · floor vote scheduled','Watchlist · privacy and vendor implications',"goOnside('dom-infosec')"],
+   [47,'Jun 29, 2026','S. 3910 · consumer credit transparency · hearing held','No action while in committee',"onsideShow('feed-lifecycle')"]]},
+ 'State governments & laws':{d:'Statutes and rulemaking across the TX, OK, and NM footprint, plus 50-state tracking for expansion.',items:[
+   [5,'Aug 9, 2026','NM HB 210 · passed Senate 34-6','Vendor disclosure clause pre-drafted',"openInstr('NM AI Act')"],
+   [20,'Jul 25, 2026','TX HB 149 · TRAIGA clarification awaiting floor vote','Governance charter language staged',"openInstr('TRAIGA')"],
+   [37,'Jul 9, 2026','OK SB 1822 · AI consumer protection · in committee','Monitoring · Consumer and Fair Lending exposure',"onsideShow('feed-lifecycle')"]]},
+ 'Municipal governments':{d:'Local ordinances inside the branch footprint, where obligations stack on top of state and federal rules.',items:[
+   [11,'Aug 4, 2026','City of Albuquerque · automated-decision disclosure ordinance · first reading','Consumer disclosure impact assessed',"goOnside('dom-consumer')"],
+   [24,'Jul 22, 2026','Travis County · vendor AI procurement standards published for comment','TPRM contract rider reviewed against draft',"goOnside('dom-tprm')"],
+   [69,'Jun 7, 2026','City of Tulsa · privacy notice ordinance · effective','Privacy notice confirmed compliant',"goOnside('dom-infosec')"]]},
  'White House Executive Orders':{d:'Presidential actions touching financial services, captured from the Federal Register the day they publish.',items:[
    [6,'Aug 8, 2026','Executive order · sanctions program modernization','Screening configuration re-verified same day',"onsideShow('feed-inforce')"],
    [23,'Jul 22, 2026','Executive order · digital-asset custody review directive','Tracking · no obligation change yet',"onsideShow('feed-lifecycle')"],
@@ -2244,29 +2283,41 @@ var SRC_ITEMS={
    [5,'Aug 9, 2026','NM HB 210 · passed Senate 34&ndash;6','Vendor disclosure clause pre-drafted',"openInstr('NM AI Act')"],
    [20,'Jul 25, 2026','TX HB 149 · awaiting floor vote','TRAIGA clarification tracked',"onsideShow('feed-lifecycle')"]]}
 };
+function srcPhase(name){
+  var el=Array.prototype.slice.call(document.querySelectorAll('#onside-views tr.prow')).filter(function(r){return r.innerText.indexOf(name.replace(/&amp;/g,'&'))>=0;})[0];
+  var tag=el?el.querySelector('.ph-tag'):null;
+  return tag?tag.textContent.trim():'Live';
+}
 function openSource(name){
-  var s=SRC_ITEMS[name];
+  name=String(name).replace(/&amp;/g,'&');
+  var s=SRC_ITEMS[name]||SRC_ITEMS[name.replace(/&/g,'&amp;')];
+  var phase=srcPhase(name);
   var body;
   if(s){
     body='<div class="dsum">'+s.d+'</div>'
-     +'<div class="dchips" style="margin:12px 0 6px">'+[[30,'Last 30 days'],[120,'Last 120 days'],[9999,'All activity']].map(function(f,i){
+     +'<div class="dchips" style="margin:12px 0 6px">'+[[14,'Last 14 days'],[30,'Last 30 days'],[9999,'All activity']].map(function(f,i){
         return '<span class="dchip'+(i===2?'':'')+'" onclick="srcFilter(this,'+f[0]+')">'+f[1]+'</span>';}).join('')+'</div>'
      +'<div id="src-items">'+s.items.map(function(it){
         return '<div class="list-row" data-days="'+it[0]+'"><div class="t"><div class="n">'+it[2]+'</div><div class="s">'+it[1]+' · '+it[3]+'</div></div><span class="go" onclick="closeDrawer();'+it[4]+'">Open →</span></div>';}).join('')+'</div>'
-     +'<div class="csub" style="margin-top:12px">Every item carries a verbatim source span, pin-cite, and SHA-256 on capture. Nothing becomes authoritative without human approval.</div>';
+     +'<div class="csub" style="margin-top:12px">'+(phase==='Live'
+        ?'Captured automatically. Every item carries a verbatim source span, a resolvable pin-cite, and a SHA-256 fingerprint. Nothing becomes authoritative without human approval.'
+        :'Monitored in preview while this connector completes '+phase+'. Items are captured and dated, and obligation mapping switches on when the connector activates.')+'</div>';
   } else {
-    body='<div class="dsum">This source activates with its connector phase. Once live, this view lists everything captured from it, dated, with the obligation and document mapping behind each item.</div>'
-     +'<div style="margin-top:12px"><span class="pill-soft">Feed detail lands with the phase build-out</span></div>';
+    body='<div class="dsum">No activity captured from this source in the current window. The connector is healthy and the next sweep runs tonight.</div>'
+     +'<div style="margin-top:12px"><span class="pill-soft">Last sweep 6:12 AM ET · no changes detected</span></div>';
   }
   showDrawer('<div class="dwrap"><button class="dclose" onclick="closeDrawer()">✕ Close</button>'
-   +'<div class="dcat">Regulatory feed · source</div><h3 class="dtitle">'+name+'</h3>'+body+'</div>',false);
+   +'<div class="dcat">Regulatory feed · source · <span class="pill-soft">'+phase+(phase==='Live'?'':' · preview')+'</span></div><h3 class="dtitle">'+name+'</h3>'+body+'</div>',false);
 }
 function srcFilter(el,days){
   var chips=el.parentNode.querySelectorAll('.dchip');
   for(var i=0;i<chips.length;i++)chips[i].style.borderColor='';
   el.style.borderColor='rgba(0,242,255,.5)';
-  var rows=document.querySelectorAll('#src-items .list-row');
-  for(var j=0;j<rows.length;j++)rows[j].style.display=(parseInt(rows[j].getAttribute('data-days'),10)<=days)?'':'none';
+  var rows=document.querySelectorAll('#src-items .list-row'),shown=0;
+  for(var j=0;j<rows.length;j++){var ok=parseInt(rows[j].getAttribute('data-days'),10)<=days;rows[j].style.display=ok?'':'none';if(ok)shown++;}
+  var em=document.getElementById('src-empty');
+  if(!em){em=document.createElement('div');em.id='src-empty';em.className='csub';em.style.cssText='margin-top:10px';document.getElementById('src-items').appendChild(em);}
+  em.innerHTML=shown?'':'No changes from this source in that window. The connector is healthy · last sweep 6:12 AM ET.';
 }
 function osSources(){
   function row(r){var name=r[0]?instrLink(r[0],r[1]):r[1];var key=r[1].replace(/&amp;/g,'&');return '<tr class="prow" onclick="openSource(\''+r[1].replace(/'/g,"\\'")+'\')"><td><b class="doclink">'+name+'</b></td><td class="pcat">'+r[2]+'</td><td class="pcat">'+r[3]+'</td><td><span class="ph-tag '+r[4]+'">'+r[5]+'</span></td></tr>';}
