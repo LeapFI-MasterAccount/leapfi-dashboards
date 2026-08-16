@@ -625,8 +625,8 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
       <div class="nav-item" data-mod="studio" onclick="toggleStudioNav()"><span class="ni">◎</span> Studio <span class="caret">▸</span></div>
       <div class="nav-subwrap">
         <span class="os-sub" data-st="ask" onclick="goStudio('ask')">Ask the platform</span>
-        <span class="os-sub" data-st="design" onclick="goStudio('design')">Design studio</span>
-        <span class="os-sub" data-st="roadmap" onclick="goStudio('roadmap')">Three-year roadmap</span>
+        <span class="os-sub" data-st="design" onclick="goStudio('design')">Investment Design</span>
+        <span class="os-sub" data-st="roadmap" onclick="goStudio('roadmap')">Roadmaps</span>
       </div>
     </div>
     <div class="nav-group" id="ng-onside">
@@ -664,7 +664,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.052</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.053</b></div>
   </div>
 </aside>
 
@@ -841,8 +841,8 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 
       <!-- ============ STUDIO SUB VIEW: ROADMAP ============ -->
       <div class="st-view" id="st-view-roadmap">
-      <div class="sect-lab" id="st-roadmap" style="margin-top:4px">Three-year roadmap</div>
-      <div class="phint">Every step across the horizon: the next four quarters in detail, then the Year 2 and Year 3 sequence they unlock. The whole view moves live with the Design studio levers, and every play opens its full scope.</div>
+      <div class="sect-lab" id="st-roadmap" style="margin-top:4px">Roadmaps</div>
+      <div class="phint">Every step across the horizon: the next four quarters in detail, then the Year 2 and Year 3 sequence they unlock. The whole view moves live with the Investment Design levers, and every play opens its full scope.</div>
       <div class="rm-kpis" id="rm-kpis"></div>
       <div class="gantt" id="gantt-body"></div>
       </div>
@@ -897,6 +897,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.053</span> · <span class="cd">Aug 16, 2026</span><br>Two Studio pages renamed. Design studio is now <b>Investment Design</b>, which says what the levers actually decide. Three-year roadmap is now <b>Roadmaps</b>. Page headings, breadcrumbs, the CEO queue, and every link that named either page follow the new labels.</li>
             <li><span class="cv">v 1.052</span> · <span class="cd">Aug 16, 2026</span><br>The How it works diagram comes off the Connect, AllRailz, and Vantage pages. Four boxes, eight labels, and a policy spine were carrying more detail than a page about something not yet built needs. Each page now states the same idea as three numbered steps on one line under the opening paragraph, with the point of it underneath. What it delivers and What changes are untouched. All three pages stay identical in structure.</li>
             <li><span class="cv">v 1.051</span> · <span class="cd">Aug 16, 2026</span><br>Numbers line up across every card row. Where one heading wrapped to two lines and its neighbours did not, the number underneath sat lower than the rest. Each row now measures its own headings, holds them all to the tallest, and drops any footnote line to a shared bottom edge, so the figures read straight across on every screen and at every window width.</li>
             <li><span class="cv">v 1.050</span> · <span class="cd">Aug 16, 2026</span><br>Ten more documents in the sample universe, chosen to show the kinds of record an examiner actually asks for: the AI system inventory, AI Governance Committee minutes, AI acceptable use training attestations, the business continuity and disaster recovery plan, the annual penetration test and remediation tracker, SAR quality assurance, the OFAC screening independent test, the Regulation E error resolution procedure (with a drafted redline on the error clock for automated channels), the HMDA data integrity review, and the CBLR calculation worksheet. The capital narrative, which was already in the library, is now listed too. The sample runs 25 documents and covers all eight domains, so the domain scope filter no longer comes back empty on Capital or thin on AI Governance.</li>
@@ -953,7 +954,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.052</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.053</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1467,7 +1468,7 @@ function openReport(kind){
      +'<div class="dsec"><div class="dh">The funded portfolio behind the number</div><table class="rtbl"><thead><tr><th>Play</th><th>Category</th><th>Build</th><th>Annual value</th><th>Payback</th></tr></thead><tbody>'
      +P.funded.map(function(o){return '<tr><td><b>'+playLink(o.n)+'</b></td><td>'+o.c+'</td><td>'+fmt(o.cost)+'</td><td>'+fmt(o.val*L.eff)+'</td><td>'+Math.round(o.cost/(o.val*L.eff)*12)+' mo</td></tr>';}).join('')
      +'<tr class="tot"><td>Total</td><td></td><td>'+fmt(P.spent)+'</td><td>'+fmt(P.annual)+'</td><td>'+P.payM+' mo</td></tr></tbody></table>'
-     +'<div class="csub" style="margin-top:8px">'+P.bench.length+' plays cleared and waiting on budget · '+P.gated.length+' sequence-gated on controls · full sequencing lives in the <span class="doclink" onclick="closeDrawer();goStudio(\'roadmap\')">three-year roadmap</span>.</div></div>'
+     +'<div class="csub" style="margin-top:8px">'+P.bench.length+' plays cleared and waiting on budget · '+P.gated.length+' sequence-gated on controls · full sequencing lives in <span class="doclink" onclick="closeDrawer();goStudio(\'roadmap\')">Roadmaps</span>.</div></div>'
      +'<div class="dsec"><div class="dh">Read</div><div class="rrec">The platform pays for itself on compliance capacity alone. The funded portfolio return ('+P.roi.toFixed(1)+'× over three years) is upside on top. Figures are planning envelopes for discussion.</div></div>'
      +'</div>';
   }
@@ -1485,9 +1486,9 @@ var studioView='ask';
 function goStudio(v){go('studio');studioShow(v||studioView);}
 var ST_HEADS={
   ask:['Ask the platform','one conversation · the register it builds lives below'],
-  design:['Design studio','move the levers, watch the plan recompute'],
+  design:['Investment Design','move the levers, watch the plan recompute'],
   register:['Ask the platform','one conversation · the register it builds lives below'],
-  roadmap:['Three-year roadmap','every step across the horizon, live from the levers']
+  roadmap:['Roadmaps','every step across the horizon, live from the levers']
 };
 function setCrumb(mod,page,hint){
   var c=$('crumb'); if(!c)return;
@@ -2956,7 +2957,7 @@ function renderHome(){
     $('home-q-title').textContent='Your queue · strategy';
     $('home-q-sub').textContent='What to bring to the board';
     q=lrow('Board pack','Posture, portfolio, return, recommendation · one page','Generate',"openReport('board')")
-     +lrow('Three-year roadmap','Year 1 tactical, years 2 and 3 vision','Open',"goStudio('roadmap')")
+     +lrow('Roadmaps','Year 1 by quarter, then years 2 and 3','Open',"goStudio('roadmap')")
      +lrow('Ask the platform','Price the next idea before the next meeting','Ask',"goStudio('ask')");
   } else if(CURRENT.roleKey==='ai'){
     $('home-q-title').textContent='Your queue · build';
