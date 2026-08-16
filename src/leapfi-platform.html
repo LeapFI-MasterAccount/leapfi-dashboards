@@ -503,6 +503,13 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
 .vbarrow .vv{width:110px;font-size:11px;font-weight:700;color:var(--ink)}
 .vdots{display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--muted)}
 .vdots .vd{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.oitem{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin:8px 0;cursor:pointer;transition:.12s;display:flex;align-items:center;gap:14px}
+.oitem:hover{border-color:rgba(0,242,255,.5);background:var(--panel3)}
+.oitem .ot{flex:1;min-width:0}
+.oitem .on{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.45}
+.oitem:hover .on{color:var(--cyan)}
+.oitem .om{font-size:11px;font-weight:600;color:var(--grey);margin-top:4px;line-height:1.5}
+.oitem .oarr{color:var(--cyan);font-weight:700;font-size:12px;white-space:nowrap}
 @media(max-width:1080px){.rep-row{grid-template-columns:1fr 1fr !important}}
 @media(max-width:1080px){.dom-grid{grid-template-columns:1fr}.gq{grid-template-columns:1fr 1fr}.rm-kpis{grid-template-columns:1fr 1fr}.doc-cats{grid-template-columns:1fr 1fr}.tgt-row{grid-template-columns:1fr 1fr}}
 
@@ -597,7 +604,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.040</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.041</b></div>
   </div>
 </aside>
 
@@ -862,6 +869,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.041</span> · <span class="cd">Aug 15, 2026</span><br>Domain open items rebuilt as single cards. Each item (the Incident Response Plan escalation and its peers) is one card in one type treatment: the item on top, the document, citation, and proposed-language status on a single meta line beneath. The whole card is clickable and opens the document with its redline. Items without evidence route to the gap queue.</li>
             <li><span class="cv">v 1.040</span> · <span class="cd">Aug 15, 2026</span><br>Every report now opens with a signature graphic computed live from the model. Board Pack shows where the annual value comes from and the budget committed. The Regulatory Change Briefing opens with its status distribution across the seven instruments. Risk Posture charts the gaps by domain. Compliance draws every control family against the 80% gate. Model Risk and Third-Party open with register donuts plus the inventory splits and SOC 2 coverage. IT &amp; InfoSec shows program coverage and connector health. Investment &amp; ROI leads with the money picture and the Year-1 value ramp. All in the brand palette, amber and red reserved for what is genuinely open.</li>
             <li><span class="cv">v 1.039</span> · <span class="cd">Aug 15, 2026</span><br>Reporting promoted to its own tab, directly under Home and above the Modules section. It is the platform&rsquo;s cross-cutting output layer, drawing on both the OnSide record and the Studio dials, so it sits with Home rather than inside a module. OnSide&rsquo;s nav slims to the governance record. Every old route redirects: OnSide reporting links, the home quick action, report generation, and the panel return-point all land on and return from the new tab.</li>
             <li><span class="cv">v 1.038</span> · <span class="cd">Aug 15, 2026</span><br>Closing a side panel now returns you to where you started. Panels that navigate before opening (play details land on Design studio, reports land on Reporting) remember the page and scroll position you came from and restore both on close. Deep links inside a panel still take you where they say, and chained panels return to the original page, not an intermediate one.</li>
@@ -906,7 +914,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.040</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.041</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1694,12 +1702,15 @@ var DOM_OPEN={
  capital:[{t:'Qualitative operational-risk note for the capital narrative',doc:'capital-narr'}]
 };
 function openItemRow(x){
-  var right='';
-  if(x.doc&&DOCLIB[x.doc]){
-    right+=docLink(x.doc);
-    if(DOCLIB[x.doc].redline)right+=' <span class="tag warn ctl-link" style="margin-left:6px" onclick="event.stopPropagation();openDocView(\''+x.doc+'\')">Proposed language →</span>';
-  } else right='<span class="pill-soft">No evidence on file · HITL queue</span>';
-  return '<div class="list-row"><div class="t"><div class="n">'+x.t+(x.cite?' <span class="cite">· '+citeLink(x.cite)+'</span>':'')+'</div></div><div style="white-space:nowrap">'+right+'</div></div>';
+  var d=x.doc&&DOCLIB[x.doc]?DOCLIB[x.doc]:null;
+  var meta=[];
+  if(d)meta.push(d.t);
+  if(x.cite)meta.push(x.cite);
+  if(d&&d.rlState&&d.rlState.act==='adopted')meta.push('<span style="color:var(--cyan)">Language adopted · '+d.v+'</span>');
+  else if(d&&d.redline)meta.push('<span style="color:var(--sem2)">Proposed language drafted</span>');
+  if(!d)meta.push('No evidence on file · HITL queue');
+  var click=d?("openDocView('"+x.doc+"')"):"onsideShow('gaps')";
+  return '<div class="oitem" onclick="'+click+'"><div class="ot"><div class="on">'+x.t+'</div><div class="om">'+meta.join(' · ')+'</div></div><span class="oarr">Open →</span></div>';
 }
 var SAMPLE_DOCS=['mrm-policy','mrm-validation-fraud','mrm-minutes','tprm-program','tprm-critical','bsa-policy','fl-review','aa-procedure','complaint-proc','irp','glba-program','bsa-training','gov-charter','soc2-core'];
 
