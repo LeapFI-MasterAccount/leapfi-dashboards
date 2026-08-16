@@ -96,10 +96,10 @@ b{color:var(--ink)}
 .card .csub{font-size:12.5px;color:var(--grey);margin-bottom:14px}
 .sect-lab{font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:24px 2px 12px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
-.kpi .lab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--grey)}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 16px;display:flex;flex-direction:column}
+.kpi .lab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--grey);line-height:1.3}
 .kpi .num{font-size:29px;font-weight:800;letter-spacing:-.02em;margin-top:6px;line-height:1}
-.kpi .sub{font-size:11px;color:var(--grey);margin-top:6px}
+.kpi .sub{font-size:11px;color:var(--grey);margin-top:6px;line-height:1.35}
 .kpi .num.warn{color:var(--sem2)}.kpi .num.crit{color:var(--sem1)}.kpi .num.ok{color:var(--ink)}.kpi .num.cy{color:var(--ink)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .tag{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:6px;white-space:nowrap}
@@ -299,8 +299,8 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 .dtitle{font-size:22px;font-weight:800;letter-spacing:-.01em;margin-bottom:8px;max-width:90%}
 .dsum{font-size:13.5px;color:var(--muted);line-height:1.55;margin-bottom:16px}
 .decon{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:15px}
-.dt{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
-.dtl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--grey)}
+.dt{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column}
+.dtl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--grey);line-height:1.3}
 .dtv{font-size:18px;font-weight:800;margin-top:5px}
 .dts{font-size:11px;color:var(--grey);margin-top:3px}
 .okline{font-size:12.5px;color:var(--sem4);background:rgba(127,167,116,.1);border:1px solid rgba(127,167,116,.3);border-radius:10px;padding:10px 13px;margin-bottom:15px}
@@ -659,7 +659,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.050</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.051</b></div>
   </div>
 </aside>
 
@@ -892,6 +892,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.051</span> · <span class="cd">Aug 16, 2026</span><br>Numbers line up across every card row. Where one heading wrapped to two lines and its neighbours did not, the number underneath sat lower than the rest. Each row now measures its own headings, holds them all to the tallest, and drops any footnote line to a shared bottom edge, so the figures read straight across on every screen and at every window width.</li>
             <li><span class="cv">v 1.050</span> · <span class="cd">Aug 16, 2026</span><br>Ten more documents in the sample universe, chosen to show the kinds of record an examiner actually asks for: the AI system inventory, AI Governance Committee minutes, AI acceptable use training attestations, the business continuity and disaster recovery plan, the annual penetration test and remediation tracker, SAR quality assurance, the OFAC screening independent test, the Regulation E error resolution procedure (with a drafted redline on the error clock for automated channels), the HMDA data integrity review, and the CBLR calculation worksheet. The capital narrative, which was already in the library, is now listed too. The sample runs 25 documents and covers all eight domains, so the domain scope filter no longer comes back empty on Capital or thin on AI Governance.</li>
             <li><span class="cv">v 1.049</span> · <span class="cd">Aug 16, 2026</span><br>Connect, AllRailz, and Vantage rebuilt from the thesis on one shared page system, so all three carry the same graphics at the same sizes: a hero, a How it works flow diagram showing the module reading live policy from OnSide before it acts, a four-tile What it delivers row, and a By hand today versus With the module comparison. All three stay marked Soon and not part of this demo build. Every figure comes from the thesis: Connect&rsquo;s six system classes and same-day propagation, AllRailz&rsquo;s 11+ agents across 12 rails on three cores, Vantage&rsquo;s five review types across 87 vendors.</li>
             <li><span class="cv">v 1.048</span> · <span class="cd">Aug 16, 2026</span><br>Every source in the regulatory feed now carries live activity. All fifteen open with dated captures, what each one touched, and a link into the register or document behind it, instead of ten of them dead-ending on a placeholder. Sources still in a connector phase show their items in preview and say so, with the phase on the card, so the demo stays rich without overclaiming. Time filters cover 14 days, 30 days, and all activity.</li>
@@ -946,7 +947,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.050</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.051</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -2823,10 +2824,47 @@ document.addEventListener('click',function(e){
   if(open&&open!==t)open.classList.remove('open');
   if(t){e.stopPropagation();t.classList.toggle('open');}
 });
+/* ---- row alignment: cards sitting side by side share one baseline ---- */
+var ALIGN=[['.kpi','.lab'],['.kpi','.sub'],['.dt','.dtl']];
+function alignRows(){
+  ALIGN.forEach(function(pair){
+    var cards=document.querySelectorAll(pair[0]);
+    var rows=[],keys=[];
+    for(var i=0;i<cards.length;i++){
+      var p=cards[i].parentNode; if(!p)continue;
+      var k=keys.indexOf(p); if(k<0){keys.push(p);rows.push([]);k=rows.length-1;}
+      rows[k].push(cards[i]);
+    }
+    rows.forEach(function(row){
+      row.forEach(function(c){var e=c.querySelector(pair[1]);if(e)e.style.minHeight='';});
+      if(row.length<2)return;
+      /* group by the line the card actually sits on, so a wrapped grid aligns per line */
+      var lines={};
+      row.forEach(function(c){
+        if(!c.offsetParent&&c.offsetHeight===0)return;
+        var t=Math.round(c.getBoundingClientRect().top);
+        (lines[t]=lines[t]||[]).push(c);
+      });
+      Object.keys(lines).forEach(function(t){
+        var line=lines[t];
+        var els=line.map(function(c){return c.querySelector(pair[1]);}).filter(Boolean);
+        if(line.length<2||els.length<2)return;
+        var max=0; els.forEach(function(e){max=Math.max(max,e.offsetHeight);});
+        if(max<=0)return;
+        els.forEach(function(e){e.style.minHeight=max+'px';});
+        if(pair[1]==='.sub')line.forEach(function(c){var s=c.querySelector('.sub');if(s)s.style.marginTop='auto';});
+      });
+    });
+  });
+}
+var __alignQ=false;
+function queueAlign(){ if(__alignQ)return; __alignQ=true; requestAnimationFrame(function(){__alignQ=false;alignRows();}); }
+window.addEventListener('resize',queueAlign);
 /* keep new DOM keyboard-reachable */
-var __kbObs=new MutationObserver(function(){kbEnable(document);});
+var __kbObs=new MutationObserver(function(){kbEnable(document);queueAlign();});
 __kbObs.observe(document.body,{childList:true,subtree:true});
 kbEnable(document);
+queueAlign();
 function renderProfileMenu(){
   $('pm-users').innerHTML=USERS.map(function(u){
     return '<div class="pm-user" onclick="switchUser(\''+u.id+'\')"><div class="sm-ava">'+u.ini+'</div><div><div class="n">'+u.name+'</div><div class="r">'+u.role+'</div></div>'+(u.id===CURRENT.id?'<span class="now">SIGNED IN</span>':'')+'</div>';
