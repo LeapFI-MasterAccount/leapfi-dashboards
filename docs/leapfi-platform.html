@@ -562,7 +562,12 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 .soon-hero p{font-size:13.5px;color:var(--muted);line-height:1.7;max-width:760px;margin-top:4px}
 .soon-sec{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px}
 .soon-sec .sh{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--grey);margin-bottom:14px}
-.soon-flow{width:100%;height:212px;display:block}
+.soon-steps{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px 12px;margin:20px 0 10px}
+.soon-steps .ss{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;font-weight:700;color:var(--ink);background:var(--panel2);border:1px solid var(--line2);border-radius:999px;padding:8px 15px 8px 9px}
+.soon-steps .ss b{flex:none;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--chev1),var(--chev5));color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.soon-steps .sar{color:var(--cyan);font-size:17px;font-weight:800;line-height:1}
+.ss-note{text-align:center;font-size:12px;color:var(--grey);margin-bottom:2px}
+.soon-hero .sp-phase{margin-top:20px;font-size:11.5px;font-weight:600;color:var(--grey);border:1px solid var(--line2);border-radius:20px;padding:7px 15px}
 .soon-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .soon-stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:15px 16px;text-align:center}
 .soon-stat .sn{font-size:26px;font-weight:800;color:var(--ink);line-height:1.1}
@@ -659,7 +664,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.051</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.052</b></div>
   </div>
 </aside>
 
@@ -892,6 +897,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.052</span> · <span class="cd">Aug 16, 2026</span><br>The How it works diagram comes off the Connect, AllRailz, and Vantage pages. Four boxes, eight labels, and a policy spine were carrying more detail than a page about something not yet built needs. Each page now states the same idea as three numbered steps on one line under the opening paragraph, with the point of it underneath. What it delivers and What changes are untouched. All three pages stay identical in structure.</li>
             <li><span class="cv">v 1.051</span> · <span class="cd">Aug 16, 2026</span><br>Numbers line up across every card row. Where one heading wrapped to two lines and its neighbours did not, the number underneath sat lower than the rest. Each row now measures its own headings, holds them all to the tallest, and drops any footnote line to a shared bottom edge, so the figures read straight across on every screen and at every window width.</li>
             <li><span class="cv">v 1.050</span> · <span class="cd">Aug 16, 2026</span><br>Ten more documents in the sample universe, chosen to show the kinds of record an examiner actually asks for: the AI system inventory, AI Governance Committee minutes, AI acceptable use training attestations, the business continuity and disaster recovery plan, the annual penetration test and remediation tracker, SAR quality assurance, the OFAC screening independent test, the Regulation E error resolution procedure (with a drafted redline on the error clock for automated channels), the HMDA data integrity review, and the CBLR calculation worksheet. The capital narrative, which was already in the library, is now listed too. The sample runs 25 documents and covers all eight domains, so the domain scope filter no longer comes back empty on Capital or thin on AI Governance.</li>
             <li><span class="cv">v 1.049</span> · <span class="cd">Aug 16, 2026</span><br>Connect, AllRailz, and Vantage rebuilt from the thesis on one shared page system, so all three carry the same graphics at the same sizes: a hero, a How it works flow diagram showing the module reading live policy from OnSide before it acts, a four-tile What it delivers row, and a By hand today versus With the module comparison. All three stay marked Soon and not part of this demo build. Every figure comes from the thesis: Connect&rsquo;s six system classes and same-day propagation, AllRailz&rsquo;s 11+ agents across 12 rails on three cores, Vantage&rsquo;s five review types across 87 vendors.</li>
@@ -947,7 +953,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.051</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.052</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -2671,10 +2677,8 @@ function setTarget(key,v){
 var SOON={
  connect:{icon:'⇄',name:'LeapFI · Connect',tag:'The integration layer',phase:'In development · ships with the OnSide policy record',
   lead:'MCP and APIs that let any system read the institution&rsquo;s live policies from OnSide and configure itself, at install and at every policy change. Your Microsoft 365 tenant reads retention, DLP, and sharing policy straight from the record. Nobody re-types anything, and the exam file shows configuration provably derived from approved policy.',
-  flow:{nodes:['Institution systems','Connect · MCP + API','Systems configure themselves','Configuration evidence'],
-        subs:['M365 · core · GRC · HRIS','reads the approved record','retention · DLP · sharing · access','who, what, from which policy'],
-        spine:'OnSide · approved policy',spineAt:1,
-        note:'Policy approved once, applied everywhere, evidenced automatically.'},
+  steps:['Policy approved in OnSide','Connect writes it into your systems','Configuration evidence on file'],
+  note:'Approved once, applied everywhere, evidenced automatically.',
   stats:[['6','SYSTEM CLASSES','targeted at launch: productivity, core, GRC, HRIS, ITSM, data'],
          ['2-way','MCP + REST','systems read policy and report their configuration back'],
          ['Same day','APPROVAL TO CONFIG','a redline approved in OnSide propagates on approval'],
@@ -2683,10 +2687,8 @@ var SOON={
        after:[['Policy approved to systems updated',6,'same day'],['Configuration matches policy',100,'continuous'],['Evidence for the examiner',100,'generated']]}},
  allrailz:{icon:'≋',name:'LeapFI · AllRailz',tag:'The agentic runtime',phase:'In development · deploys in weeks, zero core replacement',
   lead:'An agentic-native digital banking platform running on the core you already have: core-agnostic across FIS, Fiserv, and Jack Henry, with 11+ AI agents and 12 payment rails behind one branded experience covering consumer and business banking, cards, invoicing and bill pay, and real-time payments. Every agentic workflow reads live policy from OnSide before it acts, which is what keeps agentic banking supervisable.',
-  flow:{nodes:['Member &amp; business','AllRailz agents','12 payment rails','Your existing core'],
-        subs:['one branded front end','11+ agents, policy-checked','RTP · FedNow · ACH · wires · cards','FIS · Fiserv · Jack Henry'],
-        spine:'OnSide · policy check before act',spineAt:1,
-        note:'Agents act only inside the policy the institution approved.'},
+  steps:['Member or business acts','Agent checks live policy first','Rail executes on your core'],
+  note:'Agents act only inside the policy the institution approved.',
   stats:[['11+','AI AGENTS','routing, servicing, fraud triage, compliance checks'],
          ['12','PAYMENT RAILS','RTP, FedNow, ACH, wires, cards, and more'],
          ['3','CORES SUPPORTED','FIS, Fiserv, and Jack Henry, no replacement'],
@@ -2695,10 +2697,8 @@ var SOON={
        after:[['Front-end release cycle',18,'weeks'],['New rail onboarding',20,'configuration'],['Policy check before an action',100,'every time']]}},
  vantage:{icon:'⬡',name:'LeapFI · Vantage',tag:'Agentic third-party oversight',phase:'Future module · targeted for v3',
   lead:'Third-party oversight is the next manual mountain. Every vendor carries a diligence burden that recurs annually and runs almost entirely by hand: financial condition against your thresholds, SOC 2 reports read line by line, resiliency and continuity assessments, HR and employment policy checks, and compliance review against your own standards. Vantage runs these with agentic workflows and hands people the exception report instead of the raw statements.',
-  flow:{nodes:['Vendor evidence','Vantage agents','Exception report','Third-Party register'],
-        subs:['SOC 2 · financials · BCP · policies','five review types, run annually','only what breaches your standard','findings land as evidence'],
-        spine:'OnSide · your standards &amp; thresholds',spineAt:1,
-        note:'People read exceptions, not statements. The evidence trail writes itself.'},
+  steps:['Vendor evidence arrives','Agents review it against your standards','Exceptions land in the register'],
+  note:'People read exceptions, not statements. The evidence trail writes itself.',
   stats:[['5','REVIEW TYPES','financial, SOC 2, resiliency, HR, compliance'],
          ['87','VENDORS IN SCOPE','the full inventory, not just the critical set'],
          ['12','CRITICAL VENDORS','reviewed against the tier-one standard'],
@@ -2706,25 +2706,10 @@ var SOON={
   cmp:{today:[['Annual review per critical vendor',100,'12-20 hrs'],['Full inventory covered each year',35,'critical set'],['Findings reach the register',45,'re-keyed']],
        after:[['Annual review per critical vendor',12,'~2 hrs'],['Full inventory covered each year',100,'all 87'],['Findings reach the register',100,'automatic']]}}
 };
-function soonFlow(f){
-  var W=980,H=212,n=f.nodes.length,gap=18,bw=(W-gap*(n-1)-8)/n,by=118,bh=62;
-  var s='<svg class="soon-flow" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+f.nodes.join(' then ')+', all reading from '+String(f.spine).replace(/&amp;/g,'and')+'">';
-  s+='<defs><linearGradient id="sgrad" x1="0" x2="1"><stop offset="0" stop-color="#01DFD9"/><stop offset="1" stop-color="#0092FF"/></linearGradient>'
-    +'<marker id="sarrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#00B8FF"/></marker></defs>';
-  /* policy spine */
-  var sx=4+(f.spineAt)*(bw+gap), scx=sx+bw/2;
-  s+='<rect x="'+(scx-165)+'" y="18" width="330" height="44" rx="12" fill="rgba(0,242,255,.08)" stroke="rgba(0,242,255,.45)"/>'
-    +'<text x="'+scx+'" y="45" text-anchor="middle" font-size="13" font-weight="800" fill="#00F2FF" font-family="Inter,sans-serif">'+f.spine+'</text>'
-    +'<line x1="'+scx+'" y1="62" x2="'+scx+'" y2="'+(by-4)+'" stroke="#00F2FF" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#sarrow)"/>';
-  for(var i=0;i<n;i++){
-    var x=4+i*(bw+gap), primary=(i===f.spineAt);
-    s+='<rect x="'+x+'" y="'+by+'" width="'+bw+'" height="'+bh+'" rx="12" fill="'+(primary?'rgba(0,146,255,.14)':'var(--panel2)')+'" stroke="'+(primary?'url(#sgrad)':'var(--line2)')+'" stroke-width="'+(primary?2:1)+'"/>'
-      +'<text x="'+(x+bw/2)+'" y="'+(by+26)+'" text-anchor="middle" font-size="13" font-weight="800" fill="#f5f5f7" font-family="Inter,sans-serif">'+f.nodes[i]+'</text>'
-      +'<text x="'+(x+bw/2)+'" y="'+(by+45)+'" text-anchor="middle" font-size="11" font-weight="600" fill="#939aa2" font-family="Inter,sans-serif">'+f.subs[i]+'</text>';
-    if(i<n-1){var ax=x+bw+3;s+='<line x1="'+ax+'" y1="'+(by+bh/2)+'" x2="'+(ax+gap-8)+'" y2="'+(by+bh/2)+'" stroke="#00B8FF" stroke-width="2" marker-end="url(#sarrow)"/>';}
-  }
-  s+='<text x="'+(W/2)+'" y="204" text-anchor="middle" font-size="11.5" font-weight="600" fill="#939aa2" font-family="Inter,sans-serif">'+f.note+'</text>';
-  return s+'</svg>';
+function soonSteps(c){
+  return '<div class="soon-steps" role="img" aria-label="'+c.steps.join(', then ')+'">'
+   +c.steps.map(function(s,i){return (i?'<span class="sar">&rsaquo;</span>':'')+'<span class="ss"><b>'+(i+1)+'</b>'+s+'</span>';}).join('')
+   +'</div><div class="ss-note">'+c.note+'</div>';
 }
 function soonCmpRow(r,cls){
   var col=cls==='today'?'#D99B43':'#01DFD9';
@@ -2735,8 +2720,7 @@ function renderSoon(key){
   var c=SOON[key], el=$('soon-'+key); if(!c||!el)return;
   el.innerHTML='<div class="soon-wrap">'
    +'<div class="soon-hero"><div class="si">'+c.icon+'</div><h3>'+c.name+'</h3><div class="sp-tag">'+c.tag+'</div>'
-     +'<p>'+c.lead+'</p><div class="sp-phase">'+c.phase+' · not part of this demo build</div></div>'
-   +'<div class="soon-sec"><div class="sh">How it works</div>'+soonFlow(c.flow)+'</div>'
+     +'<p>'+c.lead+'</p>'+soonSteps(c)+'<div class="sp-phase">'+c.phase+' · not part of this demo build</div></div>'
    +'<div class="soon-sec"><div class="sh">What it delivers</div><div class="soon-stats">'
      +c.stats.map(function(s){return '<div class="soon-stat"><div class="sn">'+s[0]+'</div><div class="sl2">'+s[1]+'</div><div class="sd2">'+s[2]+'</div></div>';}).join('')
    +'</div></div>'
