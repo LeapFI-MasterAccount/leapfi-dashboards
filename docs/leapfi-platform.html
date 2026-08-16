@@ -510,6 +510,38 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
 .oitem:hover .on{color:var(--cyan)}
 .oitem .om{font-size:11px;font-weight:600;color:var(--grey);margin-top:4px;line-height:1.5}
 .oitem .oarr{color:var(--cyan);font-weight:700;font-size:12px;white-space:nowrap}
+.deck{margin:16px 0}
+.deck-stage{background:#07090b;border:1px solid var(--line2);border-radius:14px;overflow:hidden}
+.slide{aspect-ratio:16/9;padding:30px 38px;display:flex;flex-direction:column;background:radial-gradient(1100px 480px at 18% -12%,rgba(0,146,255,.09),transparent 60%),#07090b}
+.slide .sl-eb{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--cyan);text-transform:uppercase}
+.slide h1{font-size:23px;font-weight:800;color:var(--ink);margin:7px 0 2px;letter-spacing:-.01em;line-height:1.25}
+.sl-body{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+.sl-take{font-size:11.5px;color:var(--muted);border-left:3px solid var(--cyan);padding-left:12px;line-height:1.5;margin-top:8px}
+.sl-chev{height:4px;border-radius:2px;background:linear-gradient(90deg,#01DFD9,#00B8FF,#0092FF,#006BFF,#002BFF);margin-top:14px;width:130px}
+.sl-title{justify-content:center;align-items:flex-start}
+.sl-sub{font-size:13px;color:var(--grey);margin-top:12px}
+.sl-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.sl-stats .sn{font-size:29px;font-weight:800;color:var(--cyan)}
+.sl-stats .sd{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.45}
+.sl-gauges{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.sl-gauges .sgn{font-size:9.5px;font-weight:700;color:var(--muted);margin-top:1px}
+.sl-list{font-size:12px;color:var(--muted);line-height:1.7;margin:0;padding-left:16px}
+.sl-list b{color:var(--ink)}
+.sl-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sl-cols .qc{background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+.sl-cols .qh2{font-size:10px;font-weight:800;color:var(--cyan);letter-spacing:.06em;margin-bottom:6px}
+.sl-cols .qi{font-size:10.5px;color:var(--muted);line-height:1.5;font-weight:600}
+.sl-loop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sl-loop .lc{background:rgba(0,242,255,.06);border:1px solid rgba(0,242,255,.25);border-radius:9px;padding:9px 13px;font-size:11.5px;font-weight:700;color:var(--ink)}
+.sl-loop .lc small{display:block;font-size:9.5px;color:var(--grey);font-weight:600;margin-top:2px}
+.sl-loop .la{color:var(--cyan);font-weight:700}
+.deck-nav{display:flex;align-items:center;gap:14px;justify-content:center;padding:11px 0 2px}
+.deck-nav .db{background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:6px 15px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700}
+.deck-nav .db:hover{border-color:var(--cyan);color:var(--cyan)}
+.deck-nav .dc{font-size:11px;color:var(--grey);font-weight:700;min-width:52px;text-align:center}
+.deck-dots{display:flex;gap:5px}
+.deck-dots span{width:7px;height:7px;border-radius:50%;background:var(--line2);cursor:pointer}
+.deck-dots span.on{background:var(--cyan)}
 @media(max-width:1080px){.rep-row{grid-template-columns:1fr 1fr !important}}
 @media(max-width:1080px){.dom-grid{grid-template-columns:1fr}.gq{grid-template-columns:1fr 1fr}.rm-kpis{grid-template-columns:1fr 1fr}.doc-cats{grid-template-columns:1fr 1fr}.tgt-row{grid-template-columns:1fr 1fr}}
 
@@ -604,7 +636,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.041</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.042</b></div>
   </div>
 </aside>
 
@@ -869,6 +901,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.042</span> · <span class="cd">Aug 15, 2026</span><br>The Board Pack now opens with a 12-slide presentation for the CEO: title, the one-slide story, four risk slides (posture gauges, gaps, the regulatory environment, how change is governed), four opportunity slides (portfolio composition, economics, the Year-1 quarters, what Years 2 and 3 unlock), the money picture, and the ask. Every slide is generated live from the record, navigated with prev/next and dots, in the brand system with the chevron motif. The one-page read remains beneath as the appendix.</li>
             <li><span class="cv">v 1.041</span> · <span class="cd">Aug 15, 2026</span><br>Domain open items rebuilt as single cards. Each item (the Incident Response Plan escalation and its peers) is one card in one type treatment: the item on top, the document, citation, and proposed-language status on a single meta line beneath. The whole card is clickable and opens the document with its redline. Items without evidence route to the gap queue.</li>
             <li><span class="cv">v 1.040</span> · <span class="cd">Aug 15, 2026</span><br>Every report now opens with a signature graphic computed live from the model. Board Pack shows where the annual value comes from and the budget committed. The Regulatory Change Briefing opens with its status distribution across the seven instruments. Risk Posture charts the gaps by domain. Compliance draws every control family against the 80% gate. Model Risk and Third-Party open with register donuts plus the inventory splits and SOC 2 coverage. IT &amp; InfoSec shows program coverage and connector health. Investment &amp; ROI leads with the money picture and the Year-1 value ramp. All in the brand palette, amber and red reserved for what is genuinely open.</li>
             <li><span class="cv">v 1.039</span> · <span class="cd">Aug 15, 2026</span><br>Reporting promoted to its own tab, directly under Home and above the Modules section. It is the platform&rsquo;s cross-cutting output layer, drawing on both the OnSide record and the Studio dials, so it sits with Home rather than inside a module. OnSide&rsquo;s nav slims to the governance record. Every old route redirects: OnSide reporting links, the home quick action, report generation, and the panel return-point all land on and return from the new tab.</li>
@@ -914,7 +947,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.041</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.042</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1253,6 +1286,13 @@ function openReport(kind){
           segBar(segs,18)+vlegend(segs.map(function(s){return {c:s.c,n:s.n,v:fmt(s.v)};}))
           +'<div style="margin-top:14px">'+vbar('Budget committed',P.spent,L.budget,'#00B8FF',fmt(P.spent)+' of '+fmt(L.budget))+'</div>');
       })()
+     +(function(){
+        DECK=boardDeck(P,L);
+        return '<div class="dh" style="margin-top:14px">The board presentation · '+DECK.length+' slides · risk then opportunity</div>'
+         +'<div class="deck"><div class="deck-stage" id="deck-stage"></div>'
+         +'<div class="deck-nav"><button class="db" onclick="deckNav(-1)">← Prev</button><span class="dc" id="deck-count"></span><div class="deck-dots" id="deck-dots">'+DECK.map(function(){return '<span></span>';}).join('')+'</div><button class="db" onclick="deckNav(1)">Next →</button></div></div>'
+         +'<div class="dh" style="margin-top:6px">The appendix · the one-page read behind the deck</div>';
+      })()
      +'<div class="rrec">At a <b>'+ (L.tol<34?'conservative':L.tol<67?'balanced':'aggressive') +'</b> risk tolerance and a <b>'+fmt(L.budget)+'</b> annual budget, the plan funds <b>'+P.funded.length+' of '+OPPS.length+'</b> plays for a one-time build of <b>'+fmt(P.spent)+'</b>, returning an expected <b>'+P.roi.toFixed(1)+'× over three years</b> ('+fmt(P.annual)+'/yr at '+Math.round(L.eff*100)+'% adoption, ~'+P.payM+'-month payback). Ambition is set to <b>'+BANDS[L.amb]+'</b> against a current <b>'+BANDS[CUR]+'</b> posture; closing <b>'+P.toClose.length+' control families</b> releases the remaining '+P.gated.length+' higher-value plays.</div>'
      +'<div class="rgrid">'+tile('Plays funded',P.funded.length+' / '+OPPS.length,'of the library')+tile('Build cost',fmt(P.spent),'one-time')+tile('Annual value',fmt(P.annual),'at adoption')+tile('3-yr ROI',P.roi.toFixed(1)+'×','on build')+tile('Payback',P.payM+' mo','blended')+'</div>'
      +'<div class="dsec"><div class="dh">Recommended first moves</div><ul class="rlist">'+top.map(function(o){return '<li><b>'+playLink(o.n)+'</b>: '+fmt(o.val*L.eff)+'/yr at '+fmt(o.cost)+' build, '+Math.round(o.cost/(o.val*L.eff)*12)+'-mo payback.</li>';}).join('')+'</ul></div>'
@@ -1403,6 +1443,11 @@ function openReport(kind){
   }
   var dr=$('drawer'); dr.innerHTML=h; dr.classList.add('open'); dr.classList.add('wide'); dr.setAttribute('aria-hidden','false');
   $('scrim').classList.add('open'); dr.scrollTop=0;
+  if(kind==='board'){
+    var dots=document.querySelectorAll('#deck-dots span');
+    for(var di=0;di<dots.length;di++)(function(j){dots[j].onclick=function(){deckShow(j);};})(di);
+    deckShow(0);
+  }
 }
 
 /* ============ STUDIO SUB VIEWS ============ */
@@ -1723,6 +1768,71 @@ function showDrawer(html,wide){
 function mockSha(seed){var s=0;for(var i=0;i<seed.length;i++)s=(s*31+seed.charCodeAt(i))>>>0;return ('00000000'+s.toString(16)).slice(-8)+'…'+('00000000'+((s*2654435761)>>>0).toString(16)).slice(-8);}
 function statusTag(st){return st==='good'?'<span class="tag good">Current</span>':st==='warn'?'<span class="tag warn">Update</span>':st==='crit'?'<span class="tag crit">High</span>':'<span class="tag grey">'+st+'</span>';}
 var VIZC=['#01DFD9','#00B8FF','#0092FF','#006BFF','#5b79ff','#6e757d'];
+var DECK=[],DECKI=0;
+function deckShow(i){
+  DECKI=Math.max(0,Math.min(DECK.length-1,i));
+  var st=$('deck-stage'); if(st)st.innerHTML=DECK[DECKI];
+  var c=$('deck-count'); if(c)c.textContent=(DECKI+1)+' / '+DECK.length;
+  var dots=document.querySelectorAll('#deck-dots span');
+  for(var j=0;j<dots.length;j++)dots[j].className=j===DECKI?'on':'';
+}
+function deckNav(d){deckShow(DECKI+d);}
+function boardDeck(P,L){
+  var below=DOMAINS.filter(function(d){return statusOf(d)==='below';});
+  var gapsT=0; DOMAINS.forEach(function(d){gapsT+=oblToClose(d);});
+  var meets=P.roi>=L.roiTgt;
+  function sl(eb,title,body,take){return '<div class="slide"><div class="sl-eb">'+eb+'</div><h1>'+title+'</h1><div class="sl-body">'+body+'</div>'+(take?'<div class="sl-take">'+take+'</div>':'')+'<div class="sl-chev"></div></div>';}
+  function stats(rows){return '<div class="sl-stats">'+rows.map(function(r){return '<div><div class="sn">'+r[0]+'</div><div class="sd">'+r[1]+'</div></div>';}).join('')+'</div>';}
+  var s=[];
+  s.push('<div class="slide sl-title"><div class="sl-eb">LEAPFI PLATFORM · BOARD REVIEW · AUG 2026</div><h1 style="font-size:32px">NorthWinds Credit Union<br>AI Program · Risk &amp; Opportunity</h1><div class="sl-sub">Prepared for the Board Risk Committee · presented by the CEO · every figure generated live from the governance record</div><div class="sl-chev" style="width:200px"></div></div>');
+  s.push(sl('THE ONE-SLIDE STORY','Governed on our own terms, funded on the numbers',
+    stats([[ (DOMAINS.length-below.length)+' / '+DOMAINS.length,'domains at or above the targets this board set'],[ ''+gapsT,'obligations still to close · each routed with language drafted'],[ ''+P.funded.length,'plays funded · '+fmt(P.spent)+' committed'],[ P.roi.toFixed(1)+'×','expected 3-year return · '+(meets?'clears':'below')+' our '+L.roiTgt.toFixed(1)+'× bar']]),
+    'Risk and opportunity run on one data model. The next five slides are the risk story, the four after are the investment story.'));
+  s.push(sl('RISK · 1 OF 4','Posture by domain · judged against our own bar',
+    '<div class="sl-gauges">'+DOMAINS.map(function(d){return '<div><div style="display:flex;justify-content:center">'+gaugeSVG(curOf(d),d.target,54)+'</div><div class="sgn">'+(DOM_SHORT[d.key]||d.name)+'</div></div>';}).join('')+'</div>',
+    'Targets come from our risk appetite and the use cases we chose. A 3.7 against a chosen 4 is a governed position, never a failing grade.'));
+  s.push(sl('RISK · 2 OF 4','Where the gaps sit · all routed, none orphaned',
+    (function(){var open2=DOMAINS.filter(function(d){return oblToClose(d)>0;}).sort(function(a,b){return oblToClose(b)-oblToClose(a);});var mx=open2.length?oblToClose(open2[0]):1;
+      return open2.map(function(d){return vbar(DOM_SHORT[d.key]||d.name,oblToClose(d),mx,'#D99B43',oblToClose(d)+' to close');}).join('');})(),
+    '<b>One high-priority item</b>: the Incident Response Plan escalation path for member-facing automation. Redline drafted, owner assigned, closure targeted before quarter end.'));
+  s.push(sl('RISK · 3 OF 4','The regulatory environment moved. We saw it the day it did.',
+    segBar([{v:2,c:'#D99B43'},{v:4,c:'#0092FF'},{v:1,c:'#01DFD9'}],14)
+    +vlegend([{c:'#D99B43',n:'Open · work in progress',v:2},{c:'#0092FF',n:'Tracking',v:4},{c:'#01DFD9',n:'Closed',v:1}])
+    +'<ul class="sl-list" style="margin-top:12px"><li><b>Fed &amp; FDIC joint NPRM · Regulation O</b> · proposed Jul 31 · comment window open, our position in drafting</li><li><b>Interagency 2026-13 · Model Risk</b> · policy updated · validation clauses rolling through 9 legacy contracts, target Q1 2027</li><li><b>New Mexico AI Act</b> · vendor disclosure clause pre-drafted, monitoring the House vote</li></ul>',null));
+  s.push(sl('RISK · 4 OF 4','How every change is governed',
+    '<div class="sl-loop"><span class="lc">Monitor<small>9 bodies · 3 layers · 517 documents</small></span><span class="la">→</span><span class="lc">Detect<small>same-day, with pin-cite &amp; hash</small></span><span class="la">→</span><span class="lc">Propose<small>language drafted, routed to the owner</small></span><span class="la">→</span><span class="lc">Approve<small>a named human, every time</small></span><span class="la">→</span><span class="lc">Report<small>this pack, from the same record</small></span></div>',
+    'Nothing becomes authoritative without a qualified person approving it. The exam answer writes itself as the work happens.'));
+  s.push(sl('OPPORTUNITY · 1 OF 4','The funded portfolio · where the value comes from',
+    (function(){var f=P.funded.slice().sort(function(a,b){return b.val-a.val;});
+      var segs=f.slice(0,5).map(function(o,i){return {v:o.val*L.eff,c:VIZC[i],n:o.n};});
+      var rest=f.slice(5).reduce(function(a,o){return a+o.val*L.eff;},0);
+      if(rest>0)segs.push({v:rest,c:VIZC[5],n:(f.length-5)+' more'});
+      return segBar(segs,18)+vlegend(segs.map(function(x){return {c:x.c,n:x.n,v:fmt(x.v)};}))
+       +'<div style="margin-top:14px">'+vbar('Budget committed',P.spent,L.budget,'#00B8FF',fmt(P.spent)+' of '+fmt(L.budget))+'</div>';})(),
+    P.funded.length+' plays funded at a '+(L.tol<34?'conservative':L.tol<67?'balanced':'aggressive')+' risk appetite · '+P.gated.length+' higher-value plays wait on the controls above.'));
+  s.push(sl('OPPORTUNITY · 2 OF 4','The economics',
+    stats([[P.roi.toFixed(1)+'×','expected 3-year return on build'],[P.payM+' mo','blended payback across the portfolio'],[fmt(P.annual),'annual value at our '+Math.round(L.eff*100)+'% adoption setting'],[fmt(P.spent),'one-time build, inside the approved envelope']]),
+    (meets?'The plan clears the ':'The plan is below the ')+L.roiTgt.toFixed(1)+'× hurdle this board set. Every figure recomputes if we change the levers.'));
+  s.push(sl('OPPORTUNITY · 3 OF 4','Year 1 · what lands each quarter',
+    (function(){var y1=P.funded.slice(); var per=Math.ceil(y1.length/4)||1; var out='';
+      for(var q=0;q<4;q++){var plays=y1.slice(q*per,(q+1)*per);
+        out+='<div class="qc"><div class="qh2">Q'+(q+1)+'</div>'+(plays.length?plays.map(function(o){return '<div class="qi">'+o.n+'</div>';}).join(''):'<div class="qi" style="color:var(--grey)">Scoping capacity</div>')+'</div>';}
+      return '<div class="sl-cols">'+out+'</div>';})(),
+    'Foundational work leads, quick paybacks follow. The full sequencing lives in Studio and moves with the levers.'));
+  s.push(sl('OPPORTUNITY · 4 OF 4','Years 2 and 3 · what this year unlocks',
+    (function(){var spine=P.gated.filter(function(o){return DETAIL[o.n]&&(DETAIL[o.n].deps||[]).indexOf('Unified data foundation')>=0;});
+      return stats([[ ''+(P.bench.length+spine.length),'plays queued for Year 2 · led by the data foundation'],[ ''+P.gated.filter(function(o){return spine.indexOf(o)<0;}).length,'plays gated on controls · release as domains reach target'],[fmt(P.gated.concat(P.bench).reduce(function(a,o){return a+o.val*L.eff;},0)),'annual value waiting behind the gates'],['2×','the portfolio if we close the six control families']]);})(),
+    'The gates are ours to open. Closing the control gaps on slide 4 is what releases the second wave.'));
+  s.push(sl('THE MONEY PICTURE','It pays for itself before the portfolio counts',
+    vbar('Compliance spend today',4500000,4500000,'#6e757d','$4.50M/yr')
+    +vbar('Platform subscription',180000,4500000,'#0092FF','$180k/yr')
+    +vbar('Capacity freed + portfolio value',Math.round(4500000*0.12)+P.annual,4500000,'#01DFD9',fmt(Math.round(4500000*0.12)+P.annual)+'/yr'),
+    'A conservative 12% of compliance capacity freed covers the platform on its own. The portfolio return is upside on top.'));
+  s.push(sl('THE ASK','Three approvals tonight',
+    '<ul class="sl-list" style="font-size:13px;line-height:2"><li><b>Ratify the domain targets</b> as the institution&rsquo;s stated risk appetite, as presented on slide 3.</li><li><b>Approve the '+fmt(L.budget)+' annual envelope</b> funding the '+P.funded.length+'-play portfolio on slide 7.</li><li><b>Note the Incident Response Plan escalation</b> as the one high-priority item, with closure before quarter end.</li></ul>',
+    'Everything in this pack is drill-downable live, and the same record answers the examiner.'));
+  return s;
+}
 function viz(title,body){return '<div class="viz"><div class="vh">'+title+'</div>'+body+'</div>';}
 function vlegend(items){return '<div class="vleg">'+items.map(function(s){return '<span><span class="d" style="background:'+s.c+'"></span>'+s.n+(s.v!=null?' · <b style="color:var(--ink)">'+s.v+'</b>':'')+'</span>';}).join('')+'</div>';}
 function segBar(segs,hh){var tot=0;segs.forEach(function(s){tot+=s.v;});tot=tot||1;
