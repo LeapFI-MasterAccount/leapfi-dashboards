@@ -8,7 +8,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 :root{
   --bg:#070809;--panel:#0e1116;--panel2:#12161c;--panel3:#171c23;--line:#22262c;--line2:#2c3138;
-  --ink:#f5f5f7;--muted:#9ba0a6;--grey:#6e757d;
+  --ink:#f5f5f7;--muted:#9ba0a6;--grey:#939aa2;
   --cyan:#00F2FF;--cyan-dim:rgba(0,242,255,.13);
   --chev1:#01DFD9;--chev2:#00B8FF;--chev3:#0092FF;--chev4:#006BFF;--chev5:#002BFF;
   --sem1:#C94A4A;--sem2:#D99B43;--sem3:#E4C662;--sem4:#7FA774;--sem5:#557A61;
@@ -61,7 +61,7 @@ b{color:var(--ink)}
 .profile-menu.open{display:block}
 .pm-head{display:flex;gap:14px;align-items:center;padding:18px;border-bottom:1px solid var(--line)}
 .pm-ava{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--chev2),var(--chev5));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;position:relative}
-.pm-ava .cam{position:absolute;bottom:-3px;right:-3px;width:20px;height:20px;border-radius:50%;background:var(--panel3);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer}
+.pm-ava .cam{position:absolute;bottom:-3px;right:-3px;width:20px;height:20px;border-radius:50%;background:var(--panel3);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:10px;cursor:default}
 .pm-name{font-size:15px;font-weight:800}
 .pm-role{font-size:11.5px;color:var(--cyan);font-weight:700}
 .pm-body{padding:12px 18px;border-bottom:1px solid var(--line)}
@@ -387,10 +387,6 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
 .os-nest-body .os-sub{padding-left:46px;font-size:11.5px}
 .nav-item .caret{margin-left:auto;font-size:10px;color:var(--grey);transition:transform .15s}
 .nav-group.open .caret{transform:rotate(90deg);color:var(--cyan)}
-/* ---- onside embed ---- */
-#mod-onside{margin:-26px}
-#onside-frame{width:100%;height:calc(100vh - 62px);border:0;display:block;background:#0a0c10}
-#onside-loading{display:flex;align-items:center;justify-content:center;height:calc(100vh - 62px);color:var(--grey);font-size:13px;gap:10px}
 .doclink{color:var(--cyan);cursor:pointer;font-weight:600}
 .ctl-link{cursor:pointer}
 .ctl-link:hover{text-decoration:underline;text-underline-offset:3px}
@@ -538,6 +534,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
 .deck-nav{display:flex;align-items:center;gap:14px;justify-content:center;padding:11px 0 2px}
 .deck-nav .db{background:var(--panel2);border:1px solid var(--line2);color:var(--ink);border-radius:8px;padding:6px 15px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700}
 .deck-nav .db:hover{border-color:var(--cyan);color:var(--cyan)}
+.deck-nav .db:disabled{opacity:.35;cursor:default;pointer-events:none}
 .deck-nav .dc{font-size:11px;color:var(--grey);font-weight:700;min-width:52px;text-align:center}
 .deck-dots{display:flex;gap:5px}
 .deck-dots span{width:7px;height:7px;border-radius:50%;background:var(--line2);cursor:pointer}
@@ -636,7 +633,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.042</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.043</b></div>
   </div>
 </aside>
 
@@ -644,7 +641,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
 <div class="main">
   <div class="topbar">
     <div class="welcome"><span id="welcome-line">Welcome, Rachel</span>
-      <div class="w-sub" id="welcome-sub">NorthWinds Credit Union · Friday, August 14, 2026</div>
+      <div class="w-sub" id="welcome-sub">NorthWinds Credit Union · Friday, August 15, 2026</div>
     </div>
     <div class="crumb" id="crumb" style="display:none"></div>
     <div class="top-right">
@@ -654,11 +651,11 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
     </div>
     <div class="profile-menu" id="profile-menu">
       <div class="pm-head">
-        <div class="pm-ava" id="pm-ava">RF<span class="cam" title="Change photo">✎</span></div>
+        <div class="pm-ava" id="pm-ava">RF<span class="cam" title="Photo synced from Entra ID">✎</span></div>
         <div><div class="pm-name" id="pm-name">Rachel Fischer</div><div class="pm-role" id="pm-role">Chief Risk Officer</div></div>
       </div>
       <div class="pm-body">
-        <div class="pm-row"><span class="k">Email</span><span id="pm-email">rachel.fischer@leapfi.ai</span></div>
+        <div class="pm-row"><span class="k">Email</span><span id="pm-email">rachel.fischer@northwindscu.org</span></div>
         <div class="pm-row"><span class="k">Phone</span><span id="pm-phone">+1 (203) 555-0184</span></div>
         <div class="pm-row"><span class="k">Org</span><span>NorthWinds Credit Union</span></div>
       </div>
@@ -702,7 +699,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         <div class="mod-sub" style="margin-top:4px">Everything NorthWinds monitors, in one record, judged against the targets you set. Last full scan 6:12 AM ET.</div>
       </div>
       <div id="onside-views"></div>
-      <div class="foot-note">LeapFI · OnSide · Mockup for internal review · Illustrative customer data · Not legal advice · No obligation is presented as authoritative until a qualified human approves it · Institutions bear sole responsibility for verifying regulatory currency with their primary federal regulator · © 2026 LeapFI LLC</div>
+      <div class="foot-note">LeapFI · OnSide · Platform demo · illustrative customer data for NorthWinds Credit Union · Not legal advice · No obligation is presented as authoritative until a qualified human approves it · Institutions bear sole responsibility for verifying regulatory currency with their primary federal regulator · © 2026 LeapFI LLC</div>
     </section>
 
     
@@ -885,22 +882,23 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
       <div class="set-grid">
         <div class="card">
           <h2>Identity &amp; access</h2>
-          <div class="set-row"><div><div class="sk">Active Directory sync</div><div class="sd">Profiles, photos &amp; roles inherited from Entra ID · last sync 6:02 AM ET</div></div><div class="toggle on"></div></div>
-          <div class="set-row"><div><div class="sk">Single sign-on</div><div class="sd">SSO via the institution's identity provider · MFA inherited</div></div><div class="toggle on"></div></div>
-          <div class="set-row"><div><div class="sk">Role-based access</div><div class="sd">Homepage &amp; module permissions derived from directory role</div></div><div class="toggle on"></div></div>
-          <div class="set-row"><div><div class="sk">Audit logging</div><div class="sd">Every query, approval, alert &amp; export logged end to end</div></div><div class="toggle on"></div></div>
+          <div class="set-row"><div><div class="sk">Active Directory sync</div><div class="sd">Profiles, photos &amp; roles inherited from Entra ID · last sync 6:02 AM ET</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="set-row"><div><div class="sk">Single sign-on</div><div class="sd">SSO via the institution's identity provider · MFA inherited</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="set-row"><div><div class="sk">Role-based access</div><div class="sd">Homepage &amp; module permissions derived from directory role</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="set-row"><div><div class="sk">Audit logging</div><div class="sd">Every query, approval, alert &amp; export logged end to end</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
         </div>
         <div class="card">
           <h2>Notifications</h2>
-          <div class="set-row"><div><div class="sk">Regulatory change alerts</div><div class="sd">Same-day detection from 9 governing bodies</div></div><div class="toggle on"></div></div>
-          <div class="set-row"><div><div class="sk">Approval requests</div><div class="sd">Policy redlines routed to your approval chain</div></div><div class="toggle on"></div></div>
-          <div class="set-row"><div><div class="sk">Control breach alerting</div><div class="sd">SLA-tracked alerts when a monitored control drifts</div></div><div class="toggle on"></div></div>
-          <div class="set-row"><div><div class="sk">Weekly digest</div><div class="sd">Monday morning summary to your inbox</div></div><div class="toggle"></div></div>
+          <div class="set-row"><div><div class="sk">Regulatory change alerts</div><div class="sd">Same-day detection from 9 governing bodies</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="set-row"><div><div class="sk">Approval requests</div><div class="sd">Policy redlines routed to your approval chain</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="set-row"><div><div class="sk">Control breach alerting</div><div class="sd">SLA-tracked alerts when a monitored control drifts</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="set-row"><div><div class="sk">Weekly digest</div><div class="sd">Monday morning summary to your inbox</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
         </div>
         <div class="card">
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.043</span> · <span class="cd">Aug 15, 2026</span><br>Hostile-review fixes, round one of five. OnSide no longer renders full-bleed and clipped (legacy embed CSS removed) and its footer reads as a customer demo. The Back button in obligation-to-document chains works (quote-escaping bug). One demo date everywhere. Secondary text lightened for projector-safe contrast. Demo personas carry NorthWinds emails. Settings toggles toggle, the two dead feed drill-downs open their instruments, lifecycle and in-force rows are fully clickable, and the gaps row for messaging disclosure opens the document that actually carries the drafted language. Deck slide 9 matches the Studio roadmap sequence, slide 10 computes its multiple, slide 11 nets the subscription to agree with the ROI report, and Prev/Next disable at the ends. Reports say Reporting, the stale add-it chat chip is gone, and an empty Send flashes the input.</li>
             <li><span class="cv">v 1.042</span> · <span class="cd">Aug 15, 2026</span><br>The Board Pack now opens with a 12-slide presentation for the CEO: title, the one-slide story, four risk slides (posture gauges, gaps, the regulatory environment, how change is governed), four opportunity slides (portfolio composition, economics, the Year-1 quarters, what Years 2 and 3 unlock), the money picture, and the ask. Every slide is generated live from the record, navigated with prev/next and dots, in the brand system with the chevron motif. The one-page read remains beneath as the appendix.</li>
             <li><span class="cv">v 1.041</span> · <span class="cd">Aug 15, 2026</span><br>Domain open items rebuilt as single cards. Each item (the Incident Response Plan escalation and its peers) is one card in one type treatment: the item on top, the document, citation, and proposed-language status on a single meta line beneath. The whole card is clickable and opens the document with its redline. Items without evidence route to the gap queue.</li>
             <li><span class="cv">v 1.040</span> · <span class="cd">Aug 15, 2026</span><br>Every report now opens with a signature graphic computed live from the model. Board Pack shows where the annual value comes from and the budget committed. The Regulatory Change Briefing opens with its status distribution across the seven instruments. Risk Posture charts the gaps by domain. Compliance draws every control family against the 80% gate. Model Risk and Third-Party open with register donuts plus the inventory splits and SOC 2 coverage. IT &amp; InfoSec shows program coverage and connector health. Investment &amp; ROI leads with the money picture and the Year-1 value ramp. All in the brand palette, amber and red reserved for what is genuinely open.</li>
@@ -947,7 +945,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.042</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.043</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -973,10 +971,10 @@ function fmt(n){return n>=1e6?'$'+(n/1e6).toFixed(2)+'M':'$'+Math.round(n/1000)+
 
 /* ============ USERS (Active Directory mock) ============ */
 var USERS=[
- {id:'rachel',first:'Rachel',name:'Rachel Fischer',ini:'RF',role:'Chief Risk Officer',roleKey:'cro',email:'rachel.fischer@leapfi.ai',phone:'+1 (203) 555-0184'},
- {id:'adam',first:'Adam',name:'Adam Schlesinger',ini:'AS',role:'Chief Executive Officer',roleKey:'ceo',email:'adam.schlesinger@leapfi.ai',phone:'+1 (415) 555-0117'},
- {id:'jose',first:'Jose',name:'Jose Ribau',ini:'JR',role:'AI Leader',roleKey:'ai',email:'jose.ribau@leapfi.ai',phone:'+1 (416) 555-0139'},
- {id:'dan',first:'Dan',name:'Dan Scheffler',ini:'DS',role:'Program Manager',roleKey:'pm',email:'dan.scheffler@leapfi.ai',phone:'+1 (917) 555-0162'}
+ {id:'rachel',first:'Rachel',name:'Rachel Fischer',ini:'RF',role:'Chief Risk Officer',roleKey:'cro',email:'rachel.fischer@northwindscu.org',phone:'+1 (203) 555-0184'},
+ {id:'adam',first:'Adam',name:'Adam Schlesinger',ini:'AS',role:'Chief Executive Officer',roleKey:'ceo',email:'adam.schlesinger@northwindscu.org',phone:'+1 (415) 555-0117'},
+ {id:'jose',first:'Jose',name:'Jose Ribau',ini:'JR',role:'AI Leader',roleKey:'ai',email:'jose.ribau@northwindscu.org',phone:'+1 (416) 555-0139'},
+ {id:'dan',first:'Dan',name:'Dan Scheffler',ini:'DS',role:'Program Manager',roleKey:'pm',email:'dan.scheffler@northwindscu.org',phone:'+1 (917) 555-0162'}
 ];
 var CURRENT=USERS[0];
 
@@ -1270,7 +1268,7 @@ function openReport(kind){
   goReporting();
   var P=computePlan(), L=P.L, h='';
   var head=function(title,sub){return '<div class="dwrap"><button class="dclose" onclick="closeDrawer()">✕ Close</button>'
-    +'<div class="dcat">LEAPFI · Studio · auto-generated report</div><h3 class="dtitle">'+title+'</h3>'
+    +'<div class="dcat">LEAPFI · Reporting · generated from the live record</div><h3 class="dtitle">'+title+'</h3>'
     +'<div class="repmeta">'+sub+' · NorthWinds Credit Union · illustrative model on sample data</div>'
     +'<div class="repbar"><button class="repprint" onclick="window.print()">🖨 Print / Save as PDF</button>'
     +'<button class="dclose" style="float:none" onclick="closeDrawer();goOnside(\'overview\')">Open full governance detail · OnSide →</button></div>';};
@@ -1290,7 +1288,7 @@ function openReport(kind){
         DECK=boardDeck(P,L);
         return '<div class="dh" style="margin-top:14px">The board presentation · '+DECK.length+' slides · risk then opportunity</div>'
          +'<div class="deck"><div class="deck-stage" id="deck-stage"></div>'
-         +'<div class="deck-nav"><button class="db" onclick="deckNav(-1)">← Prev</button><span class="dc" id="deck-count"></span><div class="deck-dots" id="deck-dots">'+DECK.map(function(){return '<span></span>';}).join('')+'</div><button class="db" onclick="deckNav(1)">Next →</button></div></div>'
+         +'<div class="deck-nav"><button class="db" id="deck-prev" onclick="deckNav(-1)">← Prev</button><span class="dc" id="deck-count"></span><div class="deck-dots" id="deck-dots">'+DECK.map(function(){return '<span></span>';}).join('')+'</div><button class="db" id="deck-next" onclick="deckNav(1)">Next →</button></div></div>'
          +'<div class="dh" style="margin-top:6px">The appendix · the one-page read behind the deck</div>';
       })()
      +'<div class="rrec">At a <b>'+ (L.tol<34?'conservative':L.tol<67?'balanced':'aggressive') +'</b> risk tolerance and a <b>'+fmt(L.budget)+'</b> annual budget, the plan funds <b>'+P.funded.length+' of '+OPPS.length+'</b> plays for a one-time build of <b>'+fmt(P.spent)+'</b>, returning an expected <b>'+P.roi.toFixed(1)+'× over three years</b> ('+fmt(P.annual)+'/yr at '+Math.round(L.eff*100)+'% adoption, ~'+P.payM+'-month payback). Ambition is set to <b>'+BANDS[L.amb]+'</b> against a current <b>'+BANDS[CUR]+'</b> posture; closing <b>'+P.toClose.length+' control families</b> releases the remaining '+P.gated.length+' higher-value plays.</div>'
@@ -1500,7 +1498,7 @@ function cpAnswer(x){
    +'<div class="vcard">'
    +vrow('Answer',x.a)
    +vrow('Sources',x.src.map(function(s){return '<span class="doclink" onclick="goOnside(\'docs\')">'+s+'</span>';}).join('<br>'))
-   +vrow('Audit','Query logged · answered from policy in force as of Aug 14, 2026 · no external generation')
+   +vrow('Audit','Query logged · answered from policy in force as of Aug 15, 2026 · no external generation')
    +'</div>';
 }
 /* priced answers carry a source tag inside the chat thread */
@@ -1775,6 +1773,9 @@ function deckShow(i){
   var c=$('deck-count'); if(c)c.textContent=(DECKI+1)+' / '+DECK.length;
   var dots=document.querySelectorAll('#deck-dots span');
   for(var j=0;j<dots.length;j++)dots[j].className=j===DECKI?'on':'';
+  var pv=$('deck-prev'),nx=$('deck-next');
+  if(pv)pv.disabled=DECKI===0;
+  if(nx)nx.disabled=DECKI===DECK.length-1;
 }
 function deckNav(d){deckShow(DECKI+d);}
 function boardDeck(P,L){
@@ -1814,20 +1815,20 @@ function boardDeck(P,L){
     stats([[P.roi.toFixed(1)+'×','expected 3-year return on build'],[P.payM+' mo','blended payback across the portfolio'],[fmt(P.annual),'annual value at our '+Math.round(L.eff*100)+'% adoption setting'],[fmt(P.spent),'one-time build, inside the approved envelope']]),
     (meets?'The plan clears the ':'The plan is below the ')+L.roiTgt.toFixed(1)+'× hurdle this board set. Every figure recomputes if we change the levers.'));
   s.push(sl('OPPORTUNITY · 3 OF 4','Year 1 · what lands each quarter',
-    (function(){var y1=P.funded.slice(); var per=Math.ceil(y1.length/4)||1; var out='';
+    (function(){var y1=P.funded.slice().sort(function(a,b){var f=(b.found?1:0)-(a.found?1:0);if(f)return f;return (a.cost/(a.val||1))-(b.cost/(b.val||1));}); var per=Math.ceil(y1.length/4)||1; var out='';
       for(var q=0;q<4;q++){var plays=y1.slice(q*per,(q+1)*per);
         out+='<div class="qc"><div class="qh2">Q'+(q+1)+'</div>'+(plays.length?plays.map(function(o){return '<div class="qi">'+o.n+'</div>';}).join(''):'<div class="qi" style="color:var(--grey)">Scoping capacity</div>')+'</div>';}
       return '<div class="sl-cols">'+out+'</div>';})(),
     'Foundational work leads, quick paybacks follow. The full sequencing lives in Studio and moves with the levers.'));
   s.push(sl('OPPORTUNITY · 4 OF 4','Years 2 and 3 · what this year unlocks',
     (function(){var spine=P.gated.filter(function(o){return DETAIL[o.n]&&(DETAIL[o.n].deps||[]).indexOf('Unified data foundation')>=0;});
-      return stats([[ ''+(P.bench.length+spine.length),'plays queued for Year 2 · led by the data foundation'],[ ''+P.gated.filter(function(o){return spine.indexOf(o)<0;}).length,'plays gated on controls · release as domains reach target'],[fmt(P.gated.concat(P.bench).reduce(function(a,o){return a+o.val*L.eff;},0)),'annual value waiting behind the gates'],['2×','the portfolio if we close the six control families']]);})(),
+      return stats([[ ''+(P.bench.length+spine.length),'plays queued for Year 2 · led by the data foundation'],[ ''+P.gated.filter(function(o){return spine.indexOf(o)<0;}).length,'plays gated on controls · release as domains reach target'],[fmt(P.gated.concat(P.bench).reduce(function(a,o){return a+o.val*L.eff;},0)),'annual value waiting behind the gates'],[(function(){var w=P.gated.concat(P.bench).reduce(function(a,o){return a+o.val*L.eff;},0);return ((P.annual+w)/Math.max(1,P.annual)).toFixed(1);})()+'×','the portfolio if we close the '+P.toClose.length+' open control families']]);})(),
     'The gates are ours to open. Closing the control gaps on slide 4 is what releases the second wave.'));
   s.push(sl('THE MONEY PICTURE','It pays for itself before the portfolio counts',
     vbar('Compliance spend today',4500000,4500000,'#6e757d','$4.50M/yr')
     +vbar('Platform subscription',180000,4500000,'#0092FF','$180k/yr')
-    +vbar('Capacity freed + portfolio value',Math.round(4500000*0.12)+P.annual,4500000,'#01DFD9',fmt(Math.round(4500000*0.12)+P.annual)+'/yr'),
-    'A conservative 12% of compliance capacity freed covers the platform on its own. The portfolio return is upside on top.'));
+    +vbar('Net annual impact',Math.max(0,Math.round(4500000*0.12)+P.annual-180000),4500000,'#01DFD9',fmt(Math.round(4500000*0.12)+P.annual-180000)+'/yr'),
+    'A conservative 12% of compliance capacity freed covers the platform on its own. The portfolio return is upside on top, net of the subscription.'));
   s.push(sl('THE ASK','Three approvals tonight',
     '<ul class="sl-list" style="font-size:13px;line-height:2"><li><b>Ratify the domain targets</b> as the institution&rsquo;s stated risk appetite, as presented on slide 3.</li><li><b>Approve the '+fmt(L.budget)+' annual envelope</b> funding the '+P.funded.length+'-play portfolio on slide 7.</li><li><b>Note the Incident Response Plan escalation</b> as the one high-priority item, with closure before quarter end.</li></ul>',
     'Everything in this pack is drill-downable live, and the same record answers the examiner.'));
@@ -1847,7 +1848,7 @@ function donut(segs,label,sub){
   }).join('');
   return '<svg width="118" height="118" viewBox="0 0 118 118">'+arcs
    +'<text x="59" y="57" text-anchor="middle" font-size="21" font-weight="800" fill="#f5f5f7" font-family="Inter,sans-serif">'+label+'</text>'
-   +'<text x="59" y="73" text-anchor="middle" font-size="8.5" font-weight="700" fill="#6e757d" font-family="Inter,sans-serif">'+sub+'</text></svg>';
+   +'<text x="59" y="73" text-anchor="middle" font-size="8.5" font-weight="700" fill="#9BA0A6" font-family="Inter,sans-serif">'+sub+'</text></svg>';
 }
 function vbar(label,val,max,color,right,mark){
   var pct=Math.min(100,val/(max||1)*100);
@@ -1859,7 +1860,7 @@ function spark(vals,labels){
   var line=pts.map(function(p,i){return (i===0?'M':'L')+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' ');
   var area=line+' L'+pts[pts.length-1][0].toFixed(1)+' '+(hh-8)+' L'+pts[0][0].toFixed(1)+' '+(hh-8)+' Z';
   return '<svg width="'+w+'" height="'+hh+'"><path d="'+area+'" fill="rgba(0,242,255,.09)"/><path d="'+line+'" fill="none" stroke="#00F2FF" stroke-width="2"/>'
-   +pts.map(function(p,i){return '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.6" fill="#00F2FF"/>'+(labels?'<text x="'+p[0].toFixed(1)+'" y="'+(hh-1)+'" text-anchor="middle" font-size="8" fill="#6e757d" font-family="Inter,sans-serif">'+labels[i]+'</text>':'');}).join('')+'</svg>';
+   +pts.map(function(p,i){return '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.6" fill="#00F2FF"/>'+(labels?'<text x="'+p[0].toFixed(1)+'" y="'+(hh-1)+'" text-anchor="middle" font-size="8" fill="#9BA0A6" font-family="Inter,sans-serif">'+labels[i]+'</text>':'');}).join('')+'</svg>';
 }
 function rlAction(id,act){
   var d=DOCLIB[id]; if(!d||!d.redline)return;
@@ -1921,7 +1922,7 @@ function openDocView(id,back){
   var rl=rlSection(id,reopen);
   showDrawer('<div class="dwrap">'
    +'<button class="dclose" onclick="closeDrawer()">✕ Close</button>'
-   +(back?'<button class="dclose" style="margin-right:8px" onclick="'+back+'">← Back</button>':'')
+   +(back?'<button class="dclose" style="margin-right:8px" onclick="'+String(back).replace(/"/g,'&quot;')+'">← Back</button>':'')
    +'<div class="dcat">Governance document · '+(dom?'<span class="doclink" onclick="closeDrawer();goOnside(\'dom-'+dom.key+'\')">'+dom.name+'</span>':'')+' · <span class="pill-soft">'+d.type+'</span> '+statusTag(d.status)+'</div>'
    +'<h3 class="dtitle">'+d.t+'</h3>'
    +'<div class="repmeta">'+d.v+' · Owner: '+d.owner+' · '+d.line+'</div>'
@@ -1932,7 +1933,7 @@ function openDocView(id,back){
    +'</div>'
    +secs+rl
    +'<div class="dsec"><div class="dh">Obligations this document evidences</div><div class="dchips">'+(obls||'<span class="pill-soft">Mapped at obligation level in the full register</span>')+'</div></div>'
-   +'<div class="dsec"><div class="dh">Activity</div><ul class="dlist">'+(d.rlLog||[]).map(function(x){return '<li><b style="color:var(--cyan)">'+x+'</b></li>';}).join('')+'<li>Verified against current obligations · Aug 14, 2026 scan</li><li>'+(d.redline?(d.rlState?'Redline drafted by OnSide · actioned above':'Redline drafted and routed to owner'):'No changes proposed this cycle')+'</li><li>Every access and export logged for audit</li></ul></div>'
+   +'<div class="dsec"><div class="dh">Activity</div><ul class="dlist">'+(d.rlLog||[]).map(function(x){return '<li><b style="color:var(--cyan)">'+x+'</b></li>';}).join('')+'<li>Verified against current obligations · Aug 15, 2026 scan</li><li>'+(d.redline?(d.rlState?'Redline drafted by OnSide · actioned above':'Redline drafted and routed to owner'):'No changes proposed this cycle')+'</li><li>Every access and export logged for audit</li></ul></div>'
    +'</div>',false);
 }
 function openInstr(k){
@@ -2137,7 +2138,7 @@ function osGaps(){
    ['warn','MRM-08 · vendor model validation evidence','Model Risk',null,['mrm','MRM-08'],'A. Kaur · MRM','Request packets from 3 vendors','q'],
    ['warn','MRM-09 · model change approval gate','Model Risk','mrm-change-draft',['mrm','MRM-09'],'A. Kaur · MRM','Workflow draft in HITL queue','q'],
    ['warn','Model-derived adverse-action reason codes','Fair Lending','aa-procedure',null,'M. Okafor · CCO','Redline drafted · attribution-to-code matrix','ok'],
-   ['warn','Automated-messaging disclosure documentation','Consumer / UDAAP','complaint-proc',null,'M. Okafor · CCO','Disclosure language drafted','ok'],
+   ['warn','Automated-messaging disclosure documentation','Consumer / UDAAP','msg-disclosure',null,'M. Okafor · CCO','Disclosure language drafted','ok'],
    ['warn','AI-assisted transaction-monitoring validation','BSA / AML','bsa-policy',null,'T. Whitfield · BSA','Independent validation scheduled','ok']
   ];
   var rows=G.map(function(r){
@@ -2167,7 +2168,7 @@ var SRC_ITEMS={
    [98,'May 8, 2026','Executive order · AI use in federal financial oversight','Mapped to AI Governance watchlist',"goOnside('dom-aigov')"]]},
  'Federal Reserve · 12 CFR Ch. II':{d:'Binding lettered regulations, versioned through the eCFR API with same-day change detection.',items:[
    [14,'Jul 31, 2026','Joint NPRM with FDIC · Regulation O · extensions of credit to insiders','<span class="tag info">New</span> Comment period open',"onsideShow('feed-lifecycle')"],
-   [45,'Jun 30, 2026','RFI 2026-04 · generative &amp; agentic AI in model risk','Comments due Sep 30',"openInstr('rfi2026')"],
+   [45,'Jun 30, 2026','RFI 2026-04 · generative &amp; agentic AI in model risk','Comments due Sep 30',"openInstr('RFI 2026-04')"],
    [119,'Apr 17, 2026','Interagency Guidance 2026-13 in force','Mapped to the Model Risk register',"goOnside('dom-mrm')"]]},
  'FinCEN · 31 CFR Ch. X':{d:'BSA program rules, CDD, and SAR/CTR requirements, versioned through the eCFR API.',items:[
    [9,'Aug 5, 2026','CTA / BOI scope update · litigation cycle','Lifecycle status tracked, never hard-coded',"onsideShow('feed-lifecycle')"],
@@ -2176,7 +2177,7 @@ var SRC_ITEMS={
    [8,'Aug 6, 2026','§1033 staged compliance dates · tier confirmation','Applies at our asset tier',"openInstr('1033')"],
    [60,'Jun 15, 2026','Circular 2026-C1 in force · adverse-action specificity','2 items open in Fair Lending',"goOnside('dom-fairlend')"]]},
  'State banking regulators':{d:'NYDFS Part 500/504, CA DFPI, and CSBS/NMLS state actions for the TX · OK · NM footprint.',items:[
-   [5,'Aug 9, 2026','NM HB 210 · passed Senate 34&ndash;6','Vendor disclosure clause pre-drafted',"openInstr('nmai')"],
+   [5,'Aug 9, 2026','NM HB 210 · passed Senate 34&ndash;6','Vendor disclosure clause pre-drafted',"openInstr('NM AI Act')"],
    [20,'Jul 25, 2026','TX HB 149 · awaiting floor vote','TRAIGA clarification tracked',"onsideShow('feed-lifecycle')"]]}
 };
 function openSource(name){
@@ -2258,7 +2259,7 @@ function osLifecycle(){
    ['TX','TRAIGA','HB 149 · AI Governance Rules Clarification Act','Awaiting floor vote','AI Governance'],
    ['OK',null,'SB 1822 · AI Consumer Protection Act','In committee','Consumer / UDAAP · Fair Lending'],
    ['CFPB','2026-C1','Reg B Guidance 2026-C1 · adverse-action specificity','<span style="color:var(--sem2);font-weight:700">Effective now</span>','Fair Lending']
-  ].filter(function(r){return lcMatch(r[4]);}).map(function(r){var t=r[1]?instrLink(r[1],r[2]):r[2];return '<tr><td><span class="tag grey">'+r[0]+'</span></td><td><b>'+t+'</b></td><td class="pcat">'+r[3]+'</td><td class="pcat">'+r[4]+'</td></tr>';}).join('');
+  ].filter(function(r){return lcMatch(r[4]);}).map(function(r){var t=r[1]?instrLink(r[1],r[2]):r[2];return '<tr'+(r[1]?' class="prow" onclick="openInstr(\''+r[1]+'\')"':'')+'><td><span class="tag grey">'+r[0]+'</span></td><td><b>'+t+'</b></td><td class="pcat">'+r[3]+'</td><td class="pcat">'+r[4]+'</td></tr>';}).join('');
   return lcBar()
    +'<div class="card" style="border-color:rgba(0,242,255,.3)"><h2>Newly proposed · the strategy signal</h2><div class="csub">New proposed rulemakings are the biggest impact to strategy, so they surface here the day they post: captured while the comment window is open and positions can still be shaped, before they harden into obligations.</div>'
    +'<table class="tbl"><thead><tr><th>Source</th><th>Proposal</th><th>Status</th><th>Would touch</th></tr></thead><tbody>'+(NEW_RULES||'<tr><td colspan="4" style="color:var(--grey)">No new proposals in this area.</td></tr>')+'</tbody></table></div>'
@@ -2275,7 +2276,7 @@ function osInforce(){
    ['NM','NM AI Act','New Mexico Artificial Intelligence Act','Jun 2026','AI Governance'],
    ['TX','TRAIGA','Responsible AI Governance Act (TRAIGA)','2026','AI Governance'],
    ['NCUA','AI Hub','AI Resource Hub · supervisory expectations','Jan 2026','AI Governance']
-  ].map(function(r){return '<tr><td><span class="tag grey">'+r[0]+'</span></td><td><b>'+instrLink(r[1],r[2])+'</b></td><td class="pcat">'+r[3]+'</td><td class="pcat">'+r[4]+'</td></tr>';}).join('');
+  ].map(function(r){return '<tr class="prow" onclick="openInstr(\''+r[1]+'\')"><td><span class="tag grey">'+r[0]+'</span></td><td><b>'+instrLink(r[1],r[2])+'</b></td><td class="pcat">'+r[3]+'</td><td class="pcat">'+r[4]+'</td></tr>';}).join('');
   return '<div class="card"><h2>Enacted / in force · click any instrument</h2><div class="csub">Detection is same-day. Each change links to the mapped obligations and documents in the register.</div>'
    +'<table class="tbl"><thead><tr><th>Jur.</th><th>Instrument</th><th>Effective</th><th>Domains</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
@@ -2372,7 +2373,7 @@ function boardUpdate(id){
 }
 function boardSave(id){
   var txt=$('bu-txt').value.trim(); if(!txt){$('bu-txt').focus();return;}
-  (BOARD_LOG[id]=BOARD_LOG[id]||[]).unshift({txt:txt,when:'Aug 14, 2026',who:CURRENT.first+' '+(CURRENT.role||''),date:$('bu-date').value.trim()});
+  (BOARD_LOG[id]=BOARD_LOG[id]||[]).unshift({txt:txt,when:'Aug 15, 2026',who:CURRENT.first+' '+(CURRENT.role||''),date:$('bu-date').value.trim()});
   var ok=$('bu-ok'); if(ok){ok.style.display='';setTimeout(function(){closeDrawer();openReport('regchange');},900);}
 }
 function boardStandingHTML(){
@@ -2418,7 +2419,7 @@ function copilotRender(a,srcs,q){
    +vrow('You asked',q)
    +vrow('Answer',a)
    +vrow('Sources',srcs.map(function(s){return '<span class="doclink" onclick="onsideShow(\'docs\')">'+s+'</span>';}).join('<br>'))
-   +vrow('Audit','Query logged · answered from approved policy in force as of Aug 14, 2026 · no external generation')
+   +vrow('Audit','Query logged · answered from approved policy in force as of Aug 15, 2026 · no external generation')
    +'</div>';
 }
 function copilotAsk(i){var x=COPILOT_QA[i];$('cp-in').value=x.q;copilotRender(x.a,x.src,x.q);}
@@ -2565,7 +2566,7 @@ function renderProfileMenu(){
 function switchUser(id){
   CURRENT=USERS.filter(function(u){return u.id===id;})[0]||USERS[0];
   $('avatar').textContent=CURRENT.ini;
-  $('pm-ava').innerHTML=CURRENT.ini+'<span class="cam" title="Change photo">✎</span>';
+  $('pm-ava').innerHTML=CURRENT.ini+'<span class="cam" title="Photo synced from Entra ID">✎</span>';
   $('pm-name').textContent=CURRENT.name;
   $('pm-role').textContent=CURRENT.role;
   $('pm-email').textContent=CURRENT.email;
@@ -2751,7 +2752,8 @@ function botSay(html,delay,cb){
   setTimeout(function(){t.innerHTML='<div class="who">Advisor</div>'+html;$('chat-log').scrollTop=$('chat-log').scrollHeight;if(cb)cb();},delay||700);
 }
 function userSend(){
-  var q=$('chat-in').value.trim(); if(!q)return;
+  var q=$('chat-in').value.trim();
+  if(!q){var ci=$('chat-in');ci.focus();ci.style.borderColor='rgba(0,242,255,.6)';setTimeout(function(){ci.style.borderColor='';},600);return;}
   $('chat-in').value='';
   addMsg('user',CURRENT.first,q);
   route(q);
@@ -2808,6 +2810,7 @@ function acceptProposed(){
   var doms=domainsFor(o.g);
   SCOPE_EVENTS.push({uc:o.n,doms:doms,obl:3+o.g.length*2});
   recompute(); renderHome();
+  resetChips();
   botSay('Added. <b>'+o.n+'</b> is in the register'+(o.minGate>=readLevers().threshold?' and clears the gate at your current tolerance. Studio has picked it up for funding consideration.':', currently sequence-gated. Studio shows it with the control that unlocks it.')+' It pulls <b>'+(3+o.g.length*2)+' obligations</b> into scope across '+doms.join(', ')+'; OnSide has re-evaluated those domain targets. The library is at <b>'+OPPS.length+'</b>.'
    +'<div class="actions"><button class="btn" onclick="goStudio(\'register\')">See it in the register</button><button class="btn ghost" onclick="goOnside(\'overview\');setTimeout(function(){var el=document.getElementById(\'scope-events\');if(el)el.scrollIntoView({behavior:\'smooth\'});},200)">See the scope change in OnSide</button><button class="btn ghost" onclick="resetChips()">Capture another</button></div>',700);
 }
@@ -2839,7 +2842,11 @@ function route(q){
     else{chips([]);finishIntake();}
     return;
   }
-  if(ql.indexOf('add it')>=0&&chatState.proposed){acceptProposed();return;}
+  if(ql.indexOf('add it')>=0){
+    if(chatState.proposed){acceptProposed();}
+    else{botSay('It&rsquo;s already in the register. Ask about it by name, or describe the next idea.',500);resetChips();}
+    return;
+  }
   if(ql.indexOf('auto loan')>=0||ql.indexOf('loan origination')>=0){autoLoanAnswer();return;}
   if(ql.indexOf('something new')>=0){botSay('Go ahead: describe the process in a sentence. Who does it today, and what would you want the platform to take over?',600);chips(['Indirect lending dealer-portal assistant','Collections outreach drafting','Branch staffing forecaster']);chatState.mode='await-name';return;}
   if(chatState.mode==='await-name'){chatState.mode='idle';startIntake(q);return;}
