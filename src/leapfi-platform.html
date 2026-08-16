@@ -633,7 +633,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.044</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.045</b></div>
   </div>
 </aside>
 
@@ -898,6 +898,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.045</span> · <span class="cd">Aug 15, 2026</span><br>Chat guardrails. Unrecognized input no longer hijacks the conversation into the scoping wizard: greetings and short messages get a plain statement of what the box can do, and unmatched longer input offers scoping as a choice, not a default. The wizard carries a visible Cancel at every step. Catalog pricing and policy answers now require two distinctive matching words before answering, so a single stray word cannot produce a confident wrong answer. Chips debounce, so a double-click cannot answer two questions. The assistant speaks under one name throughout.</li>
             <li><span class="cv">v 1.044</span> · <span class="cd">Aug 15, 2026</span><br>Credibility pass: every checkable number now derives from the model or states its definition. The document universe headline equals the sum of the domains (AI Governance carries the CRI crosswalk set), category tiles re-tuned to match, and evidence counts reconcile. The sources claim is 15 sources on three layers everywhere. The change-events KPI is computed from the feed. Model Risk and Third-Party report donuts label Below maturity and carry the sentence that ties the donut, the target math, and the worked queue together. The standing view counts workstreams, the program queue counts the registers&rsquo; actual review items, above-target domains explain their open items, and deck slide 2 claims only what the record shows.</li>
             <li><span class="cv">v 1.043</span> · <span class="cd">Aug 15, 2026</span><br>Hostile-review fixes, round one of five. OnSide no longer renders full-bleed and clipped (legacy embed CSS removed) and its footer reads as a customer demo. The Back button in obligation-to-document chains works (quote-escaping bug). One demo date everywhere. Secondary text lightened for projector-safe contrast. Demo personas carry NorthWinds emails. Settings toggles toggle, the two dead feed drill-downs open their instruments, lifecycle and in-force rows are fully clickable, and the gaps row for messaging disclosure opens the document that actually carries the drafted language. Deck slide 9 matches the Studio roadmap sequence, slide 10 computes its multiple, slide 11 nets the subscription to agree with the ROI report, and Prev/Next disable at the ends. Reports say Reporting, the stale add-it chat chip is gone, and an empty Send flashes the input.</li>
             <li><span class="cv">v 1.042</span> · <span class="cd">Aug 15, 2026</span><br>The Board Pack now opens with a 12-slide presentation for the CEO: title, the one-slide story, four risk slides (posture gauges, gaps, the regulatory environment, how change is governed), four opportunity slides (portfolio composition, economics, the Year-1 quarters, what Years 2 and 3 unlock), the money picture, and the ask. Every slide is generated live from the record, navigated with prev/next and dots, in the brand system with the chevron motif. The one-page read remains beneath as the appendix.</li>
@@ -946,7 +947,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.044</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.045</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1491,15 +1492,27 @@ var SUGGEST_ALIASES={'after hours':'Underwriting assist','after-hours':'Underwri
 function findPlay(q){
   var ql=q.toLowerCase();
   for(var k in SUGGEST_ALIASES){if(ql.indexOf(k)>=0)return {o:playByName(SUGGEST_ALIASES[k]),alias:true};}
-  var hit=OPPS.filter(function(o){var t=o.n.toLowerCase();return q.split(/\s+/).some(function(w){return w.length>3&&t.indexOf(w.toLowerCase())>=0;})||t.split(/\s+/).some(function(w){return w.length>3&&ql.indexOf(w)>=0;});})[0];
-  return hit?{o:hit,alias:false}:null;
+  function overlap(o){
+    var t=o.n.toLowerCase(), c=0, seen={};
+    ql.split(/\s+/).forEach(function(w){w=w.replace(/[^a-z0-9-]/g,'');if(w.length>3&&!seen[w]&&t.indexOf(w)>=0){seen[w]=1;c++;}});
+    return c;
+  }
+  var best=null,bestC=0;
+  OPPS.forEach(function(o){var c=overlap(o);if(c>bestC){bestC=c;best=o;}});
+  return (best&&bestC>=2)?{o:best,alias:false}:null;
 }
 function cpMatch(q){
   var ql=q.toLowerCase();
-  return COPILOT_QA.filter(function(x){return x.q.toLowerCase().split(' ').some(function(w){return w.length>4&&ql.indexOf(w)>=0;});})[0];
+  var best=null,bestC=0;
+  COPILOT_QA.forEach(function(x){
+    var c=0,seen={};
+    x.q.toLowerCase().split(' ').forEach(function(w){w=w.replace(/[^a-z0-9-]/g,'');if(w.length>4&&!seen[w]&&ql.indexOf(w)>=0){seen[w]=1;c++;}});
+    if(c>bestC){bestC=c;best=x;}
+  });
+  return bestC>=2?best:null;
 }
 function cpAnswer(x){
-  return '<div style="margin-bottom:8px"><span class="tag info">Knowledge Copilot · answered from approved policy</span></div>'
+  return '<div style="margin-bottom:8px"><span class="tag info">Advisor · answered from approved policy · cited</span></div>'
    +'<div class="vcard">'
    +vrow('Answer',x.a)
    +vrow('Sources',x.src.map(function(s){return '<span class="doclink" onclick="goOnside(\'docs\')">'+s+'</span>';}).join('<br>'))
@@ -2755,7 +2768,12 @@ var chatState={mode:'idle',pending:null,answers:[]};
 function chips(list){
   $('chat-chips').innerHTML=list.map(function(c){return '<span class="qchip" onclick="chipPick(this.textContent)">'+c+'</span>';}).join('');
 }
-function chipPick(t){$('chat-in').value=t;userSend();}
+var __chipLock=false;
+function chipPick(t){
+  if(__chipLock)return;
+  __chipLock=true; setTimeout(function(){__chipLock=false;},700);
+  $('chat-in').value=t; userSend();
+}
 function addMsg(cls,who,html){
   var d=document.createElement('div'); d.className='msg '+cls;
   d.innerHTML='<div class="who">'+who+'</div>'+html;
@@ -2784,7 +2802,7 @@ var INTAKE=[
 function startIntake(name){
   chatState.mode='intake'; chatState.pending={name:name,step:0}; chatState.answers=[];
   botSay('Good one. I don’t have a comparable for <b>'+name+'</b> in the library yet, so let me scope it properly. Four quick questions and I’ll come back with a build estimate, the controls and regulations it touches, and where it slots on the roadmap.',600,function(){
-    setTimeout(function(){botSay(INTAKE[0].q,500);chips(INTAKE[0].chips);},650);
+    setTimeout(function(){botSay(INTAKE[0].q,500);chips(INTAKE[0].chips.concat(['✕ Cancel scoping']));},650);
   });
 }
 function finishIntake(){
@@ -2853,9 +2871,14 @@ function addAutoLoan(){
 function route(q){
   var ql=q.toLowerCase();
   if(chatState.mode==='intake'){
+    if(ql.indexOf('cancel')>=0){
+      chatState.mode='idle'; chatState.pending=null; chatState.answers=[];
+      botSay('Scoping cancelled. Nothing was added. Ask me anything, or describe another idea when you&rsquo;re ready.',500);
+      resetChips(); return;
+    }
     chatState.answers.push(q);
     var s=++chatState.pending.step;
-    if(s<INTAKE.length){botSay(INTAKE[s].q,550);chips(INTAKE[s].chips);}
+    if(s<INTAKE.length){botSay(INTAKE[s].q,550);chips(INTAKE[s].chips.concat(['✕ Cancel scoping']));}
     else{chips([]);finishIntake();}
     return;
   }
@@ -2868,11 +2891,22 @@ function route(q){
   if(ql.indexOf('something new')>=0){botSay('Go ahead: describe the process in a sentence. Who does it today, and what would you want the platform to take over?',600);chips(['Indirect lending dealer-portal assistant','Collections outreach drafting','Branch staffing forecaster']);chatState.mode='await-name';return;}
   if(chatState.mode==='await-name'){chatState.mode='idle';startIntake(q);return;}
   if(ql.indexOf('what else')>=0){botSay('Looking at your peer set and your open governance items, three areas are underweighted in the register: <b>collections outreach</b> (member-facing, UDAAP-gated), <b>branch staffing forecasting</b> (internal, low risk, quick payback), and <b>indirect lending</b> ops. Want me to scope one?',900);chips(['Collections outreach drafting','Branch staffing forecaster','Indirect lending dealer-portal assistant']);return;}
+  if(ql.indexOf('scope "')===0||ql.indexOf('scope \u201c')===0){
+    var nm=q.replace(/^scope\s+["“]/i,'').replace(/["”].*$/,'').trim();
+    if(nm){startIntake(nm.charAt(0).toUpperCase()+nm.slice(1));return;}
+  }
   var cp=cpMatch(q);
   if(cp){botSay(cpAnswer(cp),800);resetChips();return;}
   var hit=findPlay(q);
-  if(hit&&hit.o){botSay('<div style="margin-bottom:8px"><span class="tag info">Priced from the Studio catalog</span></div>'+verdictHTML(hit.o,true),900);resetChips();return;}
-  startIntake(q.charAt(0).toUpperCase()+q.slice(1));
+  if(hit&&hit.o){botSay('<div style="margin-bottom:8px"><span class="tag info">Advisor · priced from the Studio catalog</span></div>'+verdictHTML(hit.o,true),900);resetChips();return;}
+  var wc=ql.split(/\s+/).filter(function(w){return w.length>0;}).length;
+  var greeting=/^(hi|hello|hey|thanks|thank you|good (morning|afternoon|evening)|ok|okay|yo|sup|test)\b/.test(ql);
+  if(greeting||wc<3){
+    botSay('I can do three things from this box: answer from your approved policies with citations, price a known idea from the catalog, or scope something new into the register. What would you like?',600);
+    resetChips(); return;
+  }
+  botSay('I don&rsquo;t have a confident match for that in your policies or the catalog. I can scope it as a new use case (four quick questions), or you can rephrase &mdash; policy questions work best with a specific topic, like wire limits or dormant accounts.',700);
+  chips(['Scope "'+q.charAt(0).toUpperCase()+q.slice(1)+'" as a new use case','What else should we consider?']);
 }
 function formAdd(){
   var name=$('ucf-name').value.trim();
