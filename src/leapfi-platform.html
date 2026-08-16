@@ -541,6 +541,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </div>
   <nav class="nav">
     <div class="nav-item active" data-mod="home" onclick="go('home')"><span class="ni">⌂</span> Home</div>
+    <div class="nav-item" data-mod="reporting" onclick="goReporting()"><span class="ni">▤</span> Reporting</div>
     <div class="nav-sec">Modules</div>
     <div class="nav-group" id="ng-studio">
       <div class="nav-item" data-mod="studio" onclick="toggleStudioNav()"><span class="ni">◎</span> Studio <span class="caret">▸</span></div>
@@ -555,7 +556,6 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
       <div class="nav-subwrap">
         <span class="os-sub" data-os="overview" onclick="goOnside('overview')">Overview</span>
         <span class="os-sub" data-os="domains" onclick="goOnside('domains')">Domains · gaps &amp; levers</span>
-        <span class="os-sub" data-os="reports" onclick="goOnside('reports')">Reporting</span>
         <div class="os-nest" id="nest-documents">
           <div class="os-nest-h" onclick="toggleNest('documents')">Documents <span class="caret">▸</span></div>
           <div class="os-nest-body">
@@ -586,7 +586,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.038</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.039</b></div>
   </div>
 </aside>
 
@@ -802,6 +802,11 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
     </section>
 
     <!-- ============ VANTAGE (splash) ============ -->
+    <section class="module" id="mod-reporting">
+      <div id="reporting-view"></div>
+      <div class="foot-note">LeapFI · Reporting · every report generated live from the governance record and the Studio dials · illustrative customer data for NorthWinds Credit Union · Not legal advice · © 2026 LeapFI LLC</div>
+    </section>
+
     <section class="module" id="mod-vantage">
       <div class="splash">
         <div class="si">⬡</div>
@@ -846,6 +851,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.039</span> · <span class="cd">Aug 15, 2026</span><br>Reporting promoted to its own tab, directly under Home and above the Modules section. It is the platform&rsquo;s cross-cutting output layer, drawing on both the OnSide record and the Studio dials, so it sits with Home rather than inside a module. OnSide&rsquo;s nav slims to the governance record. Every old route redirects: OnSide reporting links, the home quick action, report generation, and the panel return-point all land on and return from the new tab.</li>
             <li><span class="cv">v 1.038</span> · <span class="cd">Aug 15, 2026</span><br>Closing a side panel now returns you to where you started. Panels that navigate before opening (play details land on Design studio, reports land on Reporting) remember the page and scroll position you came from and restore both on close. Deep links inside a panel still take you where they say, and chained panels return to the original page, not an intermediate one.</li>
             <li><span class="cv">v 1.037</span> · <span class="cd">Aug 15, 2026</span><br>Design studio: removed the intro paragraphs above the levers. The card now opens with the live stance readout and goes straight to the levers, with the lever explanations living entirely in the hover tips.</li>
             <li><span class="cv">v 1.036</span> · <span class="cd">Aug 15, 2026</span><br>The ROI guidance now explains the diminishing-returns math instead of contradicting it. Plays fund best-first, so a larger budget reaches deeper into the register and the blended return falls even as total value rises. When the blend is below the bar, the note shows the marginal return of the last play funded and points at the moves that actually help: trim to the best plays, raise adoption, or lower the bar. The Target ROI tooltip carries the same explanation.</li>
@@ -888,7 +894,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.038</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.039</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1198,6 +1204,7 @@ function restoreRet(){
   if(now.mod===r.mod&&now.sub===r.sub)return;
   if(r.mod==='onside')goOnside(r.sub||'overview');
   else if(r.mod==='studio')goStudio(r.sub||'ask');
+  else if(r.mod==='reporting')goReporting();
   else go(r.mod);
   if(typeof r.scroll==='number')setTimeout(function(){window.scrollTo(0,r.scroll);},80);
 }
@@ -1207,7 +1214,7 @@ function playsGatedBy(k){return OPPS.filter(function(o){return o.g.indexOf(k)>=0
 function tile(l,v,s){return '<div class="dt"><div class="dtl">'+l+'</div><div class="dtv">'+v+'</div><div class="dts">'+s+'</div></div>';}
 function openReport(kind){
   captureRet();
-  goOnside('reports');
+  goReporting();
   var P=computePlan(), L=P.L, h='';
   var head=function(title,sub){return '<div class="dwrap"><button class="dclose" onclick="closeDrawer()">✕ Close</button>'
     +'<div class="dcat">LEAPFI · Studio · auto-generated report</div><h3 class="dtitle">'+title+'</h3>'
@@ -1790,8 +1797,9 @@ function osScopeBar(){
 }
 function goOnside(v){go('onside');onsideShow(v||'overview');}
 function onsideShow(v){
+  if(v==='reports'||v==='board'){goReporting();return;}
   var el=$('onside-views'); if(!el)return;
-  var R={overview:osOverview,domains:osDomainsMaster,docs:osDocs,gaps:osGaps,'feed-sources':osSources,'feed-lifecycle':osLifecycle,'feed-inforce':osInforce,raci:osRaci,board:osReports,reports:osReports,onboarding:osOnboarding};
+  var R={overview:osOverview,domains:osDomainsMaster,docs:osDocs,gaps:osGaps,'feed-sources':osSources,'feed-lifecycle':osLifecycle,'feed-inforce':osInforce,raci:osRaci,onboarding:osOnboarding};
   var orig=v;
   if(v==='targets')v='domains';
   var domKey=null;
@@ -2289,6 +2297,12 @@ function setTarget(key,v){
 }
 
 /* ============ SHELL ============ */
+function goReporting(){
+  go('reporting');
+  var v=$('reporting-view'); if(v)v.innerHTML=osReports();
+  setCrumb('Reporting','one screen, every audience','');
+  window.scrollTo({top:0});
+}
 function go(mod){
   var mods=document.querySelectorAll('.module'), i;
   for(i=0;i<mods.length;i++) mods[i].classList.remove('active');
@@ -2468,7 +2482,7 @@ function renderHome(){
   $('home-qa').innerHTML=
    qa('◎','Ask the platform','Ideas priced, policy cited, new use cases scoped. One conversation.',"goStudio('ask')")
    +qa('▣','Domains · gaps &amp; levers','Every category, its target, and the gaps behind the score.',"goOnside('domains')")
-   +qa('📊','Reporting','Eight standing reports on one screen, from IT to the board.',"goOnside('reports')");
+   +qa('📊','Reporting','Eight standing reports on one screen, from IT to the board.',"goReporting()");
   applyHomePanels();
 }
 
