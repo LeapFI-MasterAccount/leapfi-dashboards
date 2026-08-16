@@ -492,6 +492,17 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
 .docbar input:focus{outline:none;border-color:rgba(0,242,255,.45)}
 .docbar select{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 11px;color:var(--muted);font-size:12px;font-family:inherit}
 .repcard .ra{font-size:9px;color:var(--cyan);font-weight:800;letter-spacing:.07em;text-transform:uppercase;margin:2px 0 3px}
+.viz{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0}
+.viz .vh{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);margin-bottom:11px}
+.vleg{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-size:11px;color:var(--muted)}
+.vleg .d{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.vrow2{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.vbarrow{display:flex;align-items:center;gap:10px;margin:7px 0}
+.vbarrow .vl{width:180px;min-width:120px;font-size:11.5px;font-weight:600;color:var(--muted);text-align:right}
+.vbarrow .bar{flex:1;height:10px;position:relative}
+.vbarrow .vv{width:110px;font-size:11px;font-weight:700;color:var(--ink)}
+.vdots{display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--muted)}
+.vdots .vd{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
 @media(max-width:1080px){.rep-row{grid-template-columns:1fr 1fr !important}}
 @media(max-width:1080px){.dom-grid{grid-template-columns:1fr}.gq{grid-template-columns:1fr 1fr}.rm-kpis{grid-template-columns:1fr 1fr}.doc-cats{grid-template-columns:1fr 1fr}.tgt-row{grid-template-columns:1fr 1fr}}
 
@@ -586,7 +597,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.039</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.040</b></div>
   </div>
 </aside>
 
@@ -851,6 +862,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.040</span> · <span class="cd">Aug 15, 2026</span><br>Every report now opens with a signature graphic computed live from the model. Board Pack shows where the annual value comes from and the budget committed. The Regulatory Change Briefing opens with its status distribution across the seven instruments. Risk Posture charts the gaps by domain. Compliance draws every control family against the 80% gate. Model Risk and Third-Party open with register donuts plus the inventory splits and SOC 2 coverage. IT &amp; InfoSec shows program coverage and connector health. Investment &amp; ROI leads with the money picture and the Year-1 value ramp. All in the brand palette, amber and red reserved for what is genuinely open.</li>
             <li><span class="cv">v 1.039</span> · <span class="cd">Aug 15, 2026</span><br>Reporting promoted to its own tab, directly under Home and above the Modules section. It is the platform&rsquo;s cross-cutting output layer, drawing on both the OnSide record and the Studio dials, so it sits with Home rather than inside a module. OnSide&rsquo;s nav slims to the governance record. Every old route redirects: OnSide reporting links, the home quick action, report generation, and the panel return-point all land on and return from the new tab.</li>
             <li><span class="cv">v 1.038</span> · <span class="cd">Aug 15, 2026</span><br>Closing a side panel now returns you to where you started. Panels that navigate before opening (play details land on Design studio, reports land on Reporting) remember the page and scroll position you came from and restore both on close. Deep links inside a panel still take you where they say, and chained panels return to the original page, not an intermediate one.</li>
             <li><span class="cv">v 1.037</span> · <span class="cd">Aug 15, 2026</span><br>Design studio: removed the intro paragraphs above the levers. The card now opens with the live stance readout and goes straight to the levers, with the lever explanations living entirely in the hover tips.</li>
@@ -894,7 +906,7 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:0;border-radiu
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.039</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.040</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1224,6 +1236,15 @@ function openReport(kind){
   if(kind==='board'){
     var top=P.funded.slice().sort(function(a,b){return b.val*L.eff-a.val*L.eff;}).slice(0,3);
     h=head('Board Presentation','Investment posture & recommendation')
+     +(function(){
+        var f=P.funded.slice().sort(function(a,b){return b.val-a.val;});
+        var segs=f.slice(0,5).map(function(o,i){return {v:o.val*L.eff,c:VIZC[i],n:o.n};});
+        var rest=f.slice(5).reduce(function(a,o){return a+o.val*L.eff;},0);
+        if(rest>0)segs.push({v:rest,c:VIZC[5],n:(f.length-5)+' more plays'});
+        return viz('Where the '+fmt(P.annual)+' of annual value comes from',
+          segBar(segs,18)+vlegend(segs.map(function(s){return {c:s.c,n:s.n,v:fmt(s.v)};}))
+          +'<div style="margin-top:14px">'+vbar('Budget committed',P.spent,L.budget,'#00B8FF',fmt(P.spent)+' of '+fmt(L.budget))+'</div>');
+      })()
      +'<div class="rrec">At a <b>'+ (L.tol<34?'conservative':L.tol<67?'balanced':'aggressive') +'</b> risk tolerance and a <b>'+fmt(L.budget)+'</b> annual budget, the plan funds <b>'+P.funded.length+' of '+OPPS.length+'</b> plays for a one-time build of <b>'+fmt(P.spent)+'</b>, returning an expected <b>'+P.roi.toFixed(1)+'× over three years</b> ('+fmt(P.annual)+'/yr at '+Math.round(L.eff*100)+'% adoption, ~'+P.payM+'-month payback). Ambition is set to <b>'+BANDS[L.amb]+'</b> against a current <b>'+BANDS[CUR]+'</b> posture; closing <b>'+P.toClose.length+' control families</b> releases the remaining '+P.gated.length+' higher-value plays.</div>'
      +'<div class="rgrid">'+tile('Plays funded',P.funded.length+' / '+OPPS.length,'of the library')+tile('Build cost',fmt(P.spent),'one-time')+tile('Annual value',fmt(P.annual),'at adoption')+tile('3-yr ROI',P.roi.toFixed(1)+'×','on build')+tile('Payback',P.payM+' mo','blended')+'</div>'
      +'<div class="dsec"><div class="dh">Recommended first moves</div><ul class="rlist">'+top.map(function(o){return '<li><b>'+playLink(o.n)+'</b>: '+fmt(o.val*L.eff)+'/yr at '+fmt(o.cost)+' build, '+Math.round(o.cost/(o.val*L.eff)*12)+'-mo payback.</li>';}).join('')+'</ul></div>'
@@ -1232,6 +1253,12 @@ function openReport(kind){
      +'</div>';
   } else if(kind==='compliance'){
     h=head('Compliance · Open Items','Control gaps blocking the portfolio')
+     +(function(){
+        var green2=Object.keys(CTRL).filter(function(k){return CTRL[k]>=GREEN;});
+        return viz('Coverage vs the '+GREEN+'% gate · tick marks the gate',
+          P.toClose.map(function(k){return vbar(k,CTRL[k],100,'#D99B43',CTRL[k]+'% · '+(GREEN-CTRL[k])+' pts to go',GREEN);}).join('')
+          +green2.map(function(k){return vbar(k,CTRL[k],100,'#01DFD9',CTRL[k]+'% ✓',GREEN);}).join(''));
+      })()
      +'<div class="dsec"><div class="dh">'+P.toClose.length+' open control families</div><table class="rtbl"><thead><tr><th>Control</th><th>Now</th><th>Gap to 80</th><th>Plays it blocks</th><th>Action to close</th></tr></thead><tbody>'
      +P.toClose.map(function(k){return '<tr><td><b class="doclink" onclick="closeDrawer();goOnside(\'dom-'+CTRLDOM[k]+'\')">'+k+'</b><div class="cite">'+REGMAP[k]+'</div></td><td><span class="g-open">'+CTRL[k]+'%</span></td><td>'+(GREEN-CTRL[k])+' pts</td><td>'+playsGatedBy(k).map(playLink).join('<br>')+'</td><td>'+GOV[k]+'</td></tr>';}).join('')
      +'</tbody></table></div>'
@@ -1255,6 +1282,10 @@ function openReport(kind){
      +'</div>';
   } else if(kind==='regchange'){
     h=head('Regulatory Change Briefing','The standing view · what changed, what applies, what we are doing')
+     +viz('The standing view at a glance · 7 instruments',
+        segBar([{v:2,c:'#D99B43'},{v:4,c:'#0092FF'},{v:1,c:'#01DFD9'}],16)
+        +vlegend([{c:'#D99B43',n:'Open · work in progress',v:2},{c:'#0092FF',n:'Tracking · watching',v:4},{c:'#01DFD9',n:'Closed · evidenced',v:1}])
+        +'<div class="vleg" style="margin-top:6px"><span>By layer:</span><span>Financial · <b style="color:var(--ink)">3</b></span><span>Systemic · <b style="color:var(--ink)">3</b></span><span>Regional · <b style="color:var(--ink)">1</b></span></div>')
      +'<div style="margin-top:14px">'+boardStandingHTML()+'</div>'
      +'</div>';
   } else if(kind==='posture'){
@@ -1266,6 +1297,11 @@ function openReport(kind){
        +'<div class="t" style="margin-left:6px"><div class="n">'+d.name+'</div><div class="s">target '+d.target+' · '+BANDS[d.target-1]+' · '+d.met+' of '+d.appl+' met · '+(oblToClose(d)>0?oblToClose(d)+' to close':'at the bar')+'</div></div>'+statusChip(d)+'</div>';
     }).join('');
     h=head('Risk Posture & Targets','Every domain against the bar the institution set')
+     +(function(){
+        var open2=DOMAINS.filter(function(d){return oblToClose(d)>0;}).sort(function(a,b){return oblToClose(b)-oblToClose(a);});
+        var mx=open2.length?oblToClose(open2[0]):1;
+        return viz('Gaps to targets · by domain',open2.map(function(d){return vbar(DOM_SHORT[d.key]||d.name,oblToClose(d),mx,'#D99B43',oblToClose(d)+' to close');}).join('')||'<span class="pill-soft">Nothing open</span>');
+      })()
      +'<div class="rgrid">'+tile('At / above target',(DOMAINS.length-below2.length)+' / '+DOMAINS.length,'judged against your own bar')+tile('Gaps to targets',''+gapsT,'obligations to close')+tile('Largest gap',worst?worst.name.split(' · ')[0]:'None',worst?oblToClose(worst)+' obligations':'')+tile('High priority','1','IRP escalation')+'</div>'
      +'<div class="dsec"><div class="dh">Posture by domain · click any row for its register</div>'+prow2+'</div>'
      +'<div class="dsec"><div class="rrec">Targets are set from risk appetite and the use cases in the portfolio, with determination provenance on every inclusion. A 3.7 against a target of 4 means the institution chose Managed, not that it failed a generic bar.</div></div>'
@@ -1274,6 +1310,14 @@ function openReport(kind){
     var dm=domByKey('mrm'), openM=OBL.mrm.filter(function(o){return o.st!=='met';});
     var mrows=openM.map(function(o){return '<tr class="prow" onclick="openObl(\'mrm\',\''+o.id+'\')"><td><span class="obl-id">'+o.id+'</span></td><td><b class="doclink">'+o.s+'</b></td><td>'+(o.st==='partial'?'<span class="tag warn">Partial</span>':'<span class="tag crit">Gap</span>')+'</td><td><span class="hitl '+(o.rev==='ok'?'ok':'q')+'">'+(o.rev==='ok'?'Approved':'HITL queue')+'</span></td></tr>';}).join('');
     h=head('Model Risk Report','Register status · '+dm.owner+' · Interagency Guidance 2026-13')
+     +(function(){
+        var pp=OBL.mrm.filter(function(o){return o.st==='partial';}).length;
+        var gg=dm.appl-dm.met-pp;
+        return viz('The register at a glance',
+          '<div class="vrow2">'+donut([{v:dm.met,c:'#01DFD9'},{v:pp,c:'#D99B43'},{v:gg,c:'#C94A4A'}],curOf(dm).toFixed(1),'OF TARGET '+dm.target)
+          +'<div style="flex:1;min-width:230px">'+vlegend([{c:'#01DFD9',n:'Met at maturity',v:dm.met},{c:'#D99B43',n:'Partial',v:pp},{c:'#C94A4A',n:'Gap',v:gg}])
+          +'<div style="margin-top:14px"><div class="vh" style="margin-bottom:8px">Model inventory · 23</div>'+segBar([{v:14,c:'#0092FF'},{v:9,c:'#006BFF'}],13)+vlegend([{c:'#0092FF',n:'Internal',v:14},{c:'#006BFF',n:'Vendor',v:9}])+'</div></div></div>');
+      })()
      +'<div class="rgrid">'+tile('Score',curOf(dm).toFixed(1)+' / '+dm.target,BANDS[dm.target-1]+' target')+tile('Obligations',dm.met+' of '+dm.appl,'met at required maturity')+tile('To close',''+oblToClose(dm),'for the target')+tile('Models in inventory','23','14 internal · 9 vendor')+'</div>'
      +'<div class="dsec"><div class="dh">Open register items · click any row</div><table class="rtbl"><tbody>'+mrows+'</tbody></table></div>'
      +'<div class="dsec"><div class="dh">Validation calendar</div><ul class="rlist">'
@@ -1286,6 +1330,15 @@ function openReport(kind){
     var dt=domByKey('tprm'), openT=OBL.tprm.filter(function(o){return o.st!=='met';});
     var trows=openT.map(function(o){return '<tr class="prow" onclick="openObl(\'tprm\',\''+o.id+'\')"><td><span class="obl-id">'+o.id+'</span></td><td><b class="doclink">'+o.s+'</b></td><td>'+(o.st==='partial'?'<span class="tag warn">Partial</span>':'<span class="tag crit">Gap</span>')+'</td><td><span class="hitl '+(o.rev==='ok'?'ok':'q')+'">'+(o.rev==='ok'?'Approved':'HITL queue')+'</span></td></tr>';}).join('');
     h=head('Third-Party & Vendor Risk','Register status · '+dt.owner+' · 2023 Interagency Guidance')
+     +(function(){
+        var pp=OBL.tprm.filter(function(o){return o.st==='partial';}).length;
+        var gg=dt.appl-dt.met-pp;
+        return viz('The register at a glance',
+          '<div class="vrow2">'+donut([{v:dt.met,c:'#01DFD9'},{v:pp,c:'#D99B43'},{v:gg,c:'#C94A4A'}],curOf(dt).toFixed(1),'OF TARGET '+dt.target)
+          +'<div style="flex:1;min-width:230px">'+vlegend([{c:'#01DFD9',n:'Met at maturity',v:dt.met},{c:'#D99B43',n:'Partial',v:pp},{c:'#C94A4A',n:'Gap',v:gg}])
+          +'<div style="margin-top:14px"><div class="vh" style="margin-bottom:8px">Vendor inventory · 87</div>'+segBar([{v:12,c:'#00B8FF'},{v:75,c:'#2c3138'}],13)+vlegend([{c:'#00B8FF',n:'Critical',v:12},{c:'#2c3138',n:'Standard',v:75}])
+          +'<div style="margin-top:12px">'+vbar('SOC 2 on file · critical set',11,12,'#01DFD9','11 of 12')+'</div></div></div>');
+      })()
      +'<div class="rgrid">'+tile('Score',curOf(dt).toFixed(1)+' / '+dt.target,BANDS[dt.target-1]+' target')+tile('Obligations',dt.met+' of '+dt.appl,'met at required maturity')+tile('Critical vendors','12','of 87 in inventory')+tile('SOC 2 on file','11 of 12','core processor reviewed')+'</div>'
      +'<div class="dsec"><div class="dh">Open register items · click any row</div><table class="rtbl"><tbody>'+trows+'</tbody></table></div>'
      +'<div class="dsec"><div class="dh">Program notes</div><ul class="rlist">'
@@ -1297,6 +1350,12 @@ function openReport(kind){
   } else if(kind==='infosec'){
     var di=domByKey('infosec');
     h=head('IT & Information Security','GLBA safeguards & security posture · '+di.owner)
+     +viz('Program coverage',
+        vbar('Obligations in scope',di.appl,di.tot,'#0092FF',di.appl+' of '+di.tot)
+        +vbar('Met at required maturity',di.met,di.appl,'#01DFD9',di.met+' of '+di.appl)
+        +'<div style="margin-top:14px"><div class="vh" style="margin-bottom:8px">Connector health</div><div class="vdots">'
+        +[['eCFR','#01DFD9'],['Federal Register','#01DFD9'],['FinCEN','#01DFD9'],['WH Executive Orders','#01DFD9'],['CFPB · Phase 2','#6e757d'],['OFAC · Phase 3','#6e757d'],['States · Phase 4','#6e757d'],['Congress · Phase 5','#6e757d']].map(function(x){return '<span><span class="vd" style="background:'+x[1]+'"></span>'+x[0]+'</span>';}).join('')
+        +'</div></div>')
      +'<div class="rgrid">'+tile('Score',curOf(di).toFixed(1)+' / '+di.target,'above the bar')+tile('Obligations',di.met+' of '+di.appl,'met · 9 excluded with rationale')+tile('High priority','1','IRP escalation gap')+tile('Connector health','4 live','eCFR · FinCEN · Fed Register · WH EO')+'</div>'
      +'<div class="dsec"><div class="dh">Priority item</div><div class="warnline">Incident Response Plan: escalation path for member-facing automation is not yet defined. Redline drafted, awaiting '+di.owner.split(' · ')[0]+'. '+docLink('irp','Open the document')+'.</div></div>'
      +'<div class="dsec"><div class="dh">Program status</div><ul class="rlist">'
@@ -1310,6 +1369,15 @@ function openReport(kind){
     var opex=45000000, compPct=0.10, comp=opex*compPct;
     var platCost=180000, save=Math.round(comp*0.12), net=save+P.annual-platCost;
     h=head('Platform ROI','Why the investment pays for itself')
+     +(function(){
+        var y1=P.funded.slice(); var per=Math.ceil(y1.length/4)||1; var cum=0,cums=[];
+        for(var q=0;q<4;q++){ y1.slice(q*per,(q+1)*per).forEach(function(o){cum+=o.val*L.eff;}); cums.push(Math.round(cum)); }
+        return viz('The money picture',
+          vbar('Compliance spend today',45000000*0.10,45000000*0.10,'#6e757d',fmt(45000000*0.10)+'/yr')
+          +vbar('Platform subscription',180000,45000000*0.10,'#0092FF',fmt(180000)+'/yr')
+          +vbar('Net annual impact',Math.max(0,Math.round(45000000*0.10*0.12)+P.annual-180000),45000000*0.10,'#01DFD9',fmt(Math.round(45000000*0.10*0.12)+P.annual-180000)+'/yr')
+          +'<div style="margin-top:14px"><div class="vh" style="margin-bottom:6px">Portfolio value coming online · Year 1</div>'+spark(cums,['Q1','Q2','Q3','Q4'])+'<div class="csub" style="margin-top:4px">'+fmt(P.annual)+'/yr running by end of Q4 at your adoption setting</div></div>');
+      })()
      +'<div class="rrec">Community and regional institutions spend roughly <b>10% of noninterest expense</b> on compliance (CSBS survey data, 2015&ndash;2024, with the smallest banks running higher). For NorthWinds, on an estimated <b>'+fmt(opex)+'</b> noninterest expense, that is <b>'+fmt(comp)+'/yr</b> of compliance spend, most of it manual monitoring, re-interpretation, and document upkeep the platform industrializes.</div>'
      +'<div class="rgrid">'+tile('Compliance spend',fmt(comp)+'/yr','est. 10% of NIE')+tile('Platform subscription',fmt(platCost)+'/yr','planning figure')+tile('Compliance capacity freed',fmt(save)+'/yr','conservative 12%')+tile('Portfolio value',fmt(P.annual)+'/yr','at adoption')+tile('Net annual impact',fmt(net)+'/yr','year one run rate')+'</div>'
      +'<div class="dsec"><div class="dh">Where the savings come from</div><ul class="rlist">'
@@ -1643,6 +1711,35 @@ function showDrawer(html,wide){
 }
 function mockSha(seed){var s=0;for(var i=0;i<seed.length;i++)s=(s*31+seed.charCodeAt(i))>>>0;return ('00000000'+s.toString(16)).slice(-8)+'…'+('00000000'+((s*2654435761)>>>0).toString(16)).slice(-8);}
 function statusTag(st){return st==='good'?'<span class="tag good">Current</span>':st==='warn'?'<span class="tag warn">Update</span>':st==='crit'?'<span class="tag crit">High</span>':'<span class="tag grey">'+st+'</span>';}
+var VIZC=['#01DFD9','#00B8FF','#0092FF','#006BFF','#5b79ff','#6e757d'];
+function viz(title,body){return '<div class="viz"><div class="vh">'+title+'</div>'+body+'</div>';}
+function vlegend(items){return '<div class="vleg">'+items.map(function(s){return '<span><span class="d" style="background:'+s.c+'"></span>'+s.n+(s.v!=null?' · <b style="color:var(--ink)">'+s.v+'</b>':'')+'</span>';}).join('')+'</div>';}
+function segBar(segs,hh){var tot=0;segs.forEach(function(s){tot+=s.v;});tot=tot||1;
+  return '<div style="display:flex;height:'+(hh||16)+'px;border-radius:8px;overflow:hidden;border:1px solid var(--line)">'+segs.map(function(s){return '<div style="width:'+(s.v/tot*100).toFixed(1)+'%;background:'+s.c+'"></div>';}).join('')+'</div>';}
+function donut(segs,label,sub){
+  var C=2*Math.PI*48, tot=0, acc=0;
+  segs.forEach(function(s){tot+=s.v;}); tot=tot||1;
+  var arcs=segs.map(function(s){
+    var len=C*s.v/tot;
+    var o='<circle cx="59" cy="59" r="48" fill="none" stroke="'+s.c+'" stroke-width="13" stroke-dasharray="'+Math.max(0.1,len-1.6).toFixed(1)+' '+C.toFixed(1)+'" stroke-dashoffset="'+(-acc).toFixed(1)+'" transform="rotate(-90 59 59)"/>';
+    acc+=len; return o;
+  }).join('');
+  return '<svg width="118" height="118" viewBox="0 0 118 118">'+arcs
+   +'<text x="59" y="57" text-anchor="middle" font-size="21" font-weight="800" fill="#f5f5f7" font-family="Inter,sans-serif">'+label+'</text>'
+   +'<text x="59" y="73" text-anchor="middle" font-size="8.5" font-weight="700" fill="#6e757d" font-family="Inter,sans-serif">'+sub+'</text></svg>';
+}
+function vbar(label,val,max,color,right,mark){
+  var pct=Math.min(100,val/(max||1)*100);
+  return '<div class="vbarrow"><span class="vl">'+label+'</span><div class="bar">'+(mark!=null?'<div class="tmark" style="left:'+mark+'%"></div>':'')+'<div class="fill" style="width:'+pct.toFixed(1)+'%;background:'+color+'"></div></div><span class="vv">'+right+'</span></div>';
+}
+function spark(vals,labels){
+  var w=300,hh=64,max=Math.max.apply(null,vals)||1;
+  var pts=vals.map(function(v,i){return [(i/(vals.length-1))*(w-14)+7, hh-14-(v/max)*(hh-28)];});
+  var line=pts.map(function(p,i){return (i===0?'M':'L')+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' ');
+  var area=line+' L'+pts[pts.length-1][0].toFixed(1)+' '+(hh-8)+' L'+pts[0][0].toFixed(1)+' '+(hh-8)+' Z';
+  return '<svg width="'+w+'" height="'+hh+'"><path d="'+area+'" fill="rgba(0,242,255,.09)"/><path d="'+line+'" fill="none" stroke="#00F2FF" stroke-width="2"/>'
+   +pts.map(function(p,i){return '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.6" fill="#00F2FF"/>'+(labels?'<text x="'+p[0].toFixed(1)+'" y="'+(hh-1)+'" text-anchor="middle" font-size="8" fill="#6e757d" font-family="Inter,sans-serif">'+labels[i]+'</text>':'');}).join('')+'</svg>';
+}
 function rlAction(id,act){
   var d=DOCLIB[id]; if(!d||!d.redline)return;
   var who=CURRENT.first+' '+(CURRENT.role?'('+CURRENT.role+')':'');
