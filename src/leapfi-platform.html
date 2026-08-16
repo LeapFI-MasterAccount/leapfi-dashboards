@@ -659,7 +659,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.049</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.050</b></div>
   </div>
 </aside>
 
@@ -892,6 +892,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.050</span> · <span class="cd">Aug 16, 2026</span><br>Ten more documents in the sample universe, chosen to show the kinds of record an examiner actually asks for: the AI system inventory, AI Governance Committee minutes, AI acceptable use training attestations, the business continuity and disaster recovery plan, the annual penetration test and remediation tracker, SAR quality assurance, the OFAC screening independent test, the Regulation E error resolution procedure (with a drafted redline on the error clock for automated channels), the HMDA data integrity review, and the CBLR calculation worksheet. The capital narrative, which was already in the library, is now listed too. The sample runs 25 documents and covers all eight domains, so the domain scope filter no longer comes back empty on Capital or thin on AI Governance.</li>
             <li><span class="cv">v 1.049</span> · <span class="cd">Aug 16, 2026</span><br>Connect, AllRailz, and Vantage rebuilt from the thesis on one shared page system, so all three carry the same graphics at the same sizes: a hero, a How it works flow diagram showing the module reading live policy from OnSide before it acts, a four-tile What it delivers row, and a By hand today versus With the module comparison. All three stay marked Soon and not part of this demo build. Every figure comes from the thesis: Connect&rsquo;s six system classes and same-day propagation, AllRailz&rsquo;s 11+ agents across 12 rails on three cores, Vantage&rsquo;s five review types across 87 vendors.</li>
             <li><span class="cv">v 1.048</span> · <span class="cd">Aug 16, 2026</span><br>Every source in the regulatory feed now carries live activity. All fifteen open with dated captures, what each one touched, and a link into the register or document behind it, instead of ten of them dead-ending on a placeholder. Sources still in a connector phase show their items in preview and say so, with the phase on the card, so the demo stays rich without overclaiming. Time filters cover 14 days, 30 days, and all activity.</li>
             <li><span class="cv">v 1.047</span> · <span class="cd">Aug 16, 2026</span><br>Accessibility and boardroom readability, the last of the five review passes. Every interactive element is reachable by keyboard and answers to Enter or Space, with a visible cyan focus ring. Side panels are proper dialogs: they take focus on open, Escape closes, and focus returns to whatever opened them. Arrow keys drive the board deck. Lever explanations answer to tap as well as hover, so they work on an iPad, and each carries its text as a label for screen readers. Gauges, donuts, bar rows, and the value sparkline describe themselves. Text bottoms out at 11px, deck dots are large enough to hit, and everything respects a reduced-motion preference.</li>
@@ -945,7 +946,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.049</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.050</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1643,6 +1644,50 @@ function instrKey(cite){
 
 /* ---- document library (every reference document, viewable) ---- */
 var DOCLIB={
+'ai-inventory':{t:'AI System Inventory & Use-Case Register',v:'Live register',dom:'aigov',type:'Evidence',owner:'R. Fischer · CRO',status:'good',line:'23 systems catalogued · tier and owner assigned to each',obl:[],
+ secs:[['Contents','Every AI and automated decision system in operation, with business owner, purpose, member impact, data touched, vendor or in-house build, governance tier, and the date of the last review.'],
+ ['Tiering','Tier 1 covers systems that inform member-facing decisions. Tier 2 covers systems that inform staff judgement. Tier 3 covers internal productivity use with no member impact. Depth of governance follows the tier.'],
+ ['Reconciliation','The register reconciles monthly against the model inventory held by Model Risk, so a system cannot be governed as an AI use case and be missing from the model record.']]},
+'ai-committee':{t:'AI Governance Committee Minutes',v:'Jul 2026',dom:'aigov',type:'Committee record',owner:'R. Fischer · CRO',status:'good',line:'Monthly session · quorum met · CEO and CCO present',obl:[],
+ secs:[['Agenda','Three new use cases presented for tier assignment. Review of the member-messaging disclosure draft. Status of the CRI control crosswalk. Watchlist update on S. 4127 and the interagency RFI.'],
+ ['Decisions','Approved two use cases at Tier 2 and held one at Tier 1 pending a fair-lending impact review. Directed that the disclosure standard return with UDAAP sign-off before adoption.'],
+ ['Escalation','Nothing rose to the Board this cycle. The standing quarterly AI risk summary remains on the Board Risk Committee calendar.']]},
+'ai-training':{t:'AI Acceptable Use Training Attestation',v:'2026 cycle',dom:'aigov',type:'Training',owner:'R. Fischer · CRO',status:'good',line:'96% completion · role-based modules · board module delivered',obl:[],
+ secs:[['Contents','Completion records and signed attestations for the AI acceptable use curriculum, tracked by role. Lending and member service staff take the extended module covering disclosure and escalation duties.'],
+ ['Coverage','Board members completed the governance briefing in May. Contractors with system access are enrolled through the vendor onboarding path.'],
+ ['Open item','Eleven staff remain outstanding at cycle close. Managers were notified and completion is tracked to a September deadline.']]},
+'bcp-dr':{t:'Business Continuity & Disaster Recovery Plan',v:'v6.1',dom:'infosec',type:'Policy',owner:'P. Nguyen · ISD',status:'good',line:'Annual tabletop exercise complete · Mar 2026',obl:[],
+ secs:[['1. Scope','Recovery objectives and procedures for core processing, digital banking, payments, and member contact channels, with dependencies mapped to the critical vendor set.'],
+ ['2. Objectives','Recovery time and recovery point objectives are set per business process and tested against them, not asserted. Results feed the annual plan revision.'],
+ ['3. Exercise results','The March tabletop covered core processor degradation and a ransomware containment scenario. Two process gaps were identified in member communication sequencing and both were closed in this version.']]},
+'pentest':{t:'Annual Penetration Test & Remediation Tracker',v:'2026',dom:'infosec',type:'Evidence',owner:'P. Nguyen · ISD',status:'warn',line:'2 medium findings open · remediation due Sep 2026',obl:[],
+ secs:[['Scope','External perimeter, digital banking application, internal network segmentation, and a social engineering component, performed by an independent firm in April.'],
+ ['Results','No critical or high findings. Four medium findings, two of which are closed and verified. The two open items concern session handling in a secondary portal and a legacy service account scope.'],
+ ['Tracking','Each finding carries an owner, a due date, and re-test evidence on closure. Aggregate status reports to the Board Risk Committee quarterly.']]},
+'sar-qa':{t:'SAR Quality Assurance Review',v:'Q2-2026',dom:'bsa',type:'Evidence',owner:'T. Whitfield · BSA Officer',status:'good',line:'Sampled review complete · timeliness within requirement',obl:[],
+ secs:[['Method','A sample of filed suspicious activity reports is reviewed each quarter for narrative sufficiency, supporting documentation, decision rationale, and filing timeliness.'],
+ ['Results','All sampled filings met the 30-day requirement. Narrative quality was rated adequate or better throughout, with coaching notes issued on two files for supporting detail.'],
+ ['Linkage','Alert disposition quality feeds the transaction monitoring tuning record, which is where the model validation obligation picks it up.']]},
+'ofac-test':{t:'OFAC Screening Independent Test',v:'2026',dom:'bsa',type:'Evidence',owner:'T. Whitfield · BSA Officer',status:'warn',line:'Threshold tuning recommended · action plan agreed',obl:[],
+ secs:[['Scope','Independent test of the sanctions screening configuration covering list currency, name matching logic, batch and real-time coverage, and alert disposition quality.'],
+ ['Findings','List updates applied same day throughout the period. The test recommends tuning the fuzzy match threshold, which currently produces a false positive rate above peer benchmark and slows disposition.'],
+ ['Action','Tuning is scheduled with the vendor for Q3, with a before and after effectiveness comparison retained as evidence. No missed matches were identified.']]},
+'rege-proc':{t:'Regulation E Error Resolution Procedure',v:'v3.2',dom:'consumer',type:'Procedure',owner:'M. Okafor · CCO',status:'warn',line:'Provisional credit timing under revision · see redline',obl:[],
+ secs:[['1. Requirement','Investigation and resolution of member-reported electronic transfer errors within the timeframes set by Regulation E, including provisional credit where the investigation extends.'],
+ ['2. Intake','Errors are accepted through any channel the member uses, including automated channels, and are logged to the complaint record on receipt.'],
+ ['3. Open item','Where an automated channel takes the first report, the clock start currently depends on staff transcription. That dependency is being removed.']],
+ redline:{note:'Proposed revision to §2 · error clock start for automated intake channels · drafted by OnSide',
+  old:'The investigation period begins when a representative logs the reported error to the complaint record.',
+  nw:'The investigation period begins on the member&rsquo;s first report through any channel, including automated chat and messaging, timestamped at receipt by the channel itself. Automated intake creates the complaint record directly, and staff review confirms rather than starts the clock.'}},
+'hmda-lar':{t:'HMDA LAR Data Integrity Review',v:'2026 submission',dom:'fairlend',type:'Evidence',owner:'M. Okafor · CCO',status:'good',line:'Pre-submission scrub complete · error rate within tolerance',obl:[],
+ secs:[['Method','A sampled field-by-field review of the loan application register against source documents, run before submission and again after any resubmission.'],
+ ['Results','The sampled error rate sits within the resubmission threshold. Corrections were concentrated in rate spread and action taken date, both traced to a single intake workflow that has been amended.'],
+ ['Use','The register feeds the quarterly fair lending comparative review, so data integrity here is a precondition for the analysis there.']]},
+'cblr-worksheet':{t:'CBLR Calculation Worksheet & Sign-off',v:'Q2-2026',dom:'capital',type:'Evidence',owner:'CFO office',status:'good',line:'Independently reviewed · reconciles to the call report',obl:[],
+ secs:[['Contents','The quarter-end leverage ratio calculation with supporting balances, the qualifying criteria check, and the preparer and reviewer sign-off.'],
+ ['Control','A second reviewer independent of the preparer reconciles the worksheet to the filed call report before sign-off. Variances above tolerance are documented with explanation.'],
+ ['Position','The ratio sits well above the qualifying threshold, with prompt corrective action headroom reported in the capital narrative each quarter.']]},
+
 'mrm-policy':{t:'Model Risk Management Policy',v:'v3.1',dom:'mrm',type:'Policy',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Approved by Board Risk Committee · Jul 14, 2026 · annual review Jul 2027',obl:['MRM-01','MRM-03','MRM-12'],
  secs:[['1. Purpose','Establishes the framework for identifying, measuring, monitoring, and controlling model risk across the Credit Union, aligned to Interagency Guidance 2026-13.'],
  ['2. Scope','Applies to all models as defined in §II of 2026-13, including AI/ML and vendor-supplied models used in decisioning, valuation, fraud, and monitoring.'],
@@ -1803,7 +1848,7 @@ function openItemRow(x){
   var click=d?("openDocView('"+x.doc+"')"):"onsideShow('gaps')";
   return '<div class="oitem" onclick="'+click+'"><div class="ot"><div class="on">'+x.t+'</div><div class="om">'+meta.join(' · ')+'</div></div><span class="oarr">Open →</span></div>';
 }
-var SAMPLE_DOCS=['mrm-policy','mrm-validation-fraud','mrm-minutes','tprm-program','tprm-critical','bsa-policy','fl-review','aa-procedure','complaint-proc','irp','glba-program','bsa-training','gov-charter','soc2-core'];
+var SAMPLE_DOCS=['mrm-policy','mrm-validation-fraud','mrm-minutes','tprm-program','tprm-critical','soc2-core','bsa-policy','bsa-training','sar-qa','ofac-test','fl-review','aa-procedure','hmda-lar','complaint-proc','rege-proc','irp','glba-program','bcp-dr','pentest','gov-charter','ai-inventory','ai-committee','ai-training','capital-narr','cblr-worksheet'];
 
 /* ---- viewers ---- */
 function showDrawer(html,wide){
@@ -2182,7 +2227,7 @@ function osDocs(){
     return '<tr class="prow" data-q="'+q+'" data-st="'+d.status+'" onclick="openDocView(\''+id+'\')"><td><b class="doclink">'+d.t+'</b></td><td class="pcat">'+(dom?dom.name:'')+'</td><td class="pcat">'+d.type+'</td><td class="pcat">'+d.owner.split(' · ')[0]+'</td><td>'+statusTag(d.status)+'</td><td class="pcat">'+d.v+'</td></tr>';
   }).join('');
   return osScopeBar()+'<div class="doc-cats">'+cats+'</div>'
-   +'<div class="card"><h2>Document universe · representative sample · click any document to open it</h2><div class="csub">Each monitored document maps to the obligations it evidences. Policies and procedures are only part of it: evidence artifacts, committee minutes, validations, and training records carry the exam.</div>'
+   +'<div class="card"><h2>Document universe · representative sample · click any document to open it</h2><div class="csub">A representative slice of '+DOCS_TOTAL+' monitored documents, drawn across all '+DOMAINS.length+' domains. Policies and procedures are only part of it. Evidence artifacts, committee minutes, validations, test results, and training records are what carry an exam, and each one maps to the obligations it evidences.</div>'
    +'<div class="docbar"><input id="doc-q" placeholder="Search by title, domain, type, or owner…" oninput="docFilter()"><select id="doc-st" onchange="docFilter()"><option value="">All statuses</option><option value="good">Current</option><option value="warn">Update proposed</option><option value="crit">High priority</option></select></div>'
    +'<table class="tbl"><thead><tr><th>Document</th><th>Domain</th><th>Type</th><th>Owner</th><th>Status</th><th>Version / verified</th></tr></thead><tbody id="doc-rows">'+(rows||'<tr><td colspan="6" style="color:var(--grey)">No sample documents in this scope; the full universe covers it.</td></tr>')+'</tbody></table></div>'
    +'<div class="card" style="margin-top:14px"><h2>Bring your own repository</h2><div class="csub">SharePoint, network folders, or a GRC platform: OnSide connects to where documents already live through LeapFI · Connect (MCP), keeps the evidence chain intact, and never forces a migration. Coming with the Connect module.</div></div>';
