@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>LeapFI Platform · NorthWinds Credit Union</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -664,7 +667,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.053</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.054</b></div>
   </div>
 </aside>
 
@@ -897,6 +900,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.054</span> · <span class="cd">Aug 16, 2026</span><br>The page now tells browsers not to hold a cached copy. The demo keeps one filename on purpose so the embed never breaks, which meant a browser that had already loaded it would keep showing an older build after a publish. Each load now revalidates against the published file.</li>
             <li><span class="cv">v 1.053</span> · <span class="cd">Aug 16, 2026</span><br>Two Studio pages renamed. Design studio is now <b>Investment Design</b>, which says what the levers actually decide. Three-year roadmap is now <b>Roadmaps</b>. Page headings, breadcrumbs, the CEO queue, and every link that named either page follow the new labels.</li>
             <li><span class="cv">v 1.052</span> · <span class="cd">Aug 16, 2026</span><br>The How it works diagram comes off the Connect, AllRailz, and Vantage pages. Four boxes, eight labels, and a policy spine were carrying more detail than a page about something not yet built needs. Each page now states the same idea as three numbered steps on one line under the opening paragraph, with the point of it underneath. What it delivers and What changes are untouched. All three pages stay identical in structure.</li>
             <li><span class="cv">v 1.051</span> · <span class="cd">Aug 16, 2026</span><br>Numbers line up across every card row. Where one heading wrapped to two lines and its neighbours did not, the number underneath sat lower than the rest. Each row now measures its own headings, holds them all to the tallest, and drops any footnote line to a shared bottom edge, so the figures read straight across on every screen and at every window width.</li>
@@ -954,7 +958,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.053</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.054</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
