@@ -667,7 +667,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.054</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.055</b></div>
   </div>
 </aside>
 
@@ -900,6 +900,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.055</span> · <span class="cd">Aug 16, 2026</span><br>Two demo personas retitled: Jose Ribau is Engagement Manager and Dan Scheffler is Product Manager. The titles show in the profile card, the switch-user list, and anywhere a role is named. Each persona still lands on the same homepage and permissions as before.</li>
             <li><span class="cv">v 1.054</span> · <span class="cd">Aug 16, 2026</span><br>The page now tells browsers not to hold a cached copy. The demo keeps one filename on purpose so the embed never breaks, which meant a browser that had already loaded it would keep showing an older build after a publish. Each load now revalidates against the published file.</li>
             <li><span class="cv">v 1.053</span> · <span class="cd">Aug 16, 2026</span><br>Two Studio pages renamed. Design studio is now <b>Investment Design</b>, which says what the levers actually decide. Three-year roadmap is now <b>Roadmaps</b>. Page headings, breadcrumbs, the CEO queue, and every link that named either page follow the new labels.</li>
             <li><span class="cv">v 1.052</span> · <span class="cd">Aug 16, 2026</span><br>The How it works diagram comes off the Connect, AllRailz, and Vantage pages. Four boxes, eight labels, and a policy spine were carrying more detail than a page about something not yet built needs. Each page now states the same idea as three numbered steps on one line under the opening paragraph, with the point of it underneath. What it delivers and What changes are untouched. All three pages stay identical in structure.</li>
@@ -958,7 +959,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.054</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.055</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -986,8 +987,8 @@ function fmt(n){return n>=1e6?'$'+(n/1e6).toFixed(2)+'M':'$'+Math.round(n/1000)+
 var USERS=[
  {id:'rachel',first:'Rachel',name:'Rachel Fischer',ini:'RF',role:'Chief Risk Officer',roleKey:'cro',email:'rachel.fischer@northwindscu.org',phone:'+1 (203) 555-0184'},
  {id:'adam',first:'Adam',name:'Adam Schlesinger',ini:'AS',role:'Chief Executive Officer',roleKey:'ceo',email:'adam.schlesinger@northwindscu.org',phone:'+1 (415) 555-0117'},
- {id:'jose',first:'Jose',name:'Jose Ribau',ini:'JR',role:'AI Leader',roleKey:'ai',email:'jose.ribau@northwindscu.org',phone:'+1 (416) 555-0139'},
- {id:'dan',first:'Dan',name:'Dan Scheffler',ini:'DS',role:'Program Manager',roleKey:'pm',email:'dan.scheffler@northwindscu.org',phone:'+1 (917) 555-0162'}
+ {id:'jose',first:'Jose',name:'Jose Ribau',ini:'JR',role:'Engagement Manager',roleKey:'ai',email:'jose.ribau@northwindscu.org',phone:'+1 (416) 555-0139'},
+ {id:'dan',first:'Dan',name:'Dan Scheffler',ini:'DS',role:'Product Manager',roleKey:'pm',email:'dan.scheffler@northwindscu.org',phone:'+1 (917) 555-0162'}
 ];
 var CURRENT=USERS[0];
 
