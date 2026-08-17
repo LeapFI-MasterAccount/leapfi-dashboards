@@ -602,6 +602,8 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 .sbc.on{color:var(--cyan);border-color:rgba(0,242,255,.45);background:rgba(0,242,255,.07)}
 .scopebar .sb-note{font-size:11px;color:var(--grey);margin-left:auto}
 .sh-b{font-size:12.5px;color:var(--muted);line-height:1.65;background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--cyan);border-radius:10px;padding:11px 14px;margin-top:8px}
+.doc-tbl td{padding-top:9px;padding-bottom:9px}
+.doc-count{font-size:11.5px;color:var(--grey);font-weight:700;margin:2px 0 8px}
 .docbar{display:flex;gap:10px;margin:2px 0 12px}
 .docbar input{flex:1;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 13px;color:var(--ink);font-size:12.5px;font-family:inherit}
 .docbar input:focus{outline:none;border-color:rgba(0,242,255,.45)}
@@ -782,7 +784,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.065</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.066</b></div>
   </div>
 </aside>
 
@@ -1018,6 +1020,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.066</span> · <span class="cd">Aug 16, 2026</span><br><b>Model Risk and Third-Party Risk are built out in full.</b> All 57 documents behind the Model Risk register and all 74 behind Third-Party Risk are in the universe and open: validation reports for each tiered model, conceptual soundness documentation, quarterly outcomes and monitoring packets, vendor model evidence, change logs, standards, committee minutes, board summaries, and training attestations on the model side; due diligence and SOC 2 packets for all twelve critical vendors, financial condition and resiliency assessments, executed contract records, questionnaires, monitoring attestations, and offboarding records on the vendor side. The corpus is written against the open gaps rather than around them, so the documents that would close an item you still show as open are absent and say why. Scope to a domain and the view states whether you are seeing all of it or a sample. A type filter joins the search and status filters, and the table reports how many rows it is showing.</li>
             <li><span class="cv">v 1.065</span> · <span class="cd">Aug 16, 2026</span><br>The gap statement now reads <b>required vs current</b>, and it sits on two lines: what the rule requires, then what the institution does today, each on its own row with its own label. Reading a gap no longer means finding the break in a paragraph. Every card carrying proposed language now shows the <b>before and the after</b>, labelled, whether the language is still proposed or already adopted &mdash; previously an adopted change showed only the new text, so the thing it replaced disappeared from view at exactly the moment someone would ask what changed. Obligations, documents, cases, and the board report all render from the same two helpers, so they cannot drift apart again.</li>
             <li><span class="cv">v 1.064</span> · <span class="cd">Aug 16, 2026</span><br>One level of back, in the top bar. Any click that moves you to a different view leaves a <b>Back to</b> chip naming the place you came from, and it returns you there at the scroll position you left. It is one step, never a stack, so it always does exactly what it says. This closes the one drill-down with no way home: the register links on the Strategic signal took you into a domain and left you to find your way back. Side panels are unchanged &mdash; they still close to wherever you opened them from.</li>
             <li><span class="cv">v 1.063</span> · <span class="cd">Aug 16, 2026</span><br>OnSide and Studio swap places in the navigation. OnSide now leads the module list, which matches how the platform is sold and how a walkthrough runs: the governance record first, then what the institution decides to build on top of it.</li>
@@ -1087,7 +1090,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.065</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.066</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1792,13 +1795,21 @@ var DOMAINS=[
  {key:'capital',name:'Capital Adequacy · CBLR',bodies:'NCUA · FDIC',inst:'Community Bank Leverage Ratio framework',appl:18,tot:18,met:17,target:4,owner:'CFO office',docs:24,ev:16,
   why:'Target <b>4</b>: mature, well-controlled program reported for completeness of total regulatory scope. Currently running above target.'}
 ];
-var DOCS_TOTAL=0, DOC_CATS=[['Policies & procedures',158],['Evidence artifacts',263],['Committee & board records',52],['Training & attestations',44]];
+var DOCS_TOTAL=0, DOC_CATS=[];
+/* per-domain split: policies & procedures, evidence, committee & board, training.
+   Model Risk and Third-Party Risk are the built corpora, so their numbers are counted
+   from DOCLIB rather than claimed. Every row sums to that domain's document count. */
+var DOM_CATS={bsa:[18,36,7,7],mrm:[14,33,9,1],tprm:[10,58,4,2],consumer:[20,30,6,5],fairlend:[12,24,4,3],infosec:[24,48,8,8],aigov:[30,52,12,8],capital:[8,12,3,1]};
+var BUILT_DOMS={mrm:1,tprm:1};
 /* DOCS_TOTAL derived after DOMAINS loads (below) so the headline always equals the sum of the domains */
 var SCOPE_EVENTS=[];
 function domByKey(k){return DOMAINS.filter(function(d){return d.key===k;})[0];}
 DOMAINS.forEach(function(d){d.t0=d.target;d.why0=d.why;});
+DOMAINS.forEach(function(d){var c=DOM_CATS[d.key]; if(c){d.cats=c; d.ev=c[1];}});
 DOCS_TOTAL=DOMAINS.reduce(function(a,d){return a+d.docs;},0);
 var EV_TOTAL=DOMAINS.reduce(function(a,d){return a+d.ev;},0);
+DOC_CATS=[['Policies &amp; procedures',0],['Evidence artifacts',0],['Committee &amp; board records',0],['Training &amp; attestations',0]];
+DOMAINS.forEach(function(d){(d.cats||[0,0,0,0]).forEach(function(v,i){DOC_CATS[i][1]+=v;});});
 var SRC_TOTAL=15, SRC_LIVE=6;
 function feedEventCount(days){
   var c=0; Object.keys(SRC_ITEMS).forEach(function(k){SRC_ITEMS[k].items.forEach(function(it){if(it[0]<=days)c++;});});
@@ -1876,6 +1887,229 @@ function instrKey(cite){
 
 /* ---- document library (every reference document, viewable) ---- */
 var DOCLIB={
+'mrm-val-tm':{t:'Model Validation Report · BSA Transaction Monitoring',v:'Mar 2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Independent validation · monitoring scenarios and thresholds',obl:['MRM-04','MRM-06'],
+ secs:[['Scope','Independent validation of the bsa transaction monitoring model (Tier 1, vendor). Conceptual soundness, data quality, outcomes analysis, and implementation testing, performed independent of development per 2026-13 §IV.'],['Findings','No material findings. Discrimination and calibration sit within tolerance and the champion/challenger benchmark is documented.'],['Sign-off','Presented to the MRM Committee Mar 2026 and accepted. Next validation due on the tier cadence.']]},
+'mrm-val-uw':{t:'Model Validation Report · Consumer Underwriting Support',v:'Feb 2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Independent validation · discrimination, calibration, and fair-lending read-across',obl:['MRM-04','MRM-06'],
+ secs:[['Scope','Independent validation of the consumer underwriting support model (Tier 1, in-house). Conceptual soundness, data quality, outcomes analysis, and implementation testing, performed independent of development per 2026-13 §IV.'],['Findings','No material findings. Discrimination and calibration sit within tolerance and the champion/challenger benchmark is documented.'],['Sign-off','Presented to the MRM Committee Feb 2026 and accepted. Next validation due on the tier cadence.']]},
+'mrm-val-cecl':{t:'Model Validation Report · CECL Allowance',v:'Jan 2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Independent validation · vendor model, Q4 close cycle',obl:['MRM-04','MRM-06'],
+ secs:[['Scope','Independent validation of the cecl allowance model (Tier 1, vendor). Conceptual soundness, data quality, outcomes analysis, and implementation testing, performed independent of development per 2026-13 §IV.'],['Findings','No material findings. Discrimination and calibration sit within tolerance and the champion/challenger benchmark is documented.'],['Sign-off','Presented to the MRM Committee Jan 2026 and accepted. Next validation due on the tier cadence.']]},
+'mrm-val-alm':{t:'Model Validation Report · Asset-Liability / Interest-Rate Risk',v:'Nov 2025',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Independent validation · rate-shock scenarios',obl:['MRM-04','MRM-06'],
+ secs:[['Scope','Independent validation of the asset-liability / interest-rate risk model (Tier 1, vendor). Conceptual soundness, data quality, outcomes analysis, and implementation testing, performed independent of development per 2026-13 §IV.'],['Findings','No material findings. Discrimination and calibration sit within tolerance and the champion/challenger benchmark is documented.'],['Sign-off','Presented to the MRM Committee Nov 2025 and accepted. Next validation due on the tier cadence.']]},
+'mrm-val-indirect':{t:'Model Validation Report · Indirect Auto Pricing',v:'Apr 2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Independent validation · pricing tiers and override analysis',obl:['MRM-04','MRM-06'],
+ secs:[['Scope','Independent validation of the indirect auto pricing model (Tier 2, in-house). Conceptual soundness, data quality, outcomes analysis, and implementation testing, performed independent of development per 2026-13 §IV.'],['Findings','No material findings. Discrimination and calibration sit within tolerance and the champion/challenger benchmark is documented.'],['Sign-off','Presented to the MRM Committee Apr 2026 and accepted. Next validation due on the tier cadence.']]},
+'mrm-val-attrition':{t:'Model Validation Report · Deposit Attrition',v:'May 2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'warn',line:'Validation complete · two observations open',obl:['MRM-04','MRM-06'],
+ secs:[['Scope','Independent validation of the deposit attrition model (Tier 2, in-house). Conceptual soundness, data quality, outcomes analysis, and implementation testing, performed independent of development per 2026-13 §IV.'],['Findings','Two observations: feature drift in the balance-trend inputs, and documentation of the retraining trigger. Both carry owners and are tracked to close in Q3.'],['Sign-off','Presented to the MRM Committee May 2026 and accepted. Next validation due on the tier cadence.']]},
+'mrm-val-collections':{t:'Model Validation Report · Collections Prioritisation',v:'Jun 2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Independent validation · treatment assignment',obl:['MRM-04','MRM-06'],
+ secs:[['Scope','Independent validation of the collections prioritisation model (Tier 2, in-house). Conceptual soundness, data quality, outcomes analysis, and implementation testing, performed independent of development per 2026-13 §IV.'],['Findings','No material findings. Discrimination and calibration sit within tolerance and the champion/challenger benchmark is documented.'],['Sign-off','Presented to the MRM Committee Jun 2026 and accepted. Next validation due on the tier cadence.']]},
+'mrm-cs-fraud':{t:'Conceptual Soundness Documentation · Transaction Fraud Detection',v:'v2.0',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Theory, assumptions, limitations, and data lineage',obl:['MRM-05'],
+ secs:[['Contents','The design rationale for the transaction fraud detection model: the question it answers, the theory behind the specification, the assumptions it rests on, the data lineage feeding it, and the limitations a user must understand before relying on an output.'],['Use','Written so an independent party can follow the model without the developer in the room, which is the standard 2026-13 §III sets.']]},
+'mrm-cs-uw':{t:'Conceptual Soundness Documentation · Consumer Underwriting Support',v:'v2.0',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Theory, assumptions, limitations, and data lineage',obl:['MRM-05'],
+ secs:[['Contents','The design rationale for the consumer underwriting support model: the question it answers, the theory behind the specification, the assumptions it rests on, the data lineage feeding it, and the limitations a user must understand before relying on an output.'],['Use','Written so an independent party can follow the model without the developer in the room, which is the standard 2026-13 §III sets.']]},
+'mrm-cs-indirect':{t:'Conceptual Soundness Documentation · Indirect Auto Pricing',v:'v2.0',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Theory, assumptions, limitations, and data lineage',obl:['MRM-05'],
+ secs:[['Contents','The design rationale for the indirect auto pricing model: the question it answers, the theory behind the specification, the assumptions it rests on, the data lineage feeding it, and the limitations a user must understand before relying on an output.'],['Use','Written so an independent party can follow the model without the developer in the room, which is the standard 2026-13 §III sets.']]},
+'mrm-cs-attrition':{t:'Conceptual Soundness Documentation · Deposit Attrition',v:'v2.0',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Theory, assumptions, limitations, and data lineage',obl:['MRM-05'],
+ secs:[['Contents','The design rationale for the deposit attrition model: the question it answers, the theory behind the specification, the assumptions it rests on, the data lineage feeding it, and the limitations a user must understand before relying on an output.'],['Use','Written so an independent party can follow the model without the developer in the room, which is the standard 2026-13 §III sets.']]},
+'mrm-cs-collections':{t:'Conceptual Soundness Documentation · Collections Prioritisation',v:'v2.0',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Theory, assumptions, limitations, and data lineage',obl:['MRM-05'],
+ secs:[['Contents','The design rationale for the collections prioritisation model: the question it answers, the theory behind the specification, the assumptions it rests on, the data lineage feeding it, and the limitations a user must understand before relying on an output.'],['Use','Written so an independent party can follow the model without the developer in the room, which is the standard 2026-13 §III sets.']]},
+'mrm-out-q1-2026':{t:'Quarterly Outcomes Analysis Packet',v:'Q1-2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Back-testing across the tiered production set',obl:['MRM-06'],
+ secs:[['Contents','Back-testing and outcomes analysis for every Tier 1 and Tier 2 production model: performance against expectation, override rates and their reasons, population stability, and drift indicators.'],['Result','All tiered models performed within tolerance for the quarter. Override analysis is reported to the MRM Committee with the packet.']]},
+'mrm-out-q4-2025':{t:'Quarterly Outcomes Analysis Packet',v:'Q4-2025',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Back-testing across the tiered production set',obl:['MRM-06'],
+ secs:[['Contents','Back-testing and outcomes analysis for every Tier 1 and Tier 2 production model: performance against expectation, override rates and their reasons, population stability, and drift indicators.'],['Result','All tiered models performed within tolerance for the quarter. Override analysis is reported to the MRM Committee with the packet.']]},
+'mrm-out-q3-2025':{t:'Quarterly Outcomes Analysis Packet',v:'Q3-2025',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Back-testing across the tiered production set',obl:['MRM-06'],
+ secs:[['Contents','Back-testing and outcomes analysis for every Tier 1 and Tier 2 production model: performance against expectation, override rates and their reasons, population stability, and drift indicators.'],['Result','All tiered models performed within tolerance for the quarter. Override analysis is reported to the MRM Committee with the packet.']]},
+'mrm-out-q2-2025':{t:'Quarterly Outcomes Analysis Packet',v:'Q2-2025',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Back-testing across the tiered production set',obl:['MRM-06'],
+ secs:[['Contents','Back-testing and outcomes analysis for every Tier 1 and Tier 2 production model: performance against expectation, override rates and their reasons, population stability, and drift indicators.'],['Result','All tiered models performed within tolerance for the quarter. Override analysis is reported to the MRM Committee with the packet.']]},
+'mrm-mon-q2-2026':{t:'Production Monitoring &amp; Drift Report',v:'Q2-2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'warn',line:'2 production models still run without configured alerting',obl:['MRM-07'],
+ secs:[['Contents','Drift, stability, and performance indicators for production models, with configured thresholds and the alerts raised in the quarter.'],['Open item','Two Tier 2 models run without configured alerting. Thresholds are proposed and awaiting the model owners&rsquo; sign-off, tracked as MRM-07.']]},
+'mrm-mon-q1-2026':{t:'Production Monitoring &amp; Drift Report',v:'Q1-2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'warn',line:'2 production models still run without configured alerting',obl:['MRM-07'],
+ secs:[['Contents','Drift, stability, and performance indicators for production models, with configured thresholds and the alerts raised in the quarter.'],['Open item','Two Tier 2 models run without configured alerting. Thresholds are proposed and awaiting the model owners&rsquo; sign-off, tracked as MRM-07.']]},
+'mrm-mon-q4-2025':{t:'Production Monitoring &amp; Drift Report',v:'Q4-2025',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'warn',line:'2 production models still run without configured alerting',obl:['MRM-07'],
+ secs:[['Contents','Drift, stability, and performance indicators for production models, with configured thresholds and the alerts raised in the quarter.'],['Open item','Two Tier 2 models run without configured alerting. Thresholds are proposed and awaiting the model owners&rsquo; sign-off, tracked as MRM-07.']]},
+'mrm-vend-fraud':{t:'Vendor Model Documentation Packet · Transaction Fraud Detection',v:'2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Vendor validation evidence received and reviewed',obl:['MRM-08'],
+ secs:[['Contents','The vendor&rsquo;s own validation report, methodology description, performance testing, and the limitations it discloses, reviewed against the standard we would apply to an in-house model.'],['Review','Reviewed and accepted. Where the vendor withholds detail, the gap is recorded and compensating monitoring is documented rather than assumed.']]},
+'mrm-vend-cecl':{t:'Vendor Model Documentation Packet · CECL Allowance',v:'2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Vendor validation evidence received and reviewed',obl:['MRM-08'],
+ secs:[['Contents','The vendor&rsquo;s own validation report, methodology description, performance testing, and the limitations it discloses, reviewed against the standard we would apply to an in-house model.'],['Review','Reviewed and accepted. Where the vendor withholds detail, the gap is recorded and compensating monitoring is documented rather than assumed.']]},
+'mrm-vend-alm':{t:'Vendor Model Documentation Packet · Asset-Liability / Interest-Rate Risk',v:'2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Vendor validation evidence received and reviewed',obl:['MRM-08'],
+ secs:[['Contents','The vendor&rsquo;s own validation report, methodology description, performance testing, and the limitations it discloses, reviewed against the standard we would apply to an in-house model.'],['Review','Reviewed and accepted. Where the vendor withholds detail, the gap is recorded and compensating monitoring is documented rather than assumed.']]},
+'mrm-chg-2026':{t:'Model Change Log',v:'2026 YTD',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'warn',line:'Changes recorded · no formal approval gate yet',obl:['MRM-09'],
+ secs:[['Contents','Every change to a production model in 2026: what changed, who made it, when it deployed, and the testing behind it.'],['Open item','Changes still deploy on developer sign-off. The formal approval gate is drafted and in the review queue as MRM-09.']]},
+'mrm-chg-2025':{t:'Model Change Log',v:'2025',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Closed year · retained per the recordkeeping standard',obl:['MRM-09'],
+ secs:[['Contents','The 2025 change record for production models, retained with the validation and monitoring evidence for the same period.']]},
+'mrm-bench-fraud':{t:'Champion / Challenger Benchmark · Fraud',v:'Jun 2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Challenger run alongside production for two quarters',obl:['MRM-06'],
+ secs:[['Method','A challenger specification run in parallel with the production fraud model, scored on the same population, with the decision to retain or promote documented.'],['Result','Production retained. The challenger improved recall at an unacceptable false-positive cost to the member experience, and that trade-off is recorded.']]},
+'mrm-bench-uw':{t:'Champion / Challenger Benchmark · Underwriting Support',v:'Mar 2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Benchmark against the prior scorecard',obl:['MRM-04'],
+ secs:[['Method','The underwriting support model scored against the prior scorecard on a held-out population, with fair-lending metrics reported alongside performance.']]},
+'mrm-dq':{t:'Model Input Data Quality Assessment',v:'2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Completeness, accuracy, and timeliness of model inputs',obl:['MRM-01'],
+ secs:[['Contents','Assessment of the data feeding tiered models: completeness, accuracy, timeliness, and lineage from the system of origin, with the controls each feed depends on.']]},
+'mrm-euc':{t:'End-User Computing Sweep · Q2 2026',v:'Q2-2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'warn',line:'4 spreadsheet models found outside the inventory',obl:['MRM-02'],
+ secs:[['Method','A sweep of business-unit spreadsheets and desktop tools for anything meeting the model definition in policy §2.'],['Result','Four end-user computing models identified that are not in the inventory. Owners have been notified and cataloguing is due September 2026, tracked as MRM-02.']]},
+'mrm-retire':{t:'Model Retirement Record',v:'2026',dom:'mrm',type:'Evidence',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Two models retired with documentation retained',obl:['MRM-12'],
+ secs:[['Contents','Retirement records for two models withdrawn from production: the decision, the replacement, the final performance record, and where the documentation is retained.']]},
+'mrm-std-val':{t:'Model Validation Standard',v:'v3.0',dom:'mrm',type:'Standard',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Depth and independence by tier',obl:['MRM-04'],
+ secs:[['Requirement','Sets what validation must cover, who may perform it, and how depth scales with tier. Tier 1 requires full independent validation before deployment and on an annual cycle.']]},
+'mrm-std-dev':{t:'Model Development Standard',v:'v2.1',dom:'mrm',type:'Standard',owner:'A. Kaur · Model Risk Manager',status:'good',line:'How a model is built and documented',obl:['MRM-05'],
+ secs:[['Requirement','Requirements for specification, data sourcing, testing, and documentation during development, so validation is not the first time anyone writes it down.']]},
+'mrm-proc-change':{t:'Model Change Management Procedure',v:'v1.4',dom:'mrm',type:'Standard',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Classification, testing, and rollback',obl:['MRM-09'],
+ secs:[['Requirement','Classifies changes by materiality, sets the testing each class requires, and defines the rollback position. The approval gate this procedure anticipates is still in draft.']]},
+'mrm-std-euc':{t:'End-User Computing Standard',v:'v1.2',dom:'mrm',type:'Standard',owner:'A. Kaur · Model Risk Manager',status:'good',line:'When a spreadsheet becomes a model',obl:['MRM-02'],
+ secs:[['Requirement','The test for whether a spreadsheet or desktop tool meets the model definition, and what happens when it does: inventory entry, owner, tier, and the controls that follow.']]},
+'mrm-std-vendor':{t:'Vendor Model Risk Standard',v:'v2.0',dom:'mrm',type:'Standard',owner:'A. Kaur · Model Risk Manager',status:'good',line:'What we require of a vendor model',obl:['MRM-08'],
+ secs:[['Requirement','Diligence, documentation, and validation evidence required before a vendor model reaches production, and the compensating controls where a vendor withholds detail.']]},
+'mrm-std-mon':{t:'Model Monitoring Standard',v:'v1.3',dom:'mrm',type:'Standard',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Thresholds, cadence, and escalation',obl:['MRM-07'],
+ secs:[['Requirement','Monitoring requirements by tier: which indicators, at what cadence, against which thresholds, and who is alerted when a threshold breaks.']]},
+'mrm-std-dq':{t:'Model Data Quality Standard',v:'v1.1',dom:'mrm',type:'Standard',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Requirements for model inputs',obl:['MRM-01'],
+ secs:[['Requirement','Data quality requirements for model inputs, the lineage that must be documented, and the checks that run before a model consumes a feed.']]},
+'mrm-proc-tier':{t:'Model Tiering Procedure',v:'v2.0',dom:'mrm',type:'Standard',owner:'A. Kaur · Model Risk Manager',status:'good',line:'How a model is scored into a tier',obl:['MRM-03'],
+ secs:[['Requirement','The scoring procedure behind the tiering matrix: materiality, complexity, and member impact, and who approves a tier assignment or a change to one.']]},
+'mrm-proc-issue':{t:'Validation Issue Escalation Procedure',v:'v1.1',dom:'mrm',type:'Standard',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Findings, owners, and due dates',obl:['MRM-10'],
+ secs:[['Requirement','How validation findings are rated, assigned, tracked, and escalated when they age past their due date.']]},
+'mrm-std-retire':{t:'Model Retirement Standard',v:'v1.0',dom:'mrm',type:'Standard',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Withdrawal and record retention',obl:['MRM-12'],
+ secs:[['Requirement','What must happen when a model leaves production: the decision record, the replacement, and how long the documentation is retained.']]},
+'mrm-min-jul':{t:'MRM Committee Minutes',v:'Jul 2026',dom:'mrm',type:'Committee record',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Standing monthly session · quorum met',obl:['MRM-10'],
+ secs:[['Agenda','Validation results presented in the month, monitoring exceptions, the issue tracker, and vendor evidence outstanding.'],['Decisions','Recorded with the members present and the votes taken. Items carried forward appear on the following month&rsquo;s agenda.']]},
+'mrm-min-may':{t:'MRM Committee Minutes',v:'May 2026',dom:'mrm',type:'Committee record',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Standing monthly session · quorum met',obl:['MRM-10'],
+ secs:[['Agenda','Validation results presented in the month, monitoring exceptions, the issue tracker, and vendor evidence outstanding.'],['Decisions','Recorded with the members present and the votes taken. Items carried forward appear on the following month&rsquo;s agenda.']]},
+'mrm-min-apr':{t:'MRM Committee Minutes',v:'Apr 2026',dom:'mrm',type:'Committee record',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Standing monthly session · quorum met',obl:['MRM-10'],
+ secs:[['Agenda','Validation results presented in the month, monitoring exceptions, the issue tracker, and vendor evidence outstanding.'],['Decisions','Recorded with the members present and the votes taken. Items carried forward appear on the following month&rsquo;s agenda.']]},
+'mrm-min-mar':{t:'MRM Committee Minutes',v:'Mar 2026',dom:'mrm',type:'Committee record',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Standing monthly session · quorum met',obl:['MRM-10'],
+ secs:[['Agenda','Validation results presented in the month, monitoring exceptions, the issue tracker, and vendor evidence outstanding.'],['Decisions','Recorded with the members present and the votes taken. Items carried forward appear on the following month&rsquo;s agenda.']]},
+'mrm-min-feb':{t:'MRM Committee Minutes',v:'Feb 2026',dom:'mrm',type:'Committee record',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Standing monthly session · quorum met',obl:['MRM-10'],
+ secs:[['Agenda','Validation results presented in the month, monitoring exceptions, the issue tracker, and vendor evidence outstanding.'],['Decisions','Recorded with the members present and the votes taken. Items carried forward appear on the following month&rsquo;s agenda.']]},
+'mrm-board-h2':{t:'Board Model Risk Summary',v:'H2-2025',dom:'mrm',type:'Board record',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Semiannual aggregate reporting',obl:['MRM-10'],
+ secs:[['Contents','Aggregate model risk posture for the half: validation coverage, open findings by age, tier migration, and the models entering or leaving production.']]},
+'mrm-board-deep':{t:'Board Risk Committee · Model Risk Deep Dive',v:'Jun 2026',dom:'mrm',type:'Board record',owner:'A. Kaur · Model Risk Manager',status:'good',line:'Annual deep dive on the tiered set',obl:['MRM-10'],
+ secs:[['Contents','The annual session on model risk: the inventory, what each Tier 1 model decides, where the institution relies on vendor models, and the interagency guidance the programme answers to.']]},
+'mrm-train':{t:'Model Owner Training Attestation',v:'2026 cycle',dom:'mrm',type:'Training',owner:'A. Kaur · Model Risk Manager',status:'good',line:'All model owners current',obl:['MRM-12'],
+ secs:[['Contents','Role-based training for model owners and validators covering the policy, the tiering test, monitoring duties, and what a model owner must escalate. Signed attestations on file for every owner in the inventory.']]},
+'tprm-dd-core':{t:'Due Diligence Packet · Core Processing Platform',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence · critical relationship',obl:['TPRM-03'],
+ secs:[['Contents','Financial condition, security posture, resilience, insurance, regulatory history, and compliance capacity assessed before contract and refreshed on the critical cadence.'],['Scope note','Subcontractor dependencies are not covered. No fourth-party disclosures have been collected from any vendor, which is open as TPRM-06.']]},
+'tprm-dd-digital':{t:'Due Diligence Packet · Digital Banking Platform',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence · critical relationship',obl:['TPRM-03'],
+ secs:[['Contents','Financial condition, security posture, resilience, insurance, regulatory history, and compliance capacity assessed before contract and refreshed on the critical cadence.'],['Scope note','Subcontractor dependencies are not covered. No fourth-party disclosures have been collected from any vendor, which is open as TPRM-06.']]},
+'tprm-dd-cards':{t:'Due Diligence Packet · Card Processing &amp; Settlement',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence · critical relationship',obl:['TPRM-03'],
+ secs:[['Contents','Financial condition, security posture, resilience, insurance, regulatory history, and compliance capacity assessed before contract and refreshed on the critical cadence.'],['Scope note','Subcontractor dependencies are not covered. No fourth-party disclosures have been collected from any vendor, which is open as TPRM-06.']]},
+'tprm-dd-payments':{t:'Due Diligence Packet · ACH &amp; Wire Origination',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence · critical relationship',obl:['TPRM-03'],
+ secs:[['Contents','Financial condition, security posture, resilience, insurance, regulatory history, and compliance capacity assessed before contract and refreshed on the critical cadence.'],['Scope note','Subcontractor dependencies are not covered. No fourth-party disclosures have been collected from any vendor, which is open as TPRM-06.']]},
+'tprm-dd-los':{t:'Due Diligence Packet · Loan Origination System',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence · critical relationship',obl:['TPRM-03'],
+ secs:[['Contents','Financial condition, security posture, resilience, insurance, regulatory history, and compliance capacity assessed before contract and refreshed on the critical cadence.'],['Scope note','Subcontractor dependencies are not covered. No fourth-party disclosures have been collected from any vendor, which is open as TPRM-06.']]},
+'tprm-dd-collect':{t:'Due Diligence Packet · Collections Servicing',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence · critical relationship',obl:['TPRM-03'],
+ secs:[['Contents','Financial condition, security posture, resilience, insurance, regulatory history, and compliance capacity assessed before contract and refreshed on the critical cadence.'],['Scope note','Subcontractor dependencies are not covered. No fourth-party disclosures have been collected from any vendor, which is open as TPRM-06.']]},
+'tprm-dd-cloud':{t:'Due Diligence Packet · Cloud Infrastructure',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence · critical relationship',obl:['TPRM-03'],
+ secs:[['Contents','Financial condition, security posture, resilience, insurance, regulatory history, and compliance capacity assessed before contract and refreshed on the critical cadence.'],['Scope note','Subcontractor dependencies are not covered. No fourth-party disclosures have been collected from any vendor, which is open as TPRM-06.']]},
+'tprm-dd-mssp':{t:'Due Diligence Packet · Managed Security Services',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence · critical relationship',obl:['TPRM-03'],
+ secs:[['Contents','Financial condition, security posture, resilience, insurance, regulatory history, and compliance capacity assessed before contract and refreshed on the critical cadence.'],['Scope note','Subcontractor dependencies are not covered. No fourth-party disclosures have been collected from any vendor, which is open as TPRM-06.']]},
+'tprm-dd-fraud':{t:'Due Diligence Packet · Fraud Analytics',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence · critical relationship',obl:['TPRM-03'],
+ secs:[['Contents','Financial condition, security posture, resilience, insurance, regulatory history, and compliance capacity assessed before contract and refreshed on the critical cadence.'],['Scope note','Subcontractor dependencies are not covered. No fourth-party disclosures have been collected from any vendor, which is open as TPRM-06.']]},
+'tprm-dd-bsa':{t:'Due Diligence Packet · BSA Monitoring Platform',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence · critical relationship',obl:['TPRM-03'],
+ secs:[['Contents','Financial condition, security posture, resilience, insurance, regulatory history, and compliance capacity assessed before contract and refreshed on the critical cadence.'],['Scope note','Subcontractor dependencies are not covered. No fourth-party disclosures have been collected from any vendor, which is open as TPRM-06.']]},
+'tprm-dd-dms':{t:'Due Diligence Packet · Document Management Estate',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence · critical relationship',obl:['TPRM-03'],
+ secs:[['Contents','Financial condition, security posture, resilience, insurance, regulatory history, and compliance capacity assessed before contract and refreshed on the critical cadence.'],['Scope note','Subcontractor dependencies are not covered. No fourth-party disclosures have been collected from any vendor, which is open as TPRM-06.']]},
+'tprm-dd-hris':{t:'Due Diligence Packet · Payroll &amp; HRIS',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence · critical relationship',obl:['TPRM-03'],
+ secs:[['Contents','Financial condition, security posture, resilience, insurance, regulatory history, and compliance capacity assessed before contract and refreshed on the critical cadence.'],['Scope note','Subcontractor dependencies are not covered. No fourth-party disclosures have been collected from any vendor, which is open as TPRM-06.']]},
+'tprm-soc2-digital':{t:'Vendor SOC 2 Review Packet · Digital Banking Platform',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Type 2 reviewed against the vendor record',obl:['TPRM-05'],
+ secs:[['Summary','SOC 2 Type 2 report read for scope, period covered, exceptions, and the complementary user-entity controls it assumes we operate.'],['Result','Exceptions triaged against our own control set. CUECs confirmed in place, or the gap recorded where they are not.']]},
+'tprm-soc2-cards':{t:'Vendor SOC 2 Review Packet · Card Processing &amp; Settlement',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Type 2 reviewed against the vendor record',obl:['TPRM-05'],
+ secs:[['Summary','SOC 2 Type 2 report read for scope, period covered, exceptions, and the complementary user-entity controls it assumes we operate.'],['Result','Exceptions triaged against our own control set. CUECs confirmed in place, or the gap recorded where they are not.']]},
+'tprm-soc2-payments':{t:'Vendor SOC 2 Review Packet · ACH &amp; Wire Origination',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Type 2 reviewed against the vendor record',obl:['TPRM-05'],
+ secs:[['Summary','SOC 2 Type 2 report read for scope, period covered, exceptions, and the complementary user-entity controls it assumes we operate.'],['Result','Exceptions triaged against our own control set. CUECs confirmed in place, or the gap recorded where they are not.']]},
+'tprm-soc2-los':{t:'Vendor SOC 2 Review Packet · Loan Origination System',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Type 2 reviewed against the vendor record',obl:['TPRM-05'],
+ secs:[['Summary','SOC 2 Type 2 report read for scope, period covered, exceptions, and the complementary user-entity controls it assumes we operate.'],['Result','Exceptions triaged against our own control set. CUECs confirmed in place, or the gap recorded where they are not.']]},
+'tprm-soc2-collect':{t:'Vendor SOC 2 Review Packet · Collections Servicing',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Type 2 reviewed against the vendor record',obl:['TPRM-05'],
+ secs:[['Summary','SOC 2 Type 2 report read for scope, period covered, exceptions, and the complementary user-entity controls it assumes we operate.'],['Result','Exceptions triaged against our own control set. CUECs confirmed in place, or the gap recorded where they are not.']]},
+'tprm-soc2-cloud':{t:'Vendor SOC 2 Review Packet · Cloud Infrastructure',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Type 2 reviewed against the vendor record',obl:['TPRM-05'],
+ secs:[['Summary','SOC 2 Type 2 report read for scope, period covered, exceptions, and the complementary user-entity controls it assumes we operate.'],['Result','Exceptions triaged against our own control set. CUECs confirmed in place, or the gap recorded where they are not.']]},
+'tprm-soc2-mssp':{t:'Vendor SOC 2 Review Packet · Managed Security Services',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Type 2 reviewed against the vendor record',obl:['TPRM-05'],
+ secs:[['Summary','SOC 2 Type 2 report read for scope, period covered, exceptions, and the complementary user-entity controls it assumes we operate.'],['Result','Exceptions triaged against our own control set. CUECs confirmed in place, or the gap recorded where they are not.']]},
+'tprm-soc2-fraud':{t:'Vendor SOC 2 Review Packet · Fraud Analytics',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Type 2 reviewed against the vendor record',obl:['TPRM-05'],
+ secs:[['Summary','SOC 2 Type 2 report read for scope, period covered, exceptions, and the complementary user-entity controls it assumes we operate.'],['Result','Exceptions triaged against our own control set. CUECs confirmed in place, or the gap recorded where they are not.']]},
+'tprm-soc2-bsa':{t:'Vendor SOC 2 Review Packet · BSA Monitoring Platform',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Type 2 reviewed against the vendor record',obl:['TPRM-05'],
+ secs:[['Summary','SOC 2 Type 2 report read for scope, period covered, exceptions, and the complementary user-entity controls it assumes we operate.'],['Result','Exceptions triaged against our own control set. CUECs confirmed in place, or the gap recorded where they are not.']]},
+'tprm-soc2-dms':{t:'Vendor SOC 2 Review Packet · Document Management Estate',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Type 2 reviewed against the vendor record',obl:['TPRM-05'],
+ secs:[['Summary','SOC 2 Type 2 report read for scope, period covered, exceptions, and the complementary user-entity controls it assumes we operate.'],['Result','Exceptions triaged against our own control set. CUECs confirmed in place, or the gap recorded where they are not.']]},
+'tprm-soc2-hris':{t:'Vendor SOC 2 Review Packet · Payroll &amp; HRIS',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Type 2 reviewed against the vendor record',obl:['TPRM-05'],
+ secs:[['Summary','SOC 2 Type 2 report read for scope, period covered, exceptions, and the complementary user-entity controls it assumes we operate.'],['Result','Exceptions triaged against our own control set. CUECs confirmed in place, or the gap recorded where they are not.']]},
+'tprm-qr-q1-2026':{t:'Quarterly Vendor Review Packet',v:'Q1-2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Ongoing monitoring · critical and moderate tiers',obl:['TPRM-05'],
+ secs:[['Contents','Performance against service levels, security attestations, incident history, and a financial-condition refresh for every critical and moderate relationship in the quarter.']]},
+'tprm-qr-q4-2025':{t:'Quarterly Vendor Review Packet',v:'Q4-2025',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Ongoing monitoring · critical and moderate tiers',obl:['TPRM-05'],
+ secs:[['Contents','Performance against service levels, security attestations, incident history, and a financial-condition refresh for every critical and moderate relationship in the quarter.']]},
+'tprm-qr-q3-2025':{t:'Quarterly Vendor Review Packet',v:'Q3-2025',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Ongoing monitoring · critical and moderate tiers',obl:['TPRM-05'],
+ secs:[['Contents','Performance against service levels, security attestations, incident history, and a financial-condition refresh for every critical and moderate relationship in the quarter.']]},
+'tprm-fin-core':{t:'Financial Condition Review · Core Processing Platform',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Assessed against the institution&rsquo;s thresholds',obl:['TPRM-05'],
+ secs:[['Method','Audited statements, liquidity and leverage against our thresholds, going-concern language, and ownership changes in the period.'],['Result','Within threshold. Any breach would raise an exception to the relationship owner rather than sit in a report nobody reads.']]},
+'tprm-fin-digital':{t:'Financial Condition Review · Digital Banking Platform',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Assessed against the institution&rsquo;s thresholds',obl:['TPRM-05'],
+ secs:[['Method','Audited statements, liquidity and leverage against our thresholds, going-concern language, and ownership changes in the period.'],['Result','Within threshold. Any breach would raise an exception to the relationship owner rather than sit in a report nobody reads.']]},
+'tprm-fin-payments':{t:'Financial Condition Review · ACH &amp; Wire Origination',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Assessed against the institution&rsquo;s thresholds',obl:['TPRM-05'],
+ secs:[['Method','Audited statements, liquidity and leverage against our thresholds, going-concern language, and ownership changes in the period.'],['Result','Within threshold. Any breach would raise an exception to the relationship owner rather than sit in a report nobody reads.']]},
+'tprm-fin-cloud':{t:'Financial Condition Review · Cloud Infrastructure',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Assessed against the institution&rsquo;s thresholds',obl:['TPRM-05'],
+ secs:[['Method','Audited statements, liquidity and leverage against our thresholds, going-concern language, and ownership changes in the period.'],['Result','Within threshold. Any breach would raise an exception to the relationship owner rather than sit in a report nobody reads.']]},
+'tprm-bcp-core':{t:'Business Resiliency Assessment · Core Processing Platform',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Continuity and recovery against the criticality tier',obl:['TPRM-05'],
+ secs:[['Method','Recovery objectives, tested failover, dependency mapping, and the vendor&rsquo;s own continuity testing evidence, assessed against the tier we assigned the relationship.'],['Result','Recovery objectives align to our tier requirement. Test evidence is on file for the period.']]},
+'tprm-bcp-digital':{t:'Business Resiliency Assessment · Digital Banking Platform',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Continuity and recovery against the criticality tier',obl:['TPRM-05'],
+ secs:[['Method','Recovery objectives, tested failover, dependency mapping, and the vendor&rsquo;s own continuity testing evidence, assessed against the tier we assigned the relationship.'],['Result','Recovery objectives align to our tier requirement. Test evidence is on file for the period.']]},
+'tprm-bcp-payments':{t:'Business Resiliency Assessment · ACH &amp; Wire Origination',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Continuity and recovery against the criticality tier',obl:['TPRM-05'],
+ secs:[['Method','Recovery objectives, tested failover, dependency mapping, and the vendor&rsquo;s own continuity testing evidence, assessed against the tier we assigned the relationship.'],['Result','Recovery objectives align to our tier requirement. Test evidence is on file for the period.']]},
+'tprm-bcp-cloud':{t:'Business Resiliency Assessment · Cloud Infrastructure',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Continuity and recovery against the criticality tier',obl:['TPRM-05'],
+ secs:[['Method','Recovery objectives, tested failover, dependency mapping, and the vendor&rsquo;s own continuity testing evidence, assessed against the tier we assigned the relationship.'],['Result','Recovery objectives align to our tier requirement. Test evidence is on file for the period.']]},
+'tprm-bcp-mssp':{t:'Business Resiliency Assessment · Managed Security Services',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Continuity and recovery against the criticality tier',obl:['TPRM-05'],
+ secs:[['Method','Recovery objectives, tested failover, dependency mapping, and the vendor&rsquo;s own continuity testing evidence, assessed against the tier we assigned the relationship.'],['Result','Recovery objectives align to our tier requirement. Test evidence is on file for the period.']]},
+'tprm-con-core':{t:'Executed Contract Record · Core Processing Platform',v:'Current term',dom:'tprm',type:'Evidence',owner:'D. Reyes · General Counsel',status:'warn',line:'Risk clauses present · model-risk clauses pending renewal',obl:['TPRM-04'],
+ secs:[['Contents','The executed agreement and its riders: audit rights, performance measures, incident-notification duties, subcontractor disclosure, termination and data-return provisions.'],['Open items','Incident-notification service levels are not specified, open as TPRM-11. Where the relationship carries a model, the 2026-13 clauses roll in at renewal, open as TPRM-04.']]},
+'tprm-con-digital':{t:'Executed Contract Record · Digital Banking Platform',v:'Current term',dom:'tprm',type:'Evidence',owner:'D. Reyes · General Counsel',status:'warn',line:'Risk clauses present · model-risk clauses pending renewal',obl:['TPRM-04'],
+ secs:[['Contents','The executed agreement and its riders: audit rights, performance measures, incident-notification duties, subcontractor disclosure, termination and data-return provisions.'],['Open items','Incident-notification service levels are not specified, open as TPRM-11. Where the relationship carries a model, the 2026-13 clauses roll in at renewal, open as TPRM-04.']]},
+'tprm-con-payments':{t:'Executed Contract Record · ACH &amp; Wire Origination',v:'Current term',dom:'tprm',type:'Evidence',owner:'D. Reyes · General Counsel',status:'warn',line:'Risk clauses present · model-risk clauses pending renewal',obl:['TPRM-04'],
+ secs:[['Contents','The executed agreement and its riders: audit rights, performance measures, incident-notification duties, subcontractor disclosure, termination and data-return provisions.'],['Open items','Incident-notification service levels are not specified, open as TPRM-11. Where the relationship carries a model, the 2026-13 clauses roll in at renewal, open as TPRM-04.']]},
+'tprm-con-los':{t:'Executed Contract Record · Loan Origination System',v:'Current term',dom:'tprm',type:'Evidence',owner:'D. Reyes · General Counsel',status:'warn',line:'Risk clauses present · model-risk clauses pending renewal',obl:['TPRM-04'],
+ secs:[['Contents','The executed agreement and its riders: audit rights, performance measures, incident-notification duties, subcontractor disclosure, termination and data-return provisions.'],['Open items','Incident-notification service levels are not specified, open as TPRM-11. Where the relationship carries a model, the 2026-13 clauses roll in at renewal, open as TPRM-04.']]},
+'tprm-qn-collect':{t:'Vendor Risk Questionnaire · Collections Servicing',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Returned, reviewed, and filed',obl:['TPRM-03'],
+ secs:[['Contents','The vendor&rsquo;s returned questionnaire on security, privacy, resilience, personnel screening, and use of AI in the service, with the evidence attached to each answer.']]},
+'tprm-qn-fraud':{t:'Vendor Risk Questionnaire · Fraud Analytics',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Returned, reviewed, and filed',obl:['TPRM-03'],
+ secs:[['Contents','The vendor&rsquo;s returned questionnaire on security, privacy, resilience, personnel screening, and use of AI in the service, with the evidence attached to each answer.']]},
+'tprm-qn-bsa':{t:'Vendor Risk Questionnaire · BSA Monitoring Platform',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Returned, reviewed, and filed',obl:['TPRM-03'],
+ secs:[['Contents','The vendor&rsquo;s returned questionnaire on security, privacy, resilience, personnel screening, and use of AI in the service, with the evidence attached to each answer.']]},
+'tprm-qn-dms':{t:'Vendor Risk Questionnaire · Document Management Estate',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Returned, reviewed, and filed',obl:['TPRM-03'],
+ secs:[['Contents','The vendor&rsquo;s returned questionnaire on security, privacy, resilience, personnel screening, and use of AI in the service, with the evidence attached to each answer.']]},
+'tprm-att-q2-2026':{t:'Relationship Owner Monitoring Attestation',v:'Q2-2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Signed by each critical relationship owner',obl:['TPRM-05'],
+ secs:[['Contents','Each critical relationship owner attests that monitoring was performed for the quarter, states what changed, and confirms whether any threshold was breached.']]},
+'tprm-att-q1-2026':{t:'Relationship Owner Monitoring Attestation',v:'Q1-2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Signed by each critical relationship owner',obl:['TPRM-05'],
+ secs:[['Contents','Each critical relationship owner attests that monitoring was performed for the quarter, states what changed, and confirms whether any threshold was breached.']]},
+'tprm-att-q4-2025':{t:'Relationship Owner Monitoring Attestation',v:'Q4-2025',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Signed by each critical relationship owner',obl:['TPRM-05'],
+ secs:[['Contents','Each critical relationship owner attests that monitoring was performed for the quarter, states what changed, and confirms whether any threshold was breached.']]},
+'tprm-att-q3-2025':{t:'Relationship Owner Monitoring Attestation',v:'Q3-2025',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Signed by each critical relationship owner',obl:['TPRM-05'],
+ secs:[['Contents','Each critical relationship owner attests that monitoring was performed for the quarter, states what changed, and confirms whether any threshold was breached.']]},
+'tprm-off-legacy-print':{t:'Termination &amp; Offboarding Record · Statement Print Vendor',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'warn',line:'Data return confirmed · no documented exit plan preceded it',obl:['TPRM-08'],
+ secs:[['Contents','The termination record for a non-critical relationship: notice, data return and destruction certification, and access revocation.'],['Open item','No exit plan existed before termination. Exit planning for critical relationships remains open as TPRM-08.']]},
+'tprm-off-legacy-scan':{t:'Termination &amp; Offboarding Record · Records Scanning Vendor',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'warn',line:'Data return confirmed · no documented exit plan preceded it',obl:['TPRM-08'],
+ secs:[['Contents','The termination record for a non-critical relationship: notice, data return and destruction certification, and access revocation.'],['Open item','No exit plan existed before termination. Exit planning for critical relationships remains open as TPRM-08.']]},
+'tprm-inv-hist':{t:'Vendor Inventory · Change History',v:'2026 YTD',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Additions, tier changes, and terminations',obl:['TPRM-01'],
+ secs:[['Contents','Every change to the vendor inventory in the year: relationships added, tiers reassigned, and relationships terminated, with who approved each.']]},
+'tprm-tier-method':{t:'Criticality Tiering Assessment',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'87 relationships scored · 12 critical',obl:['TPRM-02'],
+ secs:[['Method','Every relationship scored on member impact, data sensitivity, substitutability, and regulatory exposure, producing the critical designation set.'],['Result','Twelve relationships support critical activities. The remaining 75 sit at moderate or low with monitoring scaled accordingly.']]},
+'tprm-ai-use':{t:'Vendor AI Use Register',v:'2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'warn',line:'9 vendors report AI in the service · 2 attestations outstanding',obl:['TPRM-03'],
+ secs:[['Contents','Which vendors use AI in delivering the service, what it does, whether it touches member data, and what the contract says about it.'],['Open item','Two vendors have not returned a data-handling attestation. Both are moderate tier and are being chased.']]},
+'tprm-issues':{t:'Third-Party Issue Tracker',v:'Live register',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'warn',line:'6 open items across 4 relationships',obl:['TPRM-12'],
+ secs:[['Contents','Issues raised from reviews, incidents, and attestations, with owner, severity, due date, and the evidence that closes each one.']]},
+'tprm-std-class':{t:'Vendor Classification Standard',v:'v2.0',dom:'tprm',type:'Standard',owner:'P. Nguyen · ISD',status:'good',line:'How a relationship is tiered',obl:['TPRM-02'],
+ secs:[['Requirement','The criteria that put a relationship in a tier, who approves the designation, and what monitoring each tier attracts.']]},
+'tprm-proc-onb':{t:'Vendor Onboarding Procedure',v:'v2.2',dom:'tprm',type:'Standard',owner:'P. Nguyen · ISD',status:'good',line:'From request to executed contract',obl:['TPRM-03'],
+ secs:[['Requirement','The path a new relationship follows: business case, diligence scaled to tier, contract review, security review, and the approvals required before signature.']]},
+'tprm-std-mon':{t:'Ongoing Monitoring Standard',v:'v1.4',dom:'tprm',type:'Standard',owner:'P. Nguyen · ISD',status:'good',line:'Cadence and content by tier',obl:['TPRM-05'],
+ secs:[['Requirement','What monitoring each tier requires, at what cadence, and what triggers a review outside the cycle: an incident, an ownership change, or a SOC 2 exception.']]},
+'tprm-tmpl-qn':{t:'Vendor Risk Questionnaire Template',v:'v3.1',dom:'tprm',type:'Standard',owner:'P. Nguyen · ISD',status:'good',line:'The standard question set',obl:['TPRM-03'],
+ secs:[['Requirement','The questionnaire issued to vendors, scaled by tier, covering security, privacy, resilience, personnel, subcontracting, and AI use.']]},
+'tprm-proc-off':{t:'Offboarding Procedure',v:'v1.2',dom:'tprm',type:'Standard',owner:'P. Nguyen · ISD',status:'good',line:'Termination and data return',obl:['TPRM-12'],
+ secs:[['Requirement','What happens when a relationship ends: notice, data return and destruction, access revocation, and the evidence retained.']]},
+'tprm-proc-esc':{t:'Third-Party Issue Escalation Procedure',v:'v1.1',dom:'tprm',type:'Standard',owner:'P. Nguyen · ISD',status:'good',line:'Severity, owners, and escalation',obl:['TPRM-09'],
+ secs:[['Requirement','How third-party issues are rated and escalated, and when a finding reaches the Board Risk Committee rather than staying with the relationship owner.']]},
+'tprm-board-q1-2026':{t:'Board Risk Committee Minutes · TPRM Standing Item',v:'Mar 2026',dom:'tprm',type:'Board record',owner:'Board Risk Committee',status:'good',line:'Quarterly third-party risk report',obl:['TPRM-09'],
+ secs:[['Contents','The quarterly third-party report: critical-vendor posture, concentration notes, open issues, and pending contract actions.']]},
+'tprm-board-q4-2025':{t:'Board Risk Committee Minutes · TPRM Standing Item',v:'Dec 2025',dom:'tprm',type:'Board record',owner:'Board Risk Committee',status:'good',line:'Quarterly third-party risk report',obl:['TPRM-09'],
+ secs:[['Contents','The quarterly third-party report: critical-vendor posture, concentration notes, open issues, and pending contract actions.']]},
+'tprm-review-2025':{t:'Independent Review of the TPRM Program',v:'2025',dom:'tprm',type:'Board record',owner:'P. Nguyen · ISD',status:'warn',line:'Last independent review · 2026 review not yet scheduled',obl:['TPRM-10'],
+ secs:[['Contents','Independent review of the programme against the 2023 Interagency Guidance: governance, diligence depth, contract coverage, monitoring, and records.'],['Open item','The 2026 review has not been scheduled, which is open as TPRM-10.']]},
+'tprm-train-owner':{t:'Relationship Owner Training Attestation',v:'2026 cycle',dom:'tprm',type:'Training',owner:'P. Nguyen · ISD',status:'good',line:'All critical relationship owners current',obl:['TPRM-12'],
+ secs:[['Contents','Training for relationship owners covering diligence duties, monitoring obligations, incident escalation, and what must be evidenced.']]},
+'tprm-train-proc':{t:'Procurement &amp; Contracting Training',v:'2026 cycle',dom:'tprm',type:'Training',owner:'D. Reyes · General Counsel',status:'good',line:'Procurement and business-line staff',obl:['TPRM-04'],
+ secs:[['Contents','Training for anyone who can start a vendor relationship: what triggers the process, which clauses are non-negotiable, and why a signature outside the process is a finding.']]},
+
 'fairness-bia':{t:'Fairness &amp; Bias Impact Assessment',v:'2026 cycle',dom:'aigov',type:'Evidence',owner:'R. Fischer · CRO',status:'warn',line:'8 of 11 member-facing systems assessed · 3 scheduled for Q3',obl:[],
  secs:[['Method','Each system that informs a member-facing decision is assessed for fairness exposure: the outcome it influences, the attributes it uses, proxy risk in those attributes, measured disparity across protected classes, and what the institution does when a threshold is breached.'],
  ['Results','No disparity above threshold in the assessed set. Two systems carry watch items on proxy features, both under quarterly re-test. The underwriting-support model carries the tightest thresholds because its outcome is closest to a credit decision.'],
@@ -2832,27 +3066,56 @@ function osDomain(key){
   return head+body;
 }
 function docFilter(){
-  var q=($('doc-q')?$('doc-q').value:'').toLowerCase(), st=$('doc-st')?$('doc-st').value:'';
-  var rows=document.querySelectorAll('#doc-rows tr');
+  var q=($('doc-q')?$('doc-q').value:'').toLowerCase(), st=$('doc-st')?$('doc-st').value:'', ty=$('doc-ty')?$('doc-ty').value:'';
+  var rows=document.querySelectorAll('#doc-rows tr'),shown=0;
   for(var i=0;i<rows.length;i++){
     var okQ=!q||(rows[i].getAttribute('data-q')||'').indexOf(q)>=0;
     var okS=!st||rows[i].getAttribute('data-st')===st;
-    rows[i].style.display=(okQ&&okS)?'':'none';
+    var okT=!ty||rows[i].getAttribute('data-ty')===ty;
+    var ok=okQ&&okS&&okT; rows[i].style.display=ok?'':'none'; if(ok)shown++;
   }
+  var c=$('doc-count'); if(c)c.textContent=shown+' of '+rows.length+' shown';
+}
+var TYPE_RANK={'Policy':1,'Standard':2,'Procedure':3,'Template':4,'Draft':5,'Evidence':6,'Committee record':7,'Board record':8,'Training':9};
+function docsInDomain(k){var o=[];for(var id in DOCLIB)if(DOCLIB[id].dom===k)o.push(id);return o;}
+function docsInScope(){
+  var out=[];
+  DOMAINS.forEach(function(d){
+    if(OS_SCOPE!=='all'&&d.key!==OS_SCOPE)return;
+    out=out.concat(BUILT_DOMS[d.key]?docsInDomain(d.key):SAMPLE_DOCS.filter(function(id){return DOCLIB[id].dom===d.key;}));
+  });
+  return out.sort(function(a,b){
+    var A=DOCLIB[a],B=DOCLIB[b];
+    if(A.dom!==B.dom)return 0;
+    var ra=TYPE_RANK[A.type]||99, rb=TYPE_RANK[B.type]||99;
+    return ra!==rb?ra-rb:(A.t<B.t?-1:1);
+  });
+}
+function docCoverage(){
+  if(OS_SCOPE!=='all'){
+    var d=domByKey(OS_SCOPE), have=docsInScope().length;
+    if(!d)return '';
+    return BUILT_DOMS[d.key]
+      ? '<b style="color:var(--cyan)">Showing all '+have+' documents</b> in '+d.name+'. This domain is built out in full: every policy, standard, validation, packet, minute, and attestation behind the register.'
+      : 'Showing <b>'+have+' of '+d.docs+'</b> in '+d.name+' &mdash; a representative sample. The remaining documents are monitored and land in this view with the connector build-out for this domain.';
+  }
+  var built=DOMAINS.filter(function(d){return BUILT_DOMS[d.key];});
+  var bn=built.reduce(function(a,d){return a+d.docs;},0);
+  return 'Showing <b>'+docsInScope().length+' of '+DOCS_TOTAL+'</b>. '+built.map(function(d){return d.name;}).join(' and ')+' are built out in full ('+bn+' documents between them). The other domains show a representative sample until their connectors complete.';
 }
 function osDocs(){
   var cats=DOC_CATS.map(function(c){return '<div class="kpi"><div class="lab">'+c[0]+'</div><div class="num">'+c[1]+'</div></div>';}).join('')
    +'<div class="kpi"><div class="lab">Total monitored</div><div class="num cy">'+DOCS_TOTAL+'</div><div class="sub">equals the sum of the '+DOMAINS.length+' domains</div></div>';
-  var list=SAMPLE_DOCS.filter(function(id){return OS_SCOPE==='all'||DOCLIB[id].dom===OS_SCOPE;});
+  var list=docsInScope();
   var rows=list.map(function(id){
     var d=DOCLIB[id]; var dom=domByKey(d.dom);
     var q=(d.t+' '+(dom?dom.name:'')+' '+d.type+' '+d.owner).toLowerCase();
-    return '<tr class="prow" data-q="'+q+'" data-st="'+d.status+'" onclick="openDocView(\''+id+'\')"><td><b class="doclink">'+d.t+'</b></td><td class="pcat">'+(dom?dom.name:'')+'</td><td class="pcat">'+d.type+'</td><td class="pcat">'+d.owner.split(' · ')[0]+'</td><td>'+statusTag(d.status)+'</td><td class="pcat">'+d.v+'</td></tr>';
+    return '<tr class="prow" data-q="'+q+'" data-st="'+d.status+'" data-ty="'+d.type+'" onclick="openDocView(\''+id+'\')"><td><b class="doclink">'+d.t+'</b></td><td class="pcat">'+(dom?dom.name:'')+'</td><td class="pcat">'+d.type+'</td><td class="pcat">'+d.owner.split(' · ')[0]+'</td><td>'+statusTag(d.status)+'</td><td class="pcat">'+d.v+'</td></tr>';
   }).join('');
   return osScopeBar()+'<div class="doc-cats">'+cats+'</div>'
-   +'<div class="card"><h2>Document universe · representative sample · click any document to open it</h2><div class="csub">A representative slice of '+DOCS_TOTAL+' monitored documents, drawn across all '+DOMAINS.length+' domains. Policies and procedures are only part of it. Evidence artifacts, committee minutes, validations, test results, and training records are what carry an exam, and each one maps to the obligations it evidences.</div>'
-   +'<div class="docbar"><input id="doc-q" placeholder="Search by title, domain, type, or owner…" oninput="docFilter()"><select id="doc-st" onchange="docFilter()"><option value="">All statuses</option><option value="good">Current</option><option value="warn">Update proposed</option><option value="crit">High priority</option></select></div>'
-   +'<table class="tbl"><thead><tr><th>Document</th><th>Domain</th><th>Type</th><th>Owner</th><th>Status</th><th>Version / verified</th></tr></thead><tbody id="doc-rows">'+(rows||'<tr><td colspan="6" style="color:var(--grey)">No sample documents in this scope; the full universe covers it.</td></tr>')+'</tbody></table></div>'
+   +'<div class="card"><h2>Document universe · click any document to open it</h2><div class="csub">'+docCoverage()+' Policies and procedures are only part of it. Evidence artifacts, committee minutes, validations, test results, and training records are what carry an exam, and each one maps to the obligations it evidences.</div>'
+   +'<div class="doc-count" id="doc-count">'+list.length+' of '+list.length+' shown</div><div class="docbar"><input id="doc-q" placeholder="Search by title, domain, type, or owner…" oninput="docFilter()"><select id="doc-ty" onchange="docFilter()"><option value="">All types</option>'+Object.keys(TYPE_RANK).map(function(t){return '<option>'+t+'</option>';}).join('')+'</select><select id="doc-st" onchange="docFilter()"><option value="">All statuses</option><option value="good">Current</option><option value="warn">Update proposed</option><option value="crit">High priority</option></select></div>'
+   +'<table class="tbl doc-tbl"><thead><tr><th>Document</th><th>Domain</th><th>Type</th><th>Owner</th><th>Status</th><th>Version / verified</th></tr></thead><tbody id="doc-rows">'+(rows||'<tr><td colspan="6" style="color:var(--grey)">No sample documents in this scope; the full universe covers it.</td></tr>')+'</tbody></table></div>'
    +'<div class="card" style="margin-top:14px"><h2>Bring your own repository</h2><div class="csub">SharePoint, network folders, or a GRC platform: OnSide connects to where documents already live through LeapFI · Connect (MCP), keeps the evidence chain intact, and never forces a migration. Coming with the Connect module.</div></div>';
 }
 var GAPS=[
