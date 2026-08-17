@@ -358,12 +358,32 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 .panel-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px}
 .panel-h .go2{font-size:11.5px;font-weight:700;color:var(--cyan);cursor:pointer;white-space:nowrap}
 .panel-h .go2:hover{text-decoration:underline}
-#home-posture{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+#home-posture{display:grid;grid-template-columns:repeat(8,1fr);gap:9px;margin-top:12px}
+#home-posture .pd{padding:12px 11px}
+#home-posture .pdh{display:block;margin-bottom:8px}
+#home-posture .pdn{display:block;font-size:12px;line-height:1.3;margin-bottom:5px}
+#home-posture .pdg{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+#home-posture .pgv{font-size:11px}
+#home-posture .pgs{font-size:11px}
+@media(max-width:1330px){#home-posture{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:900px){#home-posture{grid-template-columns:repeat(2,1fr)}}
 .pd{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;transition:.12s}
 .pd:hover{border-color:var(--cyan)}
 .pd .pdh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;min-height:32px}
 .pd .pdn{font-size:12.5px;font-weight:700;white-space:normal;line-height:1.3}
 #home-legis .tbl td{padding:8px 10px;font-size:12.5px}
+.sig{padding:14px 0;border-bottom:1px solid var(--line)}
+.sig:last-child{border-bottom:0;padding-bottom:2px}
+.sig-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sig-h b{font-size:13.5px}
+.sig-age{margin-left:auto;font-size:11px;color:var(--grey);white-space:nowrap}
+.sig-st{font-size:11.5px;color:var(--cyan);font-weight:700;margin-top:5px}
+.sig-read{font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:5px;max-width:940px}
+.sig-t{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:9px}
+.sig-lab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);margin-right:2px}
+.tch{font-size:11.5px;font-weight:700;color:var(--ink);background:var(--panel2);border:1px solid var(--line2);border-radius:7px;padding:4px 10px;cursor:pointer;transition:all .12s}
+.tch:hover{border-color:var(--cyan);color:var(--cyan)}
+.tch.dm{color:var(--grey)}
 /* ---- studio sub views ---- */
 .st-view{display:none}
 .st-view.active{display:block;animation:fadein .22s ease}
@@ -751,7 +771,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.061</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.062</b></div>
   </div>
 </aside>
 
@@ -799,15 +819,13 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
       <div class="home-cust"><span class="go2" onclick="toggleHomeCust()">⚙ Customize this page →</span></div>
       <div class="cust-bar" id="cust-bar" style="display:none"></div>
       <div class="kpis" id="home-kpis"></div>
+      <div class="card" id="hp-posture" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('domains')">Risk posture</h2><span class="go2" onclick="goOnside('domains')">Gaps &amp; levers →</span></div><div class="csub" style="margin-bottom:0">Judged against the targets you set, never a generic bar.</div><div id="home-posture"></div></div>
+      <div class="card" id="hp-legis" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('feed-lifecycle')">Strategic signal · newly proposed</h2><span class="go2" onclick="goOnside('feed-lifecycle')">Full lifecycle →</span></div><div class="csub" style="margin-bottom:4px">What has just been proposed, before it is law, and the exact controls it would touch. Federal, state, and local are monitored separately because obligations stack.</div><div id="home-legis"></div></div>
       <div class="grid2" style="margin-top:16px">
-        <div class="card" id="hp-posture"><div class="panel-h"><h2 class="hl2" onclick="goOnside('domains')">Risk posture</h2><span class="go2" onclick="goOnside('domains')">Gaps &amp; levers →</span></div><div class="csub" style="margin-bottom:0">Judged against the targets you set, never a generic bar.</div><div id="home-posture"></div></div>
+        <div class="card" id="hp-queue"><div class="panel-h"><h2 id="home-q-title" class="hl2" onclick="goOnside('gaps')">Your queue</h2><span class="go2" onclick="goOnside('gaps')">All open items →</span></div><div class="csub" id="home-q-sub" style="margin-bottom:4px"></div><div id="home-queue"></div></div>
         <div class="card" id="hp-invest"><div class="panel-h"><h2 class="hl2" onclick="goStudio('design')">Investments</h2><span class="go2" onclick="goStudio('design')">Work the levers →</span></div><div class="csub" id="home-inv-sub" style="margin-bottom:8px"></div><div id="home-invest"></div></div>
       </div>
-      <div class="grid2" style="margin-top:16px">
-        <div class="card" id="hp-value"><div class="panel-h"><h2 class="hl2" onclick="openReport('roi')">Return</h2><span class="go2" onclick="openReport('roi')">Platform ROI →</span></div><div class="csub" id="home-val-sub" style="margin-bottom:8px"></div><div id="home-value"></div></div>
-        <div class="card" id="hp-queue"><div class="panel-h"><h2 id="home-q-title" class="hl2" onclick="goOnside('gaps')">Your queue</h2><span class="go2" onclick="goOnside('gaps')">All open items →</span></div><div class="csub" id="home-q-sub" style="margin-bottom:4px"></div><div id="home-queue"></div></div>
-      </div>
-      <div class="card" id="hp-legis" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('feed-lifecycle')">Legislation &amp; rulemaking in consideration</h2><span class="go2" onclick="goOnside('feed-lifecycle')">Full lifecycle →</span></div><div class="csub" style="margin-bottom:4px">Federal, state, and local, monitored separately because obligations stack.</div><div id="home-legis"></div></div>
+      <div class="card" id="hp-value" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="openReport('roi')">Return</h2><span class="go2" onclick="openReport('roi')">Platform ROI →</span></div><div class="csub" id="home-val-sub" style="margin-bottom:8px"></div><div id="home-value"></div></div>
       <div class="qa-row" id="home-qa"></div>
       <div class="foot-note">LeapFI Platform demo · illustrative customer data for NorthWinds Credit Union · role-based homepage rendered for the signed-in user · Not legal advice · © 2026 LeapFI LLC</div>
     </section>
@@ -988,6 +1006,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.062</span> · <span class="cd">Aug 16, 2026</span><br>The home page is simpler and leads with what is coming. Three numbers across the top instead of six: domains at or above target, gaps to those targets, and what is high priority. Expected return, annual value, and committed spend come off the top and stay where they belong, in the Return and Investments panels below. Risk posture runs across the full width underneath, all eight domains in one row with the gauge and the gap on each. Under it, <b>Strategic signal</b>: the instruments that have just been proposed, before any of them is law, with what each one would mean for this institution and, under &ldquo;would touch&rdquo;, the specific obligations and documents it lands on. Every one is a link, so a control ID opens its register row and a policy opens the document.</li>
             <li><span class="cv">v 1.061</span> · <span class="cd">Aug 16, 2026</span><br>The notification count now follows the person signed in. Switching user left the previous person&rsquo;s badge in the corner until something else redrew it, so a case routed to the CRO looked unread by nobody. The bell redraws on sign-in and on every navigation.</li>
             <li><span class="cv">v 1.060</span> · <span class="cd">Aug 16, 2026</span><br>The approval path now follows the document, not one fixed rule. Settings carries an <b>approval matrix</b>: board-level policy takes a conditional approval from the CRO and a committee vote before it is adopted, executive policy and procedures the CRO can adopt directly. Every case reads the matrix when it opens, and turning the committee requirement off for a tier changes what the CRO sees. On a case the CRO can approve outright, approve subject to a named condition, or route it to <b>counsel</b> &mdash; Dana Reyes, General Counsel, joins the demo and either clears the language or returns it to the analyst with notes, with the opinion on file either way. A conditional approval that names the committee puts the change into the <b>Gap Closure Board Approval Report</b>, a new report written for the board book: what changed, why, the exact language for the vote, and the motion. After the vote the CRO attaches the minutes to the case and gives final approval, and only then does the language go into force and the obligation close. Two levels, every time, with the evidence for both.</li>
             <li><span class="cv">v 1.059</span> · <span class="cd">Aug 16, 2026</span><br>Proposed language now runs through a <b>Case</b>. OnSide opens one the moment it detects a change, and the case carries the whole record: what triggered it, the language drafted, every edit, every routing, and every approval, each stamped with the time and the name of the person who did it. That record is the exam answer. A fifth persona joins the demo, <b>Priya Raman, Risk Analyst</b>, who is the maker: she accepts OnSide&rsquo;s draft or edits it in her own words, with the original kept alongside, then routes it to the CRO. Rachel gets a notification in the app and an email you can open and read, and hers is the approval that adopts the change and closes the obligation behind it. Rejecting returns it to OnSide with nothing touched in the in-force document. Cases live under OnSide with a count of what is waiting on you, and the bell in the top bar shows the same by role.</li>
@@ -1053,7 +1072,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.061</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.062</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -3598,8 +3617,56 @@ function gaugeSVG(cur,tgt,px){
    +'<line x1="'+x1.toFixed(1)+'" y1="'+y1.toFixed(1)+'" x2="'+x2.toFixed(1)+'" y2="'+y2.toFixed(1)+'" stroke="var(--muted)" stroke-width="2"/>'
    +'<text x="'+cx+'" y="'+(cy-2)+'" text-anchor="middle" font-size="'+Math.max(11,Math.round(px*0.23))+'" font-weight="800" fill="var(--ink)" font-family="Inter,sans-serif">'+cur.toFixed(1)+'</text></svg>';
 }
+/* ---- the strategic signal: what was just proposed, and exactly what it would touch ---- */
+var SIGNAL=[
+ {sc:'FEDERAL',instr:'RFI 2026-04',t:'Interagency RFI 2026-04 · generative &amp; agentic AI in model risk',
+  st:'Comment period open · position due Sep 30',age:'Proposed Jun 30',
+  read:'Would put generative and agentic systems inside the model definition. Our charter and MRM scope both stop short of that today.',
+  touch:[['obl','mrm','MRM-11'],['obl','mrm','MRM-01'],['obl','mrm','MRM-09'],['doc','gov-charter'],['doc','gen-ai-draft']]},
+ {sc:'FEDERAL',instr:null,t:'Fed &amp; FDIC joint NPRM · Regulation O · insider credit',
+  st:'Comment window open · position in drafting',age:'Proposed Jul 31',
+  read:'Extensions of credit to insiders. Reporting and approval thresholds would tighten, and the capital narrative picks it up.',
+  touch:[['dom','capital'],['dom','fairlend'],['doc','capital-narr']]},
+ {sc:'STATE · NM',instr:'NM AI Act',t:'HB 210 · AI Transparency &amp; Accountability Act',
+  st:'Passed Senate 34&ndash;6 · awaiting House',age:'Introduced Feb 2026',
+  read:'Vendor disclosure duties for automated decision systems. Our contract rider already has the clause pre-drafted.',
+  touch:[['obl','tprm','TPRM-04'],['obl','tprm','TPRM-01'],['doc','contract-rider'],['dom','aigov']]},
+ {sc:'STATE · TX',instr:'TRAIGA',t:'HB 149 · AI Governance Rules Clarification Act',
+  st:'Awaiting floor vote',age:'Introduced Mar 2026',
+  read:'Clarifies governance expectations for AI in member-facing decisions. Charter language is staged and waiting.',
+  touch:[['doc','gov-charter'],['doc','ai-inventory'],['doc','hitl-standard'],['dom','aigov']]},
+ {sc:'LOCAL · NM',instr:null,t:'City of Albuquerque · automated-decision disclosure ordinance',
+  st:'Introduced · first reading Sep 3',age:'Introduced Aug 4',
+  read:'Disclosure at the point of an automated decision, inside our branch footprint. Narrower than the state bill and it stacks on top.',
+  touch:[['doc','msg-disclosure'],['doc','complaint-proc'],['dom','consumer']]},
+ {sc:'LOCAL · TX',instr:null,t:'Travis County · vendor AI procurement standards',
+  st:'Draft published for comment',age:'Published Jul 22',
+  read:'Procurement standards for vendors using AI. Reads onto our diligence standard and the contract rider.',
+  touch:[['obl','tprm','TPRM-03'],['obl','tprm','TPRM-06'],['doc','dd-standard']]}
+];
+function sigTouch(t){
+  if(t[0]==='obl'){
+    var o=oblByld(t[1],t[2]);
+    return '<span class="tch" onclick="event.stopPropagation();openObl(\''+t[1]+'\',\''+t[2]+'\')" title="'+(o?String(o.s).replace(/"/g,'&quot;'):'')+'">'+t[2]+'</span>';
+  }
+  if(t[0]==='doc'){
+    var d=DOCLIB[t[1]];
+    return '<span class="tch" onclick="event.stopPropagation();openDocView(\''+t[1]+'\')">'+((d&&d.t)||t[1])+'</span>';
+  }
+  var dm=domByKey(t[1]);
+  return '<span class="tch dm" onclick="event.stopPropagation();goOnside(\'dom-'+t[1]+'\')">'+((dm&&(DOM_SHORT[t[1]]||dm.name))||t[1])+' register</span>';
+}
+function sigRow(s){
+  var title=s.instr?instrLink(s.instr,s.t):('<span class="doclink" onclick="goOnside(\'feed-lifecycle\')">'+s.t+'</span>');
+  return '<div class="sig">'
+   +'<div class="sig-h"><span class="tag grey">'+s.sc+'</span><b>'+title+'</b><span class="sig-age">'+s.age+'</span></div>'
+   +'<div class="sig-st">'+s.st+'</div>'
+   +'<div class="sig-read">'+s.read+'</div>'
+   +'<div class="sig-t"><span class="sig-lab">Would touch</span>'+s.touch.map(sigTouch).join('')+'</div>'
+   +'</div>';
+}
 var HOME_HIDE={};
-var HP=[['kpis','home-kpis','Top metrics'],['posture','hp-posture','Risk posture'],['invest','hp-invest','Investments'],['value','hp-value','Return'],['queue','hp-queue','Your queue'],['legis','hp-legis','Legislation &amp; rulemaking'],['qa','home-qa','Quick actions']];
+var HP=[['kpis','home-kpis','Top metrics'],['posture','hp-posture','Risk posture'],['invest','hp-invest','Investments'],['value','hp-value','Return'],['queue','hp-queue','Your queue'],['legis','hp-legis','Strategic signal'],['qa','home-qa','Quick actions']];
 function toggleHomeCust(){var b=$('cust-bar');var open=b.style.display==='none';b.style.display=open?'flex':'none';if(open)renderCustBar();}
 function renderCustBar(){
   var hid=HOME_HIDE[CURRENT.roleKey]||{};
@@ -3628,19 +3695,18 @@ function renderHome(){
   $('home-eyebrow').textContent='Executive dashboard · signed in as '+CURRENT.role;
   $('home-sub').innerHTML='The state of the institution at a glance: where risk posture stands against the targets you set, what is funded, and what it returns. Every tile links to the work behind it.';
 
+  var openG=GAPS.filter(function(g){return gapState(g).k!=='closed';});
+  var crit=openG.filter(function(g){return g.sev==='crit';}).length;
   $('home-kpis').innerHTML=
    kpi('Domains at / above target',(DOMAINS.length-below.length)+' / '+DOMAINS.length,(DOMAINS.length-below.length)>=5?'ok':'warn','measured against the bar you set',"goOnside('domains')")
    +kpi('Gaps to your targets',''+gapsTotal,'warn','obligations to close, all domains',"goOnside('gaps')")
-   +kpi('Expected 3-yr ROI',P.roi.toFixed(1)+'&times;',P.roi>=L.roiTgt?'ok':'warn','against your '+L.roiTgt.toFixed(1)+'&times; hurdle',"openReport('roi')")
-   +kpi('Annual value',fmt(P.annual),'','at '+Math.round(L.eff*100)+'% adoption',"goStudio('design')")
-   +kpi('Committed',fmt(P.spent),'cy','of '+fmt(L.budget)+' envelope · '+P.funded.length+' plays',"goStudio('design')")
-   +kpi('High priority','1','crit','Incident Response Plan escalation',"goOnside('gaps')");
+   +kpi('High priority',''+crit,crit?'crit':'ok',crit?'Incident Response Plan escalation':'nothing at high priority',"goOnside('gaps')");
 
   $('home-posture').innerHTML=DOMAINS.map(function(d){
     var c=curOf(d), toClose=oblToClose(d);
     return '<div class="pd" onclick="goOnside(\'dom-'+d.key+'\')"><div class="pdh"><span class="pdn">'+(DOM_SHORT[d.key]||d.name)+'</span>'+statusChip(d)+'</div>'
-     +'<div class="pdg">'+gaugeSVG(c,d.target,62)
-     +'<div class="pdgt"><div class="pgv">target '+d.target+' · '+BANDS[d.target-1]+'</div><div class="pgs">'+(toClose>0?toClose+' obligations to close':'at your bar')+'</div></div></div></div>';
+     +'<div class="pdg">'+gaugeSVG(c,d.target,116)
+     +'<div class="pdgt"><div class="pgv">target '+d.target+' · '+BANDS[d.target-1]+'</div><div class="pgs">'+(toClose>0?toClose+' to close':'at your bar')+'</div></div></div></div>';
   }).join('');
 
   var top=P.funded.slice().sort(function(a,b){return b.val-a.val;}).slice(0,4);
@@ -3696,22 +3762,8 @@ function renderHome(){
   }
   $('home-queue').innerHTML=q;
 
-  var LEGIS=[
-   ['FEDERAL',null,'Fed &amp; FDIC joint NPRM · Regulation O · insider credit','<span class="tag info">New</span> Proposed Jul 31 · comment open','AI Gov · Capital'],
-   ['FEDERAL','RFI 2026-04','Interagency RFI 2026-04 · Generative &amp; Agentic AI in Model Risk','Comment period open · due Sep 30, 2026','Model Risk · AI Governance'],
-   ['FEDERAL','1033','CFPB §1033 · Personal Financial Data Rights','Staged compliance dates by tier','Consumer · InfoSec'],
-   ['FEDERAL','CDD Rule','CTA / BOI reporting scope','Litigation cycle tracked','BSA / AML'],
-   ['STATE · NM','NM AI Act','HB 210 · AI Transparency &amp; Accountability Act','Passed Senate 34&ndash;6 · awaiting House','Third-Party Risk · AI Gov'],
-   ['STATE · TX','TRAIGA','HB 149 · AI Governance Rules Clarification Act','Awaiting floor vote','AI Governance'],
-   ['STATE · OK',null,'SB 1822 · AI Consumer Protection Act','In committee','Consumer · Fair Lending'],
-   ['LOCAL · NM',null,'City of Albuquerque · automated-decision disclosure ordinance','Introduced · first reading Sep 3','Consumer · AI Governance'],
-   ['LOCAL · TX',null,'Travis County · vendor AI procurement standards','Draft published for comment','Third-Party Risk']
-  ];
-  $('home-legis').innerHTML='<table class="tbl"><tbody>'+LEGIS.map(function(r){
-    var t=r[1]?instrLink(r[1],r[2]):('<span class="doclink" onclick="goOnside(\'feed-lifecycle\')">'+r[2]+'</span>');
-    return '<tr><td style="width:110px"><span class="tag grey">'+r[0]+'</span></td><td><b>'+t+'</b></td><td class="pcat">'+r[3]+'</td><td class="pcat" style="text-align:right">'+r[4]+'</td></tr>';
-  }).join('')+'</tbody></table>'
-  ;
+  $('home-legis').innerHTML=SIGNAL.map(sigRow).join('')
+   +'<div class="csub" style="margin-top:12px">Four more instruments are tracked further along the lifecycle, from comment period through in force. <span class="doclink" onclick="goOnside(\'feed-lifecycle\')">Open the full lifecycle &rarr;</span></div>';
 
   $('home-qa').innerHTML=
    qa('◎','Ask the platform','Ideas priced, policy cited, new use cases scoped. One conversation.',"goStudio('ask')")

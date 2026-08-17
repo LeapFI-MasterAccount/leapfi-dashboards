@@ -1,6 +1,6 @@
 {
-  "revision": 52,
-  "updated": "2026-08-16",
+  "revision": 53,
+  "updated": "2026-08-17",
   "dashboards": [
     {
       "file": "leapguard-command-center.html",
@@ -88,7 +88,7 @@
       "title": "LeapFI Platform \u00b7 NorthWinds Credit Union",
       "order": 999,
       "url": "https://leapfi-admin.github.io/leapfi-dashboards/leapfi-platform.html",
-      "kb": 399.3
+      "kb": 403.5
     }
   ]
 }
