@@ -436,8 +436,17 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 .ctl-link{cursor:pointer}
 .ctl-link:hover{text-decoration:underline;text-underline-offset:3px}
 .doclink:hover{text-decoration:underline}
+.diffb .dfl{display:flex;gap:11px;align-items:flex-start;line-height:1.6}
+.diffb .dfl+.dfl{margin-top:8px;padding-top:8px;border-top:1px solid rgba(217,155,67,.22)}
+.diffb .dfk{flex:none;width:66px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);padding-top:2px}
+.diffb .dfk.cur{color:var(--sem2)}
+.ba{display:flex;align-items:baseline;gap:9px;margin-bottom:5px}
+.ba .bal{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#d99a9a}
+.ba .bal.aft{color:#9fd6b4}
+.ba .bas{font-size:11px;color:var(--grey)}
 .rl-old{font-size:12.5px;line-height:1.6;color:#d99a9a;text-decoration:line-through;background:rgba(201,74,74,.08);border:1px solid rgba(201,74,74,.25);border-radius:9px;padding:10px 13px;margin-bottom:8px}
 .rl-new{font-size:12.5px;line-height:1.6;color:#9fd6b4;background:rgba(127,167,116,.09);border:1px solid rgba(127,167,116,.3);border-radius:9px;padding:10px 13px}
+.rl-old{margin-bottom:12px}
 .prov{background:var(--panel3);border:1px dashed var(--line2);border-radius:11px;padding:13px 15px}
 .prov .pm-row{padding:3px 0}
 /* ---- five-point posture ---- */
@@ -773,7 +782,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.064</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.065</b></div>
   </div>
 </aside>
 
@@ -1009,6 +1018,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.065</span> · <span class="cd">Aug 16, 2026</span><br>The gap statement now reads <b>required vs current</b>, and it sits on two lines: what the rule requires, then what the institution does today, each on its own row with its own label. Reading a gap no longer means finding the break in a paragraph. Every card carrying proposed language now shows the <b>before and the after</b>, labelled, whether the language is still proposed or already adopted &mdash; previously an adopted change showed only the new text, so the thing it replaced disappeared from view at exactly the moment someone would ask what changed. Obligations, documents, cases, and the board report all render from the same two helpers, so they cannot drift apart again.</li>
             <li><span class="cv">v 1.064</span> · <span class="cd">Aug 16, 2026</span><br>One level of back, in the top bar. Any click that moves you to a different view leaves a <b>Back to</b> chip naming the place you came from, and it returns you there at the scroll position you left. It is one step, never a stack, so it always does exactly what it says. This closes the one drill-down with no way home: the register links on the Strategic signal took you into a domain and left you to find your way back. Side panels are unchanged &mdash; they still close to wherever you opened them from.</li>
             <li><span class="cv">v 1.063</span> · <span class="cd">Aug 16, 2026</span><br>OnSide and Studio swap places in the navigation. OnSide now leads the module list, which matches how the platform is sold and how a walkthrough runs: the governance record first, then what the institution decides to build on top of it.</li>
             <li><span class="cv">v 1.062</span> · <span class="cd">Aug 16, 2026</span><br>The home page is simpler and leads with what is coming. Three numbers across the top instead of six: domains at or above target, gaps to those targets, and what is high priority. Expected return, annual value, and committed spend come off the top and stay where they belong, in the Return and Investments panels below. Risk posture runs across the full width underneath, all eight domains in one row with the gauge and the gap on each. Under it, <b>Strategic signal</b>: the instruments that have just been proposed, before any of them is law, with what each one would mean for this institution and, under &ldquo;would touch&rdquo;, the specific obligations and documents it lands on. Every one is a link, so a control ID opens its register row and a policy opens the document.</li>
@@ -1077,7 +1087,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.064</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.065</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1440,7 +1450,10 @@ function openReport(kind){
         var d=DOCLIB[c.doc];
         return '<div class="dsec"><div class="dh">'+c.id+' · '+c.title+' <span class="pill-soft">'+(c.stage==='closed'?'Adopted':c.stage==='final'?'Voted · awaiting final approval':'For a vote')+'</span></div>'
          +'<div class="csub" style="margin-bottom:10px"><b>Why:</b> '+c.trigger+'<br><b>Owner:</b> '+c.owner+' · <b>Detected:</b> '+c.detected+' · <b>Prepared by:</b> P. Raman, Risk Analyst'+(c.edited?' (language edited from the OnSide draft)':'')+'</div>'
-         +'<div class="rl-old">'+(d&&d.redline?d.redline.old:'')+'</div><div class="rl-new">'+c.lang+'</div>'
+         +'<div class="ba"><span class="bal">Before</span><span class="bas">in force until this is adopted</span></div>'
+         +'<div class="rl-old">'+(d&&d.redline?d.redline.old:'')+'</div>'
+         +'<div class="ba"><span class="bal aft">After</span><span class="bas">for the committee&rsquo;s approval</span></div>'
+         +'<div class="rl-new">'+c.lang+'</div>'
          +'<div class="csub" style="margin-top:10px">'+(c.minutes?'<b style="color:var(--cyan)">'+c.minutes+'</b>':'Minutes to be attached to the case after the vote. The case carries the full history from detection to adoption.')+'</div></div>';
        }).join('')
        : '<div class="dsec"><div class="csub">Nothing is waiting on the committee. Items appear here the moment the CRO gives conditional approval on a board-level change. Open a board-tier case, approve it subject to '+APPROVAL.committee+' approval, and it lands in this report.</div>'
@@ -1682,6 +1695,25 @@ document.addEventListener('click',function(e){
     renderBackChip();
   },0);
 },true);
+/* ---- one renderer for required-vs-current, so every card reads the same ---- */
+function diffBlock(gp){
+  var s=String(gp||''); if(!s)return '';
+  var m=s.split(/\s*Current:\s*/);
+  var req=m[0].replace(/^\s*Required:\s*/,'').trim();
+  var cur=(m[1]||'').trim();
+  if(!cur)return '<div class="warnline" style="margin-bottom:0">'+s+'</div>';
+  return '<div class="warnline diffb" style="margin-bottom:0">'
+   +'<div class="dfl"><span class="dfk">Required</span><span>'+req+'</span></div>'
+   +'<div class="dfl"><span class="dfk cur">Current</span><span>'+cur+'</span></div>'
+   +'</div>';
+}
+/* ---- one renderer for before-and-after language, so every card shows both ---- */
+function rlPair(r,adopted){
+  return '<div class="ba"><span class="bal">Before</span><span class="bas">'+(adopted?'prior text, archived on adoption':'in force until this is adopted')+'</span></div>'
+   +'<div class="rl-old">'+r.old+'</div>'
+   +'<div class="ba"><span class="bal aft">After</span><span class="bas">'+(adopted?'adopted and in force':'proposed by OnSide, not yet in force')+'</span></div>'
+   +'<div class="rl-new">'+r.nw+'</div>';
+}
 function setCrumb(mod,page,hint){
   var c=$('crumb'); if(!c)return;
   if(!mod){c.style.display='none';return;}
@@ -2004,28 +2036,28 @@ var OBL={
   {id:'TPRM-01',s:'Maintain a complete, risk-based inventory of all third-party relationships.',cite:'88 FR 37920 §III.A',st:'met',docs:['vendor-inventory'],rev:'ok'},
   {id:'TPRM-02',s:'Identify and designate relationships that support critical activities.',cite:'88 FR 37920 §II',st:'met',docs:['tprm-critical'],rev:'ok'},
   {id:'TPRM-03',s:'Conduct due diligence commensurate with risk before entering a relationship.',cite:'88 FR 37920 §III.C',st:'met',docs:['dd-standard'],rev:'ok'},
-  {id:'TPRM-04',gp:'Required: every contract carries audit rights, performance measures, incident notification, and termination provisions. Today: 9 legacy contracts predate the model-risk clauses.',fx:'Roll Contract Rider v3.0 into the 9 legacy contracts at renewal, scheduled through Q1-2027.',s:'Ensure contracts address audit rights, performance measures, incident notification, and termination.',cite:'88 FR 37920 §III.D',st:'partial',docs:['contract-rider'],rev:'ok',uc:'Vendor-risk automation'},
+  {id:'TPRM-04',gp:'Required: every contract carries audit rights, performance measures, incident notification, and termination provisions. Current: 9 legacy contracts predate the model-risk clauses.',fx:'Roll Contract Rider v3.0 into the 9 legacy contracts at renewal, scheduled through Q1-2027.',s:'Ensure contracts address audit rights, performance measures, incident notification, and termination.',cite:'88 FR 37920 §III.D',st:'partial',docs:['contract-rider'],rev:'ok',uc:'Vendor-risk automation'},
   {id:'TPRM-05',s:'Perform ongoing monitoring commensurate with the risk of the relationship.',cite:'88 FR 37920 §III.E',st:'met',docs:['vendor-reviews','soc2-core'],rev:'ok'},
-  {id:'TPRM-06',gp:'Required: visibility into subcontractor dependencies of critical vendors. Today: no subcontractor disclosures collected.',fx:'Collect subcontractor lists through the rider disclosure clause and fold them into the quarterly vendor reviews.',s:'Maintain visibility into subcontractor (fourth-party) dependencies of critical vendors.',cite:'88 FR 37920 §III.C.2',st:'gap',docs:[],rev:'q',uc:'Underwriting assist'},
-  {id:'TPRM-07',gp:'Required: concentration risk assessed across critical third-party dependencies. Today: never assessed.',fx:'Run the first concentration assessment and make it a standing item in the board TPRM report.',s:'Assess concentration risk across critical third-party dependencies.',cite:'88 FR 37920 §III.B',st:'gap',docs:[],rev:'q'},
-  {id:'TPRM-08',gp:'Required: documented termination and exit plans for critical relationships, including data portability. Today: exit handled ad hoc at contract end.',fx:'Adopt the Exit Plan Standard (draft 0.7) and the proposed §6 of the TPRM Program below.',s:'Maintain termination and exit plans for critical relationships, including data portability.',cite:'88 FR 37920 §III.F',st:'gap',docs:['exit-draft','tprm-program'],rev:'q'},
+  {id:'TPRM-06',gp:'Required: visibility into subcontractor dependencies of critical vendors. Current: no subcontractor disclosures collected.',fx:'Collect subcontractor lists through the rider disclosure clause and fold them into the quarterly vendor reviews.',s:'Maintain visibility into subcontractor (fourth-party) dependencies of critical vendors.',cite:'88 FR 37920 §III.C.2',st:'gap',docs:[],rev:'q',uc:'Underwriting assist'},
+  {id:'TPRM-07',gp:'Required: concentration risk assessed across critical third-party dependencies. Current: never assessed.',fx:'Run the first concentration assessment and make it a standing item in the board TPRM report.',s:'Assess concentration risk across critical third-party dependencies.',cite:'88 FR 37920 §III.B',st:'gap',docs:[],rev:'q'},
+  {id:'TPRM-08',gp:'Required: documented termination and exit plans for critical relationships, including data portability. Current: exit handled ad hoc at contract end.',fx:'Adopt the Exit Plan Standard (draft 0.7) and the proposed §6 of the TPRM Program below.',s:'Maintain termination and exit plans for critical relationships, including data portability.',cite:'88 FR 37920 §III.F',st:'gap',docs:['exit-draft','tprm-program'],rev:'q'},
   {id:'TPRM-09',s:'Provide board oversight with periodic reporting on third-party risk.',cite:'88 FR 37920 §IV',st:'met',docs:['board-tprm'],rev:'ok'},
-  {id:'TPRM-10',gp:'Required: periodic independent review of the TPRM program. Today: last review 2025, the 2026 review is not yet scheduled.',fx:'Schedule the 2026 independent review with internal audit this quarter.',s:'Subject the TPRM program to periodic independent review.',cite:'88 FR 37920 §IV.B',st:'partial',docs:['tprm-program'],rev:'ok'},
-  {id:'TPRM-11',gp:'Required: incident-notification service levels in critical-vendor contracts. Today: absent.',fx:'Add the notification-SLA clause through the rider, critical vendors first.',s:'Establish incident-notification service levels for critical vendors.',cite:'88 FR 37920 §III.D.6',st:'gap',docs:[],rev:'q'},
+  {id:'TPRM-10',gp:'Required: periodic independent review of the TPRM program. Current: last review 2025, the 2026 review is not yet scheduled.',fx:'Schedule the 2026 independent review with internal audit this quarter.',s:'Subject the TPRM program to periodic independent review.',cite:'88 FR 37920 §IV.B',st:'partial',docs:['tprm-program'],rev:'ok'},
+  {id:'TPRM-11',gp:'Required: incident-notification service levels in critical-vendor contracts. Current: absent.',fx:'Add the notification-SLA clause through the rider, critical vendors first.',s:'Establish incident-notification service levels for critical vendors.',cite:'88 FR 37920 §III.D.6',st:'gap',docs:[],rev:'q'},
   {id:'TPRM-12',s:'Document and retain records of the third-party risk lifecycle.',cite:'88 FR 37920 §III.G',st:'met',docs:['tprm-records'],rev:'ok'}
  ],
  mrm:[
   {id:'MRM-01',s:'Define model scope, including AI/ML and vendor models, in policy.',cite:'2026-13 §II',st:'met',docs:['mrm-policy'],rev:'ok'},
-  {id:'MRM-02',gp:'Required: every model in the enterprise catalogued with owner and tier. Today: 4 end-user computing models found in the Q2 sweep are not in the inventory.',fx:'Catalogue the 4 models with owners and tiers, due Sep 2026.',s:'Maintain a complete enterprise model inventory with ownership and tiering.',cite:'2026-13 §III.A',st:'partial',docs:['inv-log'],rev:'ok'},
+  {id:'MRM-02',gp:'Required: every model in the enterprise catalogued with owner and tier. Current: 4 end-user computing models found in the Q2 sweep are not in the inventory.',fx:'Catalogue the 4 models with owners and tiers, due Sep 2026.',s:'Maintain a complete enterprise model inventory with ownership and tiering.',cite:'2026-13 §III.A',st:'partial',docs:['inv-log'],rev:'ok'},
   {id:'MRM-03',s:'Tier models by materiality and apply risk-commensurate requirements.',cite:'2026-13 §III.B',st:'met',docs:['tiering','mrm-policy'],rev:'ok'},
   {id:'MRM-04',s:'Subject models to validation independent of development.',cite:'2026-13 §IV',st:'met',docs:['mrm-validation-fraud'],rev:'ok'},
-  {id:'MRM-05',gp:'Required: conceptual-soundness documentation for each model in scope. Today: 2 legacy models lack current documentation.',fx:'Refresh the 2 legacy models against Documentation Standard v2.3.',s:'Document conceptual soundness for each model in scope.',cite:'2026-13 §IV.A',st:'partial',docs:['doc-standard'],rev:'ok'},
+  {id:'MRM-05',gp:'Required: conceptual-soundness documentation for each model in scope. Current: 2 legacy models lack current documentation.',fx:'Refresh the 2 legacy models against Documentation Standard v2.3.',s:'Document conceptual soundness for each model in scope.',cite:'2026-13 §IV.A',st:'partial',docs:['doc-standard'],rev:'ok'},
   {id:'MRM-06',s:'Perform outcomes analysis and back-testing on a defined cadence.',cite:'2026-13 §IV.C',st:'met',docs:['outcomes','mrm-validation-fraud'],rev:'ok'},
-  {id:'MRM-07',gp:'Required: drift thresholds and alerting on every production model. Today: 2 models run without configured alerting.',fx:'Configure thresholds and alerting for both models, tied to the Fraud model refresh build.',s:'Monitor production models with defined drift thresholds and alerting.',cite:'2026-13 §V',st:'partial',docs:['mrm-minutes'],rev:'ok',uc:'Fraud model refresh'},
-  {id:'MRM-08',gp:'Required: independent validation evidence for every vendor model. Today: nothing on file for 3 vendor models.',fx:'Request validation packets from the 3 vendors, using the audit-rights clause in the contract rider.',s:'Obtain and review independent validation evidence for vendor models.',cite:'2026-13 §VI',st:'gap',docs:['mrm-minutes'],rev:'q',uc:'Underwriting assist'},
-  {id:'MRM-09',gp:'Required: a formal approval gate before model changes deploy. Today: changes deploy on developer sign-off alone.',fx:'Adopt the Model Change Approval Workflow (draft 0.8, in the HITL queue).',s:'Gate model changes through a formal approval workflow before deployment.',cite:'2026-13 §V.B',st:'gap',docs:['mrm-change-draft'],rev:'q',uc:'Deposit pricing optimization'},
+  {id:'MRM-07',gp:'Required: drift thresholds and alerting on every production model. Current: 2 models run without configured alerting.',fx:'Configure thresholds and alerting for both models, tied to the Fraud model refresh build.',s:'Monitor production models with defined drift thresholds and alerting.',cite:'2026-13 §V',st:'partial',docs:['mrm-minutes'],rev:'ok',uc:'Fraud model refresh'},
+  {id:'MRM-08',gp:'Required: independent validation evidence for every vendor model. Current: nothing on file for 3 vendor models.',fx:'Request validation packets from the 3 vendors, using the audit-rights clause in the contract rider.',s:'Obtain and review independent validation evidence for vendor models.',cite:'2026-13 §VI',st:'gap',docs:['mrm-minutes'],rev:'q',uc:'Underwriting assist'},
+  {id:'MRM-09',gp:'Required: a formal approval gate before model changes deploy. Current: changes deploy on developer sign-off alone.',fx:'Adopt the Model Change Approval Workflow (draft 0.8, in the HITL queue).',s:'Gate model changes through a formal approval workflow before deployment.',cite:'2026-13 §V.B',st:'gap',docs:['mrm-change-draft'],rev:'q',uc:'Deposit pricing optimization'},
   {id:'MRM-10',s:'Report aggregate model risk to the board on a periodic basis.',cite:'2026-13 §VII',st:'met',docs:['board-mrm','mrm-minutes'],rev:'ok'},
-  {id:'MRM-11',gp:'Required: interim governance for generative and agentic models. Today: they sit outside policy scope entirely.',fx:'Adopt the pre-staged scope language below the moment RFI 2026-04 finalizes.',s:'Establish interim governance for generative and agentic models pending final scope.',cite:'RFI 2026-04 (comment period open)',st:'gap',docs:['gen-ai-draft'],rev:'q',uc:'Member FAQ chatbot'},
+  {id:'MRM-11',gp:'Required: interim governance for generative and agentic models. Current: they sit outside policy scope entirely.',fx:'Adopt the pre-staged scope language below the moment RFI 2026-04 finalizes.',s:'Establish interim governance for generative and agentic models pending final scope.',cite:'RFI 2026-04 (comment period open)',st:'gap',docs:['gen-ai-draft'],rev:'q',uc:'Member FAQ chatbot'},
   {id:'MRM-12',s:'Maintain model documentation sufficient for independent parties to understand operation.',cite:'2026-13 §IV.B',st:'met',docs:['doc-standard','mrm-policy'],rev:'ok'}
  ]
 };
@@ -2215,14 +2247,13 @@ function rlSection(id,reopen){
   if(st&&st.act==='adopted'){
     return '<div class="dsec"><div class="dh">Adopted language · in force as of '+st.when+'</div>'
      +'<div class="okline" style="margin-bottom:12px">✓ Approved and adopted as <b>'+d.v+'</b> by '+st.who+'. Prior text archived, the SHA-256 fingerprint re-sealed, connected systems notified, and the evidence chain updated. The exam answer is already written.</div>'
-     +'<div class="rl-new">'+r.nw+'</div>'
+     +rlPair(r,true)
      +'<div style="margin-top:10px"><span class="pill-soft">Prior text archived · available in version history</span></div></div>';
   }
   var cs=caseForDoc(id);
   var out='<div class="dsec"><div class="dh">Proposed redline · drafted by OnSide</div>'
    +'<div class="warnline" style="margin-bottom:12px">'+r.note+'</div>'
-   +'<div class="rl-old">'+r.old+'</div>'
-   +'<div class="rl-new">'+(cs?cs.lang:r.nw)+'</div>';
+   +rlPair({old:r.old,nw:(cs?cs.lang:r.nw)},false);
   if(cs){
     out+='<div class="csub" style="margin-top:12px">This change is worked as <b>'+cs.id+'</b>, currently with '+caseStageOwner(cs)+'. Approvals happen on the case, so the history stays in one place.</div>'
      +'<div class="actions" style="display:flex;gap:8px;margin-top:12px"><button class="btn" onclick="closeDrawer();goOnside(\'case:'+cs.id+'\')">Open '+cs.id+' &rarr;</button></div>';
@@ -2547,7 +2578,7 @@ function osCasePage(cid){
   var lang=c.editing
     ? '<textarea id="case-ta" class="case-ta">'+c.lang.replace(/&rsquo;/g,'\u2019').replace(/&amp;/g,'&')+'</textarea>'
       +'<div class="cact" style="margin-top:10px"><button class="btn" onclick="caseSaveLang(\''+cid+'\')">Save the language</button><button class="btn ghost" onclick="caseCancelEdit(\''+cid+'\')">Cancel</button></div>'
-    : '<div class="rl-new">'+c.lang+'</div>'+(c.edited?'<div class="csub" style="margin-top:8px"><b>Edited by the analyst.</b> OnSide&rsquo;s original draft is kept below and in the history.</div><div class="rl-base">'+c.base+'</div>':'');
+    : '<div class="ba"><span class="bal aft">After</span><span class="bas">'+(c.stage==='closed'?'adopted and in force':'proposed, not yet in force')+'</span></div><div class="rl-new">'+c.lang+'</div>'+(c.edited?'<div class="csub" style="margin-top:8px"><b>Edited by the analyst.</b> OnSide&rsquo;s original draft is kept below and in the history.</div><div class="rl-base">'+c.base+'</div>':'');
   var hist=c.history.map(function(x){
     return '<div class="chist"><div class="ch-w">'+x.when+'</div><div><div class="ch-t">'+x.what+'</div><div class="ch-s">'+x.who+(x.role?' · '+x.role:'')+(x.note?' · '+x.note:'')+'</div></div></div>';
   }).join('');
@@ -2568,7 +2599,8 @@ function osCasePage(cid){
    +'</div></div>'
    +'<div class="card" style="margin-top:14px"><h2>Proposed language</h2>'
      +'<div class="csub">What the document says today, and what OnSide proposes it should say. The analyst can accept this, or edit it and route their own words.</div>'
-     +'<div class="rl-old" style="margin-top:12px">'+(d&&d.redline?d.redline.old:'')+'</div>'+lang
+     +'<div class="ba" style="margin-top:12px"><span class="bal">Before</span><span class="bas">'+(c.stage==='closed'?'prior text, archived on adoption':'in force until this is adopted')+'</span></div>'
+     +'<div class="rl-old">'+(d&&d.redline?d.redline.old:'')+'</div>'+lang
      +(c.stage==='analyst'||c.stage==='cro'||c.stage==='legal'||c.stage==='committee'||c.stage==='final'?act:'')+'</div>'
    +(c.stage==='closed'||c.stage==='rejected'?'<div class="card" style="margin-top:14px">'+act+'</div>':'')
    +'<div class="card" style="margin-top:14px"><h2>Case history</h2><div class="csub">Every action on this case, in order, with the name of the person who took it. This is the exam answer.</div><div class="chist-wrap">'+hist+'</div></div>';
@@ -2632,18 +2664,28 @@ function openObl(domKey,oid){
      +'<div class="pm-row"><span class="k" style="width:80px">Verified copy</span><span style="font-family:monospace;font-size:11.5px">'+mockSha(o.id+o.s)+'</span> <span class="tip" data-tip="A SHA-256 fingerprint of the captured source text. If the regulator&rsquo;s text ever changes, the fingerprint stops matching and OnSide re-captures and re-reviews it. It proves the words above are exactly what the source said.">i</span></div>'
      +'<div class="pm-row"><span class="k" style="width:80px">Capture</span><span>Read from the source automatically · '+(o.rev==='ok'?'then approved by a compliance reviewer':'awaiting human review · not yet authoritative')+'</span></div>'
    +'</div>'
-   +(o.st!=='met'&&o.gp?'<div class="dsec"><div class="dh">The difference · required vs today</div><div class="warnline" style="margin-bottom:0">'+o.gp+'</div></div>':'')
+   +(o.st!=='met'&&o.gp?'<div class="dsec"><div class="dh">The difference · required vs current</div>'+diffBlock(o.gp)+'</div>':'')
    +(function(){
-      if(o.st==='met')return '';
       var rlDoc=(o.docs||[]).filter(function(did){return DOCLIB[did]&&DOCLIB[did].redline;})[0];
+      if(o.st==='met'){
+        /* closed by adopted language: keep the change on the record, both halves of it */
+        var md=rlDoc?DOCLIB[rlDoc]:null, mst=md?md.rlState:null;
+        if(md&&mst&&mst.act==='adopted'){
+          return '<div class="dsec"><div class="dh">How this was closed</div>'
+           +'<div class="okline" style="margin-bottom:10px">Closed by language adopted as <b>'+md.v+'</b> by '+mst.who+' · '+mst.when+'. The prior text is archived and the evidence chain carries the new wording.</div>'
+           +rlPair(md.redline,true)
+           +'<div class="actions" style="display:flex;gap:8px;margin-top:12px"><button class="btn ghost" onclick="openDocView(\''+rlDoc+'\',\'openObl(&quot;'+d.key+'&quot;,&quot;'+o.id+'&quot;)\')">Open full document</button></div></div>';
+        }
+        return '';
+      }
       var out='<div class="dsec"><div class="dh">The remediation</div>';
       out+='<div style="font-size:13.5px;color:var(--ink);line-height:1.6;margin-bottom:10px">'+(o.fx||'Remediation being scoped by the domain owner.')+'</div>';
       if(rlDoc){var r=DOCLIB[rlDoc].redline, rst=DOCLIB[rlDoc].rlState;
         var reopenO="openObl('"+domKey+"','"+o.id+"')";
         if(rst&&rst.act==='adopted'){
-          out+='<div class="okline" style="margin-bottom:10px">✓ Adopted as <b>'+DOCLIB[rlDoc].v+'</b> by '+rst.who+' · '+rst.when+' · the evidence chain now carries the new language.</div><div class="rl-new">'+r.nw+'</div>';
+          out+='<div class="okline" style="margin-bottom:10px">✓ Adopted as <b>'+DOCLIB[rlDoc].v+'</b> by '+rst.who+' · '+rst.when+' · the evidence chain now carries the new language.</div>'+rlPair(r,true);
         } else {
-          out+='<div class="csub" style="margin-bottom:8px">'+r.note+'</div><div class="rl-old">'+r.old+'</div><div class="rl-new">'+r.nw+'</div>';
+          out+='<div class="csub" style="margin-bottom:8px">'+r.note+'</div>'+rlPair(r,false);
           if(rst&&rst.act==='routed')out+='<div class="okline" style="margin-top:10px">Routed to LeapFI consultancy by '+rst.who+' · '+rst.when+'</div>';
           if(rst&&rst.act==='rejected')out+='<div class="warnline" style="margin-top:10px">Rejected by '+rst.who+' · '+rst.when+' · OnSide is redrafting</div>';
           out+='<div class="actions" style="display:flex;gap:8px;margin-top:12px">'
