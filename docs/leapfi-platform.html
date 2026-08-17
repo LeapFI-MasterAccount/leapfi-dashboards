@@ -39,7 +39,8 @@ b{color:var(--ink)}
 .nav-item.active{color:var(--ink);background:var(--cyan-dim);border-left-color:var(--cyan)}
 .nav-item .ni{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--grey)}
 .nav-item.active .ni{color:var(--cyan)}
-.nav-item .soon{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);border:1px solid var(--line);border-radius:5px;padding:1.5px 6px}
+.os-sub .soon{margin-left:8px;vertical-align:1px}
+.nav-item .soon,.os-sub .soon{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);border:1px solid var(--line);border-radius:5px;padding:1.5px 6px}
 .nav-foot{padding:10px;border-top:1px solid var(--line)}
 .ver{font-size:11px;color:var(--grey);padding:8px 12px 4px;letter-spacing:.03em}
 .ver b{color:var(--muted);font-weight:700}
@@ -80,6 +81,20 @@ b{color:var(--ink)}
 .pm-user .r{font-size:11px;color:var(--grey)}
 .pm-user .now{margin-left:auto;font-size:11px;font-weight:800;color:var(--cyan)}
 .pm-foot{padding:10px 18px 14px;font-size:11px;color:var(--grey)}
+.set-in{background:#0b0f14;border:1px solid var(--line2);border-radius:9px;color:var(--ink);font-family:inherit;font-size:12.5px;font-weight:600;padding:8px 11px;min-width:220px;flex:none}
+.set-in:focus{outline:none;border-color:var(--cyan)}
+.cond-pick{margin-top:14px;border:1px solid var(--cyan);border-radius:12px;overflow:hidden;max-width:520px}
+.cp-h{padding:11px 15px;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--grey);border-bottom:1px solid var(--line2);background:var(--panel2)}
+.cp-row{padding:12px 15px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--line)}
+.cp-row:hover{background:var(--cyan-dim);color:var(--cyan)}
+.cp-f{padding:11px 15px;font-size:11px;color:var(--grey);line-height:1.5}
+.pm-reset{display:flex;gap:11px;align-items:flex-start;margin:0 12px 12px;padding:11px 13px;border:1px solid var(--line2);border-radius:11px;cursor:pointer;transition:border-color .12s,background .12s}
+.pm-reset:hover{border-color:var(--cyan);background:var(--cyan-dim)}
+.pm-reset .rr{flex:none;font-size:15px;color:var(--cyan);line-height:1.2}
+.pm-reset b{font-size:12.5px;color:var(--ink)}
+.pm-reset .rs{font-size:11px;color:var(--grey);margin-top:3px;line-height:1.45}
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--panel);border:1px solid var(--cyan);border-radius:12px;padding:13px 20px;font-size:12.5px;font-weight:600;color:var(--ink);box-shadow:0 18px 50px rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:120;max-width:min(620px,88vw);text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
 
 .content{flex:1;padding:26px;max-width:1340px;width:100%;margin:0 auto}
 .module{display:none}
@@ -381,6 +396,8 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 .nav-subwrap{display:none;padding:2px 0 6px}
 .nav-group.open .nav-subwrap{display:block}
 .os-group{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);padding:8px 12px 2px 33px}
+.os-modlink{display:flex !important;align-items:center;justify-content:space-between;gap:8px}
+.os-modlink .soon{margin-left:auto}
 .os-sub{display:block;font-size:12.5px;font-weight:600;padding:5px 12px 5px 33px;color:var(--muted);cursor:pointer;border-left:3px solid transparent;border-radius:0 8px 8px 0;user-select:none}
 .os-sub:hover{color:var(--ink);background:var(--panel2)}
 .os-sub.active{color:var(--cyan);border-left-color:var(--cyan);background:var(--cyan-dim)}
@@ -433,6 +450,71 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 .hitl.q{color:var(--muted);background:var(--panel3)}
 .doc-cats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
 .conn-tbl td{font-size:12.5px}
+.bell{position:relative;width:38px;height:38px;border-radius:11px;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--grey);transition:all .12s}
+.bell:hover{border-color:var(--cyan);color:var(--cyan)}
+.bell .bi{display:flex;align-items:center;justify-content:center;line-height:0}
+.bell .bdot{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--cyan);color:#04121a;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.bell-panel{position:absolute;top:64px;right:74px;width:340px;background:var(--panel);border:1px solid var(--line2);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.6);opacity:0;pointer-events:none;transform:translateY(-6px);transition:all .14s;z-index:70;overflow:hidden}
+.bell-panel.open{opacity:1;pointer-events:auto;transform:none}
+.bp-h{padding:13px 16px;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--grey);border-bottom:1px solid var(--line)}
+.bp-row{padding:12px 16px;border-bottom:1px solid var(--line);cursor:pointer;border-left:3px solid var(--cyan)}
+.bp-row:hover{background:var(--panel2)}
+.bp-row.rd{border-left-color:transparent;opacity:.62}
+.bp-t{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.4}
+.bp-s{font-size:11px;color:var(--grey);margin-top:3px}
+.bp-empty{padding:16px;font-size:12px;color:var(--grey);line-height:1.6}
+.nb{margin-left:auto;min-width:17px;height:17px;padding:0 5px;border-radius:9px;background:var(--cyan);color:#04121a;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.os-sub[data-os="cases"]{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.csteps{display:flex;align-items:center;gap:0;margin-top:18px;flex-wrap:wrap}
+.cstep{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--grey);white-space:nowrap}
+.cstep span{width:22px;height:22px;border-radius:50%;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:11px}
+.cstep.done{color:var(--ink)}.cstep.done span{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan)}
+.cstep.now{color:var(--cyan)}.cstep.now span{background:linear-gradient(135deg,var(--chev1),var(--chev5));border-color:transparent;color:#fff}
+.cstep.bad{color:var(--sem1)}.cstep.bad span{border-color:var(--sem1);color:var(--sem1)}
+.cbar{flex:1;min-width:22px;height:1px;background:var(--line2);margin:0 12px}
+.cact{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+.cwait{margin-top:16px;font-size:12.5px;color:var(--muted);background:var(--panel2);border:1px solid var(--line2);border-radius:11px;padding:13px 15px;line-height:1.6}
+.case-ta{width:100%;min-height:150px;background:#0b0f14;border:1px solid var(--cyan);border-radius:11px;color:var(--ink);font-family:inherit;font-size:13.5px;line-height:1.65;padding:14px 16px;margin-top:2px;resize:vertical}
+.case-ta:focus{outline:none;box-shadow:0 0 0 3px rgba(0,242,255,.14)}
+.rl-base{margin-top:8px;font-size:12.5px;color:var(--grey);line-height:1.6;border-left:2px solid var(--line2);padding:8px 0 8px 13px}
+.mine{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--cyan);background:var(--cyan-dim);border-radius:5px;padding:2px 7px;margin-left:8px}
+.chist-wrap{margin-top:6px}
+.chist{display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--line)}
+.chist:last-child{border-bottom:0}
+.ch-w{flex:none;width:180px;font-size:11.5px;color:var(--grey);font-weight:600}
+.ch-t{font-size:13px;font-weight:700;color:var(--ink)}
+.ch-s{font-size:11.5px;color:var(--grey);margin-top:3px;line-height:1.5}
+.mail{border:1px solid var(--line2);border-radius:12px;overflow:hidden;margin-top:14px}
+.mail-h{background:var(--panel2);padding:14px 16px;font-size:12px;color:var(--muted);line-height:1.9;border-bottom:1px solid var(--line2)}
+.mail-h b{color:var(--grey);font-weight:700;display:inline-block;width:58px}
+.mail-b{padding:16px;font-size:13px;color:var(--muted);line-height:1.7}
+.mail-b p{margin:0 0 12px}
+.mail-btn{display:inline-block;background:linear-gradient(135deg,var(--chev1),var(--chev5));color:#fff;font-weight:700;font-size:12.5px;padding:10px 18px;border-radius:9px;margin:4px 0 14px}
+.mail-f{font-size:11px;color:var(--grey);border-top:1px solid var(--line);padding-top:12px;margin-bottom:0}
+@media(max-width:1080px){.ch-w{width:120px}.bell-panel{right:16px;width:300px}}
+.src-back{display:inline-block;font-size:12px;font-weight:700;color:var(--cyan);cursor:pointer;margin-bottom:10px}
+.src-back:hover{text-decoration:underline}
+.src-top{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}
+.src-badges{display:flex;align-items:center;gap:9px;flex:none}
+.al-btn{font-size:11.5px;font-weight:700;padding:6px 13px;border-radius:20px;border:1px solid var(--line2);color:var(--grey);cursor:pointer;white-space:nowrap;transition:all .12s}
+.al-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.al-btn.on{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+.al-on{color:var(--cyan);font-size:11px;margin-left:5px}
+.src-kpis{margin-top:16px}
+.src-meta{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px;margin-top:4px}
+.sml{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--grey)}
+.smv{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5}
+.dig-grid{display:grid;grid-template-columns:1fr 1.3fr .8fr;gap:20px;margin-top:6px;align-items:start}
+.dig-f label{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);margin-bottom:7px}
+.dig-f select{width:100%;background:#0b0f14;border:1px solid var(--line2);border-radius:9px;color:var(--ink);font-family:inherit;font-size:13px;font-weight:600;padding:9px 11px}
+.dig-f select:focus{outline:none;border-color:var(--cyan)}
+.dig-toggles{display:flex;gap:8px;flex-wrap:wrap}
+.dtog{font-size:11.5px;font-weight:700;padding:8px 13px;border-radius:20px;border:1px solid var(--line2);color:var(--grey);cursor:pointer;transition:all .12s}
+.dtog:hover{border-color:var(--cyan);color:var(--ink)}
+.dtog.on{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+.dig-n{font-size:29px;font-weight:800;line-height:1;letter-spacing:-.02em}
+.dig-h{font-size:11px;color:var(--grey);margin-top:7px;line-height:1.45}
+@media(max-width:1080px){.dig-grid{grid-template-columns:1fr}.src-meta{grid-template-columns:1fr}}
 .ph-tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;white-space:nowrap}
 .ph-tag.live{color:var(--sem4);background:rgba(127,167,116,.13)}
 .ph-tag.p2{color:var(--cyan);background:var(--cyan-dim)}
@@ -570,6 +652,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 .soon-steps .ss b{flex:none;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--chev1),var(--chev5));color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
 .soon-steps .sar{color:var(--cyan);font-size:17px;font-weight:800;line-height:1}
 .ss-note{text-align:center;font-size:12px;color:var(--grey);margin-bottom:2px}
+.soon-close{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);text-align:center;line-height:1.6}
 .soon-hero .sp-phase{margin-top:20px;font-size:11.5px;font-weight:600;color:var(--grey);border:1px solid var(--line2);border-radius:20px;padding:7px 15px}
 .soon-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .soon-stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:15px 16px;text-align:center}
@@ -637,6 +720,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
       <div class="nav-subwrap">
         <span class="os-sub" data-os="overview" onclick="goOnside('overview')">Overview</span>
         <span class="os-sub" data-os="domains" onclick="goOnside('domains')">Domains · gaps &amp; levers</span>
+        <span class="os-sub" data-os="cases" onclick="goOnside('cases')">Cases · approvals <span class="nb" id="nav-case-n"></span></span>
         <div class="os-nest" id="nest-documents">
           <div class="os-nest-h" onclick="toggleNest('documents')">Documents <span class="caret">▸</span></div>
           <div class="os-nest-body">
@@ -659,15 +743,15 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
             <span class="os-sub" data-os="onboarding" onclick="goOnside('onboarding')">How onboarding works</span>
           </div>
         </div>
+        <span class="os-sub os-modlink" data-mod="connect" onclick="go('connect')">Connect <span class="soon">Soon</span></span>
       </div>
     </div>
-    <div class="nav-item" data-mod="connect" onclick="go('connect')"><span class="ni">⇄</span> Connect <span class="soon">Soon</span></div>
     <div class="nav-item" data-mod="allrailz" onclick="go('allrailz')"><span class="ni">≋</span> AllRailz <span class="soon">Soon</span></div>
     <div class="nav-item" data-mod="vantage" onclick="go('vantage')"><span class="ni">⬡</span> Vantage <span class="soon">Soon</span></div>
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.055</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.060</b></div>
   </div>
 </aside>
 
@@ -681,6 +765,8 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
     <div class="top-right">
       <span class="live-pill"><span class="dot"></span> Live monitoring</span>
       <span class="org-chip">Institution · <b>NorthWinds CU</b></span>
+      <div class="bell" id="bell" onclick="toggleBell(event)"><span class="bi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span></div>
+      <div class="bell-panel" id="bell-panel"></div>
       <div class="avatar" id="avatar" onclick="toggleProfile(event)">RF</div>
     </div>
     <div class="profile-menu" id="profile-menu">
@@ -697,6 +783,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
       <div class="pm-switch-lab">Switch user · demo</div>
       <div id="pm-users"></div>
       <div class="pm-foot">Role determines the homepage and permissions shown.</div>
+      <div class="pm-reset" onclick="resetDemo()"><span class="rr">⟲</span><div><b>Reset demo</b><div class="rs">Puts every gap, redline, lever, filter, and conversation back to the opening state. Shift + Alt + R does the same.</div></div></div>
     </div>
   </div>
 
@@ -881,6 +968,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         <div class="mod-title">Settings</div>
         <div class="mod-sub">Profile, identity, and platform preferences for NorthWinds Credit Union.</div>
       </div>
+      <div class="card" id="approval-card" style="margin-bottom:14px"></div>
       <div class="set-grid">
         <div class="card">
           <h2>Identity &amp; access</h2>
@@ -900,6 +988,11 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.060</span> · <span class="cd">Aug 16, 2026</span><br>The approval path now follows the document, not one fixed rule. Settings carries an <b>approval matrix</b>: board-level policy takes a conditional approval from the CRO and a committee vote before it is adopted, executive policy and procedures the CRO can adopt directly. Every case reads the matrix when it opens, and turning the committee requirement off for a tier changes what the CRO sees. On a case the CRO can approve outright, approve subject to a named condition, or route it to <b>counsel</b> &mdash; Dana Reyes, General Counsel, joins the demo and either clears the language or returns it to the analyst with notes, with the opinion on file either way. A conditional approval that names the committee puts the change into the <b>Gap Closure Board Approval Report</b>, a new report written for the board book: what changed, why, the exact language for the vote, and the motion. After the vote the CRO attaches the minutes to the case and gives final approval, and only then does the language go into force and the obligation close. Two levels, every time, with the evidence for both.</li>
+            <li><span class="cv">v 1.059</span> · <span class="cd">Aug 16, 2026</span><br>Proposed language now runs through a <b>Case</b>. OnSide opens one the moment it detects a change, and the case carries the whole record: what triggered it, the language drafted, every edit, every routing, and every approval, each stamped with the time and the name of the person who did it. That record is the exam answer. A fifth persona joins the demo, <b>Priya Raman, Risk Analyst</b>, who is the maker: she accepts OnSide&rsquo;s draft or edits it in her own words, with the original kept alongside, then routes it to the CRO. Rachel gets a notification in the app and an email you can open and read, and hers is the approval that adopts the change and closes the obligation behind it. Rejecting returns it to OnSide with nothing touched in the in-force document. Cases live under OnSide with a count of what is waiting on you, and the bell in the top bar shows the same by role.</li>
+            <li><span class="cv">v 1.058</span> · <span class="cd">Aug 16, 2026</span><br>Every regulatory source now opens its own page instead of a side panel. A source is somewhere you spend time, not something you glance at and dismiss: the page carries what it covers and how it is captured, how many items landed in the last thirty days, which registers they fed, the last capture and the next sweep, and the full dated activity list with a way into the obligation or document behind each one. Sources still in a connector phase say so on the page. <b>Digest and alerts</b> sit above the source list and on every source page. Pick a cadence, real-time through quarterly, choose email or in-app or both, narrow to binding rules only, and see how many items that setting would carry right now. Alerts are the exception path: switch one on for a source and a change from it reaches you the moment a sweep finds it, whatever the digest cadence.</li>
+            <li><span class="cv">v 1.057</span> · <span class="cd">Aug 16, 2026</span><br>Two fixes for demo day. <b>Approving language now closes the gap everywhere.</b> The priority queue read from a fixed list, so an item you had just approved kept sitting there as open. Every row now reads its state from the document it closes: approve the language and the item moves into a Closed in this session table with who approved it and when, the obligation behind it is marked met, and the domain score, the donuts, and the counts all move with it. Rejecting or routing puts it back. <b>Reset demo</b> lives under your avatar, or Shift + Alt + R. It restores every gap, redline, lever, filter, and conversation to the opening state without reloading the page, so the next walkthrough starts clean.</li>
+            <li><span class="cv">v 1.056</span> · <span class="cd">Aug 16, 2026</span><br>Thesis V14 incorporated. Connect is no longer a module beside OnSide. V14 names four modules and makes Connect the native MCP and API layer of OnSide itself, so Connect now sits inside the OnSide navigation and the platform reads as four modules, not five. The Connect page leads with the burden V14 puts in the opening paragraph: technical staff whose real job is translating the policy manual into system settings, one product at a time. System classes match the five V14 names. OnSide&rsquo;s overview states the same problem and links straight through. Each Soon page closes on why the module compounds, Connect&rsquo;s being the vendor economics: one integration configures every client, which beats re-implementing policy client by client. The document universe gains the two fairness artifacts the thesis says the governance engine ships, the Fairness &amp; Bias Impact Assessment and the Human-in-the-Loop Decision Authority Standard.</li>
             <li><span class="cv">v 1.055</span> · <span class="cd">Aug 16, 2026</span><br>Two demo personas retitled: Jose Ribau is Engagement Manager and Dan Scheffler is Product Manager. The titles show in the profile card, the switch-user list, and anywhere a role is named. Each persona still lands on the same homepage and permissions as before.</li>
             <li><span class="cv">v 1.054</span> · <span class="cd">Aug 16, 2026</span><br>The page now tells browsers not to hold a cached copy. The demo keeps one filename on purpose so the embed never breaks, which meant a browser that had already loaded it would keep showing an older build after a publish. Each load now revalidates against the published file.</li>
             <li><span class="cv">v 1.053</span> · <span class="cd">Aug 16, 2026</span><br>Two Studio pages renamed. Design studio is now <b>Investment Design</b>, which says what the levers actually decide. Three-year roadmap is now <b>Roadmaps</b>. Page headings, breadcrumbs, the CEO queue, and every link that named either page follow the new labels.</li>
@@ -959,7 +1052,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.055</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.060</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -972,6 +1065,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 </div>
 
 <div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Detail panel" tabindex="-1" aria-hidden="true"></aside>
 
 <script>
@@ -986,6 +1080,8 @@ function fmt(n){return n>=1e6?'$'+(n/1e6).toFixed(2)+'M':'$'+Math.round(n/1000)+
 /* ============ USERS (Active Directory mock) ============ */
 var USERS=[
  {id:'rachel',first:'Rachel',name:'Rachel Fischer',ini:'RF',role:'Chief Risk Officer',roleKey:'cro',email:'rachel.fischer@northwindscu.org',phone:'+1 (203) 555-0184'},
+ {id:'priya',first:'Priya',name:'Priya Raman',ini:'PR',role:'Risk Analyst',roleKey:'analyst',email:'priya.raman@northwindscu.org',phone:'+1 (512) 555-0148'},
+ {id:'reyes',first:'Dana',name:'Dana Reyes',ini:'DR',role:'General Counsel',roleKey:'legal',email:'dana.reyes@northwindscu.org',phone:'+1 (214) 555-0173'},
  {id:'adam',first:'Adam',name:'Adam Schlesinger',ini:'AS',role:'Chief Executive Officer',roleKey:'ceo',email:'adam.schlesinger@northwindscu.org',phone:'+1 (415) 555-0117'},
  {id:'jose',first:'Jose',name:'Jose Ribau',ini:'JR',role:'Engagement Manager',roleKey:'ai',email:'jose.ribau@northwindscu.org',phone:'+1 (416) 555-0139'},
  {id:'dan',first:'Dan',name:'Dan Scheffler',ini:'DS',role:'Product Manager',roleKey:'pm',email:'dan.scheffler@northwindscu.org',phone:'+1 (917) 555-0162'}
@@ -1305,7 +1401,28 @@ function openReport(kind){
     +'<div class="repmeta">'+sub+' · NorthWinds Credit Union · illustrative model on sample data</div>'
     +'<div class="repbar"><button class="repprint" onclick="window.print()">⎙ Print / Save as PDF</button>'
     +'<button class="dclose" style="float:none" onclick="closeDrawer();goOnside(\'overview\')">Open full governance detail · OnSide →</button></div>';};
-  if(kind==='board'){
+  if(kind==='gapboard'){
+    var bc=boardCases();
+    var pend=bc.filter(function(c){return c.stage==='committee';});
+    h=head('Gap Closure Board Approval Report','For the '+APPROVAL.committee+' · '+(new Date?'Aug 2026':'')+' meeting')
+     +'<div class="dsum">Each item below is a policy change OnSide detected, drafted, and the Chief Risk Officer has conditionally approved. Under the institution&rsquo;s approval matrix, board-level policy is adopted only after this committee votes. Approving an item authorises the CRO to give final approval and adopt the language exactly as it reads here.</div>'
+     +'<div class="decon" style="grid-template-columns:1fr 1fr 1fr">'
+       +'<div class="dt"><div class="dtl">For a vote</div><div class="dtv">'+pend.length+'</div><div class="dts">conditionally approved, awaiting this meeting</div></div>'
+       +'<div class="dt"><div class="dtl">Adopted since last</div><div class="dtv">'+bc.filter(function(c){return c.stage==='closed';}).length+'</div><div class="dts">voted and in force</div></div>'
+       +'<div class="dt"><div class="dtl">Obligations closed</div><div class="dtv">'+gapsClosed().length+'</div><div class="dts">registers updated on adoption</div></div>'
+     +'</div>'
+     +(bc.length?bc.map(function(c){
+        var d=DOCLIB[c.doc];
+        return '<div class="dsec"><div class="dh">'+c.id+' · '+c.title+' <span class="pill-soft">'+(c.stage==='closed'?'Adopted':c.stage==='final'?'Voted · awaiting final approval':'For a vote')+'</span></div>'
+         +'<div class="csub" style="margin-bottom:10px"><b>Why:</b> '+c.trigger+'<br><b>Owner:</b> '+c.owner+' · <b>Detected:</b> '+c.detected+' · <b>Prepared by:</b> P. Raman, Risk Analyst'+(c.edited?' (language edited from the OnSide draft)':'')+'</div>'
+         +'<div class="rl-old">'+(d&&d.redline?d.redline.old:'')+'</div><div class="rl-new">'+c.lang+'</div>'
+         +'<div class="csub" style="margin-top:10px">'+(c.minutes?'<b style="color:var(--cyan)">'+c.minutes+'</b>':'Minutes to be attached to the case after the vote. The case carries the full history from detection to adoption.')+'</div></div>';
+       }).join('')
+       : '<div class="dsec"><div class="csub">Nothing is waiting on the committee. Items appear here the moment the CRO gives conditional approval on a board-level change. Open a board-tier case, approve it subject to '+APPROVAL.committee+' approval, and it lands in this report.</div>'
+         +'<div style="margin-top:12px"><button class="btn ghost" onclick="closeDrawer();goOnside(\'cases\')">Open cases &rarr;</button></div></div>')
+     +'<div class="dsec"><div class="dh">Recommended motion</div><div class="csub">That the '+APPROVAL.committee+' approve the '+pend.length+' policy change'+(pend.length===1?'':'s')+' set out above as drafted, and authorise the Chief Risk Officer to adopt them in the policy record.</div></div>'
+     +'</div>';
+  } else if(kind==='board'){
     var top=P.funded.slice().sort(function(a,b){return b.val*L.eff-a.val*L.eff;}).slice(0,3);
     h=head('Board Presentation','Investment posture & recommendation')
      +(function(){
@@ -1657,6 +1774,15 @@ function instrKey(cite){
 
 /* ---- document library (every reference document, viewable) ---- */
 var DOCLIB={
+'fairness-bia':{t:'Fairness &amp; Bias Impact Assessment',v:'2026 cycle',dom:'aigov',type:'Evidence',owner:'R. Fischer · CRO',status:'warn',line:'8 of 11 member-facing systems assessed · 3 scheduled for Q3',obl:[],
+ secs:[['Method','Each system that informs a member-facing decision is assessed for fairness exposure: the outcome it influences, the attributes it uses, proxy risk in those attributes, measured disparity across protected classes, and what the institution does when a threshold is breached.'],
+ ['Results','No disparity above threshold in the assessed set. Two systems carry watch items on proxy features, both under quarterly re-test. The underwriting-support model carries the tightest thresholds because its outcome is closest to a credit decision.'],
+ ['Open item','Three systems entered the inventory this quarter and have not been assessed yet. Owners are assigned and the assessments are scheduled before the systems reach production.'],
+ ['Use','The assessment is what the board and the exam file see. It feeds the Fair Lending register and the adverse-action reason-code work directly.']]},
+'hitl-standard':{t:'Human-in-the-Loop Decision Authority Standard',v:'v1.4',dom:'aigov',type:'Standard',owner:'R. Fischer · CRO',status:'good',line:'Checkpoints enforced by system tier · reviewed with the charter',obl:[],
+ secs:[['Requirement','Where fairness or consumer-impact risk requires human decision authority, a named person decides. The system may recommend, rank, or draft. It may not be the final authority on the outcome.'],
+ ['Where it applies','Every Tier 1 system: credit decisioning support, adverse-action reasoning, collections treatment, fraud dispositions that close a member account, and any automated member communication about fees, disputes, or account actions.'],
+ ['Evidence','Each checkpoint logs who decided, when, on what information, and whether they departed from the recommendation. Override rates are reviewed quarterly, because an approval rate near 100% means the checkpoint is not doing work.']]},
 'ai-inventory':{t:'AI System Inventory & Use-Case Register',v:'Live register',dom:'aigov',type:'Evidence',owner:'R. Fischer · CRO',status:'good',line:'23 systems catalogued · tier and owner assigned to each',obl:[],
  secs:[['Contents','Every AI and automated decision system in operation, with business owner, purpose, member impact, data touched, vendor or in-house build, governance tier, and the date of the last review.'],
  ['Tiering','Tier 1 covers systems that inform member-facing decisions. Tier 2 covers systems that inform staff judgement. Tier 3 covers internal productivity use with no member impact. Depth of governance follows the tier.'],
@@ -1728,8 +1854,11 @@ var DOCLIB={
  redline:{note:'Proposed insertion into the Model Risk Management Policy §2 (Scope) · pending RFI 2026-04 outcome',
   old:'Scope excludes exploratory analytics tools not used in decisioning.',
   nw:'Scope includes generative and agentic AI systems whose outputs inform member-facing decisions or regulatory processes, subject to interim governance in Appendix D until interagency scope is finalized.'}},
-'mrm-change-draft':{t:'Model Change Approval Workflow',v:'Draft 0.8',dom:'mrm',type:'Draft',owner:'A. Kaur · Model Risk Manager',status:'warn',line:'In HITL review queue',obl:['MRM-09'],
- secs:[['Status','Formal approval gate for model changes before deployment: change classification, required approvals by tier, and rollback provisions.']]},
+'mrm-change-draft':{t:'Model Change Approval Workflow',v:'Draft 0.8',dom:'mrm',type:'Draft',owner:'A. Kaur · Model Risk Manager',status:'warn',line:'In HITL review queue · language drafted',obl:['MRM-09'],
+ secs:[['Status','Formal approval gate for model changes before deployment: change classification, required approvals by tier, and rollback provisions.']],
+ redline:{note:'Proposed insertion into the Model Risk Management Policy §3 (Governance) · closes MRM-09 · drafted by OnSide',
+  old:'Model owners deploy changes to production models under existing change-management procedures.',
+  nw:'No change to a tiered production model reaches production without classification by materiality, approval at the level its tier requires, a documented rollback position, and a record of the approval in the model inventory. Immaterial changes are logged and reviewed in aggregate at the next MRM Committee.'}},
 'tprm-program':{t:'Third-Party Risk Management Program',v:'v2.0',dom:'tprm',type:'Policy',owner:'P. Nguyen · ISD',status:'warn',line:'Exit-planning section in draft · see redline',obl:['TPRM-01','TPRM-03','TPRM-05','TPRM-12'],
  secs:[['1. Purpose','Establishes lifecycle risk management for third-party relationships per the 2023 Interagency Guidance: planning, due diligence, contracting, monitoring, and termination.'],
  ['2. Risk-based approach','Oversight intensity scales with the risk and criticality of each relationship; critical activities receive board-level visibility.'],
@@ -1861,7 +1990,7 @@ function openItemRow(x){
   var click=d?("openDocView('"+x.doc+"')"):"onsideShow('gaps')";
   return '<div class="oitem" onclick="'+click+'"><div class="ot"><div class="on">'+x.t+'</div><div class="om">'+meta.join(' · ')+'</div></div><span class="oarr">Open →</span></div>';
 }
-var SAMPLE_DOCS=['mrm-policy','mrm-validation-fraud','mrm-minutes','tprm-program','tprm-critical','soc2-core','bsa-policy','bsa-training','sar-qa','ofac-test','fl-review','aa-procedure','hmda-lar','complaint-proc','rege-proc','irp','glba-program','bcp-dr','pentest','gov-charter','ai-inventory','ai-committee','ai-training','capital-narr','cblr-worksheet'];
+var SAMPLE_DOCS=['mrm-policy','mrm-validation-fraud','mrm-minutes','tprm-program','tprm-critical','soc2-core','bsa-policy','bsa-training','sar-qa','ofac-test','fl-review','aa-procedure','hmda-lar','complaint-proc','rege-proc','irp','glba-program','bcp-dr','pentest','gov-charter','ai-inventory','fairness-bia','hitl-standard','ai-committee','ai-training','capital-narr','cblr-worksheet'];
 
 /* ---- viewers ---- */
 function showDrawer(html,wide){
@@ -1986,6 +2115,7 @@ function rlAction(id,act){
     d.status='good';
     d.rlState={act:'adopted',who:who,when:'Aug 15, 2026'};
     d.rlLog.unshift('Redline approved and adopted as '+d.v+' by '+who+' · Aug 15, 2026 · prior text archived · connected systems notified');
+    applyGapClosure(id);
   } else if(act==='routed'){
     d.rlState={act:'routed',who:who,when:'Aug 15, 2026'};
     d.rlLog.unshift('Routed to LeapFI consultancy by '+who+' · Aug 15, 2026 · engagement queue notified');
@@ -1994,8 +2124,19 @@ function rlAction(id,act){
     d.rlLog.unshift('Redline rejected by '+who+' · Aug 15, 2026 · returned to OnSide to redraft');
   } else if(act==='restore'){
     d.rlState=null;
+    undoGapClosure(id);
     d.rlLog.unshift('Draft restored for review by '+who+' · Aug 15, 2026');
   }
+  if(act==='rejected'||act==='routed')undoGapClosure(id);
+  refreshAll();
+}
+/* one call so an action in a side panel never leaves a stale list behind it */
+function refreshAll(){
+  try{
+    if($('onside-views')&&$('mod-onside').classList.contains('active'))onsideShow(onsideView);
+    computePlan();
+    renderHome();
+  }catch(e){}
 }
 function rlSection(id,reopen){
   var d=DOCLIB[id]; if(!d||!d.redline)return '';
@@ -2007,20 +2148,360 @@ function rlSection(id,reopen){
      +'<div class="rl-new">'+r.nw+'</div>'
      +'<div style="margin-top:10px"><span class="pill-soft">Prior text archived · available in version history</span></div></div>';
   }
+  var cs=caseForDoc(id);
   var out='<div class="dsec"><div class="dh">Proposed redline · drafted by OnSide</div>'
    +'<div class="warnline" style="margin-bottom:12px">'+r.note+'</div>'
    +'<div class="rl-old">'+r.old+'</div>'
-   +'<div class="rl-new">'+r.nw+'</div>';
-  if(st&&st.act==='routed'){
-    out+='<div class="okline" style="margin-top:12px">Routed to LeapFI consultancy by '+st.who+' · '+st.when+'. The engagement team reviews the draft with '+d.owner.split(' · ')[0]+' and returns a recommendation. Approval authority stays here.</div>'
-     +'<div class="actions" style="display:flex;gap:8px;margin-top:12px">'+btn('adopted','Approve &amp; adopt')+btn('rejected','Reject','rej')+'</div>';
+   +'<div class="rl-new">'+(cs?cs.lang:r.nw)+'</div>';
+  if(cs){
+    out+='<div class="csub" style="margin-top:12px">This change is worked as <b>'+cs.id+'</b>, currently with '+caseStageOwner(cs)+'. Approvals happen on the case, so the history stays in one place.</div>'
+     +'<div class="actions" style="display:flex;gap:8px;margin-top:12px"><button class="btn" onclick="closeDrawer();goOnside(\'case:'+cs.id+'\')">Open '+cs.id+' &rarr;</button></div>';
   } else if(st&&st.act==='rejected'){
-    out+='<div class="warnline" style="margin-top:12px">Rejected by '+st.who+' · '+st.when+'. Returned to OnSide to redraft against the owner&rsquo;s notes. Nothing changes in the in-force document until a draft is approved.</div>'
+    out+='<div class="warnline" style="margin-top:12px">Rejected by '+st.who+' · '+st.when+'.</div>'
      +'<div class="actions" style="display:flex;gap:8px;margin-top:12px">'+btn('restore','Restore draft for review')+'</div>';
   } else {
-    out+='<div class="actions" style="display:flex;gap:8px;margin-top:14px">'+btn('adopted','Approve &amp; adopt')+'<button class="btn ghost" onclick="rlAction(\''+id+'\',\'routed\');'+reopen+'">Route to consultancy</button>'+btn('rejected','Reject','rej')+'</div>';
+    out+='<div class="actions" style="display:flex;gap:8px;margin-top:14px">'+btn('adopted','Approve &amp; adopt')+btn('rejected','Reject','rej')+'</div>';
   }
   return out+'</div>';
+}
+/* ============ APPROVAL MATRIX · set once in Settings, obeyed by every case ============ */
+var APPROVAL={
+ tiers:[
+  {k:'board',n:'Board-level policy',d:'Policies and charters the board approves. The CRO gives conditional approval, a committee votes, and final approval follows the vote.',committee:true,ex:'Governance Charter · Model Risk Management Policy'},
+  {k:'exec',n:'Executive policy',d:'Policies an executive officer approves. The CRO can adopt directly, or attach a condition if the change warrants one.',committee:false,ex:'Incident Response Plan · Third-Party Risk Management Program'},
+  {k:'proc',n:'Procedure &amp; standard',d:'Operating procedures and standards below policy level. Analyst prepares, CRO approves.',committee:false,ex:'Regulation E error resolution · adverse-action procedure'}
+ ],
+ conditions:[
+  'Board Risk Committee approval',
+  'Legal counsel opinion on file',
+  'External counsel review',
+  'Model validation complete',
+  'Vendor notification complete'
+ ],
+ committee:'Board Risk Committee'
+};
+var CASE_TIER={'gov-charter':'board','mrm-change-draft':'board','gen-ai-draft':'board','irp':'exec','tprm-program':'exec','aa-procedure':'proc','msg-disclosure':'proc','rege-proc':'proc'};
+function tierOf(k){return APPROVAL.tiers.filter(function(t){return t.k===k;})[0]||APPROVAL.tiers[1];}
+function setCommitteeName(v){APPROVAL.committee=v.trim()||'Board Risk Committee';toast('Committee set to '+APPROVAL.committee+'. Every board-tier case routes there.');}
+function toggleTierCommittee(k){
+  var t=tierOf(k); t.committee=!t.committee;
+  toast(t.n+(t.committee?' now requires a committee vote before final approval.':' can now be adopted by the CRO without a committee.'));
+  if(document.getElementById('mod-settings').classList.contains('active'))renderApprovalSettings();
+}
+/* ============ CASES · the record of who decided what, and when ============ */
+var CASES=[];
+var NOTIFS=[];
+var CASE_STAGES=[['detected','Detected'],['analyst','Risk analyst'],['cro','CRO'],['closed','Adopted']];
+var CASE_STAGES_B=[['detected','Detected'],['analyst','Risk analyst'],['cro','CRO conditional'],['committee','Committee'],['closed','Final approval']];
+var CASE_TRIGGER={
+ 'irp':'NCUA Letter 26-CU-07 and Part 748 appendix A · member-facing automation has no escalation path',
+ 'tprm-program':'Interagency Guidance 88 FR 37920 §III.F · no documented exit plan for critical relationships',
+ 'aa-procedure':'CFPB Circular 2026-C1 · adverse-action notices must give the specific principal reason',
+ 'msg-disclosure':'UDAAP supervisory expectation · automated member communications carry no disclosure standard',
+ 'gov-charter':'Interagency RFI 2026-04 · agentic systems fall outside the charter as written',
+ 'mrm-change-draft':'Interagency Guidance 2026-13 §V · model changes reach production without a formal gate',
+ 'gen-ai-draft':'Interagency RFI 2026-04 · generative models are out of scope in the policy as written',
+ 'rege-proc':'Regulation E §1005.11 · the error clock depends on staff transcription for automated intake'
+};
+var CASE_DETECTED={'irp':'Aug 14, 2026','tprm-program':'Aug 11, 2026','aa-procedure':'Aug 6, 2026','msg-disclosure':'Aug 9, 2026','gov-charter':'Jul 31, 2026','mrm-change-draft':'Aug 4, 2026','gen-ai-draft':'Jun 30, 2026','rege-proc':'Aug 12, 2026'};
+var CASE_OWNER={'irp':'P. Nguyen · ISD','tprm-program':'P. Nguyen · ISD','aa-procedure':'M. Okafor · CCO','msg-disclosure':'M. Okafor · CCO','gov-charter':'R. Fischer · CRO','mrm-change-draft':'A. Kaur · MRM','gen-ai-draft':'A. Kaur · MRM','rege-proc':'M. Okafor · CCO'};
+function stamp(){ return 'Aug 15, 2026 · '+CLOCK.next()+' ET'; }
+var CLOCK={t:[['9','14','AM'],['9','41','AM'],['10','06','AM'],['10','32','AM'],['11','15','AM'],['11','48','AM'],['1','22','PM'],['2','05','PM'],['2','47','PM'],['3','30','PM'],['4','12','PM'],['4','55','PM']],i:0,
+  next:function(){var x=this.t[Math.min(this.i,this.t.length-1)];this.i++;return x[0]+':'+x[1]+' '+x[2];}};
+function seedCases(){
+  CASES=[]; NOTIFS=[]; CLOCK.i=0;
+  var seq=0;
+  ['irp','tprm-program','aa-procedure','mrm-change-draft','msg-disclosure','rege-proc','gov-charter','gen-ai-draft'].forEach(function(id){
+    var d=DOCLIB[id]; if(!d||!d.redline)return;
+    seq++;
+    CASES.push({
+      id:'CASE-2026-'+('00'+seq).slice(-3),
+      doc:id, title:d.t, dom:d.dom, owner:CASE_OWNER[id]||d.owner,
+      detected:CASE_DETECTED[id]||'Aug 12, 2026',
+      trigger:CASE_TRIGGER[id]||d.redline.note,
+      stage:'analyst', edited:false, tier:CASE_TIER[id]||'exec', cond:null, condMet:false, minutes:null, opinion:null,
+      base:d.redline.nw, lang:d.redline.nw,
+      history:[{when:(CASE_DETECTED[id]||'Aug 12, 2026')+' · 6:12 AM ET',who:'OnSide',role:'System',what:'Change detected and language proposed',note:CASE_TRIGGER[id]||''}]
+    });
+  });
+}
+function caseById(cid){return CASES.filter(function(c){return c.id===cid;})[0]||null;}
+function caseForDoc(id){return CASES.filter(function(c){return c.doc===id;})[0]||null;}
+function caseLog(c,who,role,what,note){c.history.unshift({when:stamp(),who:who,role:role,what:what,note:note||''});}
+function caseStageOwner(c){
+  if(c.stage==='analyst')return 'P. Raman · Risk Analyst';
+  if(c.stage==='cro')return 'R. Fischer · CRO';
+  if(c.stage==='legal')return 'D. Reyes · General Counsel';
+  if(c.stage==='committee')return APPROVAL.committee;
+  if(c.stage==='final')return 'R. Fischer · CRO · final approval';
+  if(c.stage==='closed')return 'Closed';
+  if(c.stage==='rejected')return 'Returned to OnSide';
+  return '—';
+}
+function caseWaitingOn(c){
+  if(c.stage==='analyst')return 'analyst';
+  if(c.stage==='cro'||c.stage==='final'||c.stage==='committee')return 'cro';
+  if(c.stage==='legal')return 'legal';
+  return null;
+}
+function myCases(){return CASES.filter(function(c){return caseWaitingOn(c)===CURRENT.roleKey;});}
+function canAct(c){return caseWaitingOn(c)===CURRENT.roleKey;}
+/* ---- notifications ---- */
+function notify(roleKey,title,cid,kind){
+  NOTIFS.unshift({to:roleKey,title:title,cid:cid,kind:kind||'app',when:stamp(),read:false});
+  renderBell();
+}
+function myNotifs(){return NOTIFS.filter(function(x){return x.to===CURRENT.roleKey;});}
+function renderBell(){
+  var b=$('bell'); if(!b)return;
+  var un=myNotifs().filter(function(x){return !x.read;}).length;
+  b.innerHTML='<span class="bi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>'+(un?'<span class="bdot">'+un+'</span>':'');
+  var p=$('bell-panel'); if(!p)return;
+  var list=myNotifs();
+  p.innerHTML='<div class="bp-h">Notifications · '+CURRENT.role+'</div>'
+   +(list.length?list.map(function(x,i){
+      return '<div class="bp-row'+(x.read?' rd':'')+'" onclick="openNotif('+i+')"><div class="bp-t">'+x.title+'</div><div class="bp-s">'+x.when+' · '+x.cid+(x.kind==='email'?' · email + in-app':' · in-app')+'</div></div>';
+     }).join(''):'<div class="bp-empty">Nothing waiting on you. Cases you are asked to action land here, and by email if the case says so.</div>');
+}
+function toggleBell(e){ if(e)e.stopPropagation(); $('bell-panel').classList.toggle('open'); renderBell(); }
+function openNotif(i){
+  var x=myNotifs()[i]; if(!x)return;
+  x.read=true; $('bell-panel').classList.remove('open');
+  goOnside('case:'+x.cid); renderBell();
+}
+/* ---- the email a routing actually sends ---- */
+function openEmail(cid){
+  var c=caseById(cid); if(!c)return;
+  var to=c.stage==='cro'?'Rachel Fischer <rachel.fischer@northwindscu.org>':'Priya Raman <priya.raman@northwindscu.org>';
+  showDrawer('<div class="dwrap"><button class="dclose" onclick="closeDrawer()">✕ Close</button>'
+   +'<div class="dcat">Notification · email preview</div><h3 class="dtitle">'+c.id+' is waiting on you</h3>'
+   +'<div class="mail">'
+     +'<div class="mail-h"><div><b>From</b> OnSide &lt;onside@leapfi.ai&gt;</div><div><b>To</b> '+to+'</div><div><b>Subject</b> ['+c.id+'] Approval needed · '+c.title+'</div></div>'
+     +'<div class="mail-b"><p>A policy change is waiting on your approval.</p>'
+       +'<p><b>'+c.title+'</b><br>Detected '+c.detected+' · '+c.dom.toUpperCase()+' · owner '+c.owner+'</p>'
+       +'<p>'+c.trigger+'</p>'
+       +'<p>'+(c.edited?'The risk analyst edited the proposed language before routing it.':'The risk analyst accepted the proposed language as drafted.')+'</p>'
+       +'<div class="mail-btn">Open the case in OnSide</div>'
+       +'<p class="mail-f">Sent because you are the approver for this policy tier. Manage your digest and alert settings in OnSide.</p></div>'
+   +'</div></div>',false);
+}
+/* ---- actions ---- */
+function caseEdit(cid){
+  var c=caseById(cid); if(!c)return;
+  c.editing=true; onsideShow('case:'+cid);
+  setTimeout(function(){var t=$('case-ta'); if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}},60);
+}
+function caseCancelEdit(cid){var c=caseById(cid); if(!c)return; c.editing=false; onsideShow('case:'+cid);}
+function caseSaveLang(cid){
+  var c=caseById(cid), t=$('case-ta'); if(!c||!t)return;
+  var v=t.value.trim(); if(!v)return;
+  var changed=v!==c.lang;
+  c.lang=v; c.editing=false;
+  if(changed){ c.edited=true; caseLog(c,CURRENT.name,CURRENT.role,'Edited the proposed language','OnSide&rsquo;s draft kept as the base version. Both texts stay in the case.'); }
+  onsideShow('case:'+cid);
+  toast(changed?'Language updated. The original OnSide draft is kept in the case.':'No change to the language.');
+}
+function caseRevert(cid){
+  var c=caseById(cid); if(!c)return;
+  c.lang=c.base; c.edited=false; c.editing=false;
+  caseLog(c,CURRENT.name,CURRENT.role,'Reverted to the OnSide draft','');
+  onsideShow('case:'+cid); toast('Reverted to the language OnSide proposed.');
+}
+function caseAccept(cid){
+  var c=caseById(cid); if(!c||c.stage!=='analyst')return;
+  c.stage='cro';
+  caseLog(c,CURRENT.name,CURRENT.role,(c.edited?'Accepted with edits and routed for approval':'Accepted as drafted and routed for approval'),'Sent to R. Fischer, Chief Risk Officer.');
+  notify('cro','Approval needed · '+c.title,c.id,'email');
+  onsideShow('case:'+cid);
+  toast('Routed to the CRO. Notified in the app and by email.');
+}
+function caseCondPick(cid){
+  var c=caseById(cid); if(!c)return;
+  c.picking=!c.picking; onsideShow('case:'+cid);
+}
+function caseConditional(cid,cond){
+  var c=caseById(cid); if(!c)return;
+  c.cond=cond; c.condMet=false; c.picking=false;
+  var isCttee=cond===APPROVAL.conditions[0];
+  c.stage=isCttee?'committee':'final';
+  caseLog(c,CURRENT.name,CURRENT.role,'Conditional approval',(isCttee
+    ?'Approved subject to '+APPROVAL.committee+' approval. Added to the Gap Closure Board Approval Report.'
+    :'Approved subject to: '+cond+'. Final approval follows once the condition is evidenced.'));
+  if(isCttee)notify('analyst','Added to the board report · '+c.title,c.id,'app');
+  onsideShow('case:'+cid);
+  toast(isCttee?('Conditional approval recorded. '+c.title+' is now in the Gap Closure Board Approval Report.'):('Conditional approval recorded. Waiting on: '+cond+'.'));
+}
+function caseRouteLegal(cid){
+  var c=caseById(cid); if(!c)return;
+  c.backTo=c.stage; c.stage='legal';
+  caseLog(c,CURRENT.name,CURRENT.role,'Routed to legal counsel','Sent to D. Reyes, General Counsel, to validate the language before approval.');
+  notify('legal','Counsel review requested · '+c.title,c.id,'email');
+  onsideShow('case:'+cid);
+  toast('Routed to counsel. Notified in the app and by email.');
+}
+function caseOpinion(cid,ok){
+  var c=caseById(cid); if(!c||c.stage!=='legal')return;
+  c.opinion=ok?'Cleared as drafted':'Returned with drafting notes';
+  c.stage=ok?(c.backTo||'cro'):'analyst';
+  caseLog(c,CURRENT.name,CURRENT.role,'Counsel opinion recorded · '+c.opinion,ok?'No change required to the proposed language.':'Counsel asked for narrower wording. Back to the analyst to redraft.');
+  notify(ok?'cro':'analyst',(ok?'Counsel cleared · ':'Counsel notes · ')+c.title,c.id,'app');
+  onsideShow('case:'+cid);
+  toast(ok?'Counsel cleared it. Back with the CRO.':'Counsel returned notes. Back with the analyst.');
+}
+function caseMinutes(cid){
+  var c=caseById(cid); if(!c||c.stage!=='committee')return;
+  c.minutes='Board Risk Committee minutes · Aug 15, 2026 · carried 6-0';
+  c.condMet=true; c.stage='final';
+  caseLog(c,CURRENT.name,CURRENT.role,APPROVAL.committee+' approved · minutes attached',c.minutes+'. The vote is now part of the evidence chain.');
+  onsideShow('case:'+cid);
+  toast('Minutes attached. The condition is satisfied and final approval is open.');
+}
+function caseCondMet(cid){
+  var c=caseById(cid); if(!c)return;
+  c.condMet=true;
+  caseLog(c,CURRENT.name,CURRENT.role,'Condition evidenced · '+c.cond,'Final approval is now open.');
+  onsideShow('case:'+cid);
+}
+function caseApprove(cid){
+  var c=caseById(cid); if(!c||(c.stage!=='cro'&&c.stage!=='final'))return;
+  if(c.stage==='final'&&!c.condMet)return;
+  c.stage='closed';
+  var d=DOCLIB[c.doc]; if(d&&d.redline)d.redline.nw=c.lang;
+  caseLog(c,CURRENT.name,CURRENT.role,'Final approval · adopted',(c.cond?'Condition satisfied: '+c.cond+'. ':'')+'Prior text archived, the fingerprint re-sealed, connected systems notified.');
+  rlAction(c.doc,'adopted');
+  notify('analyst','Approved and adopted · '+c.title,c.id,'app');
+  onsideShow('case:'+cid);
+  toast('Adopted. The obligation behind it is now met and the gap has left the queue.');
+}
+function caseReject(cid){
+  var c=caseById(cid); if(!c)return;
+  c.stage='rejected';
+  caseLog(c,CURRENT.name,CURRENT.role,'Rejected · returned to OnSide','Nothing changes in the in-force document until a draft is approved.');
+  rlAction(c.doc,'rejected');
+  notify('analyst','Returned to redraft · '+c.title,c.id,'app');
+  onsideShow('case:'+cid);
+  toast('Returned to OnSide to redraft. The in-force document is untouched.');
+}
+function caseReopen(cid){
+  var c=caseById(cid); if(!c)return;
+  c.stage='analyst';
+  caseLog(c,CURRENT.name,CURRENT.role,'Reopened for redraft','');
+  rlAction(c.doc,'restore');
+  onsideShow('case:'+cid);
+}
+/* ---- views ---- */
+function caseStagePill(c){
+  if(c.stage==='closed')return '<span class="tag good">Adopted</span>';
+  if(c.stage==='rejected')return '<span class="tag crit">Returned</span>';
+  if(c.stage==='cro')return '<span class="tag warn">With the CRO</span>';
+  if(c.stage==='legal')return '<span class="tag warn">With counsel</span>';
+  if(c.stage==='committee')return '<span class="tag warn">At '+APPROVAL.committee+'</span>';
+  if(c.stage==='final')return '<span class="tag warn">Conditional · final approval open</span>';
+  return '<span class="tag warn">With the analyst</span>';
+}
+function boardCases(){return CASES.filter(function(c){return c.cond===APPROVAL.conditions[0]&&(c.stage==='committee'||c.stage==='final'||c.stage==='closed');});}
+function osCases(){
+  var mine=myCases().length;
+  function row(c){
+    var wait=canAct(c)?'<span class="mine">Waiting on you</span>':'';
+    return '<tr class="prow" onclick="goOnside(\'case:'+c.id+'\')"><td><b class="doclink">'+c.id+'</b></td><td><b>'+c.title+'</b>'+wait+'<div class="cite">'+c.trigger.split(' · ')[0]+'</div></td><td class="pcat">'+(domByKey(c.dom)||{name:c.dom}).name+'</td><td class="pcat">'+c.owner+'</td><td class="pcat">'+caseStageOwner(c)+'</td><td>'+caseStagePill(c)+'</td></tr>';
+  }
+  var openC=CASES.filter(function(c){return c.stage!=='closed'&&c.stage!=='rejected';});
+  var doneC=CASES.filter(function(c){return c.stage==='closed'||c.stage==='rejected';});
+  return osScopeBar()
+   +'<div class="card"><h2>Cases · every proposed change, and who has it</h2>'
+   +'<div class="csub">OnSide opens a case the moment it detects a change and drafts the language to close it. The case is the record: who edited, who accepted, who approved, and when. It is timestamped from detection to adoption, and it is what the examiner reads.'
+   +(mine?' <b style="color:var(--cyan)">'+mine+' '+(mine===1?'case is':'cases are')+' waiting on you.</b>':'')+'</div>'
+   +'<table class="tbl"><thead><tr><th>Case</th><th>Change</th><th>Domain</th><th>Policy owner</th><th>With</th><th>Stage</th></tr></thead><tbody>'+openC.map(row).join('')+'</tbody></table></div>'
+   +(doneC.length?'<div class="card" style="margin-top:14px"><h2>Closed cases · '+doneC.length+'</h2><div class="csub">Adopted or returned. The full history stays on the case either way.</div>'
+     +'<table class="tbl"><thead><tr><th>Case</th><th>Change</th><th>Domain</th><th>Policy owner</th><th>With</th><th>Stage</th></tr></thead><tbody>'+doneC.map(row).join('')+'</tbody></table></div>':'');
+}
+function osCasePage(cid){
+  var c=caseById(cid); if(!c)return osCases();
+  var d=DOCLIB[c.doc];
+  var T=tierOf(c.tier), useB=T.committee;
+  var SET=useB?CASE_STAGES_B:CASE_STAGES;
+  var IDX=useB?{analyst:1,legal:2,cro:2,committee:3,final:4,closed:4,rejected:1}:{analyst:1,legal:2,cro:2,final:2,closed:3,rejected:1};
+  var stageIdx=IDX[c.stage]!==undefined?IDX[c.stage]:1;
+  var steps=SET.map(function(s,i){
+    var cls=i<stageIdx?'done':(i===stageIdx&&c.stage!=='closed'?'now':(c.stage==='closed'?'done':''));
+    if(c.stage==='rejected'&&i===SET.length-1)return '<div class="cstep bad"><span>'+SET.length+'</span>Returned</div>';
+    return '<div class="cstep '+cls+'"><span>'+(i+1)+'</span>'+s[1]+'</div>';
+  }).join('<i class="cbar"></i>');
+  var act='';
+  if(c.stage==='analyst'){
+    act=canAct(c)
+      ? '<div class="cact"><button class="btn" onclick="caseAccept(\''+cid+'\')">Accept &amp; route for approval</button>'
+        +'<button class="btn ghost" onclick="caseEdit(\''+cid+'\')">Edit the language</button>'
+        +(c.edited?'<button class="btn ghost" onclick="caseRevert(\''+cid+'\')">Revert to the OnSide draft</button>':'')
+        +'<button class="btn" style="color:var(--sem1);border-color:rgba(201,74,74,.4);background:transparent" onclick="caseReject(\''+cid+'\')">Reject</button></div>'
+      : '<div class="cwait">This case is with <b>P. Raman, Risk Analyst</b>. <span class="doclink" onclick="switchUser(\'priya\');goOnside(\'case:'+cid+'\')">Sign in as Priya to action it &rarr;</span></div>';
+  } else if(c.stage==='cro'){
+    var picker=c.picking?('<div class="cond-pick"><div class="cp-h">Approve subject to</div>'
+      +APPROVAL.conditions.map(function(x){return '<div class="cp-row" onclick="caseConditional(\''+cid+'\',\''+x.replace(/'/g,"\\'")+'\')">'+x+'</div>';}).join('')
+      +'<div class="cp-f">Set in Settings &rsaquo; Approval matrix. Board-tier changes default to '+APPROVAL.committee+'.</div></div>'):'';
+    act=canAct(c)
+      ? '<div class="cact">'
+        +(T.committee
+          ? '<button class="btn" onclick="caseCondPick(\''+cid+'\')">Conditional approval &hellip;</button>'
+          : '<button class="btn" onclick="caseApprove(\''+cid+'\')">Final approval &amp; adopt</button><button class="btn ghost" onclick="caseCondPick(\''+cid+'\')">Approve with a condition &hellip;</button>')
+        +'<button class="btn ghost" onclick="caseRouteLegal(\''+cid+'\')">Route to legal counsel</button>'
+        +'<button class="btn ghost" onclick="openEmail(\''+cid+'\')">View the email you were sent</button>'
+        +'<button class="btn" style="color:var(--sem1);border-color:rgba(201,74,74,.4);background:transparent" onclick="caseReject(\''+cid+'\')">Reject</button></div>'+picker
+        +(T.committee?'<div class="cwait" style="margin-top:12px">This is a <b>'+T.n.toLowerCase()+'</b>. Under your approval matrix the CRO gives conditional approval and '+APPROVAL.committee+' votes before it is adopted.</div>':'')
+      : '<div class="cwait">This case is with <b>R. Fischer, Chief Risk Officer</b>, notified in the app and by email. <span class="doclink" onclick="switchUser(\'rachel\');goOnside(\'case:'+cid+'\')">Sign in as Rachel to action it &rarr;</span></div>';
+  } else if(c.stage==='legal'){
+    act=canAct(c)
+      ? '<div class="cwait" style="margin-bottom:14px">Counsel review requested by the CRO. Record your opinion and the case returns to the approval path with the opinion on file.</div>'
+        +'<div class="cact"><button class="btn" onclick="caseOpinion(\''+cid+'\',true)">Clear as drafted</button>'
+        +'<button class="btn ghost" onclick="caseOpinion(\''+cid+'\',false)">Return with drafting notes</button></div>'
+      : '<div class="cwait">Out with <b>D. Reyes, General Counsel</b> for validation. <span class="doclink" onclick="switchUser(\'reyes\');goOnside(\'case:'+cid+'\')">Sign in as Dana to record the opinion &rarr;</span></div>';
+  } else if(c.stage==='committee'){
+    act=canAct(c)
+      ? '<div class="cwait" style="margin-bottom:14px">Conditional approval given, subject to <b>'+APPROVAL.committee+'</b> approval. This change is in the <span class="doclink" onclick="openReport(\'gapboard\')">Gap Closure Board Approval Report</span> for the next meeting. Attach the minutes once it carries.</div>'
+        +'<div class="cact"><button class="btn" onclick="caseMinutes(\''+cid+'\')">Attach committee minutes</button>'
+        +'<button class="btn ghost" onclick="openReport(\'gapboard\')">Open the board report</button></div>'
+      : '<div class="cwait">Waiting on <b>'+APPROVAL.committee+'</b>. It sits in the <span class="doclink" onclick="openReport(\'gapboard\')">Gap Closure Board Approval Report</span>.</div>';
+  } else if(c.stage==='final'){
+    act=canAct(c)
+      ? '<div class="cwait" style="margin-bottom:14px">Conditional approval given, subject to <b>'+c.cond+'</b>.'+(c.condMet?' <b style="color:var(--cyan)">Condition satisfied</b>'+(c.minutes?' &middot; '+c.minutes:'')+'.':' The condition is not yet evidenced.')+'</div>'
+        +'<div class="cact">'+(c.condMet?'':'<button class="btn ghost" onclick="caseCondMet(\''+cid+'\')">Record the condition as met</button>')
+        +'<button class="btn"'+(c.condMet?'':' disabled style="opacity:.45;cursor:not-allowed"')+' onclick="'+(c.condMet?'caseApprove(\''+cid+'\')':'')+'">Final approval &amp; adopt</button>'
+        +'<button class="btn" style="color:var(--sem1);border-color:rgba(201,74,74,.4);background:transparent" onclick="caseReject(\''+cid+'\')">Reject</button></div>'
+      : '<div class="cwait">Conditionally approved, waiting on <b>'+c.cond+'</b> and the CRO&rsquo;s final approval.</div>';
+  } else if(c.stage==='closed'){
+    act='<div class="okline">Adopted as <b>'+d.v+'</b>. The prior text is archived, the fingerprint re-sealed, connected systems notified, and the obligation behind it marked met. <span class="doclink" onclick="openDocView(\''+c.doc+'\')">Open the document &rarr;</span></div>';
+  } else {
+    act='<div class="warnline">Returned to OnSide to redraft. Nothing changed in the in-force document. <span class="doclink" onclick="caseReopen(\''+cid+'\')">Reopen for redraft &rarr;</span></div>';
+  }
+  var lang=c.editing
+    ? '<textarea id="case-ta" class="case-ta">'+c.lang.replace(/&rsquo;/g,'\u2019').replace(/&amp;/g,'&')+'</textarea>'
+      +'<div class="cact" style="margin-top:10px"><button class="btn" onclick="caseSaveLang(\''+cid+'\')">Save the language</button><button class="btn ghost" onclick="caseCancelEdit(\''+cid+'\')">Cancel</button></div>'
+    : '<div class="rl-new">'+c.lang+'</div>'+(c.edited?'<div class="csub" style="margin-top:8px"><b>Edited by the analyst.</b> OnSide&rsquo;s original draft is kept below and in the history.</div><div class="rl-base">'+c.base+'</div>':'');
+  var hist=c.history.map(function(x){
+    return '<div class="chist"><div class="ch-w">'+x.when+'</div><div><div class="ch-t">'+x.what+'</div><div class="ch-s">'+x.who+(x.role?' · '+x.role:'')+(x.note?' · '+x.note:'')+'</div></div></div>';
+  }).join('');
+  return '<div class="src-back" onclick="onsideShow(\'cases\')">&larr; All cases</div>'
+   +'<div class="card"><div class="src-top"><div><div class="dcat">Case · opened by OnSide on detection</div>'
+     +'<h2 style="margin:6px 0 0">'+c.id+' · '+c.title+'</h2>'
+     +'<div class="csub" style="margin-top:6px">'+c.trigger+'</div></div>'
+     +'<div class="src-badges">'+caseStagePill(c)+'</div></div>'
+   +'<div class="csteps">'+steps+'</div>'
+   +'<div class="src-meta" style="margin-top:16px">'
+     +'<div><div class="sml">Detected</div><div class="smv">'+c.detected+' · 6:12 AM ET sweep</div></div>'
+     +'<div><div class="sml">Policy owner</div><div class="smv">'+c.owner+'</div></div>'
+     +'<div><div class="sml">Currently with</div><div class="smv">'+caseStageOwner(c)+'</div></div>'
+     +'<div><div class="sml">Approval tier</div><div class="smv">'+T.n+' · '+(T.committee?APPROVAL.committee+' votes before adoption':'CRO adopts')+' <span class="doclink" onclick="go(\'settings\')">matrix &rarr;</span></div></div>'
+     +(c.cond?'<div><div class="sml">Condition</div><div class="smv">'+c.cond+(c.condMet?' · <b style="color:var(--cyan)">satisfied</b>':' · outstanding')+'</div></div>':'')
+     +(c.opinion?'<div><div class="sml">Counsel</div><div class="smv">D. Reyes · '+c.opinion+'</div></div>':'')
+     +'<div><div class="sml">Document</div><div class="smv"><span class="doclink" onclick="openDocView(\''+c.doc+'\')">'+c.title+' &rarr;</span></div></div>'
+   +'</div></div>'
+   +'<div class="card" style="margin-top:14px"><h2>Proposed language</h2>'
+     +'<div class="csub">What the document says today, and what OnSide proposes it should say. The analyst can accept this, or edit it and route their own words.</div>'
+     +'<div class="rl-old" style="margin-top:12px">'+(d&&d.redline?d.redline.old:'')+'</div>'+lang
+     +(c.stage==='analyst'||c.stage==='cro'||c.stage==='legal'||c.stage==='committee'||c.stage==='final'?act:'')+'</div>'
+   +(c.stage==='closed'||c.stage==='rejected'?'<div class="card" style="margin-top:14px">'+act+'</div>':'')
+   +'<div class="card" style="margin-top:14px"><h2>Case history</h2><div class="csub">Every action on this case, in order, with the name of the person who took it. This is the exam answer.</div><div class="chist-wrap">'+hist+'</div></div>';
 }
 function openDocView(id,back){
   window.__docBack=back;
@@ -2132,20 +2613,34 @@ function goOnside(v){go('onside');onsideShow(v||'overview');}
 function onsideShow(v){
   if(v==='reports'||v==='board'){goReporting();return;}
   var el=$('onside-views'); if(!el)return;
-  var R={overview:osOverview,domains:osDomainsMaster,docs:osDocs,gaps:osGaps,'feed-sources':osSources,'feed-lifecycle':osLifecycle,'feed-inforce':osInforce,raci:osRaci,onboarding:osOnboarding};
+  var R={overview:osOverview,domains:osDomainsMaster,docs:osDocs,gaps:osGaps,cases:osCases,'feed-sources':osSources,'feed-lifecycle':osLifecycle,'feed-inforce':osInforce,raci:osRaci,onboarding:osOnboarding};
   var orig=v;
+  var srcName=null,caseId=null;
+  if(String(v).indexOf('src:')===0){srcName=v.slice(4);}
+  if(String(v).indexOf('case:')===0){caseId=v.slice(5);}
   if(v==='targets')v='domains';
   var domKey=null;
   if(v.indexOf('dom-')===0){domKey=v.slice(4);expandedDoms[domKey]=true;v='domains';}
   onsideView=v;
-  var OS_HEADS={overview:'Overview',domains:'Domains · gaps & levers',board:'Reporting',reports:'Reporting',docs:'Document universe',gaps:'Open gaps','feed-sources':'Sources & connectors','feed-lifecycle':'Rulemaking lifecycle','feed-inforce':'In force',raci:'RACI & owners',onboarding:'How onboarding works'};
-  setCrumb('OnSide',OS_HEADS[v]||'Overview','');
-  el.innerHTML=(R[v]||osOverview)();
+  var OS_HEADS={overview:'Overview',cases:'Cases · approvals',domains:'Domains · gaps & levers',board:'Reporting',reports:'Reporting',docs:'Document universe',gaps:'Open gaps','feed-sources':'Sources & connectors','feed-lifecycle':'Rulemaking lifecycle','feed-inforce':'In force',raci:'RACI & owners',onboarding:'How onboarding works'};
+  if(srcName){
+    onsideView=orig; v='feed-sources';
+    setCrumb('OnSide','Sources &amp; connectors',srcName);
+    el.innerHTML=osSourcePage(srcName);
+  } else if(caseId){
+    onsideView=orig; v='cases';
+    setCrumb('OnSide','Cases &amp; approvals',caseId);
+    el.innerHTML=osCasePage(caseId);
+  } else {
+    setCrumb('OnSide',OS_HEADS[v]||'Overview','');
+    el.innerHTML=(R[v]||osOverview)();
+  }
   var subs=document.querySelectorAll('#ng-onside .os-sub');
   for(var i=0;i<subs.length;i++)subs[i].classList.toggle('active',subs[i].getAttribute('data-os')===v);
   var NEST_OF={docs:'documents',gaps:'documents','feed-sources':'feed','feed-lifecycle':'feed','feed-inforce':'feed',raci:'setup',onboarding:'setup'};
   var nests=document.querySelectorAll('#ng-onside .os-nest');
   for(var j=0;j<nests.length;j++)nests[j].classList.toggle('open',nests[j].id==='nest-'+NEST_OF[v]);
+  var nc=$('nav-case-n'); if(nc){var m=myCases().length; nc.textContent=m?m:''; nc.style.display=m?'':'none';}
   if(domKey){var acc=document.getElementById('dom-acc-'+domKey); if(acc)setTimeout(function(){acc.scrollIntoView({behavior:'smooth',block:'start'});},80);}
   else window.scrollTo({top:0});
 }
@@ -2172,9 +2667,12 @@ function osOverview(){
   var ev=SCOPE_EVENTS.length?('<div class="sect-lab" id="scope-events">Scope changes this session</div>'+SCOPE_EVENTS.map(function(e){return '<div class="scope-ev"><span>◈</span><div><b>'+e.uc+'</b> entered the portfolio: pulls <b>'+e.obl+' obligations</b> into scope across '+e.doms.map(domLink).join(', ')+'. Targets re-evaluated.<div style="margin-top:6px" class="dchips">'+e.doms.map(function(dn){var k=DOMKEYS[dn]||null;return k?'<span class="dchip" onclick="goOnside(\'dom-'+k+'\')">'+dn+' · see the new scope rows →</span>':'';}).join('')+'</div></div></div>';}).join('')):'';
   var ucs='<div class="card" style="margin-top:16px"><h2>Objectives driving scope</h2><div class="csub">Applicability is derived from the use cases the institution has declared, with determination provenance on every inclusion and exclusion. Click one to open it in Studio.</div>'
    +'<div class="chipstrip" style="margin-top:2px">'+OPPS.slice(0,8).map(function(o){return '<span class="chip doclink" style="cursor:pointer" onclick="openPlay(\''+o.n+'\')">'+o.n+'</span>';}).join('')+'<span class="chip doclink" style="cursor:pointer" onclick="goStudio(\'register\')">+ '+(OPPS.length-8)+' more in the register</span></div></div>';
+  var conn='<div class="card" style="margin-top:16px"><h2>Every system reads this record · LeapFI &middot; Connect</h2>'
+   +'<div class="csub">Today someone reads the policy manual, decides what it requires, and configures each system by hand: limits, approval chains, retention rules, disclosure requirements, access rights. That translation repeats for every product under contract and starts drifting the day the next policy changes. Connect is the MCP and API layer of this record, so each system reads the approved policy and configures itself instead. '
+   +'<span class="doclink" onclick="go(\'connect\')">Open Connect &rarr;</span></div></div>';
   return osScopeBar()+osKpis()
    +'<div class="sect-lab">Posture by domain · judged against your own targets</div><div class="dom-grid">'+doms+'</div>'
-   +ev+ucs;
+   +ev+ucs+conn;
 }
 function osTargets(){
   var rows=DOMAINS.map(function(d){
@@ -2245,33 +2743,63 @@ function osDocs(){
    +'<table class="tbl"><thead><tr><th>Document</th><th>Domain</th><th>Type</th><th>Owner</th><th>Status</th><th>Version / verified</th></tr></thead><tbody id="doc-rows">'+(rows||'<tr><td colspan="6" style="color:var(--grey)">No sample documents in this scope; the full universe covers it.</td></tr>')+'</tbody></table></div>'
    +'<div class="card" style="margin-top:14px"><h2>Bring your own repository</h2><div class="csub">SharePoint, network folders, or a GRC platform: OnSide connects to where documents already live through LeapFI · Connect (MCP), keeps the evidence chain intact, and never forces a migration. Coming with the Connect module.</div></div>';
 }
+var GAPS=[
+ {sev:'crit',t:'Incident Response Plan · escalation path for member-facing automation',dom:'AI Governance',doc:'irp',obl:null,owner:'P. Nguyen · ISD',act:'Redline drafted · route for approval',rev:'q'},
+ {sev:'warn',t:'TPRM-08 · termination &amp; exit plans for critical vendors',dom:'Third-Party Risk',doc:'exit-draft',rl:'tprm-program',obl:['tprm','TPRM-08'],owner:'P. Nguyen · ISD',act:'Draft exit-plan standard in review',rev:'q'},
+ {sev:'warn',t:'MRM-08 · vendor model validation evidence',dom:'Model Risk',doc:null,obl:['mrm','MRM-08'],owner:'A. Kaur · MRM',act:'Request packets from 3 vendors',rev:'q'},
+ {sev:'warn',t:'MRM-09 · model change approval gate',dom:'Model Risk',doc:'mrm-change-draft',obl:['mrm','MRM-09'],owner:'A. Kaur · MRM',act:'Workflow draft in HITL queue',rev:'q'},
+ {sev:'warn',t:'Model-derived adverse-action reason codes',dom:'Fair Lending',doc:'aa-procedure',obl:null,owner:'M. Okafor · CCO',act:'Redline drafted · attribution-to-code matrix',rev:'ok'},
+ {sev:'warn',t:'Automated-messaging disclosure documentation',dom:'Consumer / UDAAP',doc:'msg-disclosure',obl:null,owner:'M. Okafor · CCO',act:'Disclosure language drafted',rev:'ok'},
+ {sev:'warn',t:'AI-assisted transaction-monitoring validation',dom:'BSA / AML',doc:'bsa-policy',obl:null,owner:'T. Whitfield · BSA',act:'Independent validation scheduled',rev:'ok'}
+];
+var GAP_DOM={'AI Governance':'aigov','Third-Party Risk':'tprm','Model Risk':'mrm','Fair Lending':'fairlend','Consumer / UDAAP':'consumer','BSA / AML':'bsa'};
+/* a gap's state is read from the document it closes, never stored twice */
+function gapState(g){
+  var key=g.rl||g.doc;
+  var d=key?DOCLIB[key]:null, s=d&&d.rlState?d.rlState:null;
+  if(!s)return {k:'open',act:g.act,rev:g.rev};
+  if(s.act==='adopted')return {k:'closed',act:'Closed · adopted as '+d.v+' by '+s.who+' · '+s.when,rev:'ok'};
+  if(s.act==='routed')return {k:'open',act:'With the LeapFI consultancy · '+s.who+' · '+s.when,rev:'q'};
+  if(s.act==='rejected')return {k:'open',act:'Returned to OnSide to redraft · '+s.who+' · '+s.when,rev:'q'};
+  return {k:'open',act:g.act,rev:g.rev};
+}
+function gapsClosed(){return GAPS.filter(function(g){return gapState(g).k==='closed';});}
+/* adopting the language closes the obligation behind it, so every view moves together */
+function applyGapClosure(docId){
+  GAPS.forEach(function(g){
+    if((g.rl||g.doc)!==docId||!g.obl||g.applied)return;
+    var o=oblByld(g.obl[0],g.obl[1]); var d=domByKey(g.obl[0]);
+    if(o&&o.st!=='met'){g.prevSt=o.st;g.prevRev=o.rev;o.st='met';o.rev='ok';if(d)d.met++;g.applied=true;}
+  });
+}
+function undoGapClosure(docId){
+  GAPS.forEach(function(g){
+    if((g.rl||g.doc)!==docId||!g.applied)return;
+    var o=oblByld(g.obl[0],g.obl[1]); var d=domByKey(g.obl[0]);
+    if(o){o.st=g.prevSt||'partial';o.rev=g.prevRev||'q';if(d)d.met--;}
+    g.applied=false;
+  });
+}
 function osGaps(){
-  var G=[
-   ['crit','Incident Response Plan · escalation path for member-facing automation','AI Governance','irp',null,'P. Nguyen · ISD','Redline drafted · route for approval','q'],
-   ['warn','TPRM-08 · termination &amp; exit plans for critical vendors','Third-Party Risk','exit-draft',['tprm','TPRM-08'],'P. Nguyen · ISD','Draft exit-plan standard in review','q'],
-   ['warn','MRM-08 · vendor model validation evidence','Model Risk',null,['mrm','MRM-08'],'A. Kaur · MRM','Request packets from 3 vendors','q'],
-   ['warn','MRM-09 · model change approval gate','Model Risk','mrm-change-draft',['mrm','MRM-09'],'A. Kaur · MRM','Workflow draft in HITL queue','q'],
-   ['warn','Model-derived adverse-action reason codes','Fair Lending','aa-procedure',null,'M. Okafor · CCO','Redline drafted · attribution-to-code matrix','ok'],
-   ['warn','Automated-messaging disclosure documentation','Consumer / UDAAP','msg-disclosure',null,'M. Okafor · CCO','Disclosure language drafted','ok'],
-   ['warn','AI-assisted transaction-monitoring validation','BSA / AML','bsa-policy',null,'T. Whitfield · BSA','Independent validation scheduled','ok']
-  ];
-  var rows=G.map(function(r){
-    var open=r[4]?('openObl(\''+r[4][0]+'\',\''+r[4][1]+'\')'):(r[3]?('openDocView(\''+r[3]+'\')'):'');
-    return '<tr class="prow"'+(open?' onclick="'+open+'"':'')+'><td><span class="tag '+(r[0]==='crit'?'crit':'warn')+'">'+(r[0]==='crit'?'High':'Open')+'</span></td><td><b class="doclink">'+r[1]+'</b><div class="cite">'+r[2]+'</div></td><td class="pcat">'+r[5]+'</td><td class="pcat">'+r[6]+(r[3]?' · '+docLink(r[3],'open document'):'')+'</td><td><span class="hitl '+(r[7]==='ok'?'ok':'q')+'">'+(r[7]==='ok'?'Approved':'HITL queue')+'</span></td></tr>';
-  }).join('');
-  var GAP_DOM={'AI Governance':'aigov','Third-Party Risk':'tprm','Model Risk':'mrm','Fair Lending':'fairlend','Consumer / UDAAP':'consumer','BSA / AML':'bsa'};
-  var shown=G.filter(function(r){return OS_SCOPE==='all'||GAP_DOM[r[2]]===OS_SCOPE;});
-  var rows2=shown.map(function(r){
-    var open=r[4]?('openObl(\''+r[4][0]+'\',\''+r[4][1]+'\')'):(r[3]?('openDocView(\''+r[3]+'\')'):'');
-    return '<tr class="prow"'+(open?' onclick="'+open+'"':'')+'><td><span class="tag '+(r[0]==='crit'?'crit':'warn')+'">'+(r[0]==='crit'?'High':'Open')+'</span></td><td><b class="doclink">'+r[1]+'</b><div class="cite">'+r[2]+'</div></td><td class="pcat">'+r[5]+'</td><td class="pcat">'+r[6]+(r[3]?' · '+docLink(r[3],'open document'):'')+'</td><td><span class="hitl '+(r[7]==='ok'?'ok':'q')+'">'+(r[7]==='ok'?'Approved':'HITL queue')+'</span></td></tr>';
-  }).join('');
+  var scoped=GAPS.filter(function(g){return OS_SCOPE==='all'||GAP_DOM[g.dom]===OS_SCOPE;});
+  function row(g){
+    var s=gapState(g);
+    var open=g.obl?('openObl(\''+g.obl[0]+'\',\''+g.obl[1]+'\')'):(g.doc?('openDocView(\''+g.doc+'\')'):'');
+    var sev=s.k==='closed'?'<span class="tag good">Closed</span>':'<span class="tag '+(g.sev==='crit'?'crit':'warn')+'">'+(g.sev==='crit'?'High':'Open')+'</span>';
+    return '<tr class="prow"'+(open?' onclick="'+open+'"':'')+'><td>'+sev+'</td><td><b class="doclink">'+g.t+'</b><div class="cite">'+g.dom+'</div></td><td class="pcat">'+g.owner+'</td><td class="pcat">'+s.act+(g.doc?' · '+docLink(g.doc,'open document'):'')+'</td><td><span class="hitl '+(s.rev==='ok'?'ok':'q')+'">'+(s.rev==='ok'?'Approved':'HITL queue')+'</span></td></tr>';
+  }
+  var openRows=scoped.filter(function(g){return gapState(g).k!=='closed';});
+  var doneRows=scoped.filter(function(g){return gapState(g).k==='closed';});
   var total=0; var recon=scopedDoms().filter(function(d){return oblToClose(d)>0;}).map(function(d){
     total+=oblToClose(d);
     return '<tr class="prow" onclick="goOnside(\'dom-'+d.key+'\')"><td><b class="doclink">'+d.name+'</b></td><td>'+oblToClose(d)+'</td><td class="pcat">'+d.owner+'</td><td class="pcat" style="text-align:right">Open the register →</td></tr>';
   }).join('');
+  var done=doneRows.length?('<div class="card" style="margin-top:14px"><h2>Closed in this session · '+doneRows.length+'</h2><div class="csub">Approved language adopted, the prior text archived, and the obligation behind it marked met. The domain score above moved with it.</div>'
+   +'<table class="tbl"><thead><tr><th>Sev.</th><th>Item</th><th>Owner</th><th>Outcome</th><th>Review</th></tr></thead><tbody>'+doneRows.map(row).join('')+'</tbody></table></div>'):'';
   return osScopeBar()
-   +'<div class="card"><h2>Priority queue · routed with proposed language · click any row</h2><div class="csub">The worked set: each item routed to its owner with the difference and the remediation drafted.</div>'
-   +'<table class="tbl"><thead><tr><th>Sev.</th><th>Item</th><th>Owner</th><th>Proposed action</th><th>Review</th></tr></thead><tbody>'+(rows2||'<tr><td colspan="5" style="color:var(--grey)">No priority items in this scope.</td></tr>')+'</tbody></table></div>'
+   +'<div class="card"><h2>Priority queue · '+openRows.length+' open · routed with proposed language · click any row</h2><div class="csub">The worked set: each item routed to its owner with the difference and the remediation drafted. Approve the language on a document and its item leaves this queue.</div>'
+   +'<table class="tbl"><thead><tr><th>Sev.</th><th>Item</th><th>Owner</th><th>Proposed action</th><th>Review</th></tr></thead><tbody>'+(openRows.map(row).join('')||'<tr><td colspan="5" style="color:var(--grey)">Nothing open in this scope. Everything routed here has been actioned.</td></tr>')+'</tbody></table></div>'
+   +done
    +'<div class="card" style="margin-top:14px"><h2>Where the '+total+' gaps sit · the number reconciles</h2><div class="csub">Every obligation still to close for the targets in scope, by domain. Open a register for the row-level detail; the priority queue above is the subset already in flight.</div>'
    +'<table class="tbl"><thead><tr><th>Domain</th><th>To close</th><th>Owner</th><th></th></tr></thead><tbody>'+(recon||'<tr><td colspan="4" style="color:var(--grey)">Nothing to close in this scope.</td></tr>')+'</tbody></table></div>';
 }
@@ -2368,34 +2896,141 @@ function srcFilter(el,days){
   if(!em){em=document.createElement('div');em.id='src-empty';em.className='csub';em.style.cssText='margin-top:10px';document.getElementById('src-items').appendChild(em);}
   em.innerHTML=shown?'':'No changes from this source in that window. The connector is healthy · last sweep 6:12 AM ET.';
 }
+var SRC_ROWS=[
+ {n:'OCC · 12 CFR Ch. I',i:null,l:'Financial',c:'Binding rules',m:'eCFR Versioner API',ph:'live',phl:'Live'},
+ {n:'FDIC · 12 CFR Ch. III',i:null,l:'Financial',c:'Binding rules',m:'eCFR Versioner API',ph:'live',phl:'Live'},
+ {n:'Federal Reserve · 12 CFR Ch. II',i:null,l:'Financial',c:'Binding rules (lettered Regs)',m:'eCFR Versioner API',ph:'live',phl:'Live'},
+ {n:'NCUA · 12 CFR Ch. VII',i:null,l:'Financial',c:'Binding rules',m:'eCFR Versioner API',ph:'live',phl:'Live'},
+ {n:'CFPB · 12 CFR Ch. X',i:'Reg B',l:'Financial',c:'Regs B/C/E/F/V/X/Z/DD/P · §1071 · §1033',m:'eCFR + Federal Register',ph:'p2',phl:'Phase 2'},
+ {n:'State banking regulators',i:null,l:'Financial',c:'NYDFS Part 500/504 · CA DFPI · CSBS/NMLS',m:'State sources',ph:'p4',phl:'Phase 4'},
+ {n:'OFAC',i:null,l:'Systemic',c:'Sanctions programs &amp; list updates',m:'Treasury feeds',ph:'p3',phl:'Phase 3'},
+ {n:'SEC &amp; FINRA',i:null,l:'Systemic',c:'CUSO broker-dealer scope',m:'Agency feeds',ph:'p3',phl:'Phase 3'},
+ {n:'FFIEC · incl. NIST frameworks',i:'FFIEC Manual',l:'Systemic',c:'Exam handbooks · supervisory expectation, ranked below binding rules',m:'ffiec.gov',ph:'p3',phl:'Phase 3'},
+ {n:'FinCEN · 31 CFR Ch. X',i:'31 CFR Ch. X',l:'Systemic',c:'BSA program · CDD · SAR/CTR',m:'eCFR Versioner API',ph:'live',phl:'Live'},
+ {n:'FHFA',i:null,l:'Systemic',c:'Housing finance scope',m:'Agency feeds',ph:'p3',phl:'Phase 3'},
+ {n:'White House Executive Orders',i:null,l:'Regional',c:'Presidential actions touching financial services',m:'Federal Register API',ph:'live',phl:'Live'},
+ {n:'Bills working through government',i:null,l:'Regional',c:'Congress · proposed → enacted',m:'Congress.gov · GovInfo',ph:'p5',phl:'Phase 5'},
+ {n:'State governments &amp; laws',i:null,l:'Regional',c:'TX · OK · NM statutes and 50-state tracking',m:'LegiScan · Open States · authoritative-site fallback',ph:'p5',phl:'Phase 5'},
+ {n:'Municipal governments',i:null,l:'Regional',c:'Local ordinances in footprint',m:'Municipal sources',ph:'p5',phl:'Phase 5'}
+];
+var SRC_LAYERS=[
+ ['Financial','Financial · banking regulators','The prudential and consumer core: your chartering regulator and the agencies that examine you.'],
+ ['Systemic','Systemic · governing agencies','The agencies whose programs cut across every institution: sanctions, financial crimes, exam standards, markets.'],
+ ['Regional','Regional · national, state &amp; local','Where obligations are born: executive action, bills in flight, state law, and the ordinances of your footprint.']
+];
+function srcRow(name){
+  var k=String(name).replace(/&amp;/g,'&');
+  return SRC_ROWS.filter(function(r){return r.n.replace(/&amp;/g,'&')===k;})[0]||null;
+}
+function srcItems(name){
+  var k=String(name).replace(/&amp;/g,'&');
+  return SRC_ITEMS[k]||SRC_ITEMS[k.replace(/&/g,'&amp;')]||null;
+}
+/* ---- digest & alerts ---- */
+var DIGEST={freq:'Daily',email:true,app:true,bindingOnly:false};
+var SRC_ALERTS={};
+var FREQ=[['Real-time',0,'the moment a sweep finds a change'],['Daily',1,'every weekday, 7:00 AM ET'],['Weekly',7,'Monday, 7:00 AM ET'],['Monthly',30,'first business day'],['Quarterly',90,'first business day of the quarter']];
+function freqDays(f){var r=FREQ.filter(function(x){return x[0]===f;})[0];return r?(r[1]||1):1;}
+function freqWhen(f){var r=FREQ.filter(function(x){return x[0]===f;})[0];return r?r[2]:'';}
+function digestCount(){
+  var days=freqDays(DIGEST.freq),c=0;
+  SRC_ROWS.forEach(function(r){
+    if(DIGEST.bindingOnly&&r.c.indexOf('Binding')<0)return;
+    var s=srcItems(r.n); if(!s)return;
+    s.items.forEach(function(it){if(it[0]<=days)c++;});
+  });
+  return c;
+}
+function setDigest(k,v){
+  if(k==='freq')DIGEST.freq=v; else DIGEST[k]=!DIGEST[k];
+  if(onsideView==='feed-sources'||String(onsideView).indexOf('src:')===0)onsideShow(onsideView);
+  toast(k==='freq'?('Digest set to '+DIGEST.freq+' · '+freqWhen(DIGEST.freq)):'Digest preferences updated');
+}
+function toggleSrcAlert(name){
+  var k=String(name).replace(/&amp;/g,'&');
+  SRC_ALERTS[k]=!SRC_ALERTS[k];
+  onsideShow(onsideView);
+  toast(SRC_ALERTS[k]?('Alerts on for '+k+'. You will be notified the moment a sweep finds a change.'):('Alerts off for '+k+'. It still appears in your digest.'));
+}
+function alertCount(){var c=0;for(var k in SRC_ALERTS)if(SRC_ALERTS[k])c++;return c;}
+function digestCard(compact){
+  var opts=FREQ.map(function(f){return '<option'+(DIGEST.freq===f[0]?' selected':'')+'>'+f[0]+'</option>';}).join('');
+  return '<div class="card'+(compact?'':'')+'" style="margin-top:14px"><h2>Digest &amp; alerts</h2>'
+   +'<div class="csub">Everything monitored, delivered on your schedule. Alerts are the exception path: turn them on for a source and a change from it reaches you the moment a sweep finds it, whatever the digest cadence.</div>'
+   +'<div class="dig-grid">'
+     +'<div class="dig-f"><label>Digest frequency</label><select onchange="setDigest(\'freq\',this.value)">'+opts+'</select><div class="dig-h">Next send: '+freqWhen(DIGEST.freq)+'</div></div>'
+     +'<div class="dig-f"><label>Delivery</label>'
+       +'<div class="dig-toggles">'
+        +'<span class="dtog'+(DIGEST.email?' on':'')+'" onclick="setDigest(\'email\')">Email</span>'
+        +'<span class="dtog'+(DIGEST.app?' on':'')+'" onclick="setDigest(\'app\')">In-app</span>'
+        +'<span class="dtog'+(DIGEST.bindingOnly?' on':'')+'" onclick="setDigest(\'bindingOnly\')">Binding rules only</span>'
+       +'</div><div class="dig-h">'+alertCount()+' source'+(alertCount()===1?'':'s')+' set to alert immediately</div></div>'
+     +'<div class="dig-f"><label>In this digest</label><div class="dig-n">'+digestCount()+'</div>'
+       +'<div class="dig-h">item'+(digestCount()===1?'':'s')+' captured in the '+(DIGEST.freq==='Real-time'?'last sweep':(freqDays(DIGEST.freq)===1?'last day':'last '+freqDays(DIGEST.freq)+' days'))+(DIGEST.bindingOnly?' · binding rules only':'')+'</div></div>'
+   +'</div></div>';
+}
+/* ---- the index ---- */
 function osSources(){
-  function row(r){var name=r[0]?instrLink(r[0],r[1]):r[1];var key=r[1].replace(/&amp;/g,'&');return '<tr class="prow" onclick="openSource(\''+r[1].replace(/'/g,"\\'")+'\')"><td><b class="doclink">'+name+'</b></td><td class="pcat">'+r[2]+'</td><td class="pcat">'+r[3]+'</td><td><span class="ph-tag '+r[4]+'">'+r[5]+'</span></td></tr>';}
-  var fin=[
-   [null,'OCC · 12 CFR Ch. I','Binding rules','eCFR Versioner API','live','Live'],
-   [null,'FDIC · 12 CFR Ch. III','Binding rules','eCFR Versioner API','live','Live'],
-   [null,'Federal Reserve · 12 CFR Ch. II','Binding rules (lettered Regs)','eCFR Versioner API','live','Live'],
-   [null,'NCUA · 12 CFR Ch. VII','Binding rules','eCFR Versioner API','live','Live'],
-   ['Reg B','CFPB · 12 CFR Ch. X','Regs B/C/E/F/V/X/Z/DD/P · §1071 · §1033','eCFR + Federal Register','p2','Phase 2'],
-   [null,'State banking regulators','NYDFS Part 500/504 · CA DFPI · CSBS/NMLS','State sources','p4','Phase 4']
-  ].map(row).join('');
-  var sys=[
-   [null,'OFAC','Sanctions programs &amp; list updates','Treasury feeds','p3','Phase 3'],
-   [null,'SEC &amp; FINRA','CUSO broker-dealer scope','Agency feeds','p3','Phase 3'],
-   ['FFIEC Manual','FFIEC · incl. NIST frameworks','Exam handbooks · supervisory expectation, ranked below binding rules','ffiec.gov','p3','Phase 3'],
-   ['31 CFR Ch. X','FinCEN · 31 CFR Ch. X','BSA program · CDD · SAR/CTR','eCFR Versioner API','live','Live'],
-   [null,'FHFA','Housing finance scope','Agency feeds','p3','Phase 3']
-  ].map(row).join('');
-  var reg=[
-   [null,'White House Executive Orders','Presidential actions touching financial services','Federal Register API','live','Live'],
-   [null,'Bills working through government','Congress · proposed → enacted','Congress.gov · GovInfo','p5','Phase 5'],
-   [null,'State governments &amp; laws','TX · OK · NM statutes and 50-state tracking','LegiScan · Open States · authoritative-site fallback','p5','Phase 5'],
-   [null,'Municipal governments','Local ordinances in footprint','Municipal sources','p5','Phase 5']
-  ].map(row).join('');
-  function layer(t,d,rows){return '<div class="sect-lab">'+t+'</div><div class="card"><div class="csub">'+d+'</div><table class="tbl conn-tbl"><thead><tr><th>Source · click for its activity</th><th>Covers</th><th>Method</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>';}
+  function row(r){
+    var name=r.i?instrLink(r.i,r.n):r.n;
+    var al=SRC_ALERTS[r.n.replace(/&amp;/g,'&')]?'<span class="al-on" title="Alerts on">◉</span>':'';
+    var s=srcItems(r.n); var recent=s?s.items.filter(function(it){return it[0]<=30;}).length:0;
+    return '<tr class="prow" onclick="openSource(\''+r.n.replace(/'/g,"\\'")+'\')"><td><b class="doclink">'+name+'</b> '+al+'</td><td class="pcat">'+r.c+'</td><td class="pcat">'+r.m+'</td><td class="pcat">'+(recent||'&mdash;')+'</td><td><span class="ph-tag '+r.ph+'">'+r.phl+'</span></td></tr>';
+  }
+  function layer(key,t,d){
+    var rows=SRC_ROWS.filter(function(r){return r.l===key;}).map(row).join('');
+    return '<div class="sect-lab">'+t+'</div><div class="card"><div class="csub">'+d+'</div><table class="tbl conn-tbl"><thead><tr><th>Source · click to open it</th><th>Covers</th><th>Method</th><th>30d</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
   return '<div class="card"><h2>Our sources · three layers, monitored separately</h2><div class="csub">Obligations stack: a federal rule, a state law, and a municipal ordinance can all touch the same policy, and the institution has to satisfy every one of them. Each layer is monitored separately, and every obligation carries a verbatim source span, a resolvable pin-cite, and a SHA-256 hash. Nothing becomes authoritative until a qualified human approves it. New sources are added as your charter, footprint, or business lines require them: enter a new state, acquire a fintech, or take on a product line and the sources come with it.</div></div>'
-   +layer('Financial · banking regulators','The prudential and consumer core: your chartering regulator and the agencies that examine you.',fin)
-   +layer('Systemic · governing agencies','The agencies whose programs cut across every institution: sanctions, financial crimes, exam standards, markets.',sys)
-   +layer('Regional · national, state &amp; local','Where obligations are born: executive action, bills in flight, state law, and the ordinances of your footprint.',reg);
+   +digestCard()
+   +SRC_LAYERS.map(function(L){return layer(L[0],L[1],L[2]);}).join('');
+}
+/* ---- one source, its own page ---- */
+function openSource(name){ closeDrawer(); goOnside('src:'+String(name).replace(/&amp;/g,'&')); }
+function osSourcePage(name){
+  var r=srcRow(name), s=srcItems(name);
+  if(!r)return osSources();
+  var live=r.ph==='live';
+  var key=r.n.replace(/&amp;/g,'&');
+  var items=s?s.items.slice():[];
+  var d30=items.filter(function(it){return it[0]<=30;}).length;
+  var last=items.length?items[0]:null;
+  var touched={};
+  items.forEach(function(it){var m=/dom-([a-z]+)/.exec(it[4]||'');if(m)touched[m[1]]=1;});
+  var nTouched=Object.keys(touched).length;
+  var alerted=!!SRC_ALERTS[key];
+  var head='<div class="src-back" onclick="onsideShow(\'feed-sources\')">&larr; All sources</div>'
+   +'<div class="card src-hero"><div class="src-top"><div>'
+     +'<div class="dcat">'+r.l+' layer · regulatory source</div>'
+     +'<h2 style="margin:6px 0 0">'+r.n+'</h2>'
+     +'<div class="csub" style="margin-top:6px">'+(s?s.d:'Monitored continuously. Captures land here as the connector reports them.')+'</div></div>'
+     +'<div class="src-badges"><span class="ph-tag '+r.ph+'">'+r.phl+(live?'':' · preview')+'</span>'
+       +'<span class="al-btn'+(alerted?' on':'')+'" onclick="toggleSrcAlert(\''+key.replace(/'/g,"\\'")+'\')">'+(alerted?'◉ Alerts on':'○ Alert me')+'</span></div>'
+   +'</div>'
+   +'<div class="kpis src-kpis">'
+     +kpi('Captured · 30 days',''+d30,'','items from this source alone')
+     +kpi('Domains touched',''+(nTouched||'&mdash;'),'','registers this source fed')
+     +kpi('Last capture',last?last[1]:'&mdash;','',last?'detected same day':'no activity in window')
+     +kpi('Next sweep','6:12 AM','','ET, daily · '+r.m)
+   +'</div></div>';
+  var act=items.length?('<div class="card" style="margin-top:14px"><h2>Activity from this source</h2>'
+   +'<div class="csub">Every capture, dated, with what it touched and a way into the register or document behind it.</div>'
+   +'<div class="dchips" style="margin:12px 0 6px">'+[[14,'Last 14 days'],[30,'Last 30 days'],[9999,'All activity']].map(function(f){
+      return '<span class="dchip" onclick="srcFilter(this,'+f[0]+')">'+f[1]+'</span>';}).join('')+'</div>'
+   +'<div id="src-items">'+items.map(function(it){
+      return '<div class="list-row lrc" data-days="'+it[0]+'" onclick="'+it[4]+'"><div class="t"><div class="n">'+it[2]+'</div><div class="s">'+it[1]+' · '+it[3]+'</div></div><span class="go">Open →</span></div>';}).join('')+'</div></div>')
+   : '<div class="card" style="margin-top:14px"><h2>Activity from this source</h2><div class="csub">No activity captured in the current window. The connector is healthy and the next sweep runs tonight.</div></div>';
+  var cov='<div class="card" style="margin-top:14px"><h2>Coverage &amp; method</h2>'
+   +'<div class="src-meta">'
+     +'<div><div class="sml">What it covers</div><div class="smv">'+r.c+'</div></div>'
+     +'<div><div class="sml">How it is captured</div><div class="smv">'+r.m+'</div></div>'
+     +'<div><div class="sml">Layer</div><div class="smv">'+r.l+' · obligations stack across all three</div></div>'
+     +'<div><div class="sml">Connector status</div><div class="smv">'+r.phl+(live?' · capturing and mapping':' · capturing in preview, mapping switches on at activation')+'</div></div>'
+   +'</div>'
+   +'<div class="csub" style="margin-top:12px">'+(live
+      ?'Captured automatically. Every item carries a verbatim source span, a resolvable pin-cite, and a SHA-256 fingerprint. Nothing becomes authoritative without human approval.'
+      :'Monitored in preview while this connector completes '+r.phl+'. Items are captured and dated, and obligation mapping switches on when the connector activates.')+'</div></div>';
+  return head+act+cov+digestCard(true);
 }
 var LC_SCOPE='all';
 function setLcScope(k){LC_SCOPE=k;onsideShow('feed-lifecycle');}
@@ -2658,7 +3293,7 @@ function osDomainsMaster(){
 }
 function osReports(){
   function rc(kind,icon,aud,title,desc){return '<div class="repcard" onclick="openReport(\''+kind+'\')"><div class="ri">'+icon+'</div><div class="ra">'+aud+'</div><div class="rt">'+title+'</div><div class="rd">'+desc+'</div><div class="rg">Generate →</div></div>';}
-  return '<div class="card"><h2>Reporting · one screen, every audience</h2><div class="csub">Eight standing reports generated live from the governance record and the Studio dials, from what the board needs down to what IT runs on. One data model underneath, so the numbers always agree. Each opens formatted, ready to print or save as PDF, with every figure linking back to the work behind it.</div>'
+  return '<div class="card"><h2>Reporting · one screen, every audience</h2><div class="csub">Nine standing reports generated live from the governance record and the Studio dials, from what the board needs down to what IT runs on. One data model underneath, so the numbers always agree. Each opens formatted, ready to print or save as PDF, with every figure linking back to the work behind it.</div>'
    +'<div class="rep-row" style="grid-template-columns:repeat(4,1fr);margin-top:6px">'
    +rc('board','▤','For the board','Board Pack','One-page executive read: posture, the funded portfolio, expected return, and the recommendation.')
    +rc('regchange','◈','For the board','Regulatory Change Briefing','The standing view: what changed, what applies to this institution, what we are doing, what remains open. Updates logged in place.')
@@ -2668,6 +3303,7 @@ function osReports(){
    +rc('tprm','⇄','For vendor mgmt','Third-Party &amp; Vendor Risk','Critical vendors, due-diligence and SOC 2 status, exit planning, and the open register items.')
    +rc('infosec','▦','For IT','IT &amp; Information Security','GLBA safeguards posture, the incident-response escalation item, CAT sunset transition, and connector health.')
    +rc('roi','◆','For the CEO / CFO','Investment &amp; ROI','Why the platform pays for itself against compliance spend, with the funded portfolio behind the number.')
+   +rc('gapboard','◈','For the risk committee','Gap Closure Board Approval Report','Every change conditionally approved by the CRO and waiting on a committee vote, with the language, why it is needed, and space for the minutes.')
    +'</div>'
    +'<div class="csub" style="margin-top:14px">Cadence: the board pack and regulatory briefing refresh continuously and print for each meeting; the rest generate on demand. <button class="btn ghost" style="margin-left:8px" onclick="openReport(\'board\')">⎙ Print this month&rsquo;s board pack</button></div></div>';
 }
@@ -2681,14 +3317,15 @@ function setTarget(key,v){
 
 /* ============ SOON MODULES · one renderer, three identical pages ============ */
 var SOON={
- connect:{icon:'⇄',name:'LeapFI · Connect',tag:'The integration layer',phase:'In development · ships with the OnSide policy record',
-  lead:'MCP and APIs that let any system read the institution&rsquo;s live policies from OnSide and configure itself, at install and at every policy change. Your Microsoft 365 tenant reads retention, DLP, and sharing policy straight from the record. Nobody re-types anything, and the exam file shows configuration provably derived from approved policy.',
+ connect:{icon:'⇄',name:'LeapFI · Connect',tag:'The MCP and API layer of LeapFI · OnSide',phase:'Part of OnSide · in development',
+  lead:'Every institution employs technical resources whose real job is translation: read the policy manual, decide what it requires, then configure each system by hand. Connect ends that. Any system, vendor platform, or agent reads the institution&rsquo;s current policies from OnSide and configures itself against them, at install and at every policy change. Your Microsoft 365 tenant takes its retention labels, DLP rules, and sharing settings straight from the record. Nobody re-types anything, and the exam file shows configuration provably derived from approved policy.',
   steps:['Policy approved in OnSide','Connect writes it into your systems','Configuration evidence on file'],
   note:'Approved once, applied everywhere, evidenced automatically.',
-  stats:[['6','SYSTEM CLASSES','targeted at launch: productivity, core, GRC, HRIS, ITSM, data'],
+  stats:[['5','SYSTEM CLASSES','productivity estate, cloud infrastructure, loan origination, HR and personnel, vendor and servicing platforms'],
          ['2-way','MCP + REST','systems read policy and report their configuration back'],
          ['Same day','APPROVAL TO CONFIG','a redline approved in OnSide propagates on approval'],
          ['100%','CHANGES LOGGED','every push carries the policy version that produced it']],
+  close:'As more institutions expose their rules this way, one integration configures every client correctly, and building toward LeapFI becomes cheaper for a vendor than re-implementing policy client by client.',
   cmp:{today:[['Policy approved to systems updated',100,'2-6 weeks'],['Configuration matches policy',55,'spot checks'],['Evidence for the examiner',40,'by hand']],
        after:[['Policy approved to systems updated',6,'same day'],['Configuration matches policy',100,'continuous'],['Evidence for the examiner',100,'generated']]}},
  allrailz:{icon:'≋',name:'LeapFI · AllRailz',tag:'The agentic runtime',phase:'In development · deploys in weeks, zero core replacement',
@@ -2700,7 +3337,8 @@ var SOON={
          ['3','CORES SUPPORTED','FIS, Fiserv, and Jack Henry, no replacement'],
          ['Weeks','TO DEPLOY','alongside the core, not through it']],
   cmp:{today:[['Front-end release cycle',100,'quarters'],['New rail onboarding',85,'6-12 mo'],['Policy check before an action',30,'manual']],
-       after:[['Front-end release cycle',18,'weeks'],['New rail onboarding',20,'configuration'],['Policy check before an action',100,'every time']]}},
+       after:[['Front-end release cycle',18,'weeks'],['New rail onboarding',20,'configuration'],['Policy check before an action',100,'every time']]},
+  close:'Agentic banking a supervisor can accept, because the rules are read at runtime instead of copied into the build.'},
  vantage:{icon:'⬡',name:'LeapFI · Vantage',tag:'Agentic third-party oversight',phase:'Future module · targeted for v3',
   lead:'Third-party oversight is the next manual mountain. Every vendor carries a diligence burden that recurs annually and runs almost entirely by hand: financial condition against your thresholds, SOC 2 reports read line by line, resiliency and continuity assessments, HR and employment policy checks, and compliance review against your own standards. Vantage runs these with agentic workflows and hands people the exception report instead of the raw statements.',
   steps:['Vendor evidence arrives','Agents review it against your standards','Exceptions land in the register'],
@@ -2710,7 +3348,8 @@ var SOON={
          ['12','CRITICAL VENDORS','reviewed against the tier-one standard'],
          ['1','EXCEPTION REPORT','what breached, what it touches, what to do']],
   cmp:{today:[['Annual review per critical vendor',100,'12-20 hrs'],['Full inventory covered each year',35,'critical set'],['Findings reach the register',45,'re-keyed']],
-       after:[['Annual review per critical vendor',12,'~2 hrs'],['Full inventory covered each year',100,'all 87'],['Findings reach the register',100,'automatic']]}}
+       after:[['Annual review per critical vendor',12,'~2 hrs'],['Full inventory covered each year',100,'all 87'],['Findings reach the register',100,'automatic']]},
+  close:'Every review reads the institution&rsquo;s current policy rather than a copy, and every finding lands in the evidence trail an examiner already trusts.'}
 };
 function soonSteps(c){
   return '<div class="soon-steps" role="img" aria-label="'+c.steps.join(', then ')+'">'
@@ -2733,7 +3372,7 @@ function renderSoon(key){
    +'<div class="soon-sec"><div class="sh">What changes</div><div class="soon-cmp">'
      +'<div class="today"><div class="ch">By hand today</div>'+c.cmp.today.map(function(r){return soonCmpRow(r,'today');}).join('')+'</div>'
      +'<div class="after"><div class="ch">With '+c.name.split('· ')[1]+'</div>'+c.cmp.after.map(function(r){return soonCmpRow(r,'after');}).join('')+'</div>'
-   +'</div></div></div>';
+   +'</div><div class="soon-close">'+c.close+'</div></div></div>';
   kbEnable(el);
 }
 /* ============ SHELL ============ */
@@ -2748,15 +3387,22 @@ function go(mod){
   for(i=0;i<mods.length;i++) mods[i].classList.remove('active');
   var tgt=$('mod-'+mod); if(tgt) tgt.classList.add('active');
   var items=document.querySelectorAll('.nav-item');
-  for(i=0;i<items.length;i++) items[i].classList.toggle('active',items[i].getAttribute('data-mod')===mod);
+  for(i=0;i<items.length;i++){
+    var dm=items[i].getAttribute('data-mod');
+    items[i].classList.toggle('active',dm===mod||(mod==='connect'&&dm==='onside'));
+  }
+  var mlinks=document.querySelectorAll('.os-modlink');
+  for(i=0;i<mlinks.length;i++) mlinks[i].classList.toggle('active',mlinks[i].getAttribute('data-mod')===mod);
+  if(mod==='connect'){var osubs=document.querySelectorAll('#ng-onside .os-sub[data-os]');for(i=0;i<osubs.length;i++)osubs[i].classList.remove('active');}
   var g=$('ng-onside');
-  if(g){ if(mod==='onside') g.classList.add('open'); else g.classList.remove('open'); }
+  if(g){ if(mod==='onside'||mod==='connect') g.classList.add('open'); else g.classList.remove('open'); }
   var gs=$('ng-studio');
   if(gs){ if(mod==='studio') gs.classList.add('open'); else gs.classList.remove('open'); }
-  if(mod==='onside'&&!document.querySelector('#ng-onside .os-sub.active')) onsideShow('overview');
+  if(mod==='onside'&&!document.querySelector('#ng-onside .os-sub[data-os].active')) onsideShow('overview');
   if(mod==='studio'&&!document.querySelector('#ng-studio .os-sub.active')) studioShow(studioView);
   if(mod==='studio')studioShow(studioView);
   if(SOON[mod])renderSoon(mod);
+  if(mod==='settings')renderApprovalSettings();
   if(mod!=='studio'&&mod!=='onside')setCrumb(null);
   $('profile-menu').classList.remove('open');
   window.scrollTo({top:0});
@@ -2775,7 +3421,7 @@ function toggleOnsideNav(){
   else{ go('onside'); }
 }
 function scrollToEl(id){setTimeout(function(){var el=$(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},60);}
-function toggleProfile(e){e.stopPropagation();$('profile-menu').classList.toggle('open');}
+function toggleProfile(e){ var bp=$('bell-panel'); if(bp)bp.classList.remove('open');e.stopPropagation();$('profile-menu').classList.toggle('open');}
 document.addEventListener('click',function(e){
   if(!$('profile-menu').contains(e.target)&&e.target.id!=='avatar')$('profile-menu').classList.remove('open');
 });
@@ -2793,6 +3439,7 @@ function kbEnable(root){
   }
 }
 document.addEventListener('keydown',function(e){
+  if(e.altKey&&e.shiftKey&&(e.key==='R'||e.key==='r')){e.preventDefault();resetDemo();return;}
   if(e.key==='Escape'){
     var t=document.querySelector('.tip.open'); if(t){t.classList.remove('open');return;}
     closeDrawer(); return;
@@ -2809,6 +3456,8 @@ document.addEventListener('keydown',function(e){
 });
 /* tooltips answer to tap as well as hover */
 document.addEventListener('click',function(e){
+  var bp=document.getElementById('bell-panel');
+  if(bp&&bp.classList.contains('open')&&!e.target.closest('#bell-panel')&&!e.target.closest('#bell'))bp.classList.remove('open');
   var t=e.target.closest?e.target.closest('.tip'):null;
   var open=document.querySelector('.tip.open');
   if(open&&open!==t)open.classList.remove('open');
@@ -2855,6 +3504,63 @@ var __kbObs=new MutationObserver(function(){kbEnable(document);queueAlign();});
 __kbObs.observe(document.body,{childList:true,subtree:true});
 kbEnable(document);
 queueAlign();
+seedCases();
+renderBell();
+seedDemo();
+/* ============ DEMO RESET ============ */
+var DEMO_SEED;
+function dclone(x){return JSON.parse(JSON.stringify(x));}
+function seedDemo(){
+  DEMO_SEED={
+    DOCLIB:dclone(DOCLIB),DOMAINS:dclone(DOMAINS),OBL:dclone(OBL),OPPS:dclone(OPPS),GAPS:dclone(GAPS),DIGEST:dclone(DIGEST),APPROVAL:dclone(APPROVAL),
+    levers:{amb:$('amb').value,tol:$('tol').value,speed:$('speed').value,budget:$('budget').value,roi:$('roi').value,eff:$('eff').value}
+  };
+}
+function reseedObj(t,s){for(var k in t)delete t[k];for(var k2 in s)t[k2]=dclone(s[k2]);}
+function reseedArr(t,s){t.length=0;s.forEach(function(x){t.push(dclone(x));});}
+function resetDemo(){
+  if(!DEMO_SEED)return;
+  reseedObj(DOCLIB,DEMO_SEED.DOCLIB);
+  reseedArr(DOMAINS,DEMO_SEED.DOMAINS);
+  reseedObj(OBL,DEMO_SEED.OBL);
+  reseedArr(OPPS,DEMO_SEED.OPPS);
+  reseedArr(GAPS,DEMO_SEED.GAPS);
+  reseedObj(DIGEST,DEMO_SEED.DIGEST); reseedObj(SRC_ALERTS,{});
+  seedCases(); renderBell(); reseedObj(APPROVAL,DEMO_SEED.APPROVAL);
+  for(var k in DEMO_SEED.levers){var el=$(k); if(el)el.value=DEMO_SEED.levers[k];}
+  OS_SCOPE='all'; LC_SCOPE='all'; expandedDoms={}; SCOPE_EVENTS.length=0;
+  chatState={mode:'idle',pending:null,answers:[]};
+  if($('chat-log')){$('chat-log').innerHTML='';$('chat-log').classList.remove('live');}
+  if($('chat-in'))$('chat-in').value='';
+  resetChips();
+  DRAWER_RET=null; closeDrawer();
+  studioView='ask'; onsideView='overview';
+  switchUser('rachel');
+  computePlan(); renderHome(); go('home');
+  toast('Demo reset. Every gap, redline, lever, filter, and conversation is back to the opening state.');
+}
+function toast(msg){
+  var t=$('toast'); if(!t)return;
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(window.__toastT);
+  window.__toastT=setTimeout(function(){t.classList.remove('show');},4200);
+}
+function renderApprovalSettings(){
+  var el=$('approval-card'); if(!el)return;
+  var rows=APPROVAL.tiers.map(function(t){
+    var cnt=CASES.filter(function(c){return c.tier===t.k;}).length;
+    return '<div class="set-row"><div><div class="sk">'+t.n+' <span class="pill-soft" style="margin-left:6px">'+cnt+' open case'+(cnt===1?'':'s')+'</span></div>'
+     +'<div class="sd">'+t.d+'<br><span style="color:var(--grey)">Example: '+t.ex+'</span></div></div>'
+     +'<div style="display:flex;align-items:center;gap:11px;flex:none"><span style="font-size:11.5px;color:var(--grey);white-space:nowrap">Committee vote</span>'
+     +'<div class="toggle'+(t.committee?' on':'')+'" onclick="toggleTierCommittee(\''+t.k+'\')"></div></div></div>';
+  }).join('');
+  el.innerHTML='<h2>Approval matrix</h2>'
+   +'<div class="csub">Not every policy carries the same governance requirement, so the approval path follows the tier of the document rather than one fixed rule. Every case reads this matrix when it opens. Turn the committee requirement off for a tier and the CRO adopts directly.</div>'
+   +rows
+   +'<div class="set-row"><div><div class="sk">Approving committee</div><div class="sd">Where conditionally approved changes go for a vote, and the heading on the Gap Closure Board Approval Report.</div></div>'
+   +'<input class="set-in" value="'+APPROVAL.committee+'" onchange="setCommitteeName(this.value);renderApprovalSettings()"></div>'
+   +'<div class="set-row"><div><div class="sk">Conditions the CRO can attach</div><div class="sd">'+APPROVAL.conditions.join(' · ')+'</div></div></div>';
+}
 function renderProfileMenu(){
   $('pm-users').innerHTML=USERS.map(function(u){
     return '<div class="pm-user" onclick="switchUser(\''+u.id+'\')"><div class="sm-ava">'+u.ini+'</div><div><div class="n">'+u.name+'</div><div class="r">'+u.role+'</div></div>'+(u.id===CURRENT.id?'<span class="now">SIGNED IN</span>':'')+'</div>';
@@ -2952,10 +3658,19 @@ function renderHome(){
    +'<div style="margin-top:12px;font-size:11.5px;color:var(--muted)">Compliance capacity freed adds ≈ <b>$540k/yr</b> on top of portfolio value.</div>';
 
   var q='';
-  if(CURRENT.roleKey==='cro'){
+  if(CURRENT.roleKey==='analyst'){
+    $('home-q-title').textContent='Your queue · review';
+    $('home-q-sub').textContent='Language drafted by OnSide, waiting on your read';
+    var mc=myCases();
+    q=lrow(mc.length+' case'+(mc.length===1?'':'s')+' waiting on you',mc.length?'Oldest: '+mc[0].title:'Nothing in your queue','Open',"goOnside('cases')")
+     +lrow('Open gaps',''+GAPS.filter(function(g){return gapState(g).k!=='closed';}).length+' items routed with proposed language','Gaps',"goOnside('gaps')")
+     +lrow('Regulatory digest',DIGEST.freq+' · '+digestCount()+' items in the current window','Settings',"goOnside('feed-sources')");
+  } else if(CURRENT.roleKey==='cro'){
     $('home-q-title').textContent='Your queue · risk';
     $('home-q-sub').textContent='Routed to you with proposed language drafted';
-    q=lrow('Incident Response Plan · escalation gap','High priority · redline awaiting P. Nguyen','Review',"goOnside('gaps')")
+    var croC=myCases();
+    q=(croC.length?lrow(croC.length+' case'+(croC.length===1?'':'s')+' awaiting your approval',croC[0].title,'Approve',"goOnside('cases')"):'')
+     +lrow('Incident Response Plan · escalation gap','High priority · redline awaiting P. Nguyen','Review',"goOnside('gaps')")
      +lrow('Below-target domains',''+below.length+' of '+DOMAINS.length+' · worst gap: '+(below[0]?below[0].name:'none'),'Levers',"goOnside('domains')")
      +lrow('Rulemaking to watch','RFI 2026-04 comments due Sep 30','Track',"goOnside('feed-lifecycle')");
   } else if(CURRENT.roleKey==='ceo'){
