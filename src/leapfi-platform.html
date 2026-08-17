@@ -727,14 +727,6 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
     <div class="nav-item active" data-mod="home" onclick="go('home')"><span class="ni">⌂</span> Home</div>
     <div class="nav-item" data-mod="reporting" onclick="goReporting()"><span class="ni">▤</span> Reporting</div>
     <div class="nav-sec">Modules</div>
-    <div class="nav-group" id="ng-studio">
-      <div class="nav-item" data-mod="studio" onclick="toggleStudioNav()"><span class="ni">◎</span> Studio <span class="caret">▸</span></div>
-      <div class="nav-subwrap">
-        <span class="os-sub" data-st="ask" onclick="goStudio('ask')">Ask the platform</span>
-        <span class="os-sub" data-st="design" onclick="goStudio('design')">Investment Design</span>
-        <span class="os-sub" data-st="roadmap" onclick="goStudio('roadmap')">Roadmaps</span>
-      </div>
-    </div>
     <div class="nav-group" id="ng-onside">
       <div class="nav-item" data-mod="onside" onclick="toggleOnsideNav()"><span class="ni">▣</span> OnSide <span class="caret">▸</span></div>
       <div class="nav-subwrap">
@@ -766,12 +758,20 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         <span class="os-sub os-modlink" data-mod="connect" onclick="go('connect')">Connect <span class="soon">Soon</span></span>
       </div>
     </div>
+    <div class="nav-group" id="ng-studio">
+      <div class="nav-item" data-mod="studio" onclick="toggleStudioNav()"><span class="ni">◎</span> Studio <span class="caret">▸</span></div>
+      <div class="nav-subwrap">
+        <span class="os-sub" data-st="ask" onclick="goStudio('ask')">Ask the platform</span>
+        <span class="os-sub" data-st="design" onclick="goStudio('design')">Investment Design</span>
+        <span class="os-sub" data-st="roadmap" onclick="goStudio('roadmap')">Roadmaps</span>
+      </div>
+    </div>
     <div class="nav-item" data-mod="allrailz" onclick="go('allrailz')"><span class="ni">≋</span> AllRailz <span class="soon">Soon</span></div>
     <div class="nav-item" data-mod="vantage" onclick="go('vantage')"><span class="ni">⬡</span> Vantage <span class="soon">Soon</span></div>
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.062</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.063</b></div>
   </div>
 </aside>
 
@@ -1006,6 +1006,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.063</span> · <span class="cd">Aug 16, 2026</span><br>OnSide and Studio swap places in the navigation. OnSide now leads the module list, which matches how the platform is sold and how a walkthrough runs: the governance record first, then what the institution decides to build on top of it.</li>
             <li><span class="cv">v 1.062</span> · <span class="cd">Aug 16, 2026</span><br>The home page is simpler and leads with what is coming. Three numbers across the top instead of six: domains at or above target, gaps to those targets, and what is high priority. Expected return, annual value, and committed spend come off the top and stay where they belong, in the Return and Investments panels below. Risk posture runs across the full width underneath, all eight domains in one row with the gauge and the gap on each. Under it, <b>Strategic signal</b>: the instruments that have just been proposed, before any of them is law, with what each one would mean for this institution and, under &ldquo;would touch&rdquo;, the specific obligations and documents it lands on. Every one is a link, so a control ID opens its register row and a policy opens the document.</li>
             <li><span class="cv">v 1.061</span> · <span class="cd">Aug 16, 2026</span><br>The notification count now follows the person signed in. Switching user left the previous person&rsquo;s badge in the corner until something else redrew it, so a case routed to the CRO looked unread by nobody. The bell redraws on sign-in and on every navigation.</li>
             <li><span class="cv">v 1.060</span> · <span class="cd">Aug 16, 2026</span><br>The approval path now follows the document, not one fixed rule. Settings carries an <b>approval matrix</b>: board-level policy takes a conditional approval from the CRO and a committee vote before it is adopted, executive policy and procedures the CRO can adopt directly. Every case reads the matrix when it opens, and turning the committee requirement off for a tier changes what the CRO sees. On a case the CRO can approve outright, approve subject to a named condition, or route it to <b>counsel</b> &mdash; Dana Reyes, General Counsel, joins the demo and either clears the language or returns it to the analyst with notes, with the opinion on file either way. A conditional approval that names the committee puts the change into the <b>Gap Closure Board Approval Report</b>, a new report written for the board book: what changed, why, the exact language for the vote, and the motion. After the vote the CRO attaches the minutes to the case and gives final approval, and only then does the language go into force and the obligation close. Two levels, every time, with the evidence for both.</li>
@@ -1072,7 +1073,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.062</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.063</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
