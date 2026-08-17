@@ -49,6 +49,8 @@ b{color:var(--ink)}
 .topbar{height:62px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 26px;border-bottom:1px solid var(--line);background:rgba(7,8,9,.92);position:sticky;top:0;z-index:20;backdrop-filter:blur(6px)}
 .welcome{font-size:15px;font-weight:700}
 .welcome .w-sub{font-size:11.5px;font-weight:500;color:var(--grey);margin-top:0px}
+.backchip{flex:none;margin-left:18px;font-size:12px;font-weight:700;color:var(--cyan);background:var(--cyan-dim);border:1px solid rgba(0,242,255,.32);border-radius:20px;padding:6px 14px;cursor:pointer;white-space:nowrap;transition:all .12s}
+.backchip:hover{border-color:var(--cyan);background:rgba(0,242,255,.14)}
 .crumb{flex:1;font-size:12.5px;color:var(--grey);padding-left:18px;margin-left:18px;border-left:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .crumb b{color:var(--ink);font-weight:700}
 .crumb .cs{color:var(--muted)}
@@ -771,7 +773,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.063</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.064</b></div>
   </div>
 </aside>
 
@@ -781,6 +783,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
     <div class="welcome"><span id="welcome-line">Welcome, Rachel</span>
       <div class="w-sub" id="welcome-sub">NorthWinds Credit Union · Friday, August 15, 2026</div>
     </div>
+    <div class="backchip" id="back-chip" onclick="navBack()" style="display:none"></div>
     <div class="crumb" id="crumb" style="display:none"></div>
     <div class="top-right">
       <span class="live-pill"><span class="dot"></span> Live monitoring</span>
@@ -1006,6 +1009,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.064</span> · <span class="cd">Aug 16, 2026</span><br>One level of back, in the top bar. Any click that moves you to a different view leaves a <b>Back to</b> chip naming the place you came from, and it returns you there at the scroll position you left. It is one step, never a stack, so it always does exactly what it says. This closes the one drill-down with no way home: the register links on the Strategic signal took you into a domain and left you to find your way back. Side panels are unchanged &mdash; they still close to wherever you opened them from.</li>
             <li><span class="cv">v 1.063</span> · <span class="cd">Aug 16, 2026</span><br>OnSide and Studio swap places in the navigation. OnSide now leads the module list, which matches how the platform is sold and how a walkthrough runs: the governance record first, then what the institution decides to build on top of it.</li>
             <li><span class="cv">v 1.062</span> · <span class="cd">Aug 16, 2026</span><br>The home page is simpler and leads with what is coming. Three numbers across the top instead of six: domains at or above target, gaps to those targets, and what is high priority. Expected return, annual value, and committed spend come off the top and stay where they belong, in the Return and Investments panels below. Risk posture runs across the full width underneath, all eight domains in one row with the gauge and the gap on each. Under it, <b>Strategic signal</b>: the instruments that have just been proposed, before any of them is law, with what each one would mean for this institution and, under &ldquo;would touch&rdquo;, the specific obligations and documents it lands on. Every one is a link, so a control ID opens its register row and a policy opens the document.</li>
             <li><span class="cv">v 1.061</span> · <span class="cd">Aug 16, 2026</span><br>The notification count now follows the person signed in. Switching user left the previous person&rsquo;s badge in the corner until something else redrew it, so a case routed to the CRO looked unread by nobody. The bell redraws on sign-in and on every navigation.</li>
@@ -1073,7 +1077,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.063</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.064</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -1633,6 +1637,51 @@ var ST_HEADS={
   register:['Ask the platform','one conversation · the register it builds lives below'],
   roadmap:['Roadmaps','every step across the horizon, live from the levers']
 };
+/* ============ ONE LEVEL OF BACK ============
+   Deliberately not browser history: no stack to lose count of, nothing written to the
+   address bar, and nothing that can walk a presenter out of the Google Sites page.
+   A click that changes the view records where it came from, including scroll. One step. */
+var NAVBACK=null;
+function navLabel(l){
+  if(!l)return '';
+  if(l.mod==='onside'){
+    var v=String(l.sub||'overview');
+    if(v.indexOf('case:')===0)return v.slice(5);
+    if(v.indexOf('src:')===0)return v.slice(4);
+    if(v.indexOf('dom-')===0){var d=domByKey(v.slice(4));return d?d.name:'Domains';}
+    var H={overview:'OnSide overview',cases:'Cases',domains:'Domains',docs:'Document universe',gaps:'Open gaps','feed-sources':'Sources','feed-lifecycle':'Rulemaking lifecycle','feed-inforce':'In force',raci:'RACI &amp; owners',onboarding:'Onboarding'};
+    return H[v]||'OnSide';
+  }
+  if(l.mod==='studio'){var S={ask:'Ask the platform',design:'Investment Design',roadmap:'Roadmaps',register:'Ask the platform'};return S[l.sub]||'Studio';}
+  var M={home:'Home',reporting:'Reporting',connect:'Connect',allrailz:'AllRailz',vantage:'Vantage',settings:'Settings'};
+  return M[l.mod]||l.mod;
+}
+function renderBackChip(){
+  var el=$('back-chip'); if(!el)return;
+  if(!NAVBACK){el.style.display='none';el.innerHTML='';return;}
+  el.style.display='';
+  el.innerHTML='&larr; Back to '+navLabel(NAVBACK);
+}
+function navBack(){
+  if(!NAVBACK)return;
+  var r=NAVBACK; NAVBACK=null;
+  if(r.mod==='onside')goOnside(r.sub||'overview');
+  else if(r.mod==='studio')goStudio(r.sub||'ask');
+  else if(r.mod==='reporting')goReporting();
+  else go(r.mod);
+  if(typeof r.scroll==='number')setTimeout(function(){window.scrollTo(0,r.scroll);},70);
+  renderBackChip();
+}
+document.addEventListener('click',function(e){
+  /* a click on the chip itself is handled by navBack, never recorded */
+  if(e.target.closest&&e.target.closest('#back-chip'))return;
+  var before=curLoc();
+  setTimeout(function(){
+    var after=curLoc();
+    if(before.mod!==after.mod||String(before.sub)!==String(after.sub)){NAVBACK=before;}
+    renderBackChip();
+  },0);
+},true);
 function setCrumb(mod,page,hint){
   var c=$('crumb'); if(!c)return;
   if(!mod){c.style.display='none';return;}
@@ -2886,27 +2935,6 @@ function srcPhase(name){
   var tag=el?el.querySelector('.ph-tag'):null;
   return tag?tag.textContent.trim():'Live';
 }
-function openSource(name){
-  name=String(name).replace(/&amp;/g,'&');
-  var s=SRC_ITEMS[name]||SRC_ITEMS[name.replace(/&/g,'&amp;')];
-  var phase=srcPhase(name);
-  var body;
-  if(s){
-    body='<div class="dsum">'+s.d+'</div>'
-     +'<div class="dchips" style="margin:12px 0 6px">'+[[14,'Last 14 days'],[30,'Last 30 days'],[9999,'All activity']].map(function(f,i){
-        return '<span class="dchip'+(i===2?'':'')+'" onclick="srcFilter(this,'+f[0]+')">'+f[1]+'</span>';}).join('')+'</div>'
-     +'<div id="src-items">'+s.items.map(function(it){
-        return '<div class="list-row" data-days="'+it[0]+'"><div class="t"><div class="n">'+it[2]+'</div><div class="s">'+it[1]+' · '+it[3]+'</div></div><span class="go" onclick="closeDrawer();'+it[4]+'">Open →</span></div>';}).join('')+'</div>'
-     +'<div class="csub" style="margin-top:12px">'+(phase==='Live'
-        ?'Captured automatically. Every item carries a verbatim source span, a resolvable pin-cite, and a SHA-256 fingerprint. Nothing becomes authoritative without human approval.'
-        :'Monitored in preview while this connector completes '+phase+'. Items are captured and dated, and obligation mapping switches on when the connector activates.')+'</div>';
-  } else {
-    body='<div class="dsum">No activity captured from this source in the current window. The connector is healthy and the next sweep runs tonight.</div>'
-     +'<div style="margin-top:12px"><span class="pill-soft">Last sweep 6:12 AM ET · no changes detected</span></div>';
-  }
-  showDrawer('<div class="dwrap"><button class="dclose" onclick="closeDrawer()">✕ Close</button>'
-   +'<div class="dcat">Regulatory feed · source · <span class="pill-soft">'+phase+(phase==='Live'?'':' · preview')+'</span></div><h3 class="dtitle">'+name+'</h3>'+body+'</div>',false);
-}
 function srcFilter(el,days){
   var chips=el.parentNode.querySelectorAll('.dchip');
   for(var i=0;i<chips.length;i++)chips[i].style.borderColor='';
@@ -3556,9 +3584,10 @@ function resetDemo(){
   if($('chat-in'))$('chat-in').value='';
   resetChips();
   DRAWER_RET=null; closeDrawer();
-  studioView='ask'; onsideView='overview';
+  studioView='ask'; onsideView='overview'; NAVBACK=null;
   switchUser('rachel');
   computePlan(); renderHome(); go('home');
+  NAVBACK=null; renderBackChip();
   toast('Demo reset. Every gap, redline, lever, filter, and conversation is back to the opening state.');
 }
 function toast(msg){
