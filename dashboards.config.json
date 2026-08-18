@@ -1,5 +1,5 @@
 {
-  "base_url": "https://leapfi-admin.github.io/leapfi-dashboards",
+  "base_url": "https://leapfi-masteraccount.github.io/leapfi-dashboards",
   "dashboards": {
     "leapguard-command-center.html": { "title": "LeapGuard Regulatory Command Center", "order": 1 },
     "onside-plan-timeline.html":     { "title": "OnSide Master Project Plan: Timeline", "order": 2 },

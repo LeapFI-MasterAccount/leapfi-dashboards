@@ -565,7 +565,7 @@ function openPlay(n){
 function closeDrawer(){$('drawer').classList.remove('open');$('drawer').setAttribute('aria-hidden','true');$('scrim').classList.remove('open');}
 
 /* ============ REPORT GENERATOR ============ */
-var ONSIDE_URL='https://leapfi-admin.github.io/leapfi-dashboards/onside-command-center.html';
+var ONSIDE_URL='https://leapfi-masteraccount.github.io/leapfi-dashboards/onside-command-center.html';
 function computePlan(){
   var L=readLevers();
   var pool=OPPS.filter(function(o){return riskOrder(o.r)+1<=L.allowRisk;});

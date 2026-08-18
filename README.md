@@ -6,8 +6,8 @@ Sites page embeds its dashboard **by URL** (iframe). Update = replace the file +
 Sites reflects the change automatically. You never re-edit Sites after initial setup.
 
 ## One-time setup (already done)
-- GitHub repo: `LeapFi-Admin/leapfi-dashboards`, GitHub Pages serving from `main` branch `/docs`.
-- Base URL: https://leapfi-admin.github.io/leapfi-dashboards
+- GitHub repo: `LeapFI-MasterAccount/leapfi-dashboards`, GitHub Pages serving from `main` branch `/docs`.
+- Base URL: https://leapfi-masteraccount.github.io/leapfi-dashboards
 - Each Google Sites page has one **Embed > By URL** block pointing at a dashboard URL.
 
 ## Everyday workflow
@@ -28,7 +28,7 @@ Slugs are auto-derived from filenames. To pin a title, stable slug, or order, ed
 `dashboards.config.json`:
 ```json
 {
-  "base_url": "https://leapfi-admin.github.io/leapfi-dashboards",
+  "base_url": "https://leapfi-masteraccount.github.io/leapfi-dashboards",
   "dashboards": {
     "my-report.html": { "title": "Quarterly Risk Report", "slug": "risk-report", "order": 1 }
   }
@@ -36,8 +36,8 @@ Slugs are auto-derived from filenames. To pin a title, stable slug, or order, ed
 ```
 
 ## Live URLs
-- Index of all dashboards: https://leapfi-admin.github.io/leapfi-dashboards/index.html
-- Each dashboard: https://leapfi-admin.github.io/leapfi-dashboards/<slug>.html
+- Index of all dashboards: https://leapfi-masteraccount.github.io/leapfi-dashboards/index.html
+- Each dashboard: https://leapfi-masteraccount.github.io/leapfi-dashboards/<slug>.html
 
 ## Important: these URLs are PUBLIC
 GitHub Pages serves to anyone with the URL. Google Sites embed-by-URL requires that,
