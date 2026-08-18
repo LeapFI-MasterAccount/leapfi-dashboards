@@ -372,19 +372,22 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 .panel-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:4px}
 .panel-h .go2{font-size:11.5px;font-weight:700;color:var(--cyan);cursor:pointer;white-space:nowrap}
 .panel-h .go2:hover{text-decoration:underline}
-#home-posture{display:grid;grid-template-columns:repeat(8,1fr);gap:9px;margin-top:12px}
-#home-posture .pd{padding:12px 11px}
-#home-posture .pdh{display:block;margin-bottom:8px}
-#home-posture .pdn{display:block;font-size:12px;line-height:1.3;margin-bottom:5px}
-#home-posture .pdg{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
-#home-posture .pgv{font-size:11px}
-#home-posture .pgs{font-size:11px}
+#home-posture{display:grid;grid-template-columns:repeat(8,1fr);gap:9px;margin-top:10px}
+#home-posture .pd{padding:9px 10px;display:block}
+/* name and score share the top line; the meter carries the comparison */
+.pdx{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.pdx .pnm{font-size:11.5px;font-weight:700;color:var(--ink);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pdx .pval{font-size:18px;font-weight:800;color:var(--ink);line-height:1;letter-spacing:-.01em;flex:none}
+.ptrk{position:relative;height:6px;border-radius:4px;background:var(--line2);margin:8px 0 6px}
+.pfil{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:#00B8FF}
+.ptik{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--muted);border-radius:1px}
+.pft{font-size:10.5px;line-height:1.35;color:var(--grey);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pft .amb{color:var(--sem2);font-weight:700}
+.pft .okk{color:var(--cyan);font-weight:700}
 @media(max-width:1330px){#home-posture{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:900px){#home-posture{grid-template-columns:repeat(2,1fr)}}
 .pd{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;transition:.12s}
 .pd:hover{border-color:var(--cyan)}
-.pd .pdh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px;min-height:32px}
-.pd .pdn{font-size:12.5px;font-weight:700;white-space:normal;line-height:1.3}
 #home-legis .tbl td{padding:8px 10px;font-size:12.5px}
 .sig{padding:14px 0;border-bottom:1px solid var(--line)}
 .sig:last-child{border-bottom:0;padding-bottom:2px}
@@ -598,8 +601,6 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 .kpi.click{cursor:pointer;transition:border-color .12s}
 .kpi.click:hover{border-color:rgba(0,242,255,.45)}
 .gg{flex:none;display:block}
-.pdg{display:flex;align-items:center;gap:12px;margin-top:6px}
-.pdgt .pgv{font-size:11.5px;font-weight:700;color:var(--muted)}
 .pdgt .pgs{font-size:11px;color:var(--grey);margin-top:2px}
 .home-cust{display:flex;justify-content:flex-end;margin:-6px 0 8px}
 .cust-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px}
@@ -796,7 +797,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.067</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.068</b></div>
   </div>
 </aside>
 
@@ -845,7 +846,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
       <div class="home-cust"><span class="go2" onclick="toggleHomeCust()">⚙ Customize this page →</span></div>
       <div class="cust-bar" id="cust-bar" style="display:none"></div>
       <div class="kpis" id="home-kpis"></div>
-      <div class="card" id="hp-posture" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('domains')">Risk posture</h2><span class="go2" onclick="goOnside('domains')">Gaps &amp; levers →</span></div><div class="csub" style="margin-bottom:0">Each domain scored 1 to 5 against the target the institution set for it, not an industry average. Below target means obligations are open, and the count is what it takes to reach your own bar.</div><div id="home-posture"></div></div>
+      <div class="card" id="hp-posture" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('domains')">Risk posture</h2><span class="go2" onclick="goOnside('domains')">Gaps &amp; levers →</span></div><div class="csub" style="margin-bottom:0">Each domain scored 1 to 5 against the target the institution set for it, not an industry average. The count is what it takes to reach your own bar.</div><div id="home-posture"></div></div>
       <div class="card" id="hp-legis" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('feed-lifecycle')">Strategic signal · newly proposed</h2><span class="go2" onclick="goOnside('feed-lifecycle')">Full lifecycle →</span></div><div class="csub" style="margin-bottom:4px">What has just been proposed, before it is law, and the exact controls it would touch. Federal, state, and local are monitored separately because obligations stack.</div><div id="home-legis"></div></div>
       <div class="card" id="hp-invest" style="margin-top:16px">
         <div class="panel-h"><h2 class="hl2" onclick="goStudio('design')">Investment and return</h2>
@@ -1036,6 +1037,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.068</span> · <span class="cd">Aug 18, 2026</span><br>Risk posture at <b>half the height</b>: 312px down to 170px, with every domain still on one row. The eight semicircular gauges are now linear meters. Each tile reads name and score on one line, then a meter with a tick at your target, then one line of <b>target 4 · 2 to close</b>. Eight bars on aligned tracks are far easier to compare at a glance than eight separate arcs, and the tile costs 74px instead of 214px. The below-target chip is retired because the footer already carries the judgment in colour, so posture is stated once rather than twice. One accuracy fix rides along: the old gauge filled from zero, but the maturity scale starts at 1, so every score was drawn longer than it is. The meter runs 1 to 5, which is why AI Governance at 2.6 now looks as far back as it actually is.</li>
             <li><span class="cv">v 1.067</span> · <span class="cd">Aug 17, 2026</span><br>Investments and Return are one card, <b>Investment and return</b>, keeping both links: Work the levers goes to Investment Design, Platform ROI opens the report. The four numbers now say what they are in a CFO&rsquo;s language rather than shorthand: return on investment against the hurdle, one-time build cost against the approved envelope, recurring annual value, and payback in months. <b>Compliance capacity freed is now its own highlighted block</b> with the explanation it never had: what the hours are, that it is roughly 3.5 full-time equivalents of loaded salary returned to other work rather than a headcount cut, that it falls to the efficiency ratio, and that it lands whether or not a single funded play ships. Adoption and efficacy now opens at 70%. Brand: the fallback font chain, the metadata grey, and the em dashes are corrected against the brand kit.</li>
             <li><span class="cv">v 1.066</span> · <span class="cd">Aug 16, 2026</span><br><b>Model Risk and Third-Party Risk are built out in full.</b> All 57 documents behind the Model Risk register and all 74 behind Third-Party Risk are in the universe and open: validation reports for each tiered model, conceptual soundness documentation, quarterly outcomes and monitoring packets, vendor model evidence, change logs, standards, committee minutes, board summaries, and training attestations on the model side; due diligence and SOC 2 packets for all twelve critical vendors, financial condition and resiliency assessments, executed contract records, questionnaires, monitoring attestations, and offboarding records on the vendor side. The corpus is written against the open gaps rather than around them, so the documents that would close an item you still show as open are absent and say why. Scope to a domain and the view states whether you are seeing all of it or a sample. A type filter joins the search and status filters, and the table reports how many rows it is showing.</li>
             <li><span class="cv">v 1.065</span> · <span class="cd">Aug 16, 2026</span><br>The gap statement now reads <b>required vs current</b>, and it sits on two lines: what the rule requires, then what the institution does today, each on its own row with its own label. Reading a gap no longer means finding the break in a paragraph. Every card carrying proposed language now shows the <b>before and the after</b>, labelled, whether the language is still proposed or already adopted: previously an adopted change showed only the new text, so the thing it replaced disappeared from view at exactly the moment someone would ask what changed. Obligations, documents, cases, and the board report all render from the same two helpers, so they cannot drift apart again.</li>
@@ -1107,7 +1109,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.067</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.068</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -4056,9 +4058,15 @@ function renderHome(){
 
   $('home-posture').innerHTML=DOMAINS.map(function(d){
     var c=curOf(d), toClose=oblToClose(d);
-    return '<div class="pd" onclick="goOnside(\'dom-'+d.key+'\')"><div class="pdh"><span class="pdn">'+(DOM_SHORT[d.key]||d.name)+'</span>'+statusChip(d)+'</div>'
-     +'<div class="pdg">'+gaugeSVG(c,d.target,116)
-     +'<div class="pdgt"><div class="pgv">target '+d.target+' · '+BANDS[d.target-1]+'</div><div class="pgs">'+(toClose>0?toClose+' to close':'at your bar')+'</div></div></div></div>';
+    /* the scale runs 1 to 5, so the meter runs 1 to 5: a 2.6 is not half full */
+    var fill=Math.max(0,Math.min(100,(c-1)/4*100)), tick=Math.max(0,Math.min(100,(d.target-1)/4*100));
+    return '<div class="pd" onclick="goOnside(\'dom-'+d.key+'\')" title="'+(DOM_SHORT[d.key]||d.name)+' scored '+c.toFixed(1)+' of 5 against a target of '+d.target+'">'
+     +'<div class="pdx"><span class="pnm">'+(DOM_SHORT[d.key]||d.name)+'</span><span class="pval">'+c.toFixed(1)+'</span></div>'
+     +'<div class="ptrk" role="img" aria-label="Score '+c.toFixed(1)+' of 5 against a target of '+d.target+(c<d.target-0.001?', below target':', at or above target')+'">'
+       +'<div class="pfil" style="width:'+fill.toFixed(1)+'%"></div>'
+       +'<div class="ptik" style="left:calc('+tick.toFixed(1)+'% - 1px)"></div></div>'
+     +'<div class="pft">target '+d.target+' · '+(toClose>0?'<span class="amb">'+toClose+' to close</span>':'<span class="okk">at your bar</span>')+'</div>'
+     +'</div>';
   }).join('');
 
   var top=P.funded.slice().sort(function(a,b){return b.val-a.val;}).slice(0,4);
