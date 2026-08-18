@@ -389,6 +389,22 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
 .pd{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer;transition:.12s}
 .pd:hover{border-color:var(--cyan)}
 #home-legis .tbl td{padding:8px 10px;font-size:12.5px}
+.sgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:9px;margin-top:10px}
+.sgc{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:11px 12px;cursor:pointer;transition:.12s;display:flex;flex-direction:column}
+.sgc:hover{border-color:var(--cyan)}
+.sgc:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,242,255,.14)}
+.sgt{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.sgn{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.32;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.sgs{font-size:10.5px;font-weight:700;color:var(--cyan);margin-top:5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sgu{display:flex;align-items:flex-start;gap:6px;font-size:10.5px;font-weight:700;line-height:1.35;margin-top:9px}
+.sgu .sgdot{flex:none;width:6px;height:6px;border-radius:50%;margin-top:4px}
+.sgu.warn{color:var(--sem2)}
+.sgu.warn .sgdot{background:var(--sem2)}
+.sgu.ok{color:var(--cyan)}
+.sgu.ok .sgdot{background:var(--cyan)}
+.sgf{margin-top:auto;padding-top:9px;font-size:10.5px;font-weight:700;color:var(--cyan)}
+@media(max-width:1330px){.sgrid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.sgrid{grid-template-columns:repeat(2,1fr)}}
 .sig{padding:14px 0;border-bottom:1px solid var(--line)}
 .sig:last-child{border-bottom:0;padding-bottom:2px}
 .sig-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -797,7 +813,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.068</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.069</b></div>
   </div>
 </aside>
 
@@ -847,7 +863,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
       <div class="cust-bar" id="cust-bar" style="display:none"></div>
       <div class="kpis" id="home-kpis"></div>
       <div class="card" id="hp-posture" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('domains')">Risk posture</h2><span class="go2" onclick="goOnside('domains')">Gaps &amp; levers →</span></div><div class="csub" style="margin-bottom:0">Each domain scored 1 to 5 against the target the institution set for it, not an industry average. The count is what it takes to reach your own bar.</div><div id="home-posture"></div></div>
-      <div class="card" id="hp-legis" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('feed-lifecycle')">Strategic signal · newly proposed</h2><span class="go2" onclick="goOnside('feed-lifecycle')">Full lifecycle →</span></div><div class="csub" style="margin-bottom:4px">What has just been proposed, before it is law, and the exact controls it would touch. Federal, state, and local are monitored separately because obligations stack.</div><div id="home-legis"></div></div>
+      <div class="card" id="hp-legis" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('feed-lifecycle')">Strategic signal · newly proposed</h2><span class="go2" onclick="goOnside('feed-lifecycle')">Full lifecycle →</span></div><div class="csub" style="margin-bottom:2px">What has just been proposed, before it is law, and whether it lands on something you already have in force. Four more instruments sit further along the lifecycle.</div><div id="home-legis"></div></div>
       <div class="card" id="hp-invest" style="margin-top:16px">
         <div class="panel-h"><h2 class="hl2" onclick="goStudio('design')">Investment and return</h2>
           <span class="ir-links"><span class="go2" onclick="goStudio('design')">Work the levers →</span><span class="go2" onclick="openReport('roi')">Platform ROI →</span></span>
@@ -1037,6 +1053,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.069</span> · <span class="cd">Aug 18, 2026</span><br>Strategic signal rebuilt as a <b>six-across dashboard strip</b>: 945px down to about 300px, roughly a third of what it was. Each tile carries the scope, the instrument, where it sits in the pipeline, and a new line that answers the question the card never answered: <b>does this land on something we already have in force</b>. That count is derived from live state, not typed, so it moves as the demo moves. An obligation that is <b>met</b> today counts as needing an update, because the rule would move underneath a control that currently passes. An obligation that is already a gap is <b>not</b> counted again, because it is already in your queue. A document with language already drafted reads as <b>already staged</b>, which is the point of the product. A domain register is a route, not a control, so it is never counted. The per-item paragraph and the live chip row are not deleted, they moved one click into a panel that also states, in words, which controls would need updating and which were drafted ahead of the rule.</li>
             <li><span class="cv">v 1.068</span> · <span class="cd">Aug 18, 2026</span><br>Risk posture at <b>half the height</b>: 312px down to 170px, with every domain still on one row. The eight semicircular gauges are now linear meters. Each tile reads name and score on one line, then a meter with a tick at your target, then one line of <b>target 4 · 2 to close</b>. Eight bars on aligned tracks are far easier to compare at a glance than eight separate arcs, and the tile costs 74px instead of 214px. The below-target chip is retired because the footer already carries the judgment in colour, so posture is stated once rather than twice. One accuracy fix rides along: the old gauge filled from zero, but the maturity scale starts at 1, so every score was drawn longer than it is. The meter runs 1 to 5, which is why AI Governance at 2.6 now looks as far back as it actually is.</li>
             <li><span class="cv">v 1.067</span> · <span class="cd">Aug 17, 2026</span><br>Investments and Return are one card, <b>Investment and return</b>, keeping both links: Work the levers goes to Investment Design, Platform ROI opens the report. The four numbers now say what they are in a CFO&rsquo;s language rather than shorthand: return on investment against the hurdle, one-time build cost against the approved envelope, recurring annual value, and payback in months. <b>Compliance capacity freed is now its own highlighted block</b> with the explanation it never had: what the hours are, that it is roughly 3.5 full-time equivalents of loaded salary returned to other work rather than a headcount cut, that it falls to the efficiency ratio, and that it lands whether or not a single funded play ships. Adoption and efficacy now opens at 70%. Brand: the fallback font chain, the metadata grey, and the em dashes are corrected against the brand kit.</li>
             <li><span class="cv">v 1.066</span> · <span class="cd">Aug 16, 2026</span><br><b>Model Risk and Third-Party Risk are built out in full.</b> All 57 documents behind the Model Risk register and all 74 behind Third-Party Risk are in the universe and open: validation reports for each tiered model, conceptual soundness documentation, quarterly outcomes and monitoring packets, vendor model evidence, change logs, standards, committee minutes, board summaries, and training attestations on the model side; due diligence and SOC 2 packets for all twelve critical vendors, financial condition and resiliency assessments, executed contract records, questionnaires, monitoring attestations, and offboarding records on the vendor side. The corpus is written against the open gaps rather than around them, so the documents that would close an item you still show as open are absent and say why. Scope to a domain and the view states whether you are seeing all of it or a sample. A type filter joins the search and status filters, and the table reports how many rows it is showing.</li>
@@ -1109,7 +1126,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.068</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.069</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -2227,7 +2244,7 @@ var DOCLIB={
  secs:[['Contents','Identifies relationships supporting critical activities (core processing, payments, lending decisioning) per 88 FR 37920 §II, with rationale.']]},
 'dd-standard':{t:'Due Diligence Standard + Completed Packets',v:'12 packets',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Pre-contract diligence commensurate with risk',obl:['TPRM-03'],
  secs:[['Standard','Financial condition, security posture, subcontractor use, resilience, and compliance capacity reviewed before contract, scaled by tier.']]},
-'contract-rider':{t:'Contract Rider Template · Risk Clauses',v:'v3.0',dom:'tprm',type:'Template',owner:'D. Reyes · General Counsel',status:'warn',line:'Model-risk clauses rolling into 9 legacy contracts',obl:['TPRM-04'],
+'contract-rider':{t:'Contract Rider Template · Risk Clauses',staged:1,v:'v3.0',dom:'tprm',type:'Template',owner:'D. Reyes · General Counsel',status:'warn',line:'Model-risk clauses rolling into 9 legacy contracts',obl:['TPRM-04'],
  secs:[['Contents','Audit rights, performance measures, incident-notification duties, subcontractor disclosure, termination and data-return provisions.'],
  ['Open item','Nine legacy contracts predate the 2026-13 model-validation clauses; renewals scheduled through Q1-2027.']]},
 'vendor-reviews':{t:'Quarterly Vendor Review Packets',v:'Q2-2026',dom:'tprm',type:'Evidence',owner:'P. Nguyen · ISD',status:'good',line:'Ongoing monitoring commensurate with risk',obl:['TPRM-05'],
@@ -3974,27 +3991,27 @@ function gaugeSVG(cur,tgt,px){
 /* ---- the strategic signal: what was just proposed, and exactly what it would touch ---- */
 var SIGNAL=[
  {sc:'FEDERAL',instr:'RFI 2026-04',t:'Interagency RFI 2026-04 · generative &amp; agentic AI in model risk',
-  st:'Comment period open · position due Sep 30',age:'Proposed Jun 30',
+  st:'Comment period open · position due Sep 30',stS:'Comment open · due Sep 30',age:'Proposed Jun 30',
   read:'Would put generative and agentic systems inside the model definition. Our charter and MRM scope both stop short of that today.',
   touch:[['obl','mrm','MRM-11'],['obl','mrm','MRM-01'],['obl','mrm','MRM-09'],['doc','gov-charter'],['doc','gen-ai-draft']]},
  {sc:'FEDERAL',instr:null,t:'Fed &amp; FDIC joint NPRM · Regulation O · insider credit',
-  st:'Comment window open · position in drafting',age:'Proposed Jul 31',
+  st:'Comment window open · position in drafting',stS:'Comment open · drafting',age:'Proposed Jul 31',
   read:'Extensions of credit to insiders. Reporting and approval thresholds would tighten, and the capital narrative picks it up.',
   touch:[['dom','capital'],['dom','fairlend'],['doc','capital-narr']]},
  {sc:'STATE · NM',instr:'NM AI Act',t:'HB 210 · AI Transparency &amp; Accountability Act',
-  st:'Passed Senate 34&ndash;6 · awaiting House',age:'Introduced Feb 2026',
+  st:'Passed Senate 34&ndash;6 · awaiting House',stS:'Passed Senate · awaiting House',age:'Introduced Feb 2026',
   read:'Vendor disclosure duties for automated decision systems. Our contract rider already has the clause pre-drafted.',
   touch:[['obl','tprm','TPRM-04'],['obl','tprm','TPRM-01'],['doc','contract-rider'],['dom','aigov']]},
  {sc:'STATE · TX',instr:'TRAIGA',t:'HB 149 · AI Governance Rules Clarification Act',
-  st:'Awaiting floor vote',age:'Introduced Mar 2026',
+  st:'Awaiting floor vote',stS:'Awaiting floor vote',age:'Introduced Mar 2026',
   read:'Clarifies governance expectations for AI in member-facing decisions. Charter language is staged and waiting.',
   touch:[['doc','gov-charter'],['doc','ai-inventory'],['doc','hitl-standard'],['dom','aigov']]},
  {sc:'LOCAL · NM',instr:null,t:'City of Albuquerque · automated-decision disclosure ordinance',
-  st:'Introduced · first reading Sep 3',age:'Introduced Aug 4',
+  st:'Introduced · first reading Sep 3',stS:'First reading Sep 3',age:'Introduced Aug 4',
   read:'Disclosure at the point of an automated decision, inside our branch footprint. Narrower than the state bill and it stacks on top.',
   touch:[['doc','msg-disclosure'],['doc','complaint-proc'],['dom','consumer']]},
  {sc:'LOCAL · TX',instr:null,t:'Travis County · vendor AI procurement standards',
-  st:'Draft published for comment',age:'Published Jul 22',
+  st:'Draft published for comment',stS:'Draft out for comment',age:'Published Jul 22',
   read:'Procurement standards for vendors using AI. Reads onto our diligence standard and the contract rider.',
   touch:[['obl','tprm','TPRM-03'],['obl','tprm','TPRM-06'],['doc','dd-standard']]}
 ];
@@ -4009,6 +4026,61 @@ function sigTouch(t){
   }
   var dm=domByKey(t[1]);
   return '<span class="tch dm" onclick="event.stopPropagation();goOnside(\'dom-'+t[1]+'\')">'+((dm&&(DOM_SHORT[t[1]]||dm.name))||t[1])+' register</span>';
+}
+/* ---- what this proposal lands on, computed off live state so it moves with the demo ---- */
+function sigImpact(s){
+  var r={n:0,upd:0,staged:0,open:0,updList:[],stagedList:[]};
+  (s.touch||[]).forEach(function(t){
+    r.n++;
+    if(t[0]==='dom')return;                       /* a register is a route, not a control */
+    if(t[0]==='obl'){
+      var o=oblByld(t[1],t[2]); if(!o)return;
+      if(o.st==='met'){r.upd++;r.updList.push(t[2]);}   /* in force and passing: the rule moves under it */
+      else r.open++;                                    /* already an open gap, already counted once */
+      return;
+    }
+    var d=DOCLIB[t[1]]; if(!d)return;
+    var st=d.rlState;
+    if(st&&st.act==='adopted')return;                   /* already updated in this session */
+    if(d.redline||d.staged){r.staged++;r.stagedList.push(d.t||t[1]);return;}
+    r.upd++; r.updList.push(d.t||t[1]);                 /* in force with nothing drafted */
+  });
+  return r;
+}
+function sigTile(s,i){
+  var im=sigImpact(s);
+  var flag=im.upd>0
+    ? '<div class="sgu warn"><span class="sgdot"></span>'+im.upd+' in force '+(im.upd===1?'needs':'need')+' updating</div>'
+    : '<div class="sgu ok"><span class="sgdot"></span>nothing in force would change</div>';
+  var foot=im.n+' touched'+(im.staged?' · '+im.staged+' already staged':'')+' &rarr;';
+  return '<div class="sgc" onclick="openSignal('+i+')" data-kb="1" tabindex="0" role="button" title="'+String(s.read).replace(/"/g,'&quot;')+'">'
+   +'<div class="sgt"><span class="tag grey">'+s.sc+'</span></div>'
+   +'<div class="sgn">'+s.t+'</div>'
+   +'<div class="sgs">'+(s.stS||s.st)+'</div>'
+   +flag
+   +'<div class="sgf">'+foot+'</div></div>';
+}
+/* the paragraph and the live chip row are one click away, not deleted */
+function openSignal(i){
+  var s=SIGNAL[i]; if(!s)return;
+  var im=sigImpact(s);
+  var title=s.instr?instrLink(s.instr,s.t):s.t;
+  function list(a){return a.length?a.join(', '):'none';}
+  showDrawer('<div class="dwrap"><button class="dclose" onclick="closeDrawer()">&#10005; Close</button>'
+   +'<div class="dcat">Strategic signal · '+s.sc+' · '+s.age+'</div>'
+   +'<h3 class="dtitle">'+title+'</h3>'
+   +'<div class="sig-st" style="margin-bottom:12px">'+s.st+'</div>'
+   +'<div class="dsec"><div class="dh">What it would mean here</div><div class="csub" style="margin-bottom:0">'+s.read+'</div></div>'
+   +'<div class="dsec"><div class="dh">Against what you have today</div>'
+     +(im.upd>0
+       ? '<div class="warnline" style="margin-bottom:10px"><b>'+im.upd+' in force '+(im.upd===1?'control or document would':'controls or documents would')+' need updating.</b> '+list(im.updList)+'. '+(im.upd===1?'It is':'They are')+' satisfied against the rule as written today, so the change lands on '+(im.upd===1?'it':'them')+' rather than on an open gap.</div>'
+       : '<div class="okline" style="margin-bottom:10px">Nothing you have in force would change. Everything this touches is either already open work or already has language drafted.</div>')
+     +(im.staged?'<div class="okline" style="margin-bottom:10px"><b>'+im.staged+' already '+(im.staged===1?'has':'have')+' language staged.</b> '+list(im.stagedList)+'. OnSide drafted the wording before the rule landed, so this is a review, not a rewrite.</div>':'')
+     +(im.open?'<div class="csub" style="margin-bottom:0">'+im.open+' of what this touches '+(im.open===1?'is':'are')+' already an open gap, counted once in your queue rather than twice here.</div>':'')
+   +'</div>'
+   +'<div class="dsec"><div class="dh">Every control and document it would touch</div>'
+     +'<div class="sig-t" style="margin-top:0">'+s.touch.map(sigTouch).join('')+'</div></div>'
+   +'<div class="actions" style="display:flex;gap:8px;margin-top:14px"><button class="btn ghost" onclick="closeDrawer();goOnside(\'feed-lifecycle\')">Open the full lifecycle</button></div></div>');
 }
 function sigRow(s){
   var title=s.instr?instrLink(s.instr,s.t):('<span class="doclink" onclick="goOnside(\'feed-lifecycle\')">'+s.t+'</span>');
@@ -4132,8 +4204,7 @@ function renderHome(){
   }
   $('home-queue').innerHTML=q;
 
-  $('home-legis').innerHTML=SIGNAL.map(sigRow).join('')
-   +'<div class="csub" style="margin-top:12px">Four more instruments are tracked further along the lifecycle, from comment period through in force. <span class="doclink" onclick="goOnside(\'feed-lifecycle\')">Open the full lifecycle &rarr;</span></div>';
+  $('home-legis').innerHTML='<div class="sgrid">'+SIGNAL.map(sigTile).join('')+'</div>';
 
   $('home-qa').innerHTML=
    qa('◎','Ask the platform','Ideas priced, policy cited, new use cases scoped. One conversation.',"goStudio('ask')")
