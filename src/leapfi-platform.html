@@ -816,7 +816,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.070</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.071</b></div>
   </div>
 </aside>
 
@@ -1056,6 +1056,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.071</span> · <span class="cd">Aug 18, 2026</span><br><b>The demo now opens with every case plainly undecided, and the Cases tab carries the count.</b> Two things were wrong at the opening frame. The nav badge counted cases waiting on <i>whoever was signed in</i>, and the demo opens as the CRO while all eight cases sit with the analyst, so the badge rendered <b>blank</b> on a fresh load; it was also only written inside the OnSide router, so it did not exist at all until you navigated in. It now counts <b>open cases</b>, reads the same for every persona, and is drawn wherever the notification bell is drawn, which covers boot, sign-in, every navigation, and every case action. Separately, all eight cases read <b>With the analyst</b> in the Stage column, which only repeated the With column and never said the thing that matters. A case nobody has acted on now reads <b>Not decided yet</b> in neutral grey rather than amber, because nothing is at risk, it simply has not been decided. A case that has come <i>back</i> to the analyst still reads Back with the analyst, since that is a different fact. Both states are seeded, so every reset returns to eight open and none decided.</li>
             <li><span class="cv">v 1.070</span> · <span class="cd">Aug 18, 2026</span><br><b>Home now reads in the order you pick.</b> Customize this page used to decide only what showed; the sequence was fixed in the code, so an executive could remove a panel but never move one. Each role now carries its own order: <b>turning a panel on puts it at the end of your page</b>, turning it off takes it out, and the real DOM is reordered to match. Every active chip shows <b>its position number</b>, so the mechanic is visible on screen rather than something a presenter has to explain. Two shortcuts sit at the end of the bar: <b>Clear all</b>, so you can empty the page and then pick the panels back in the order you want to read them, and <b>Reset layout</b>, which restores the shipped order. Both the order and the visibility are per role and both are in the demo reset, so a walkthrough always opens on the same page.</li>
             <li><span class="cv">v 1.069</span> · <span class="cd">Aug 18, 2026</span><br>Strategic signal rebuilt as a <b>six-across dashboard strip</b>: 945px down to about 300px, roughly a third of what it was. Each tile carries the scope, the instrument, where it sits in the pipeline, and a new line that answers the question the card never answered: <b>does this land on something we already have in force</b>. That count is derived from live state, not typed, so it moves as the demo moves. An obligation that is <b>met</b> today counts as needing an update, because the rule would move underneath a control that currently passes. An obligation that is already a gap is <b>not</b> counted again, because it is already in your queue. A document with language already drafted reads as <b>already staged</b>, which is the point of the product. A domain register is a route, not a control, so it is never counted. The per-item paragraph and the live chip row are not deleted, they moved one click into a panel that also states, in words, which controls would need updating and which were drafted ahead of the rule.</li>
             <li><span class="cv">v 1.068</span> · <span class="cd">Aug 18, 2026</span><br>Risk posture at <b>half the height</b>: 312px down to 170px, with every domain still on one row. The eight semicircular gauges are now linear meters. Each tile reads name and score on one line, then a meter with a tick at your target, then one line of <b>target 4 · 2 to close</b>. Eight bars on aligned tracks are far easier to compare at a glance than eight separate arcs, and the tile costs 74px instead of 214px. The below-target chip is retired because the footer already carries the judgment in colour, so posture is stated once rather than twice. One accuracy fix rides along: the old gauge filled from zero, but the maturity scale starts at 1, so every score was drawn longer than it is. The meter runs 1 to 5, which is why AI Governance at 2.6 now looks as far back as it actually is.</li>
@@ -1130,7 +1131,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.070</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.071</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -2628,6 +2629,7 @@ function notify(roleKey,title,cid,kind){
 }
 function myNotifs(){return NOTIFS.filter(function(x){return x.to===CURRENT.roleKey;});}
 function renderBell(){
+  renderCaseNav();
   var b=$('bell'); if(!b)return;
   var un=myNotifs().filter(function(x){return !x.read;}).length;
   b.innerHTML='<span class="bi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>'+(un?'<span class="bdot">'+un+'</span>':'');
@@ -2765,6 +2767,12 @@ function caseReopen(cid){
   onsideShow('case:'+cid);
 }
 /* ---- views ---- */
+/* a case nobody has acted on yet: one history line, the one OnSide wrote when it
+   opened the case. That is the opening state of the demo for all eight. */
+function caseUntouched(c){return c.stage==='analyst'&&!c.edited&&(c.history||[]).length<=1;}
+function caseOpen(c){return c.stage!=='closed'&&c.stage!=='rejected';}
+function openCases(){return CASES.filter(caseOpen);}
+function undecidedCases(){return CASES.filter(caseUntouched);}
 function caseStagePill(c){
   if(c.stage==='closed')return '<span class="tag good">Adopted</span>';
   if(c.stage==='rejected')return '<span class="tag crit">Returned</span>';
@@ -2772,11 +2780,24 @@ function caseStagePill(c){
   if(c.stage==='legal')return '<span class="tag warn">With counsel</span>';
   if(c.stage==='committee')return '<span class="tag warn">At '+APPROVAL.committee+'</span>';
   if(c.stage==='final')return '<span class="tag warn">Conditional · final approval open</span>';
-  return '<span class="tag warn">With the analyst</span>';
+  /* neutral, not amber: nothing is at risk, it simply has not been decided */
+  if(caseUntouched(c))return '<span class="tag grey">Not decided yet</span>';
+  return '<span class="tag warn">Back with the analyst</span>';
+}
+/* the count on the nav tab is what is OPEN, not what is waiting on whoever is
+   signed in, so it reads the same for every persona and is never blank at boot */
+function renderCaseNav(){
+  var nc=$('nav-case-n'); if(!nc)return;
+  var o=openCases().length, u=undecidedCases().length;
+  nc.textContent=o?o:'';
+  nc.style.display=o?'':'none';
+  var tab=nc.parentNode;
+  if(tab&&tab.setAttribute)tab.setAttribute('title',o?(o+' open '+(o===1?'case':'cases')+(u?', '+u+' not decided yet':'')):'No open cases');
 }
 function boardCases(){return CASES.filter(function(c){return c.cond===APPROVAL.conditions[0]&&(c.stage==='committee'||c.stage==='final'||c.stage==='closed');});}
 function osCases(){
   var mine=myCases().length;
+  var und=undecidedCases().length;
   function row(c){
     var wait=canAct(c)?'<span class="mine">Waiting on you</span>':'';
     return '<tr class="prow" onclick="goOnside(\'case:'+c.id+'\')"><td><b class="doclink">'+c.id+'</b></td><td><b>'+c.title+'</b>'+wait+'<div class="cite">'+c.trigger.split(' · ')[0]+'</div></td><td class="pcat">'+(domByKey(c.dom)||{name:c.dom}).name+'</td><td class="pcat">'+c.owner+'</td><td class="pcat">'+caseStageOwner(c)+'</td><td>'+caseStagePill(c)+'</td></tr>';
@@ -2784,8 +2805,9 @@ function osCases(){
   var openC=CASES.filter(function(c){return c.stage!=='closed'&&c.stage!=='rejected';});
   var doneC=CASES.filter(function(c){return c.stage==='closed'||c.stage==='rejected';});
   return osScopeBar()
-   +'<div class="card"><h2>Cases · every proposed change, and who has it</h2>'
+   +'<div class="card"><h2>Cases · '+openC.length+' open</h2>'
    +'<div class="csub">OnSide opens a case the moment it detects a change and drafts the language to close it. The case is the record: who edited, who accepted, who approved, and when. It is timestamped from detection to adoption, and it is what the examiner reads.'
+   +(und?' <b>'+(und===openC.length?'None':und+' of '+openC.length)+' '+(und===1?'has':'have')+' been decided yet.</b>':'')
    +(mine?' <b style="color:var(--cyan)">'+mine+' '+(mine===1?'case is':'cases are')+' waiting on you.</b>':'')+'</div>'
    +'<table class="tbl"><thead><tr><th>Case</th><th>Change</th><th>Domain</th><th>Policy owner</th><th>With</th><th>Stage</th></tr></thead><tbody>'+openC.map(row).join('')+'</tbody></table></div>'
    +(doneC.length?'<div class="card" style="margin-top:14px"><h2>Closed cases · '+doneC.length+'</h2><div class="csub">Adopted or returned. The full history stays on the case either way.</div>'
@@ -3026,7 +3048,7 @@ function onsideShow(v){
   var NEST_OF={docs:'documents',gaps:'documents','feed-sources':'feed','feed-lifecycle':'feed','feed-inforce':'feed',raci:'setup',onboarding:'setup'};
   var nests=document.querySelectorAll('#ng-onside .os-nest');
   for(var j=0;j<nests.length;j++)nests[j].classList.toggle('open',nests[j].id==='nest-'+NEST_OF[v]);
-  var nc=$('nav-case-n'); if(nc){var m=myCases().length; nc.textContent=m?m:''; nc.style.display=m?'':'none';}
+  renderCaseNav();
   if(domKey){var acc=document.getElementById('dom-acc-'+domKey); if(acc)setTimeout(function(){acc.scrollIntoView({behavior:'smooth',block:'start'});},80);}
   else window.scrollTo({top:0});
 }
