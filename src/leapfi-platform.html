@@ -11,14 +11,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 :root{
   --bg:#070809;--panel:#0e1116;--panel2:#12161c;--panel3:#171c23;--line:#22262c;--line2:#2c3138;
-  --ink:#f5f5f7;--muted:#9ba0a6;--grey:#939aa2;
+  --ink:#f5f5f7;--muted:#9ba0a6;--grey:#9BA0A6;
   --cyan:#00F2FF;--cyan-dim:rgba(0,242,255,.13);
   --chev1:#01DFD9;--chev2:#00B8FF;--chev3:#0092FF;--chev4:#006BFF;--chev5:#002BFF;
   --sem1:#C94A4A;--sem2:#D99B43;--sem3:#E4C662;--sem4:#7FA774;--sem5:#557A61;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--ink);font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
 b{color:var(--ink)}
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-thumb{background:#20252c;border-radius:6px}
@@ -49,6 +49,18 @@ b{color:var(--ink)}
 .topbar{height:62px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 26px;border-bottom:1px solid var(--line);background:rgba(7,8,9,.92);position:sticky;top:0;z-index:20;backdrop-filter:blur(6px)}
 .welcome{font-size:15px;font-weight:700}
 .welcome .w-sub{font-size:11.5px;font-weight:500;color:var(--grey);margin-top:0px}
+.ir-links{display:flex;gap:16px;align-items:center}
+.capfreed{display:flex;gap:20px;align-items:flex-start;margin-top:14px;padding:16px 18px;background:var(--cyan-dim);border:1px solid rgba(0,242,255,.34);border-radius:14px}
+.cf-l{flex:none;min-width:210px;border-right:1px solid rgba(0,242,255,.22);padding-right:20px}
+.cf-k{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--cyan)}
+.cf-n{font-size:31px;font-weight:800;color:var(--ink);letter-spacing:-.02em;line-height:1.1;margin-top:6px}
+.cf-n span{font-size:15px;font-weight:700;color:var(--grey);margin-left:2px}
+.cf-r{font-size:12.5px;color:var(--muted);line-height:1.65}
+.cf-r b{color:var(--ink)}
+.ir-split{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.irs-h{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);margin-bottom:9px}
+.irs-h+.irs-h,.ir-split .list-row+.irs-h{margin-top:16px}
+@media(max-width:1080px){.capfreed{flex-direction:column;gap:12px}.cf-l{border-right:0;border-bottom:1px solid rgba(0,242,255,.22);padding-right:0;padding-bottom:12px;min-width:0}}
 .backchip{flex:none;margin-left:18px;font-size:12px;font-weight:700;color:var(--cyan);background:var(--cyan-dim);border:1px solid rgba(0,242,255,.32);border-radius:20px;padding:6px 14px;cursor:pointer;white-space:nowrap;transition:all .12s}
 .backchip:hover{border-color:var(--cyan);background:rgba(0,242,255,.14)}
 .crumb{flex:1;font-size:12.5px;color:var(--grey);padding-left:18px;margin-left:18px;border-left:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -784,7 +796,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
   </nav>
   <div class="nav-foot">
     <div class="nav-item" data-mod="settings" onclick="go('settings')"><span class="ni">⚙</span> Settings</div>
-    <div class="ver">LeapFI Platform <b>v 1.066</b></div>
+    <div class="ver">LeapFI Platform <b>v 1.067</b></div>
   </div>
 </aside>
 
@@ -833,13 +845,17 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
       <div class="home-cust"><span class="go2" onclick="toggleHomeCust()">⚙ Customize this page →</span></div>
       <div class="cust-bar" id="cust-bar" style="display:none"></div>
       <div class="kpis" id="home-kpis"></div>
-      <div class="card" id="hp-posture" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('domains')">Risk posture</h2><span class="go2" onclick="goOnside('domains')">Gaps &amp; levers →</span></div><div class="csub" style="margin-bottom:0">Judged against the targets you set, never a generic bar.</div><div id="home-posture"></div></div>
+      <div class="card" id="hp-posture" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('domains')">Risk posture</h2><span class="go2" onclick="goOnside('domains')">Gaps &amp; levers →</span></div><div class="csub" style="margin-bottom:0">Each domain scored 1 to 5 against the target the institution set for it, not an industry average. Below target means obligations are open, and the count is what it takes to reach your own bar.</div><div id="home-posture"></div></div>
       <div class="card" id="hp-legis" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="goOnside('feed-lifecycle')">Strategic signal · newly proposed</h2><span class="go2" onclick="goOnside('feed-lifecycle')">Full lifecycle →</span></div><div class="csub" style="margin-bottom:4px">What has just been proposed, before it is law, and the exact controls it would touch. Federal, state, and local are monitored separately because obligations stack.</div><div id="home-legis"></div></div>
-      <div class="grid2" style="margin-top:16px">
-        <div class="card" id="hp-queue"><div class="panel-h"><h2 id="home-q-title" class="hl2" onclick="goOnside('gaps')">Your queue</h2><span class="go2" onclick="goOnside('gaps')">All open items →</span></div><div class="csub" id="home-q-sub" style="margin-bottom:4px"></div><div id="home-queue"></div></div>
-        <div class="card" id="hp-invest"><div class="panel-h"><h2 class="hl2" onclick="goStudio('design')">Investments</h2><span class="go2" onclick="goStudio('design')">Work the levers →</span></div><div class="csub" id="home-inv-sub" style="margin-bottom:8px"></div><div id="home-invest"></div></div>
+      <div class="card" id="hp-invest" style="margin-top:16px">
+        <div class="panel-h"><h2 class="hl2" onclick="goStudio('design')">Investment and return</h2>
+          <span class="ir-links"><span class="go2" onclick="goStudio('design')">Work the levers →</span><span class="go2" onclick="openReport('roi')">Platform ROI →</span></span>
+        </div>
+        <div class="csub" id="home-inv-sub" style="margin-bottom:10px"></div>
+        <div id="home-value"></div>
+        <div id="home-invest"></div>
       </div>
-      <div class="card" id="hp-value" style="margin-top:16px"><div class="panel-h"><h2 class="hl2" onclick="openReport('roi')">Return</h2><span class="go2" onclick="openReport('roi')">Platform ROI →</span></div><div class="csub" id="home-val-sub" style="margin-bottom:8px"></div><div id="home-value"></div></div>
+      <div class="card" id="hp-queue" style="margin-top:16px"><div class="panel-h"><h2 id="home-q-title" class="hl2" onclick="goOnside('gaps')">Your queue</h2><span class="go2" onclick="goOnside('gaps')">All open items →</span></div><div class="csub" id="home-q-sub" style="margin-bottom:4px"></div><div id="home-queue"></div></div>
       <div class="qa-row" id="home-qa"></div>
       <div class="foot-note">LeapFI Platform demo · illustrative customer data for NorthWinds Credit Union · role-based homepage rendered for the signed-in user · Not legal advice · © 2026 LeapFI LLC</div>
     </section>
@@ -915,7 +931,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           </div>
           <div class="lever">
             <div class="lt"><span class="ln">Adoption / efficacy <span class="tip" data-tip="The share of eligible work that actually flows through each tool once live. Measured after launch from usage telemetry and outcome sampling; set it here from your change-management confidence. Every value figure scales linearly with it, because low adoption is where most ROI quietly dies.">i</span></span><span class="lv" id="eff-v">55%</span></div>
-            <input type="range" id="eff" min="20" max="80" step="1" value="55">
+            <input type="range" id="eff" min="20" max="80" step="1" value="70">
             <div class="ticks"><span>20%</span><span>50%</span><span>80%</span></div>
           </div>
         </div>
@@ -1020,13 +1036,14 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
           <h2>Release notes</h2>
           <div class="csub">Version increments +0.001 on every update; major launches step the whole number.</div>
           <ul class="changelog">
+            <li><span class="cv">v 1.067</span> · <span class="cd">Aug 17, 2026</span><br>Investments and Return are one card, <b>Investment and return</b>, keeping both links: Work the levers goes to Investment Design, Platform ROI opens the report. The four numbers now say what they are in a CFO&rsquo;s language rather than shorthand: return on investment against the hurdle, one-time build cost against the approved envelope, recurring annual value, and payback in months. <b>Compliance capacity freed is now its own highlighted block</b> with the explanation it never had: what the hours are, that it is roughly 3.5 full-time equivalents of loaded salary returned to other work rather than a headcount cut, that it falls to the efficiency ratio, and that it lands whether or not a single funded play ships. Adoption and efficacy now opens at 70%. Brand: the fallback font chain, the metadata grey, and the em dashes are corrected against the brand kit.</li>
             <li><span class="cv">v 1.066</span> · <span class="cd">Aug 16, 2026</span><br><b>Model Risk and Third-Party Risk are built out in full.</b> All 57 documents behind the Model Risk register and all 74 behind Third-Party Risk are in the universe and open: validation reports for each tiered model, conceptual soundness documentation, quarterly outcomes and monitoring packets, vendor model evidence, change logs, standards, committee minutes, board summaries, and training attestations on the model side; due diligence and SOC 2 packets for all twelve critical vendors, financial condition and resiliency assessments, executed contract records, questionnaires, monitoring attestations, and offboarding records on the vendor side. The corpus is written against the open gaps rather than around them, so the documents that would close an item you still show as open are absent and say why. Scope to a domain and the view states whether you are seeing all of it or a sample. A type filter joins the search and status filters, and the table reports how many rows it is showing.</li>
-            <li><span class="cv">v 1.065</span> · <span class="cd">Aug 16, 2026</span><br>The gap statement now reads <b>required vs current</b>, and it sits on two lines: what the rule requires, then what the institution does today, each on its own row with its own label. Reading a gap no longer means finding the break in a paragraph. Every card carrying proposed language now shows the <b>before and the after</b>, labelled, whether the language is still proposed or already adopted &mdash; previously an adopted change showed only the new text, so the thing it replaced disappeared from view at exactly the moment someone would ask what changed. Obligations, documents, cases, and the board report all render from the same two helpers, so they cannot drift apart again.</li>
-            <li><span class="cv">v 1.064</span> · <span class="cd">Aug 16, 2026</span><br>One level of back, in the top bar. Any click that moves you to a different view leaves a <b>Back to</b> chip naming the place you came from, and it returns you there at the scroll position you left. It is one step, never a stack, so it always does exactly what it says. This closes the one drill-down with no way home: the register links on the Strategic signal took you into a domain and left you to find your way back. Side panels are unchanged &mdash; they still close to wherever you opened them from.</li>
+            <li><span class="cv">v 1.065</span> · <span class="cd">Aug 16, 2026</span><br>The gap statement now reads <b>required vs current</b>, and it sits on two lines: what the rule requires, then what the institution does today, each on its own row with its own label. Reading a gap no longer means finding the break in a paragraph. Every card carrying proposed language now shows the <b>before and the after</b>, labelled, whether the language is still proposed or already adopted: previously an adopted change showed only the new text, so the thing it replaced disappeared from view at exactly the moment someone would ask what changed. Obligations, documents, cases, and the board report all render from the same two helpers, so they cannot drift apart again.</li>
+            <li><span class="cv">v 1.064</span> · <span class="cd">Aug 16, 2026</span><br>One level of back, in the top bar. Any click that moves you to a different view leaves a <b>Back to</b> chip naming the place you came from, and it returns you there at the scroll position you left. It is one step, never a stack, so it always does exactly what it says. This closes the one drill-down with no way home: the register links on the Strategic signal took you into a domain and left you to find your way back. Side panels are unchanged: they still close to wherever you opened them from.</li>
             <li><span class="cv">v 1.063</span> · <span class="cd">Aug 16, 2026</span><br>OnSide and Studio swap places in the navigation. OnSide now leads the module list, which matches how the platform is sold and how a walkthrough runs: the governance record first, then what the institution decides to build on top of it.</li>
             <li><span class="cv">v 1.062</span> · <span class="cd">Aug 16, 2026</span><br>The home page is simpler and leads with what is coming. Three numbers across the top instead of six: domains at or above target, gaps to those targets, and what is high priority. Expected return, annual value, and committed spend come off the top and stay where they belong, in the Return and Investments panels below. Risk posture runs across the full width underneath, all eight domains in one row with the gauge and the gap on each. Under it, <b>Strategic signal</b>: the instruments that have just been proposed, before any of them is law, with what each one would mean for this institution and, under &ldquo;would touch&rdquo;, the specific obligations and documents it lands on. Every one is a link, so a control ID opens its register row and a policy opens the document.</li>
             <li><span class="cv">v 1.061</span> · <span class="cd">Aug 16, 2026</span><br>The notification count now follows the person signed in. Switching user left the previous person&rsquo;s badge in the corner until something else redrew it, so a case routed to the CRO looked unread by nobody. The bell redraws on sign-in and on every navigation.</li>
-            <li><span class="cv">v 1.060</span> · <span class="cd">Aug 16, 2026</span><br>The approval path now follows the document, not one fixed rule. Settings carries an <b>approval matrix</b>: board-level policy takes a conditional approval from the CRO and a committee vote before it is adopted, executive policy and procedures the CRO can adopt directly. Every case reads the matrix when it opens, and turning the committee requirement off for a tier changes what the CRO sees. On a case the CRO can approve outright, approve subject to a named condition, or route it to <b>counsel</b> &mdash; Dana Reyes, General Counsel, joins the demo and either clears the language or returns it to the analyst with notes, with the opinion on file either way. A conditional approval that names the committee puts the change into the <b>Gap Closure Board Approval Report</b>, a new report written for the board book: what changed, why, the exact language for the vote, and the motion. After the vote the CRO attaches the minutes to the case and gives final approval, and only then does the language go into force and the obligation close. Two levels, every time, with the evidence for both.</li>
+            <li><span class="cv">v 1.060</span> · <span class="cd">Aug 16, 2026</span><br>The approval path now follows the document, not one fixed rule. Settings carries an <b>approval matrix</b>: board-level policy takes a conditional approval from the CRO and a committee vote before it is adopted, executive policy and procedures the CRO can adopt directly. Every case reads the matrix when it opens, and turning the committee requirement off for a tier changes what the CRO sees. On a case the CRO can approve outright, approve subject to a named condition, or route it to <b>counsel</b>: Dana Reyes, General Counsel, joins the demo and either clears the language or returns it to the analyst with notes, with the opinion on file either way. A conditional approval that names the committee puts the change into the <b>Gap Closure Board Approval Report</b>, a new report written for the board book: what changed, why, the exact language for the vote, and the motion. After the vote the CRO attaches the minutes to the case and gives final approval, and only then does the language go into force and the obligation close. Two levels, every time, with the evidence for both.</li>
             <li><span class="cv">v 1.059</span> · <span class="cd">Aug 16, 2026</span><br>Proposed language now runs through a <b>Case</b>. OnSide opens one the moment it detects a change, and the case carries the whole record: what triggered it, the language drafted, every edit, every routing, and every approval, each stamped with the time and the name of the person who did it. That record is the exam answer. A fifth persona joins the demo, <b>Priya Raman, Risk Analyst</b>, who is the maker: she accepts OnSide&rsquo;s draft or edits it in her own words, with the original kept alongside, then routes it to the CRO. Rachel gets a notification in the app and an email you can open and read, and hers is the approval that adopts the change and closes the obligation behind it. Rejecting returns it to OnSide with nothing touched in the in-force document. Cases live under OnSide with a count of what is waiting on you, and the bell in the top bar shows the same by role.</li>
             <li><span class="cv">v 1.058</span> · <span class="cd">Aug 16, 2026</span><br>Every regulatory source now opens its own page instead of a side panel. A source is somewhere you spend time, not something you glance at and dismiss: the page carries what it covers and how it is captured, how many items landed in the last thirty days, which registers they fed, the last capture and the next sweep, and the full dated activity list with a way into the obligation or document behind each one. Sources still in a connector phase say so on the page. <b>Digest and alerts</b> sit above the source list and on every source page. Pick a cadence, real-time through quarterly, choose email or in-app or both, narrow to binding rules only, and see how many items that setting would carry right now. Alerts are the exception path: switch one on for a source and a change from it reaches you the moment a sweep finds it, whatever the digest cadence.</li>
             <li><span class="cv">v 1.057</span> · <span class="cd">Aug 16, 2026</span><br>Two fixes for demo day. <b>Approving language now closes the gap everywhere.</b> The priority queue read from a fixed list, so an item you had just approved kept sitting there as open. Every row now reads its state from the document it closes: approve the language and the item moves into a Closed in this session table with who approved it and when, the obligation behind it is marked met, and the domain score, the donuts, and the counts all move with it. Rejecting or routing puts it back. <b>Reset demo</b> lives under your avatar, or Shift + Alt + R. It restores every gap, redline, lever, filter, and conversation to the opening state without reloading the page, so the next walkthrough starts clean.</li>
@@ -1090,7 +1107,7 @@ input[type=range]:focus-visible{outline:2px solid var(--cyan);outline-offset:3px
         </div>
         <div class="card">
           <h2>About</h2>
-          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.066</span></div>
+          <div class="set-row"><div><div class="sk">Product</div><div class="sd">LeapFI Platform · all-in-one back-office infrastructure</div></div><span class="pill-soft">v 1.067</span></div>
           <div class="set-row"><div><div class="sk">Modules licensed</div><div class="sd">Discovery · Studio · OnSide · (Connect, AllRailz upcoming · Vantage targeted v3)</div></div><span class="pill-soft">3 + 3</span></div>
           <div class="set-row"><div><div class="sk">Environment</div><div class="sd">Demo · illustrative customer data · NorthWinds Credit Union</div></div><span class="pill-soft">Demo</span></div>
         </div>
@@ -2571,7 +2588,7 @@ function caseStageOwner(c){
   if(c.stage==='final')return 'R. Fischer · CRO · final approval';
   if(c.stage==='closed')return 'Closed';
   if(c.stage==='rejected')return 'Returned to OnSide';
-  return '—';
+  return ',';
 }
 function caseWaitingOn(c){
   if(c.stage==='analyst')return 'analyst';
@@ -3097,7 +3114,7 @@ function docCoverage(){
     if(!d)return '';
     return BUILT_DOMS[d.key]
       ? '<b style="color:var(--cyan)">Showing all '+have+' documents</b> in '+d.name+'. This domain is built out in full: every policy, standard, validation, packet, minute, and attestation behind the register.'
-      : 'Showing <b>'+have+' of '+d.docs+'</b> in '+d.name+' &mdash; a representative sample. The remaining documents are monitored and land in this view with the connector build-out for this domain.';
+      : 'Showing <b>'+have+' of '+d.docs+'</b> in '+d.name+': a representative sample. The remaining documents are monitored and land in this view with the connector build-out for this domain.';
   }
   var built=DOMAINS.filter(function(d){return BUILT_DOMS[d.key];});
   var bn=built.reduce(function(a,d){return a+d.docs;},0);
@@ -3329,7 +3346,7 @@ function osSources(){
     var name=r.i?instrLink(r.i,r.n):r.n;
     var al=SRC_ALERTS[r.n.replace(/&amp;/g,'&')]?'<span class="al-on" title="Alerts on">◉</span>':'';
     var s=srcItems(r.n); var recent=s?s.items.filter(function(it){return it[0]<=30;}).length:0;
-    return '<tr class="prow" onclick="openSource(\''+r.n.replace(/'/g,"\\'")+'\')"><td><b class="doclink">'+name+'</b> '+al+'</td><td class="pcat">'+r.c+'</td><td class="pcat">'+r.m+'</td><td class="pcat">'+(recent||'&mdash;')+'</td><td><span class="ph-tag '+r.ph+'">'+r.phl+'</span></td></tr>';
+    return '<tr class="prow" onclick="openSource(\''+r.n.replace(/'/g,"\\'")+'\')"><td><b class="doclink">'+name+'</b> '+al+'</td><td class="pcat">'+r.c+'</td><td class="pcat">'+r.m+'</td><td class="pcat">'+(recent||'0')+'</td><td><span class="ph-tag '+r.ph+'">'+r.phl+'</span></td></tr>';
   }
   function layer(key,t,d){
     var rows=SRC_ROWS.filter(function(r){return r.l===key;}).map(row).join('');
@@ -3363,8 +3380,8 @@ function osSourcePage(name){
    +'</div>'
    +'<div class="kpis src-kpis">'
      +kpi('Captured · 30 days',''+d30,'','items from this source alone')
-     +kpi('Domains touched',''+(nTouched||'&mdash;'),'','registers this source fed')
-     +kpi('Last capture',last?last[1]:'&mdash;','',last?'detected same day':'no activity in window')
+     +kpi('Domains touched',''+(nTouched||': '),'','registers this source fed')
+     +kpi('Last capture',last?last[1]:': ','',last?'detected same day':'no activity in window')
      +kpi('Next sweep','6:12 AM','','ET, daily · '+r.m)
    +'</div></div>';
   var act=items.length?('<div class="card" style="margin-top:14px"><h2>Activity from this source</h2>'
@@ -4001,7 +4018,7 @@ function sigRow(s){
    +'</div>';
 }
 var HOME_HIDE={};
-var HP=[['kpis','home-kpis','Top metrics'],['posture','hp-posture','Risk posture'],['invest','hp-invest','Investments'],['value','hp-value','Return'],['queue','hp-queue','Your queue'],['legis','hp-legis','Strategic signal'],['qa','home-qa','Quick actions']];
+var HP=[['kpis','home-kpis','Top metrics'],['posture','hp-posture','Risk posture'],['invest','hp-invest','Investment and return'],['queue','hp-queue','Your queue'],['legis','hp-legis','Strategic signal'],['qa','home-qa','Quick actions']];
 function toggleHomeCust(){var b=$('cust-bar');var open=b.style.display==='none';b.style.display=open?'flex':'none';if(open)renderCustBar();}
 function renderCustBar(){
   var hid=HOME_HIDE[CURRENT.roleKey]||{};
@@ -4028,14 +4045,14 @@ function renderHome(){
   var greet=(new Date().getHours()<12?'Good morning':new Date().getHours()<17?'Good afternoon':'Good evening');
   $('home-title').textContent=greet+', '+CURRENT.first+'.';
   $('home-eyebrow').textContent='Executive dashboard · signed in as '+CURRENT.role;
-  $('home-sub').innerHTML='The state of the institution at a glance: where risk posture stands against the targets you set, what is funded, and what it returns. Every tile links to the work behind it.';
+  $('home-sub').innerHTML='Three questions on one screen: where the institution stands against the targets it set, what is coming that would change that, and what the investment returns. Every number links to the work behind it.';
 
   var openG=GAPS.filter(function(g){return gapState(g).k!=='closed';});
   var crit=openG.filter(function(g){return g.sev==='crit';}).length;
   $('home-kpis').innerHTML=
-   kpi('Domains at / above target',(DOMAINS.length-below.length)+' / '+DOMAINS.length,(DOMAINS.length-below.length)>=5?'ok':'warn','measured against the bar you set',"goOnside('domains')")
-   +kpi('Gaps to your targets',''+gapsTotal,'warn','obligations to close, all domains',"goOnside('gaps')")
-   +kpi('High priority',''+crit,crit?'crit':'ok',crit?'Incident Response Plan escalation':'nothing at high priority',"goOnside('gaps')");
+   kpi('Domains at or above target',(DOMAINS.length-below.length)+' of '+DOMAINS.length,(DOMAINS.length-below.length)>=5?'ok':'warn','scored against the bar this institution set',"goOnside('domains')")
+   +kpi('Obligations still to close',''+gapsTotal,'warn','across all eight domains, each with an owner',"goOnside('gaps')")
+   +kpi('High priority',''+crit,crit?'crit':'ok',crit?'needs a decision this month':'nothing at high priority',"goOnside('gaps')");
 
   $('home-posture').innerHTML=DOMAINS.map(function(d){
     var c=curOf(d), toClose=oblToClose(d);
@@ -4045,20 +4062,30 @@ function renderHome(){
   }).join('');
 
   var top=P.funded.slice().sort(function(a,b){return b.val-a.val;}).slice(0,4);
-  $('home-inv-sub').innerHTML=P.funded.length+' plays funded · '+P.gated.length+' sequence-gated · '+P.bench.length+' on the bench';
-  $('home-invest').innerHTML=
-   '<div style="margin:4px 0 12px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--grey);margin-bottom:5px"><span>Budget committed</span><span><b style="color:var(--ink)">'+fmt(P.spent)+'</b> of '+fmt(L.budget)+'</span></div><div class="bar"><div class="fill" style="width:'+Math.min(100,Math.round(P.spent/L.budget*100))+'%"></div></div></div>'
-   +top.map(function(o){return lrow(o.n,o.c+' · '+fmt(o.val*L.eff)+'/yr · payback '+Math.round(o.cost/(o.val*L.eff)*12)+' mo','Open',"openPlay('"+o.n+"')");}).join('')
-   ;
-
   var meets=P.roi>=L.roiTgt;
-  $('home-val-sub').innerHTML='Planning envelopes from the live model, at your '+Math.round(L.eff*100)+'% adoption setting';
-  $('home-value').innerHTML='<div class="eco" style="grid-template-columns:1.2fr 1fr 1fr">'
-   +'<div class="big" style="padding:16px"><div class="lab">Expected 3-yr ROI</div><div class="num '+(meets?'tgt-ok':'tgt-lo')+'" style="font-size:32px">'+P.roi.toFixed(1)+'&times;</div><div class="sub">'+(meets?'clears':'below')+' the '+L.roiTgt.toFixed(1)+'&times; hurdle</div></div>'
-   +'<div class="k"><div class="lab">Payback</div><div class="knum">'+P.payM+' mo</div><div class="sub">blended</div></div>'
-   +'<div class="k"><div class="lab">Annual value</div><div class="knum">'+fmt(P.annual)+'</div><div class="sub">at adoption</div></div>'
+  var pct=Math.round(L.eff*100);
+  $('home-inv-sub').innerHTML='What the institution has committed, what it returns, and when it pays back. Every figure below is calculated live from the '+P.funded.length+' funded plays at your '+pct+'% adoption assumption, not a planning estimate typed in by hand.';
+
+  $('home-value').innerHTML='<div class="eco" style="grid-template-columns:1.15fr 1fr 1fr 1fr">'
+   +'<div class="big" style="padding:14px 16px"><div class="lab">Return on investment</div><div class="num '+(meets?'tgt-ok':'tgt-lo')+'" style="font-size:32px">'+P.roi.toFixed(1)+'&times;</div><div class="sub">over three years, against the '+L.roiTgt.toFixed(1)+'&times; hurdle you set. '+(meets?'Clears it.':'Below it.')+'</div></div>'
+   +'<div class="k"><div class="lab">One-time build cost</div><div class="knum">'+fmt(P.spent)+'</div><div class="sub">of the '+fmt(L.budget)+' you approved</div></div>'
+   +'<div class="k"><div class="lab">Recurring annual value</div><div class="knum">'+fmt(P.annual)+'</div><div class="sub">every year once live, at '+pct+'% adoption</div></div>'
+   +'<div class="k"><div class="lab">Payback period</div><div class="knum">'+P.payM+' months</div><div class="sub">blended across the funded set</div></div>'
    +'</div>'
-   +'<div style="margin-top:12px;font-size:11.5px;color:var(--muted)">Compliance capacity freed adds ≈ <b>$540k/yr</b> on top of portfolio value.</div>';
+   +'<div class="capfreed"><div class="cf-l"><div class="cf-k">Compliance capacity freed</div><div class="cf-n">'+fmt(540000)+'<span>/yr</span></div></div>'
+   +'<div class="cf-r"><b>This sits on top of the '+fmt(P.annual)+' above, and it is the part a CFO can bank first.</b> '
+   +'It is the cost of the compliance hours OnSide takes off people: tracking rule changes, reading them against policy, rewriting documents, and assembling evidence for an examination. '
+   +'Roughly <b>3.5 full-time equivalents</b> of loaded salary returned to underwriting, member service, and technology, without a headcount reduction. '
+   +'It is a hard cost that falls to the efficiency ratio, so it lands whether or not a single funded play ships. '
+   +'<span class="doclink" onclick="openReport(\'roi\')">See the working &rarr;</span></div></div>';
+
+  $('home-invest').innerHTML=
+   '<div class="ir-split"><div class="irs-h">Where the money went</div>'
+   +'<div style="margin:2px 0 12px"><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--grey);margin-bottom:5px"><span>Committed against the approved envelope</span><span><b style="color:var(--ink)">'+fmt(P.spent)+'</b> of '+fmt(L.budget)+' &middot; '+Math.round(P.spent/L.budget*100)+'%</span></div><div class="bar"><div class="fill" style="width:'+Math.min(100,Math.round(P.spent/L.budget*100))+'%"></div></div>'
+   +'<div style="font-size:11.5px;color:var(--grey);margin-top:6px">'+P.funded.length+' plays funded, '+P.gated.length+' held until the controls behind them close, '+P.bench.length+' cleared but unfunded at this budget.</div></div>'
+   +'<div class="irs-h">The four largest, by annual value</div>'
+   +top.map(function(o){return lrow(o.n,fmt(o.val*L.eff)+' a year &middot; pays back in '+Math.round(o.cost/(o.val*L.eff)*12)+' months &middot; '+o.c,'Open',"openPlay('"+o.n+"')");}).join('')
+   +'</div>';
 
   var q='';
   if(CURRENT.roleKey==='analyst'){
@@ -4278,7 +4305,7 @@ function route(q){
     botSay('I can do three things from this box: answer from your approved policies with citations, price a known idea from the catalog, or scope something new into the register. What would you like?',600);
     resetChips(); return;
   }
-  botSay('I don&rsquo;t have a confident match for that in your policies or the catalog. I can scope it as a new use case (four quick questions), or you can rephrase &mdash; policy questions work best with a specific topic, like wire limits or dormant accounts.',700);
+  botSay('I don&rsquo;t have a confident match for that in your policies or the catalog. I can scope it as a new use case (four quick questions), or you can rephrase: policy questions work best with a specific topic, like wire limits or dormant accounts.',700);
   chips(['Scope "'+q.charAt(0).toUpperCase()+q.slice(1)+'" as a new use case','What else should we consider?']);
 }
 function formAdd(){
