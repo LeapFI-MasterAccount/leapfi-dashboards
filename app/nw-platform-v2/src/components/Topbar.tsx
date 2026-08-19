@@ -15,6 +15,16 @@
  * immediately below as historical record of a now-superseded decision, not
  * current behavior.
  *
+ * STALE AS OF D21 (decisions.md): within the "D20 — BACKCHIP STRUCK,
+ * LOGO-AS-HOME-NAV ADDED" section below, the "ASSETS" bullet's two-master
+ * import list and the entire "THEME SWAP WITHOUT OWNING THEME STATE"
+ * bullet describe a CSS-driven swap between `-Black` and `-Transparent`
+ * logo images that no longer exists in this file — both bullets are left
+ * in place, marked superseded inline, as the historical record of the
+ * D20-era approach. See the "D21 — DARK CHROME BAND, SINGLE-MASTER LOGO"
+ * section (after the D20 section) for the current, correct logo and
+ * chrome behavior.
+ *
  * Region map, left -> right (§3.2, followed literally over the
  * alphabetical "Built from" list order above, since §3.2 explicitly
  * labels itself the region map): BackChip -> Breadcrumb -> [flex space]
@@ -119,7 +129,9 @@
  * region's leading slot renders the LeapFI wordmark as a Home navigation
  * control:
  *
- *   - ASSETS: the two committed brandkit master PNGs (fd038b6,
+ *   - ASSETS [SUPERSEDED BY D21 — see the D21 section below; this
+ *     component imports ONLY `-Transparent.png` now, `-Black.png` is not
+ *     imported at all]: the two committed brandkit master PNGs (fd038b6,
  *     ASSET-1/D10 — binding masters, place-as-is, never redrawn/recolored/
  *     reconstructed in CSS) — `LeapFI-Logo-WithoutTagline-Black.png` and
  *     `-Transparent.png` — imported as Vite asset URLs (inlined to
@@ -128,24 +140,34 @@
  *     is correct for this "interior/compact/repeated" chrome placement.
  *     LOGO-6: no recolor/stretch/skew — both `<img>`s render at a fixed
  *     `height` with `width: auto`, preserving the asset's native aspect
- *     ratio (LOGO-1's stated 4.770:1) exactly.
+ *     ratio (LOGO-1's stated 4.770:1) exactly. LOGO-6's no-recolor/
+ *     stretch/skew rule and LOGO-3's Without-Tagline choice both still
+ *     apply unchanged under D21 — only the two-master/theme-swap half of
+ *     this bullet is superseded.
  *
- *   - THEME SWAP WITHOUT OWNING THEME STATE: this component has never held
- *     theme state (the `themeToggleSlot` note above is explicit that theme
- *     lives in `App.tsx`, outside this file's allowlist) and still doesn't
- *     — `App.tsx` stamps `data-theme` on `document.documentElement`
- *     (verbatim D13 mechanism), so the swap is done in pure CSS against
- *     that ancestor attribute rather than by threading a new theme prop
- *     through every screen's `TopbarProps` call site. Both `<img>`s are
- *     always mounted; a scoped `<style>` (rendered once, module-level
- *     constant `LOGO_SWAP_CSS`) hides whichever variant doesn't match
- *     `[data-theme]`, defaulting to the dark/Black variant when the
- *     attribute is absent yet (`:root:not([data-theme='light'])` — same
- *     default tokens.css itself uses for its own `:root, [data-theme=
- *     'dark']` shared block). Verified empirically against jsdom's actual
- *     `getComputedStyle` cascade (attribute-selector `display` rules from
- *     an injected `<style>` DO apply in this test environment — not
- *     assumed) — see `topbar.test.tsx`'s theme-swap coverage.
+ *   - THEME SWAP WITHOUT OWNING THEME STATE [SUPERSEDED BY D21 — this
+ *     entire bullet describes a two-image CSS swap this file no longer
+ *     implements; kept verbatim as the historical record of the D20-era
+ *     approach, per the "STALE AS OF D21" note at the top of this header.
+ *     See the D21 section below for current behavior]: this component has
+ *     never held theme state (the `themeToggleSlot` note above is explicit
+ *     that theme lives in `App.tsx`, outside this file's allowlist) and
+ *     still doesn't — `App.tsx` stamps `data-theme` on
+ *     `document.documentElement` (verbatim D13 mechanism), so the swap was
+ *     done in pure CSS against that ancestor attribute rather than by
+ *     threading a new theme prop through every screen's `TopbarProps` call
+ *     site. Both `<img>`s were always mounted; a scoped `<style>` (rendered
+ *     once, module-level constant `LOGO_SWAP_CSS`) hid whichever variant
+ *     didn't match `[data-theme]`, defaulting to the dark/Black variant
+ *     when the attribute was absent yet (`:root:not([data-theme='light'])`
+ *     — same default tokens.css itself uses for its own `:root,
+ *     [data-theme='dark']` shared block). Verified empirically against
+ *     jsdom's actual `getComputedStyle` cascade (attribute-selector
+ *     `display` rules from an injected `<style>` DO apply in this test
+ *     environment — not assumed); D21's own CSS mechanism (custom-property
+ *     scoping rather than `display` toggling) needed a fresh empirical
+ *     check of a different jsdom limitation — see the D21 section's
+ *     "TESTED VIA CSSOM" bullet.
  *
  *   - LOGO-4/LOGO-5 TENSION, ACKNOWLEDGED: LOGO-5's stated digital minimum
  *     for the Without-Tagline lockup is 80px tall; a 56px-tall topbar
@@ -178,7 +200,8 @@
  *     is outside this dispatch's allowlist and does not pass
  *     `onNavigateHome` in its `topbarProps` object today, so in the
  *     currently-running app the Home logo control renders correctly
- *     (visible, focusable, correct accessible name, correct theme variant)
+ *     (visible, focusable, correct accessible name — D21: there is now
+ *     only one logo variant, so "correct theme variant" no longer applies)
  *     but is not yet WIRED to actually navigate — pressing it is a no-op
  *     until a follow-on dispatch adds `onNavigateHome: () =>
  *     navigateToScreen('home')` to `App.tsx`'s `topbarProps` (App.tsx isn't
@@ -196,6 +219,146 @@
  *     now dead weight with no consumer; its removal is census-gap cleanup
  *     for whichever dispatch next has `App.tsx` in its allowlist, per the
  *     TASK line's own framing — not done here.
+ *
+ * D21 — DARK CHROME BAND, SINGLE-MASTER LOGO (decisions.md D21; supersedes
+ * the D20 "ASSETS" two-master list and "THEME SWAP WITHOUT OWNING THEME
+ * STATE" bullets above — see the "STALE AS OF D21" note at the top of this
+ * header):
+ *
+ *   - WHY: D20 assumed the brandkit held one dark-glyph master per theme
+ *     (`-Black` for dark backgrounds, `-Transparent` for light). It does
+ *     not: both masters carry the SAME white-LEAP/cyan-FI glyph art — the
+ *     only difference is that `-Black` bakes a solid black rectangle in
+ *     behind the glyphs, while `-Transparent` has no background fill at
+ *     all. On a true black page background the baked slab is invisible
+ *     (it blends with the page); on the topbar's actual chrome colors
+ *     (`--panel` #0D1525 / `--bg2` #0D0D0D, both navy-tinted, neither
+ *     literal #000000) the `-Black` master's slab would show up as a
+ *     visible mismatched rectangle behind the glyphs. D21 (user-ratified
+ *     via AskUserQuestion, orchestrator-surfaced during D20 implementation)
+ *     resolves this by dropping `-Black` entirely and keeping the topbar's
+ *     chrome band a CONSTANT DARK SURFACE in both themes — consistent with
+ *     the sidebar's dark chrome and the TalonFI dark-chrome inspiration
+ *     (talonfi_layout_reference.md) — so `-Transparent` (background-
+ *     agnostic by construction) is the only master this component ever
+ *     needs.
+ *
+ *     STOP-ITEM / DISCREPANCY, reported not silently accepted: D21's own
+ *     decision text describes the sidebar as "already dark" in both
+ *     themes. `Sidebar.tsx` (outside this dispatch's allowlist) renders
+ *     its nav column with `background: var(--bg2)` — a GLOBAL token that
+ *     flips to Frost White (`#F7FAFC`) in `[data-theme='light']` per
+ *     tokens.css, with no scoped override anywhere in that component or
+ *     its CSS. As shipped today the sidebar does not appear to be
+ *     dark-locked in light mode; D21's "already-dark" premise looks
+ *     inaccurate against the current code. This dispatch's ALLOWLIST is
+ *     Topbar.tsx / tokens.css / shell tests only, so `Sidebar.tsx` is not
+ *     touched or fixed here — flagging for the dispatcher rather than
+ *     guessing whether the sidebar also needs a scoped dark-lock in a
+ *     follow-on dispatch.
+ *
+ *   - SINGLE MASTER, NO SWAP: `HomeLogoButton` now imports and renders only
+ *     `logoTransparent`, unconditionally, as a single `<img>` — no
+ *     `logoBlack` import, no `LOGO_SWAP_CSS`, no `data-lf-logo-variant`
+ *     attribute, no theme-conditional `display` toggling. Artifact impact:
+ *     the ~187KB `-Black` master (`src/assets/LeapFI-Logo-WithoutTagline-
+ *     Black.png`) no longer gets base64-inlined into the single-file build
+ *     by `vite-plugin-singlefile` — see this dispatch's evidence return for
+ *     the measured before/after artifact byte delta. The asset file itself
+ *     is untouched on disk; D21/ASSET-1 concern only this component's
+ *     *usage* of it, not the brandkit inventory.
+ *
+ *   - CONSTANT DARK CHROME MECHANISM: `TOPBAR_DARK_CHROME_CSS` (module-
+ *     level constant, rendered once via the same "sibling `<style>`, not
+ *     nested inside interactive markup" technique `LOGO_SWAP_CSS` used)
+ *     redeclares the CSS custom properties this component's own styles and
+ *     its child primitives (Button/Tag/Avatar/Icon/Switch — all outside
+ *     this dispatch's allowlist) already consume via `var(--x)`: `--bg`,
+ *     `--bg2`, `--panel`, `--border`, `--ink`, `--ink2`, `--ink3`,
+ *     `--accent`, `--accent2`, `--focus-ring`, `--focus-ring-outline` —
+ *     scoped to `[data-lf-composite='topbar']` (this component's own root
+ *     `<header>`, no new attribute needed), UNCONDITIONALLY — no
+ *     `[data-theme=...]` gate on that rule. Every value is copied VERBATIM
+ *     from tokens.css's own `:root, [data-theme='dark']` core-palette block
+ *     (see that file's SOURCES comment) — not invented, not a new pairing.
+ *     Because CSS custom properties resolve per element (a descendant's
+ *     own declared value always wins over an inherited one), this single
+ *     scoped block forces every color a Topbar-owned style or a
+ *     Topbar-descendant primitive resolves via `var()` to its dark-theme
+ *     value, in both themes, WITHOUT touching tokens.css's global `:root`/
+ *     `[data-theme]` blocks (every other screen keeps reading those
+ *     normally) and without branching this component's own render logic
+ *     per theme. This is the "scoped token block" option the dispatch
+ *     brief offered, chosen over hardcoding literal hex into every
+ *     individual style object in this file, because most of the affected
+ *     color values live inside primitive components (Avatar/Button/Tag/
+ *     Icon/Switch) this dispatch cannot edit — a scoped custom-property
+ *     override is the only mechanism available that reaches them without
+ *     touching their files. `BAR_STYLE`/`LABEL_STYLE`/`HomeLogoButton`/
+ *     `NotificationBell` below are UNCHANGED by this — they already read
+ *     `var(--bg2)`/`var(--ink)`/`var(--ink2)`/`var(--panel)`/
+ *     `var(--focus-ring)` and simply inherit the forced values now.
+ *
+ *   - CONTRAST DISPOSITION (brief task 3 — cite existing dark-palette
+ *     pairs, invent none): every color pair this mechanism puts on the
+ *     dark band is one brand_doctrine.md and tokens.css already ratify for
+ *     dark theme; this dispatch makes them apply CONSTANTLY instead of
+ *     only when `data-theme='dark'` — it does not create new pairs.
+ *     brand_doctrine.md's Accessibility section (line 71): "WCAG 2.1 AA
+ *     minimum (AAA preferred). Approved: Cyan/Black ≈12.6:1; White/Black
+ *     21:1; Cool Grey/Black ≈4.8:1." Concretely on this band: Breadcrumb
+ *     (`--ink` #FFFFFF) and DateDisplay (`--ink2` #9BA0A6) against the band
+ *     background (`--bg2` #0D0D0D) are the White/Black-family and
+ *     Cool-Grey/Black-family pairs that line approves; the Live Tag
+ *     (`status-positive`) keeps its fill `--sem-positive` (theme-invariant,
+ *     unaffected by this scoping) with text `var(--bg)` forced to
+ *     `#000000` — the SAME black-on-green pairing already shipped in dark
+ *     theme today, now constant; "Open board deck" (ghost Button),
+ *     NotificationBell, the theme Switch, and the ProfileMenu Avatar
+ *     trigger all resolve to their existing dark-theme `--ink`/`--panel`/
+ *     `--border` colors — no new color, no new pairing, on any of them.
+ *     Focus treatment on every focusable control in the band is
+ *     tokens.css's dark `--focus-ring` (cyan glow, brand_doctrine.md
+ *     Accessibility: "Focus states visible, cyan glow preferred"), in both
+ *     themes.
+ *
+ *   - PROFILEMENU DROPDOWN — LEFT ON PAGE THEME (brief task 3, "your call,
+ *     document it"): the popover itself (`[data-lf-composite=
+ *     'profile-menu-list']`, the `role="menu"` panel — NOT the Avatar
+ *     trigger) is deliberately NOT forced dark. A second, narrower rule —
+ *     `[data-theme='light'] [data-lf-composite='topbar']
+ *     [data-lf-composite='profile-menu-list']` — restores tokens.css's
+ *     `[data-theme='light']` core-palette values (again copied verbatim,
+ *     same property list) for just that popover subtree when the page
+ *     theme is light. Rationale: a menu popover reads as a page-surface
+ *     overlay in most UI languages — it appears above page content on
+ *     open, not as part of the fixed chrome band it's anchored to — and
+ *     matching the page theme avoids a dark rectangle appearing over an
+ *     otherwise light page every time a light-mode user opens it. In dark
+ *     theme this second rule never matches (`[data-theme='light']` is
+ *     absent from the root), so the popover simply keeps the forced-dark
+ *     values already in scope from the outer block — identical to dark
+ *     theme's existing rendering, no discontinuity between themes for that
+ *     case. The Avatar trigger stays inside the always-dark scope (it sits
+ *     outside `profile-menu-list`), so it stays legible against the dark
+ *     band while closed, in both themes; only the opened popover's own
+ *     surface follows page theme.
+ *
+ *   - TESTED VIA CSSOM, NOT COMPUTED STYLE: jsdom (this project's test
+ *     environment) does not perform CSS custom-property (`var()`)
+ *     substitution when computing `getComputedStyle()` — verified
+ *     empirically before relying on it (`getComputedStyle(el).background`
+ *     / `.getPropertyValue('background-color')` both come back as the
+ *     unset default for a `var()`-based inline style, regardless of what
+ *     the referenced custom property resolves to), the same discipline the
+ *     D20 author applied to jsdom's `display` cascade support above — not
+ *     assumed. `topbar.test.tsx`'s D21 coverage therefore asserts against
+ *     the parsed `CSSStyleRule` objects on the injected `<style>` sheet
+ *     (`styleEl.sheet!.cssRules`, which jsdom DOES parse accurately —
+ *     `selectorText` and `style.getPropertyValue('--x')` on each rule) —
+ *     rather than resolved computed colors, which jsdom cannot produce for
+ *     `var()`-based styles regardless of whether the implementation is
+ *     correct.
  */
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
@@ -204,7 +367,13 @@ import { Button } from './primitives/Button';
 import { Icon } from './primitives/Icon';
 import { Tag } from './primitives/Tag';
 import { resetDemo } from '../state/demoStore';
-import logoBlack from '../assets/LeapFI-Logo-WithoutTagline-Black.png';
+// D21 (decisions.md; file header "D21 — DARK CHROME BAND, SINGLE-MASTER
+// LOGO"): `-Black` is NOT imported. The topbar's chrome band is now a
+// constant dark surface in both themes, and `-Transparent` (background-
+// agnostic art with no baked-in fill) is the only master that works on it
+// — see the D21 file-header section for why `-Black`'s baked black slab
+// doesn't. Dropping this import stops `vite-plugin-singlefile` from
+// base64-inlining the ~187KB PNG into the built artifact.
 import logoTransparent from '../assets/LeapFI-Logo-WithoutTagline-Transparent.png';
 
 /** @deprecated D20: the BackChip this described is struck (removed
@@ -261,6 +430,51 @@ export interface TopbarProps {
   themeToggleSlot?: ReactNode;
 }
 
+// D21 (file header "D21 — DARK CHROME BAND, SINGLE-MASTER LOGO" — full
+// rationale, sourcing, and contrast disposition there): forces every
+// `var(--x)` color role this component and its child primitives
+// (Button/Tag/Avatar/Icon/Switch) consume to its DARK value,
+// unconditionally, scoped to this component's own `[data-lf-composite=
+// 'topbar']` root — values copied verbatim from tokens.css's `:root,
+// [data-theme='dark']` core-palette block, no invented colors. The second
+// rule narrowly restores tokens.css's `[data-theme='light']` values (also
+// copied verbatim) for just the ProfileMenu popover subtree when the page
+// theme is light — see file header "PROFILEMENU DROPDOWN" bullet for why
+// that one surface is deliberately left on page theme. Rendered once, as a
+// sibling `<style>` ahead of `<header>` in `Topbar`'s own return below.
+const TOPBAR_DARK_CHROME_CSS = `
+  [data-lf-composite='topbar'] {
+    --bg: #000000;
+    --bg2: #0d0d0d;
+    --panel: #0d1525;
+    --border: #1e2d3d;
+    --ink: #ffffff;
+    --ink2: #9ba0a6;
+    --ink3: #7b8794;
+    --accent: #00f2ff;
+    --accent2: #2d5bff;
+    --focus-ring: 0 0 0 2px #000000, 0 0 0 4px #00f2ff, 0 0 12px 2px rgba(0, 242, 255, 0.65);
+    --focus-ring-outline: 2px solid #00f2ff;
+  }
+  [data-theme='light'] [data-lf-composite='topbar'] [data-lf-composite='profile-menu-list'] {
+    --bg: #ffffff;
+    --bg2: #f7fafc;
+    --panel: #f1f5f9;
+    --border: #d7dee7;
+    --ink: #0a2342;
+    --ink2: #64748b;
+    --ink3: #4a5568;
+    --accent: #006d75;
+    --accent2: #2d5bff;
+    --focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px #006d75;
+    --focus-ring-outline: 2px solid #006d75;
+  }
+`;
+
+// D21: background/border below resolve through the scoped override above —
+// still written as `var(--bg2)`/`var(--border)` (unchanged from pre-D21),
+// not literal hex, so this stays a single source of truth with tokens.css
+// rather than a second hardcoded copy of the same values.
 const BAR_STYLE: CSSProperties = {
   display: 'flex',
   alignItems: 'center',
@@ -290,83 +504,42 @@ const LABEL_STYLE: CSSProperties = {
 // trades off.
 const LOGO_HEIGHT = 28;
 
-// D20: theme-variant swap done in pure CSS against the `data-theme`
-// attribute App.tsx stamps on `document.documentElement` — this component
-// owns no theme state (see file header). Both `<img>`s always mount;
-// exactly one is hidden per theme. Default (attribute absent) matches
-// tokens.css's own `:root, [data-theme='dark']` shared-default block.
-const LOGO_SWAP_CSS = `
-  [data-theme='light'] [data-lf-logo-variant='black'] { display: none; }
-  :root:not([data-theme='light']) [data-lf-logo-variant='transparent'] { display: none; }
-`;
-
+// D21 (file header "D21 — DARK CHROME BAND, SINGLE-MASTER LOGO"): no swap —
+// exactly one master (`-Transparent`) is imported and rendered,
+// unconditionally, regardless of `data-theme`. Replaces the D20-era
+// `LOGO_SWAP_CSS`/two-`<img>` mechanism (superseded, no longer present).
 function HomeLogoButton({ onPress }: { onPress?: (() => void) | undefined }) {
   const [hover, setHover] = useState(false);
   const [focused, setFocused] = useState(false);
   return (
-    // <style> is metadata content, not valid inside <button>'s phrasing-
-    // content model — it's a sibling here, ahead of the button, not nested
-    // inside it.
-    <>
-      <style>{LOGO_SWAP_CSS}</style>
-      <button
-        type="button"
-        aria-label="LeapFI — Home"
-        onClick={onPress}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        data-lf-composite="topbar-home-logo"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          // LOGO-4 clear space, approximated — see file header "D20" note
-          // on why exact glyph cap-height isn't mechanically measurable
-          // from a flattened master PNG.
-          padding: '0.375rem 0.5rem',
-          minHeight: 44,
-          border: 'none',
-          borderRadius: 'var(--radius-sm, 6px)',
-          background: hover ? 'var(--panel)' : 'transparent',
-          boxShadow: focused ? 'var(--focus-ring)' : 'none',
-          cursor: 'pointer',
-          outline: 'none',
-          flex: '0 0 auto',
-        }}
-      >
-        <img
-          src={logoBlack}
-          alt=""
-          data-lf-logo-variant="black"
-          // No `display` here (deliberately): the LOGO_SWAP_CSS stylesheet
-          // rule sets `display: none` on whichever variant the current
-          // theme hides, and an inline style always wins over a
-          // stylesheet rule regardless of the stylesheet's own
-          // specificity — an inline `display: 'block'` here would
-          // silently defeat the swap. Flexbox blockifies the visible
-          // image's box automatically (both `<img>`s are children of the
-          // `inline-flex` button above), so no explicit display is needed
-          // for layout either.
-          style={{ height: LOGO_HEIGHT, width: 'auto' }}
-        />
-        <img
-          src={logoTransparent}
-          alt=""
-          data-lf-logo-variant="transparent"
-          // No `display` here (deliberately): the LOGO_SWAP_CSS stylesheet
-          // rule sets `display: none` on whichever variant the current
-          // theme hides, and an inline style always wins over a
-          // stylesheet rule regardless of the stylesheet's own
-          // specificity — an inline `display: 'block'` here would
-          // silently defeat the swap. Flexbox blockifies the visible
-          // image's box automatically (both `<img>`s are children of the
-          // `inline-flex` button above), so no explicit display is needed
-          // for layout either.
-          style={{ height: LOGO_HEIGHT, width: 'auto' }}
-        />
-      </button>
-    </>
+    <button
+      type="button"
+      aria-label="LeapFI — Home"
+      onClick={onPress}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      data-lf-composite="topbar-home-logo"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        // LOGO-4 clear space, approximated — see file header "D20" note
+        // on why exact glyph cap-height isn't mechanically measurable
+        // from a flattened master PNG.
+        padding: '0.375rem 0.5rem',
+        minHeight: 44,
+        border: 'none',
+        borderRadius: 'var(--radius-sm, 6px)',
+        background: hover ? 'var(--panel)' : 'transparent',
+        boxShadow: focused ? 'var(--focus-ring)' : 'none',
+        cursor: 'pointer',
+        outline: 'none',
+        flex: '0 0 auto',
+      }}
+    >
+      <img src={logoTransparent} alt="" style={{ height: LOGO_HEIGHT, width: 'auto' }} />
+    </button>
   );
 }
 
@@ -623,40 +796,46 @@ export function Topbar({
   themeToggleSlot,
 }: TopbarProps) {
   return (
-    <header role="banner" data-lf-composite="topbar" style={BAR_STYLE}>
-      {/* D20: BackChip struck, replaced by the LeapFI logo as the Home nav
-          control. See file header "D20" section. */}
-      <HomeLogoButton onPress={onNavigateHome} />
+    // D21: <style> is metadata content, not valid inside <header>'s
+    // phrasing-content model — sibling here, ahead of the header, not
+    // nested inside it (same rule the removed D20 LOGO_SWAP_CSS followed).
+    <>
+      <style>{TOPBAR_DARK_CHROME_CSS}</style>
+      <header role="banner" data-lf-composite="topbar" style={BAR_STYLE}>
+        {/* D20: BackChip struck, replaced by the LeapFI logo as the Home nav
+            control. See file header "D20" section. */}
+        <HomeLogoButton onPress={onNavigateHome} />
 
-      {/* A-overlap-05: base .crumb truncation (source 66) — nowrap + hidden
-          overflow + ellipsis, with minWidth:0 so flex can actually shrink it. */}
-      <span
-        style={{
-          ...LABEL_STYLE,
-          fontWeight: 600,
-          color: 'var(--ink)',
-          flex: '0 1 auto',
-          minWidth: 0,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {breadcrumb}
-      </span>
+        {/* A-overlap-05: base .crumb truncation (source 66) — nowrap + hidden
+            overflow + ellipsis, with minWidth:0 so flex can actually shrink it. */}
+        <span
+          style={{
+            ...LABEL_STYLE,
+            fontWeight: 600,
+            color: 'var(--ink)',
+            flex: '0 1 auto',
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {breadcrumb}
+        </span>
 
-      <span style={{ flex: '1 1 auto' }} aria-hidden="true" />
+        <span style={{ flex: '1 1 auto' }} aria-hidden="true" />
 
-      {live ? <Tag text={liveLabel} variant="status-positive" /> : null}
+        {live ? <Tag text={liveLabel} variant="status-positive" /> : null}
 
-      <Button label={boardDeckLabel} variant="ghost" onPress={onOpenBoardDeck} />
+        <Button label={boardDeckLabel} variant="ghost" onPress={onOpenBoardDeck} />
 
-      {notificationSlot ?? <NotificationBell count={notificationCount} onPress={onOpenNotifications} />}
+        {notificationSlot ?? <NotificationBell count={notificationCount} onPress={onOpenNotifications} />}
 
-      <span style={LABEL_STYLE}>{date}</span>
+        <span style={LABEL_STYLE}>{date}</span>
 
-      {themeToggleSlot ? <span data-lf-slot="theme-toggle">{themeToggleSlot}</span> : null}
+        {themeToggleSlot ? <span data-lf-slot="theme-toggle">{themeToggleSlot}</span> : null}
 
-      <ProfileMenu profile={profile} items={profileMenuItems} />
-    </header>
+        <ProfileMenu profile={profile} items={profileMenuItems} />
+      </header>
+    </>
   );
 }

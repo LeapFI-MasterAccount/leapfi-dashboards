@@ -17,6 +17,12 @@
  * below cites Topbar.tsx's own D20 header section instead.
  *
  * D18: no test here touches Home's "Start the demo" affordance.
+ *
+ * D21 (decisions.md; Topbar.tsx header "D21 — DARK CHROME BAND,
+ * SINGLE-MASTER LOGO"): the D20-era logo describes above ("Black" logo
+ * variant swapping with "Transparent" per `data-theme`) is superseded —
+ * this file's former "shows the dark-background (Black) logo variant..."
+ * test is replaced below by single-master + dark-chrome-band coverage.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
@@ -24,6 +30,7 @@ import userEvent from '@testing-library/user-event'
 import App from '../../App'
 import { Topbar } from '../../components/Topbar'
 import type { TopbarProps } from '../../components/Topbar'
+import logoTransparent from '../../assets/LeapFI-Logo-WithoutTagline-Transparent.png'
 
 function minimalTopbarProps(overrides: Partial<TopbarProps> = {}): TopbarProps {
   return {
@@ -141,33 +148,133 @@ describe('LeapFI logo Home navigation control (D20; Topbar.tsx header "D20 — B
     expect(homeButton).toBeInTheDocument()
   })
 
-  it('shows the dark-background (Black) logo variant by default and when data-theme="dark", and the light-background (Transparent) variant only when data-theme="light" (LOGO-2)', () => {
+  it('D21: renders exactly one logo <img> — the Transparent master — with no data-lf-logo-variant attribute and no swap, in every theme (supersedes the D20 Black/Transparent two-image swap)', () => {
     render(<Topbar {...minimalTopbarProps()} />)
-    const blackImg = document.querySelector('img[data-lf-logo-variant="black"]')
-    const transparentImg = document.querySelector('img[data-lf-logo-variant="transparent"]')
-    if (!(blackImg instanceof HTMLElement) || !(transparentImg instanceof HTMLElement)) {
-      throw new Error('expected both logo <img> variants to be present in the DOM')
-    }
 
-    // Default: no data-theme attribute set yet — matches tokens.css's own
-    // `:root, [data-theme='dark']` shared-default block (dark-first).
-    expect(getComputedStyle(blackImg).display).not.toBe('none')
-    expect(getComputedStyle(transparentImg).display).toBe('none')
+    const imagesAtBoot = document.querySelectorAll('[data-lf-composite="topbar-home-logo"] img')
+    expect(imagesAtBoot.length).toBe(1)
+    expect(document.querySelector('img[data-lf-logo-variant]')).not.toBeInTheDocument()
 
     document.documentElement.setAttribute('data-theme', 'light')
-    expect(getComputedStyle(blackImg).display).toBe('none')
-    expect(getComputedStyle(transparentImg).display).not.toBe('none')
+    expect(document.querySelectorAll('[data-lf-composite="topbar-home-logo"] img').length).toBe(1)
+    expect(document.querySelector('img[data-lf-logo-variant]')).not.toBeInTheDocument()
 
     document.documentElement.setAttribute('data-theme', 'dark')
-    expect(getComputedStyle(blackImg).display).not.toBe('none')
-    expect(getComputedStyle(transparentImg).display).toBe('none')
+    expect(document.querySelectorAll('[data-lf-composite="topbar-home-logo"] img').length).toBe(1)
+    expect(document.querySelector('img[data-lf-logo-variant]')).not.toBeInTheDocument()
   })
 
-  it('both logo <img>s are decorative (empty alt) so the button\'s only accessible-name source is its aria-label', () => {
+  it('D21: the single logo <img> is always the Transparent master asset (never the Black master) regardless of data-theme, and is decorative (empty alt) so the button\'s only accessible-name source is its aria-label', () => {
     render(<Topbar {...minimalTopbarProps()} />)
-    const images = document.querySelectorAll('[data-lf-composite="topbar-home-logo"] img')
-    expect(images.length).toBe(2)
-    images.forEach((img) => expect(img).toHaveAttribute('alt', ''))
+    const img = document.querySelector('[data-lf-composite="topbar-home-logo"] img')
+    if (!(img instanceof HTMLImageElement)) throw new Error('expected the logo <img> to be present')
+
+    expect(img).toHaveAttribute('alt', '')
+    const srcAtBoot = img.getAttribute('src')
+    expect(srcAtBoot).toBe(logoTransparent)
+
+    document.documentElement.setAttribute('data-theme', 'light')
+    expect(img.getAttribute('src')).toBe(srcAtBoot)
+
+    document.documentElement.setAttribute('data-theme', 'dark')
+    expect(img.getAttribute('src')).toBe(srcAtBoot)
+  })
+})
+
+describe('D21 dark chrome band (decisions.md D21; Topbar.tsx header "D21 — DARK CHROME BAND, SINGLE-MASTER LOGO")', () => {
+  beforeEach(() => {
+    document.documentElement.removeAttribute('data-theme')
+  })
+  afterEach(() => {
+    document.documentElement.removeAttribute('data-theme')
+  })
+
+  // jsdom does not perform CSS custom-property (`var()`) substitution when
+  // computing `getComputedStyle()` (empirically verified: a `var()`-based
+  // inline background/box-shadow resolves to the unset default regardless
+  // of what the referenced custom property declares — see Topbar.tsx
+  // header "D21 ... TESTED VIA CSSOM" bullet). This suite therefore reads
+  // the injected <style> sheet's parsed CSSStyleRule objects directly —
+  // jsdom DOES parse `<style>` text into real rules with accurate
+  // `selectorText` and `style.getPropertyValue('--x')` — instead of
+  // asserting resolved computed colors.
+  function topbarChromeRules(): CSSStyleRule[] {
+    const rules: CSSStyleRule[] = []
+    document.querySelectorAll('style').forEach((styleEl) => {
+      const sheet = styleEl.sheet
+      if (!sheet) return
+      Array.from(sheet.cssRules).forEach((rule) => {
+        if (rule instanceof CSSStyleRule && rule.selectorText.includes('topbar')) {
+          rules.push(rule)
+        }
+      })
+    })
+    return rules
+  }
+
+  it('declares an unconditional (no [data-theme=...] gate) dark-value rule scoped to [data-lf-composite="topbar"], with every value copied verbatim from tokens.css\'s dark block', () => {
+    render(<Topbar {...minimalTopbarProps()} />)
+    const forcingRule = topbarChromeRules().find((r) => r.selectorText === "[data-lf-composite='topbar']")
+    if (!forcingRule) throw new Error('expected an unconditional [data-lf-composite="topbar"] rule in the DOM')
+
+    // Unconditional: this rule's own selector carries no data-theme gate,
+    // so it applies to the topbar header regardless of the page theme.
+    expect(forcingRule.selectorText).not.toContain('data-theme')
+
+    // tokens.css `:root, [data-theme='dark']` core-palette values, verbatim.
+    expect(forcingRule.style.getPropertyValue('--bg').trim()).toBe('#000000')
+    expect(forcingRule.style.getPropertyValue('--bg2').trim()).toBe('#0d0d0d')
+    expect(forcingRule.style.getPropertyValue('--panel').trim()).toBe('#0d1525')
+    expect(forcingRule.style.getPropertyValue('--border').trim()).toBe('#1e2d3d')
+    expect(forcingRule.style.getPropertyValue('--ink').trim()).toBe('#ffffff')
+    expect(forcingRule.style.getPropertyValue('--ink2').trim()).toBe('#9ba0a6')
+    expect(forcingRule.style.getPropertyValue('--ink3').trim()).toBe('#7b8794')
+    expect(forcingRule.style.getPropertyValue('--accent').trim()).toBe('#00f2ff')
+    expect(forcingRule.style.getPropertyValue('--accent2').trim()).toBe('#2d5bff')
+    expect(forcingRule.style.getPropertyValue('--focus-ring').trim()).toBe(
+      '0 0 0 2px #000000, 0 0 0 4px #00f2ff, 0 0 12px 2px rgba(0, 242, 255, 0.65)',
+    )
+  })
+
+  it('the dark-forcing rule is present with identical declarations regardless of the page data-theme attribute (absent, light, or dark) — a static asset, not JS-branched per theme render', () => {
+    render(<Topbar {...minimalTopbarProps()} />)
+    const ruleTextAt = () =>
+      topbarChromeRules().find((r) => r.selectorText === "[data-lf-composite='topbar']")?.cssText
+
+    document.documentElement.removeAttribute('data-theme')
+    const textWhenAbsent = ruleTextAt()
+    expect(textWhenAbsent).toBeTruthy()
+
+    document.documentElement.setAttribute('data-theme', 'light')
+    expect(ruleTextAt()).toBe(textWhenAbsent)
+
+    document.documentElement.setAttribute('data-theme', 'dark')
+    expect(ruleTextAt()).toBe(textWhenAbsent)
+  })
+
+  it('declares a light-mode restore rule scoped ONLY to the ProfileMenu popover subtree (profile-menu-list), not the Avatar trigger, with values copied verbatim from tokens.css\'s light block', () => {
+    render(<Topbar {...minimalTopbarProps()} />)
+    const restoreRule = topbarChromeRules().find((r) => r.selectorText.includes('profile-menu-list'))
+    if (!restoreRule) throw new Error('expected a profile-menu-list light-restore rule in the DOM')
+
+    expect(restoreRule.selectorText).toBe(
+      "[data-theme='light'] [data-lf-composite='topbar'] [data-lf-composite='profile-menu-list']",
+    )
+    // tokens.css `[data-theme='light']` core-palette values, verbatim.
+    expect(restoreRule.style.getPropertyValue('--bg').trim()).toBe('#ffffff')
+    expect(restoreRule.style.getPropertyValue('--bg2').trim()).toBe('#f7fafc')
+    expect(restoreRule.style.getPropertyValue('--panel').trim()).toBe('#f1f5f9')
+    expect(restoreRule.style.getPropertyValue('--border').trim()).toBe('#d7dee7')
+    expect(restoreRule.style.getPropertyValue('--ink').trim()).toBe('#0a2342')
+    expect(restoreRule.style.getPropertyValue('--ink2').trim()).toBe('#64748b')
+    expect(restoreRule.style.getPropertyValue('--focus-ring').trim()).toBe('0 0 0 2px #ffffff, 0 0 0 4px #006d75')
+  })
+
+  it('the bar and its own directly-owned elements still read the shared var(--x) tokens (not hardcoded hex), so the scoped override stays the single source of truth with tokens.css', () => {
+    render(<Topbar {...minimalTopbarProps()} />)
+    const bar = screen.getByRole('banner')
+    expect(bar.style.background).toContain('var(--bg2)')
+    expect(bar.style.borderBottom).toContain('var(--border)')
   })
 })
 
