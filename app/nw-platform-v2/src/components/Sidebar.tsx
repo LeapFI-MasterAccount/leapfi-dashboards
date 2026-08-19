@@ -1,0 +1,218 @@
+/**
+ * Sidebar — Composite C3 (design_system_spec.md §2.2, §3.1)
+ *
+ * "SidebarItem list (§3.1)." Nav-model classification: flat top-level
+ * list, at most one nesting level (Talon system item 1, cited by §3.1).
+ * `nav` landmark; minimum a11y bar per spec C3 is standard tab order
+ * through visible items (roving arrow-key focus is explicitly optional,
+ * not implemented here).
+ *
+ * Static nav structure — copied verbatim from §3.1's restructure table,
+ * not invented:
+ *
+ *   1. Home                          (no children)
+ *   2. OnSide    -> Regulatory feed, Documents, Ownership
+ *   3. Studio    -> Ask, Investment Design, Roadmap
+ *   4. Connect   -> AllRailz, Vantage        (expanded by default)
+ *   5. Reporting                     (no children)
+ *   6. Settings  -> Toggles, About
+ *
+ * 6 top-level items, within the ≤7 budget §3.1 states with headroom.
+ *
+ * AMBIGUITY RESOLVED — default expand state (§3.1): the spec is explicit
+ * that Connect ships expanded by default ("not collapsed-by-default like
+ * OnSide/Studio... so the Step-1 gesture still communicates the platform
+ * is bigger than what gets demoed") and explicit that OnSide/Studio are
+ * collapsed by default. Settings is not mentioned by that clause at all
+ * ("existing shallow nesting kept" is the only note). I defaulted
+ * Settings to collapsed, matching the OnSide/Studio baseline rather than
+ * Connect's stated exception, since the spec only carves the exception
+ * out for Connect and gives no basis to extend it to Settings.
+ *
+ * DESIGN NOTE — auto-expand-on-active: a top-level group whose nested
+ * child is the current screen (`activeId`) always renders expanded,
+ * regardless of the user's manual collapse/expand history for that
+ * group. This is a structural a11y choice, not decoration: hiding the
+ * `aria-current="page"` row inside a collapsed group would let a
+ * (mis-)collapsed Sidebar bury the one item that answers "where am I,"
+ * which the spec's own §3.2 rationale ("the audience-facing screen
+ * itself is the anchor for where are we") treats as a hard requirement
+ * for on-screen state, not just the presenter rail.
+ *
+ * DESIGN NOTE — footer version string (§3.1 "Footer: version string
+ * only"): rendered as a plain token-styled span, not through the `Label`
+ * primitive. `--ink3` is named in the token table (§1.1) specifically for
+ * "Tertiary text (footer/copyright)," but the `Label` primitive only
+ * exposes that color via its `disabled` flag (a semantically unrelated
+ * state — this text is not a disabled control). Reusing `disabled` to
+ * fish out a color would misrepresent the row's semantics for a cosmetic
+ * shortcut, so this file references `var(--ink3)` directly instead —
+ * still token-only, no raw hex, per the styling hard rule.
+ */
+import { useState } from 'react';
+import type { CSSProperties } from 'react';
+import { SidebarItem, sidebarNestedListId } from './SidebarItem';
+import type { IconName } from './primitives/Icon';
+
+interface NavChild {
+  id: string;
+  label: string;
+}
+
+interface NavTopItem {
+  id: string;
+  label: string;
+  icon?: IconName;
+  children?: NavChild[];
+  defaultExpanded?: boolean;
+}
+
+// See file header: icons intentionally omitted (STOP-item — closed
+// IconName vocabulary has no matching nav glyphs for these six items).
+const NAV: NavTopItem[] = [
+  { id: 'home', label: 'Home' },
+  {
+    id: 'onside',
+    label: 'OnSide',
+    children: [
+      { id: 'onside.feed', label: 'Regulatory feed' },
+      { id: 'onside.documents', label: 'Documents' },
+      { id: 'onside.ownership', label: 'Ownership' },
+    ],
+  },
+  {
+    id: 'studio',
+    label: 'Studio',
+    children: [
+      { id: 'studio.ask', label: 'Ask' },
+      { id: 'studio.investment-design', label: 'Investment Design' },
+      { id: 'studio.roadmap', label: 'Roadmap' },
+    ],
+  },
+  {
+    id: 'connect',
+    label: 'Connect',
+    defaultExpanded: true,
+    children: [
+      { id: 'connect.allrailz', label: 'AllRailz' },
+      { id: 'connect.vantage', label: 'Vantage' },
+    ],
+  },
+  { id: 'reporting', label: 'Reporting' },
+  {
+    id: 'settings',
+    label: 'Settings',
+    children: [
+      { id: 'settings.toggles', label: 'Toggles' },
+      { id: 'settings.about', label: 'About' },
+    ],
+  },
+];
+
+export interface SidebarProps {
+  /** Id of the current top-level item (leaf, e.g. 'home') or nested item (e.g. 'onside.feed'). */
+  activeId: string;
+  /** Fires with a leaf item's id — top-level items with children never call this directly (they toggle expand instead). */
+  onNavigate: (id: string) => void;
+  /** Footer version string (§3.1 "Footer: version string only"). Defaults to the existing engine's value (survey_map.md 762–821). */
+  versionLabel?: string;
+}
+
+const NAV_STYLE: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+  height: '100%',
+  boxSizing: 'border-box',
+  background: 'var(--bg2)',
+  borderRight: '1px solid var(--border)',
+};
+
+const LIST_STYLE: CSSProperties = {
+  listStyle: 'none',
+  margin: 0,
+  padding: '0.5rem',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.125rem',
+};
+
+const NESTED_LIST_STYLE: CSSProperties = {
+  listStyle: 'none',
+  margin: 0,
+  padding: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.125rem',
+};
+
+const FOOTER_STYLE: CSSProperties = {
+  padding: '0.75rem',
+  borderTop: '1px solid var(--border)',
+};
+
+export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071' }: SidebarProps) {
+  // Manual collapse/expand overrides, keyed by top-level item id. Absent
+  // entries fall back to `defaultExpanded`. See file header DESIGN NOTE:
+  // an override is ignored (forced expanded) while this group owns the
+  // active nested item.
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
+
+  const handleToggle = (itemId: string, currentlyExpanded: boolean) => {
+    setOverrides((prev) => ({ ...prev, [itemId]: !currentlyExpanded }));
+  };
+
+  return (
+    <nav aria-label="Primary" data-lf-composite="sidebar" style={NAV_STYLE}>
+      <ul style={LIST_STYLE}>
+        {NAV.map((item) => {
+          const hasChildren = Boolean(item.children && item.children.length > 0);
+          const childActive = hasChildren && item.children!.some((child) => child.id === activeId);
+          const isCurrentTop = !hasChildren && item.id === activeId;
+          const expanded = hasChildren
+            ? childActive || (overrides[item.id] ?? item.defaultExpanded ?? false)
+            : false;
+
+          return (
+            <li key={item.id}>
+              <SidebarItem
+                id={item.id}
+                label={item.label}
+                icon={item.icon}
+                level="top"
+                current={isCurrentTop}
+                expandable={hasChildren}
+                expanded={expanded}
+                onPress={() => {
+                  if (hasChildren) {
+                    handleToggle(item.id, expanded);
+                  } else {
+                    onNavigate(item.id);
+                  }
+                }}
+              />
+              {hasChildren && expanded ? (
+                <ul id={sidebarNestedListId(item.id)} aria-label={`${item.label} sections`} style={NESTED_LIST_STYLE}>
+                  {item.children!.map((child) => (
+                    <li key={child.id}>
+                      <SidebarItem
+                        id={child.id}
+                        label={child.label}
+                        level="nested"
+                        current={child.id === activeId}
+                        onPress={() => onNavigate(child.id)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+      <div style={FOOTER_STYLE}>
+        <span style={{ color: 'var(--ink3)', fontSize: '0.75rem', fontWeight: 500 }}>{versionLabel}</span>
+      </div>
+    </nav>
+  );
+}

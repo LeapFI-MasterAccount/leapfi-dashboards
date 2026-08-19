@@ -6,11 +6,23 @@
  *
  * Typography: brand_doctrine.md "Typography" — Inter is the only approved
  * typeface, fallback Inter -> Helvetica Neue -> Helvetica -> Arial ->
- * sans-serif. This scaffold ships no embedded font binary and fetches
+ * sans-serif. This build ships no embedded font binary and fetches
  * nothing at runtime (D11 self-contained-build requirement): the stack
  * below resolves to Inter when the OS/browser already has it installed,
  * and falls through the doctrine's own fallback chain otherwise — never
  * `system-ui`/`-apple-system` as the primary declaration, per doctrine.
+ *
+ * Base document reset only. The D13 placeholder scaffold's own markup
+ * (`.app-shell`/`.app-header`/`.theme-toggle`/`.token-preview`/etc.) was
+ * removed here in the shell-assembly dispatch (App.tsx rewrite): every
+ * screen and shell composite in this codebase styles itself entirely via
+ * inline `CSSProperties` referencing `var(--token)` (see any file under
+ * `src/screens/` or `src/components/` for the established convention), so
+ * App.tsx renders no element that references a class from this file — the
+ * scaffold-era rules were dead weight once that markup was gone, including
+ * the raw-hex `.app-chevron` gradient this project's styling rule forbids
+ * (`color: var(--token)` only). Nothing in this file replaces them; the
+ * shell has no global CSS needs beyond this reset.
  */
 
 * {
@@ -36,134 +48,4 @@ body {
   transition:
     background-color 0.15s ease,
     color 0.15s ease;
-}
-
-.app-shell {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.app-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.app-chevron {
-  display: inline-block;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 auto;
-  background: linear-gradient(
-    135deg,
-    #01dfd9 0%,
-    #00b8ff 25%,
-    #0092ff 50%,
-    #006bff 75%,
-    #002bff 100%
-  );
-  clip-path: polygon(0% 0%, 55% 0%, 100% 50%, 55% 100%, 0% 100%, 45% 50%);
-}
-
-.app-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0;
-  line-height: 1.2;
-}
-
-.app-title-sep {
-  color: var(--ink2);
-}
-
-.app-scaffold-tag {
-  font-weight: 500;
-  color: var(--ink3);
-}
-
-.app-main {
-  flex: 1 1 auto;
-  padding: 2rem;
-  max-width: 640px;
-}
-
-.app-lede {
-  line-height: 1.4;
-  color: var(--ink2);
-}
-
-.app-lede code {
-  font-family: 'Courier New', monospace;
-  color: var(--ink);
-}
-
-.theme-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin: 1rem 0;
-  padding: 0.6rem 1.1rem;
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--bg);
-  background-color: var(--accent);
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.theme-toggle:focus-visible {
-  outline: var(--focus-ring-outline);
-  outline-offset: 2px;
-  box-shadow: var(--focus-ring);
-}
-
-.theme-toggle-indicator {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: var(--bg);
-}
-
-.token-preview {
-  display: flex;
-  gap: 0.75rem;
-  margin: 1.5rem 0;
-}
-
-.token-swatch {
-  display: flex;
-  align-items: flex-end;
-  width: 96px;
-  height: 64px;
-  padding: 0.4rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.7rem;
-}
-
-.token-swatch--panel {
-  background-color: var(--panel);
-  color: var(--ink2);
-}
-
-.token-swatch--accent {
-  background-color: var(--accent);
-  color: var(--bg);
-}
-
-.token-swatch--accent2 {
-  background-color: var(--accent2);
-  color: var(--bg);
-}
-
-.app-meta {
-  color: var(--ink3);
-  font-size: 0.85rem;
 }
