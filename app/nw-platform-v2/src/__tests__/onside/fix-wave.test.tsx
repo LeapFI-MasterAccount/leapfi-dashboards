@@ -171,7 +171,7 @@ describe('ONSIDE-05 · lifecycle "Area" scope filter (base 3452-3477 lcBar/lcMat
     const user = userEvent.setup()
     renderFeed()
     const areaGroup = screen.getByRole('group', { name: 'Area' })
-    expect(within(areaGroup).getByText('Filtered to what each officer oversees')).toBeInTheDocument()
+    expect(within(areaGroup).queryByText('Filtered to what each officer oversees')).not.toBeInTheDocument()
 
     // Fair Lending: exactly one NEW_RULES proposal touches it (§1071).
     await user.click(within(areaGroup).getByRole('button', { name: 'Fair Lending' }))

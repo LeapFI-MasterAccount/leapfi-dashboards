@@ -140,7 +140,6 @@ const MAIN_STYLE: CSSProperties = {
 };
 const headerStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem' };
 const h1Style: CSSProperties = { font: 'inherit', fontSize: '1.625rem', fontWeight: 700, color: 'var(--ink)', margin: 0 };
-const ledeStyle: CSSProperties = { font: 'inherit', fontSize: '0.9375rem', color: 'var(--ink2)', margin: 0, maxWidth: 640 };
 const cardRowStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))', gap: '1rem' };
 
 export interface ReportingProps extends DeepLinkScreenProps {
@@ -296,10 +295,6 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser
             <h1 id="reporting-title" style={h1Style}>
               Reporting
             </h1>
-            <p style={ledeStyle}>
-              Eleven standing reports generated live from the governance record and the Studio dials. One data model
-              underneath, so the numbers always agree. Each opens formatted, ready to print or save as PDF.
-            </p>
           </div>
           <div style={cardRowStyle}>
             {REPORT_KIND_ORDER.map((kind) => {
@@ -308,7 +303,6 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser
                 <SetupCard
                   key={kind}
                   title={meta.indexTitle}
-                  description={`${meta.audience} · ${meta.description}`}
                   variant="interactive"
                   onPress={() => openReport(kind)}
                 />

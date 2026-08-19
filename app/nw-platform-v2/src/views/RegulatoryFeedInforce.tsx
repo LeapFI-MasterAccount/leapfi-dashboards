@@ -47,7 +47,6 @@ function decodeEntities(text: string): string {
 
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
-const HINT_STYLE: CSSProperties = { margin: '0 0 0.5rem', fontSize: '0.8125rem', color: 'var(--ink2)', maxWidth: '54rem' };
 const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
 
 interface InforceTableRow {
@@ -121,9 +120,6 @@ export function RegulatoryFeedInforce({ onOpenInstrument }: RegulatoryFeedInforc
       <h2 id="regulatory-feed-inforce-heading" style={SUBHEADING_STYLE}>
         In force
       </h2>
-      <p style={HINT_STYLE}>
-        Detection is same-day. Each change links to the mapped obligations and documents in the register.
-      </p>
       <div style={SCROLL_WRAP_STYLE}>
         <DataTable
           caption="Enacted and in-force instruments"

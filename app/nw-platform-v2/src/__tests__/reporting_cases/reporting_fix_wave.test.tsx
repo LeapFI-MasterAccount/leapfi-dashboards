@@ -239,10 +239,10 @@ describe('RPT-08 — regchange dropped content restored (base 3596/3605/3608/360
     expect(within(table).getByText('2 workstreams open')).toBeInTheDocument();
   });
 
-  it("index card carries the base's full copy incl. 'Updates logged in place.' (base 3715)", () => {
+  it('index card title renders without the base description narration (base 3715 cut per D26 copy pass)', () => {
     render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
     const card = screen.getByRole('button', { name: /Regulatory Change Briefing/ });
-    expect(card.textContent).toContain('Updates logged in place.');
+    expect(card.textContent).not.toContain('Updates logged in place.');
   });
 });
 

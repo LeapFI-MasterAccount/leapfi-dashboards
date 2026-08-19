@@ -433,11 +433,6 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
             <Button variant="ghost" label="View the email you were sent" onPress={() => setEmailOpen(true)} />
             <Button variant="secondary" label="Reject" loading={isBusy('reject')} disabled={isBlocked('reject')} onPress={() => onAction('reject')} />
           </div>
-          {tier.committee ? (
-            <p style={WAIT_NOTE_STYLE}>
-              This is a <strong style={SCREEN_TEXT}>{tier.n.toLowerCase()}</strong>. Under the approval matrix the CRO gives conditional approval and {APPROVAL.committee} votes before it is adopted.
-            </p>
-          ) : null}
           {pickingCondition ? (
             <div>
               <Label text="Approve subject to" variant="eyebrow" />
@@ -613,9 +608,6 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
 
       <section aria-labelledby="case-language-heading" style={CARD_STYLE}>
         <h3 id="case-language-heading" style={SUBHEADING_STYLE}>Proposed language</h3>
-        <p style={INFO_NOTE_STYLE}>
-          What the document says today, and what OnSide proposes it should say. The analyst can accept this, or edit it and route their own words.
-        </p>
 
         {missingDocNote}
 
@@ -728,7 +720,6 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
 
       <section aria-labelledby="case-history-heading" style={CARD_STYLE}>
         <h3 id="case-history-heading" style={SUBHEADING_STYLE}>Case history</h3>
-        <p style={INFO_NOTE_STYLE}>Every action on this case, in order, with the name of the person who took it. This is the exam answer.</p>
         <div style={HISTORY_LIST_STYLE}>
           {caseItem.history.map((entry, index) => (
             // eslint-disable-next-line react/no-array-index-key -- history is prepended (unshift) per action; entries never reorder independently of that append, so index is a stable enough key for this session-local list

@@ -107,7 +107,6 @@ function parseInlineStatus(raw: string): { text: string; emphasized: boolean } {
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
 const CARD_HEADING_STYLE: CSSProperties = { margin: '0 0 0.25rem', font: 'inherit', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--ink)' };
-const CARD_HINT_STYLE: CSSProperties = { margin: '0 0 0.5rem', fontSize: '0.8125rem', color: 'var(--ink2)', maxWidth: '54rem' };
 const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
 const CARD_BLOCK_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem' };
 const PROPOSAL_CELL_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem', maxWidth: '28rem' };
@@ -241,7 +240,6 @@ const SCOPE_BAR_STYLE: CSSProperties = {
   gap: '0.5rem',
 };
 const SCOPE_LABEL_STYLE: CSSProperties = { fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink)' };
-const SCOPE_NOTE_STYLE: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
 
 export interface RegulatoryFeedLifecycleProps {
   /** Fired when a tracked row carrying an instrument key is pressed (base
@@ -284,16 +282,10 @@ export function RegulatoryFeedLifecycle({ onOpenInstrument, onOpenSources }: Reg
         {LC_AREAS.map(([key, label]) => (
           <Chip key={key} text={label} variant="filter" selected={scope === key} onPress={() => setScope(key)} />
         ))}
-        <span style={SCOPE_NOTE_STYLE}>Filtered to what each officer oversees</span>
       </div>
 
       <div style={CARD_BLOCK_STYLE}>
         <h3 style={CARD_HEADING_STYLE}>Newly proposed · the strategy signal</h3>
-        <p style={CARD_HINT_STYLE}>
-          New proposed rulemakings are the biggest impact to strategy, so they surface here the day they
-          post — captured while the comment window is open and positions can still be shaped, before they
-          harden into obligations.
-        </p>
         <div style={SCROLL_WRAP_STYLE}>
           <DataTable
             caption="Newly proposed rulemakings"
@@ -308,10 +300,6 @@ export function RegulatoryFeedLifecycle({ onOpenInstrument, onOpenSources }: Reg
 
       <div style={CARD_BLOCK_STYLE}>
         <h3 style={CARD_HEADING_STYLE}>Pending &amp; tracked</h3>
-        <p style={CARD_HINT_STYLE}>
-          Proposal through effect, tracked to the domains each item would touch, including
-          held-up-in-court and back-for-comment states — lifecycle status, never a hard-coded assumption.
-        </p>
         <div style={SCROLL_WRAP_STYLE}>
           <DataTable
             caption="Pending and tracked rulemakings"

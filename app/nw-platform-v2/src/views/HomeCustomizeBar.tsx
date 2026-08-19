@@ -232,7 +232,7 @@ export function HomeCustomizeBar({ roleKey, roleFirstName, visibleKeys, onChange
   }
 
   const triggerLabel = `Customize (${visibleKeys.length} of ${HOME_PANEL_DEFS.length} shown)`;
-  const noteText = `The page reads in the order you pick. ${
+  const noteText = `${
     visibleKeys.length > 0 ? `Showing ${visibleKeys.length} of ${HOME_PANEL_DEFS.length}` : 'Nothing showing'
   } · saved for ${roleFirstName}.`;
 

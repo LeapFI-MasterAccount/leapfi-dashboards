@@ -194,7 +194,6 @@ const MAIN_STYLE: CSSProperties = {
 };
 const HEADER_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.375rem' };
 const TITLE_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
-const SUBTITLE_STYLE: CSSProperties = { margin: 0, maxWidth: '38rem', fontSize: '0.9375rem', color: 'var(--ink2)', lineHeight: 1.5 };
 const GRID_STYLE: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' };
 const CARD_STYLE: CSSProperties = {
   display: 'flex',
@@ -208,7 +207,6 @@ const CARD_STYLE: CSSProperties = {
   minWidth: 0,
 };
 const CARD_TITLE_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--ink)' };
-const CARD_SUBTITLE_STYLE: CSSProperties = { margin: 0, fontSize: '0.8125rem', color: 'var(--ink2)', lineHeight: 1.5 };
 const TOGGLE_ROW_STYLE: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -330,17 +328,12 @@ export function SettingsToggles({ topbar, onNavigate, sidebarVersionLabel }: Set
             <h1 id="settings-toggles-title" style={TITLE_STYLE}>
               Settings · Toggles
             </h1>
-            <p style={SUBTITLE_STYLE}>Profile, identity, and platform preferences for NorthWinds Credit Union.</p>
           </div>
 
           <div style={CARD_STYLE} role="group" aria-labelledby="approval-matrix-heading">
             <h2 id="approval-matrix-heading" style={CARD_TITLE_STYLE}>
               Approval matrix
             </h2>
-            <p style={CARD_SUBTITLE_STYLE}>
-              Not every policy carries the same governance requirement, so the approval path follows the tier of the document
-              rather than one fixed rule. Every case reads this matrix when it opens.
-            </p>
             {APPROVAL.tiers.map((tier, index) => {
               const openCount = CASES.filter((c) => c.tier === tier.k).length;
               const caseCountText = `${openCount} open case${openCount === 1 ? '' : 's'}`;

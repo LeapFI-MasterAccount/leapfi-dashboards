@@ -707,17 +707,15 @@ function QuickActionsPanel({ onNavigate }: { onNavigate: (id: string) => void })
     <div style={setupCardRowStyle}>
       <SetupCard
         title="Ask the platform"
-        description="Ideas priced, policy cited, new use cases scoped. One conversation."
         variant="interactive"
         onPress={() => onNavigate('studio.ask')}
       />
       <SetupCard
         title="Domains · gaps & levers"
-        description="Every category, its target, and the gaps behind the score."
         variant="interactive"
         onPress={() => onNavigate('onside.overview')}
       />
-      <SetupCard title="Reporting" description="Standing reports on one screen, from IT to the board." variant="interactive" onPress={() => onNavigate('reporting')} />
+      <SetupCard title="Reporting" variant="interactive" onPress={() => onNavigate('reporting')} />
     </div>
   );
 }

@@ -194,7 +194,6 @@ function computeDigestCount(frequency: string, bindingOnly: boolean): number {
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
 const LAYER_HEADING_STYLE: CSSProperties = { margin: '0 0 0.25rem', font: 'inherit', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--ink)' };
-const INTRO_TEXT_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', color: 'var(--ink2)', maxWidth: '62rem' };
 const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
 const LAYER_BLOCK_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
 
@@ -372,20 +371,9 @@ export function RegulatoryFeedSources({ onOpenSource, onOpenInstrument }: Regula
       <h2 id="regulatory-feed-sources-heading" style={SUBHEADING_STYLE}>
         Sources &amp; connectors
       </h2>
-      <p style={INTRO_TEXT_STYLE}>
-        Every source is monitored continuously and grouped into three layers, tracked separately because
-        obligations stack: a federal rule, a state law, and a municipal ordinance can all touch the same
-        policy. Every captured item carries a verbatim source span, a resolvable pin-cite, and a SHA-256
-        hash — nothing becomes authoritative until a qualified human approves it.
-      </p>
 
       <div style={CARD_STYLE}>
         <h3 style={LAYER_HEADING_STYLE}>Digest &amp; alerts</h3>
-        <p style={DIGEST_HINT_STYLE}>
-          Everything monitored, delivered on your schedule. Alerts are the exception path — turn one on
-          for a source and a change from it reaches you the moment a sweep finds it, whatever the digest
-          cadence.
-        </p>
         <div style={DIGEST_GRID_STYLE}>
           <div style={DIGEST_FIELD_STYLE}>
             <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink)' }}>Digest frequency</span>
@@ -421,12 +409,11 @@ export function RegulatoryFeedSources({ onOpenSource, onOpenInstrument }: Regula
         </div>
       </div>
 
-      {SRC_LAYERS.map(([layerKey, layerLabel, layerDescription]) => {
+      {SRC_LAYERS.map(([layerKey, layerLabel]) => {
         const rows = ALL_SOURCE_ROWS.filter((row) => row.layerKey === layerKey);
         return (
           <div key={layerKey} style={LAYER_BLOCK_STYLE}>
             <h3 style={LAYER_HEADING_STYLE}>{decodeEntities(layerLabel)}</h3>
-            <p style={DIGEST_HINT_STYLE}>{decodeEntities(layerDescription)}</p>
             <div style={SCROLL_WRAP_STYLE}>
               <DataTable
                 caption={`${decodeEntities(layerLabel)} sources`}

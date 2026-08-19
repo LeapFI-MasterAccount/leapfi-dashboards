@@ -538,9 +538,7 @@ export function Cases({ topbar, onNavigate, sidebarVersionLabel, currentUser = C
                   Cases
                 </h1>
                 <p style={{ ...NOTE_STYLE, marginTop: '0.5rem' }}>
-                  OnSide opens a case the moment it detects a change and drafts the language to close it. The case is the record: who edited, who
-                  accepted, who approved, and when — timestamped from detection to adoption. It is what the examiner reads.
-                  {undecidedCount > 0 ? ` ${undecidedCount === openCases.length ? 'None' : `${undecidedCount} of ${openCases.length}`} ${undecidedCount === 1 ? 'has' : 'have'} been decided yet.` : ''}
+                  {undecidedCount > 0 ? `${undecidedCount === openCases.length ? 'None' : `${undecidedCount} of ${openCases.length}`} ${undecidedCount === 1 ? 'has' : 'have'} been decided yet.` : ''}
                   {waitingOnMeCount > 0 ? ` ${waitingOnMeCount} ${waitingOnMeCount === 1 ? 'case is' : 'cases are'} waiting on you.` : ''}
                 </p>
               </div>
@@ -567,7 +565,6 @@ export function Cases({ topbar, onNavigate, sidebarVersionLabel, currentUser = C
                   <h2 id="cases-closed-heading" style={SUBHEADING_STYLE}>
                     Closed cases · {doneCases.length}
                   </h2>
-                  <p style={NOTE_STYLE}>Adopted or returned. The full history stays on the case either way.</p>
                   <div style={SCROLL_WRAP_STYLE}>
                     <DataTable caption="Closed cases" columns={columns} rows={doneCases} getRowId={(row) => row.id} rowAction={rowAction} />
                   </div>

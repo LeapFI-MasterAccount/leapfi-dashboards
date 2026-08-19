@@ -278,7 +278,6 @@ const CARD_STYLE: CSSProperties = {
   flexDirection: 'column',
   gap: '0.75rem',
 };
-const SUB_TEXT_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', color: 'var(--ink2)' };
 const SCOPE_EVENT_ROW_STYLE: CSSProperties = { display: 'flex', gap: '0.625rem', fontSize: '0.8125rem', color: 'var(--ink2)' };
 const CHIP_STRIP_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' };
 
@@ -602,10 +601,6 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
             <h2 id="onside-overview-objectives-heading" style={SUBHEADING_STYLE}>
               Objectives driving scope
             </h2>
-            <p style={SUB_TEXT_STYLE}>
-              Applicability is derived from the use cases the institution has declared, with determination provenance on every inclusion
-              and exclusion. Click one to open the register in Studio.
-            </p>
             <div style={CHIP_STRIP_STYLE}>
               {objectivesPreview.map((opportunity) => (
                 <Chip key={opportunity.n} text={opportunity.n} variant="suggestion" onPress={() => onNavigate('studio.ask')} />
@@ -620,12 +615,6 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
             <h2 id="onside-overview-connect-heading" style={SUBHEADING_STYLE}>
               Every system reads this record · LeapFI · Connect
             </h2>
-            <p style={SUB_TEXT_STYLE}>
-              Today someone reads the policy manual, decides what it requires, and configures each system by hand: limits, approval
-              chains, retention rules, disclosure requirements, access rights. That translation repeats for every product under contract
-              and starts drifting the day the next policy changes. Connect is the MCP and API layer of this record, so each system reads
-              the approved policy and configures itself instead.
-            </p>
             <div>
               {/* B-dead-interactions-09 — this button's own label and the
                   base's identical card (leapfi-platform.html:3080
@@ -642,7 +631,6 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
             </h2>
             <SetupCard
               title="Cases · approvals"
-              description="Items routed to a named owner for approval, conditional approval, counsel routing, or rejection."
               variant="interactive"
               onPress={() => onNavigate('cases')}
             />
@@ -657,10 +645,6 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
             <h2 id="onside-overview-domains-heading" style={SUBHEADING_STYLE}>
               Domains · gaps &amp; levers on one page
             </h2>
-            <p style={SUB_TEXT_STYLE}>
-              Every domain the institution monitors, judged against the target it set. Open any category to see its target and the gaps
-              behind the score.
-            </p>
             <DomainsAccordion
               domains={DOMAINS}
               expandedKeys={expandedDomainKeys}

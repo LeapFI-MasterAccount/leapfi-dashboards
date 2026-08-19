@@ -139,8 +139,6 @@ interface YearView {
   status: string;
   quarters?: QuarterColumn[];
   chips?: PlayChip[];
-  /** Base `gnote` line for the year. */
-  note: string;
 }
 
 interface RoadmapDerivation {
@@ -235,19 +233,16 @@ function deriveRoadmap(): RoadmapDerivation {
       name: 'Year 1 · tactical',
       status: `${P.funded.length} plays · ${fmt(P.spent)} committed · sequenced by your horizon lever`,
       quarters,
-      note: 'Foundational work leads, quick paybacks follow. Every play carries its cost, value at your adoption setting, and payback. Click one for full scope.',
     },
     {
       name: 'Year 2 · expansion',
       status: `${y2.length} plays queued · firms up as Year 1 lands`,
       chips: y2Chips,
-      note: 'Planning envelopes rather than commitments. Each play opens with its scope, value case, and what it waits on.',
     },
     {
       name: 'Year 3 · vision',
       status: `${y3.length} plays · direction the board can steer`,
       chips: y3Chips,
-      note: 'Higher-value plays that stay sequence-gated until their control families close in OnSide. Detail waits on Year 1 results.',
     },
   ];
 
@@ -332,7 +327,6 @@ const MAIN_STYLE: CSSProperties = {
 };
 const headerStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem' };
 const h1Style: CSSProperties = { font: 'inherit', fontSize: '1.625rem', fontWeight: 700, color: 'var(--ink)', margin: 0 };
-const ledeStyle: CSSProperties = { font: 'inherit', fontSize: '0.9375rem', color: 'var(--ink2)', margin: 0, maxWidth: 640 };
 const sectionStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.75rem' };
 const sectionHeadingStyle: CSSProperties = { font: 'inherit', fontSize: '1rem', fontWeight: 700, color: 'var(--ink)', margin: 0 };
 const setupCardRowStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))', gap: '1rem' };
@@ -381,7 +375,6 @@ const chipNoteStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)'
 const quarterMarkerStyle: CSSProperties = { fontSize: '0.6875rem', color: 'var(--ink2)', marginTop: 'auto' };
 const chipRowStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(13rem, 1fr))', gap: '0.625rem' };
 const foundationLinkStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)', margin: 0, textAlign: 'center' };
-const yearNoteStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)', margin: 0 };
 
 /** Fix B-dead-interactions-04: a real, keyboard-operable button (base
  * `data-play` chip, gantt delegated click → `openPlay`) rather than a
@@ -445,7 +438,6 @@ export function Roadmap({ topbar, onNavigate, onDeepLink, sidebarVersionLabel }:
             <h1 id="roadmap-title" style={h1Style}>
               Roadmap
             </h1>
-            <p style={ledeStyle}>OnSide v1.0 ships this year — Sprint 1 is in progress on this screen right now. Connect is next.</p>
           </div>
 
           {/* Base rm-kpis row (1308-1312), live-derived. */}
@@ -497,7 +489,6 @@ export function Roadmap({ topbar, onNavigate, onDeepLink, sidebarVersionLabel }:
                   )}
                 </div>
               ) : null}
-              <p style={yearNoteStyle}>{year.note}</p>
             </div>
           ))}
 

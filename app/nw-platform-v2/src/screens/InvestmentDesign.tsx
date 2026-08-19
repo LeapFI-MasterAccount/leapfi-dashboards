@@ -232,7 +232,6 @@ const MAIN_STYLE: CSSProperties = {
 };
 const headerStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem' };
 const h1Style: CSSProperties = { font: 'inherit', fontSize: '1.625rem', fontWeight: 700, color: 'var(--ink)', margin: 0 };
-const ledeStyle: CSSProperties = { font: 'inherit', fontSize: '0.9375rem', color: 'var(--ink2)', margin: 0, maxWidth: 640 };
 const sectionStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.75rem' };
 const sectionHeadingStyle: CSSProperties = { font: 'inherit', fontSize: '1rem', fontWeight: 700, color: 'var(--ink)', margin: 0 };
 const sideListsGridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(20rem, 1fr))', gap: '1.25rem' };
@@ -631,9 +630,6 @@ export function InvestmentDesign({
             <h1 id="investment-design-title" style={h1Style}>
               Investment Design
             </h1>
-            <p style={ledeStyle}>
-              Raise ambition and the funded portfolio recomputes live against your budget envelope and ROI hurdle — no committee cycle, no consultant re-run.
-            </p>
           </div>
 
           <SliderControlRow sliders={sliders} onSlidersChange={handleSlidersChange} {...(opportunities !== undefined ? { opportunities } : {})} />

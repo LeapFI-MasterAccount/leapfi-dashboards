@@ -832,10 +832,6 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
             <h2 id="onside-domain-impact-heading" style={SUBHEADING_STYLE}>
               Domain impact
             </h2>
-            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--ink2)' }}>
-              Obligation status by governance domain. Adopting a redline above can flip a row here from open to met — a toast&rsquo;s &ldquo;View
-              impact&rdquo; link jumps straight to the change.
-            </p>
             <span role="status" aria-live="polite" style={SR_ONLY_STYLE}>
               {cascadeAnnouncement}
             </span>

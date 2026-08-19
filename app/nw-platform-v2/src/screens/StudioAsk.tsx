@@ -337,7 +337,6 @@ const CITATION_LINK_STYLE: CSSProperties = {
 };
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.125rem', fontWeight: 700, color: 'var(--ink)' };
-const SECTION_NOTE_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', color: 'var(--ink2)' };
 const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
 const SR_ONLY_STYLE: CSSProperties = {
   position: 'absolute',
@@ -775,10 +774,6 @@ export function StudioAsk({ topbar, onNavigate, onDeepLink, sidebarVersionLabel 
             <h2 id="studio-ask-register-heading" style={SUBHEADING_STYLE}>
               Opportunity register
             </h2>
-            <p style={SECTION_NOTE_STYLE}>
-              The sized use-case catalog Studio funds against. Plays captured through Ask or the scoping wizard register here, live,
-              once you add them.
-            </p>
             <span role="status" aria-live="polite" style={SR_ONLY_STYLE}>
               {registerAnnouncement}
             </span>

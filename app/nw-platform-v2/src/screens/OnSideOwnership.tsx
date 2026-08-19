@@ -205,7 +205,6 @@ function decodeText(input: string): string {
 /* ============ leapfi-platform.html 3648-3663 — see file header STOP-item ============ */
 
 const ONBOARDING_HEADING = 'How onboarding works · five steps to automated monitoring';
-const ONBOARDING_INTRO = 'From current state to automated compliance monitoring, without a migration project.';
 
 type OnboardingStep = readonly [num: string, title: string, description: string];
 
@@ -258,8 +257,6 @@ const ONBOARDING_STATS: readonly OnboardingStat[] = [
 ] as const;
 
 const TWO_ENGINES_HEADING = 'Two engines, one platform';
-const TWO_ENGINES_COPY =
-  'The <b>AI Governance engine</b> (v1.x) is the complete operating system for governing the institution&rsquo;s own AI: inventory, risk scoring, approval gates, controls, exam-ready export. The <b>Regulatory Intelligence engine</b> (v2.x) extends the same data model outward across the whole obligation set: continuous monitoring, gap analysis, redlined board packages, and the Knowledge Copilot. One data model underneath both, and each lands as its own wedge.';
 
 /* ============ RACI derived lookups ============ */
 
@@ -346,7 +343,6 @@ const TITLE_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5r
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.125rem', fontWeight: 700, color: 'var(--ink)' };
 const DOMAIN_HEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1rem', fontWeight: 700, color: 'var(--ink)' };
-const CAPTION_TEXT_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', color: 'var(--ink2)', lineHeight: 1.5, maxWidth: '48rem' };
 const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
 const ROLE_LEGEND_STYLE: CSSProperties = {
   display: 'grid',
@@ -361,7 +357,6 @@ const STEP_LIST_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap:
 const STEP_ITEM_STYLE: CSSProperties = { flex: '1 1 220px', minWidth: 220 };
 const STAT_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '1rem' };
 const STAT_ITEM_STYLE: CSSProperties = { flex: '1 1 220px', minWidth: 220, display: 'flex', flexDirection: 'column', gap: '0.5rem' };
-const STAT_SUB_STYLE: CSSProperties = { margin: 0, fontSize: '0.8125rem', color: 'var(--ink2)', lineHeight: 1.5 };
 const TWO_ENGINES_CARD_STYLE: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -446,10 +441,6 @@ export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel }: OnS
             <h2 id="onside-raci-heading" style={SUBHEADING_STYLE}>
               RACI · policy ownership matrix
             </h2>
-            <p style={CAPTION_TEXT_STYLE}>
-              Every governance document mapped to who is Responsible, Accountable, Consulted, and Informed, even where one person wears several
-              hats. Open a document to see its detail. Approval authority stays with named human owners at every gate.
-            </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
               {M.map(([domainKey, domainLabel, docs]) => (
@@ -480,12 +471,11 @@ export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel }: OnS
             <h2 id="onside-onboarding-heading" style={SUBHEADING_STYLE}>
               {ONBOARDING_HEADING}
             </h2>
-            <p style={CAPTION_TEXT_STYLE}>{ONBOARDING_INTRO}</p>
 
             <ol style={STEP_LIST_STYLE}>
-              {ONBOARDING_STEPS.map(([num, title, description]) => (
+              {ONBOARDING_STEPS.map(([num, title]) => (
                 <li key={num} style={STEP_ITEM_STYLE}>
-                  <SetupCard title={`${num} · ${decodeText(title)}`} description={decodeText(description)} variant="locked" />
+                  <SetupCard title={`${num} · ${decodeText(title)}`} variant="locked" />
                 </li>
               ))}
             </ol>
@@ -494,14 +484,12 @@ export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel }: OnS
               {ONBOARDING_STATS.map((stat) => (
                 <div key={stat.label} style={STAT_ITEM_STYLE}>
                   <StatCard label={stat.label} value="✓" />
-                  <p style={STAT_SUB_STYLE}>{stat.sub}</p>
                 </div>
               ))}
             </div>
 
             <div style={TWO_ENGINES_CARD_STYLE}>
               <h3 style={DOMAIN_HEADING_STYLE}>{TWO_ENGINES_HEADING}</h3>
-              <Label text={decodeText(TWO_ENGINES_COPY)} variant="body-secondary" />
             </div>
           </section>
         </main>

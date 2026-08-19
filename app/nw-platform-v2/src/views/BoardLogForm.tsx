@@ -99,7 +99,6 @@ export interface BoardLogFormProps {
 }
 
 const WRAP_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '1rem' };
-const SUMMARY_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', color: 'var(--ink2)' };
 const FORM_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.75rem' };
 const SAVE_ROW_STYLE: CSSProperties = { display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' };
 /** Same token-styled semantic textarea CaseDetail.tsx already ships (see
@@ -165,10 +164,6 @@ export function BoardLogForm({
         * (its `title` carries the base `dtitle`), so this eyebrow is never
         * the only accessible name — Label's a11y baseline. */}
       <Label text="Board reporting · open item" variant="eyebrow" />
-      {/* Base `dsum`, line 3582 — copy verbatim. */}
-      <p style={SUMMARY_STYLE}>
-        Progress logged here lands on the standing board view and in the exam record, with the author and date attached.
-      </p>
 
       <div style={FORM_STYLE}>
         <Input
