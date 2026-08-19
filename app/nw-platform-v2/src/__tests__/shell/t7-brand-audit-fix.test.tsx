@@ -108,14 +108,32 @@ describe('F2 — the RPT-01 print stylesheet (Drawer.tsx) reproduced a cyan-on-w
   })
 })
 
-describe('F8 — no favicon; LINK plumbing added as a data-URI slot (chevron master PNG not local — STOP-item)', () => {
-  it('index.html declares an icon link and an apple-touch-icon link, each an inline data URI slot', () => {
+describe('F8 — favicon: chevron master downscaled into both icon slots (ASSET-7 mechanical derivation)', () => {
+  it('index.html declares an icon link and an apple-touch-icon link, each carrying a non-empty PNG data URI', () => {
     const html = readIndexHtml()
-    expect(html).toMatch(/<link[^>]+rel="icon"[^>]+sizes="32x32"[^>]+href="data:image\/png;base64,[^"]*"/)
-    expect(html).toMatch(/<link[^>]+rel="apple-touch-icon"[^>]+sizes="180x180"[^>]+href="data:image\/png;base64,[^"]*"/)
-    // Neither slot references an on-disk file path — a path reference to a
-    // not-yet-sourced asset would break `npm run build`; the slot must stay
-    // a same-line-editable data URI until the master PNG is provided.
+    const iconMatch = html.match(
+      /<link[^>]+rel="icon"[^>]+sizes="32x32"[^>]+href="data:image\/png;base64,([^"]*)"/,
+    )
+    const touchIconMatch = html.match(
+      /<link[^>]+rel="apple-touch-icon"[^>]+sizes="180x180"[^>]+href="data:image\/png;base64,([^"]*)"/,
+    )
+    expect(iconMatch).not.toBeNull()
+    expect(touchIconMatch).not.toBeNull()
+    // "slot exists" is not enough — a slot can exist and still be the empty
+    // placeholder from the earlier wiring-only dispatch. Pin that the
+    // base64 payload is actually present and each decodes to a real PNG
+    // (magic-byte signature, not just non-empty text).
+    const iconB64 = iconMatch![1]!
+    const touchIconB64 = touchIconMatch![1]!
+    expect(iconB64.length).toBeGreaterThan(0)
+    expect(touchIconB64.length).toBeGreaterThan(0)
+    const iconBytes = Buffer.from(iconB64, 'base64')
+    const touchIconBytes = Buffer.from(touchIconB64, 'base64')
+    const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+    expect(iconBytes.subarray(0, 8).equals(pngSignature)).toBe(true)
+    expect(touchIconBytes.subarray(0, 8).equals(pngSignature)).toBe(true)
+    // Neither slot references an on-disk file path — the artifact must stay
+    // self-contained (D14/D11) with zero external or same-origin file refs.
     expect(html).not.toMatch(/<link[^>]+rel="(icon|apple-touch-icon)"[^>]+href="\/src\/assets\//)
   })
 })
