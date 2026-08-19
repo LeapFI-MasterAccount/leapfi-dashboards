@@ -3,6 +3,8 @@ _scratch/
 
 _*
 !_archive/
+!__tests__/
+!__tests__/**
 
 # app/nw-platform-v2 (D14 twin build pipeline) — repo-local toolchain state,
 # never committed. Build output (src/leapfi-platform-v2.html) IS committed.
