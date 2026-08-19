@@ -11,13 +11,23 @@
  * not invented:
  *
  *   1. Home                          (no children)
- *   2. OnSide    -> Regulatory feed, Documents, Ownership
+ *   2. OnSide    -> Overview, Regulatory feed, Documents, Ownership
  *   3. Studio    -> Ask, Investment Design, Roadmap
  *   4. Connect   -> AllRailz, Vantage        (expanded by default)
  *   5. Reporting                     (no children)
  *   6. Settings  -> Toggles, About
  *
  * 6 top-level items, within the ≤7 budget §3.1 states with headroom.
+ *
+ * PARITY-ASSEMBLY ADDITION — OnSide · Overview 4th nested child
+ * (parity_ia_addendum.md §0, resolved conservatively there and ratified
+ * here by the wiring dispatch that also gives it a `ScreenId` in
+ * `App.tsx`): `overview` is added first in OnSide's `children` array,
+ * matching the base engine's own `os-sub` ordering (survey_map.md
+ * 762-821, `overview` first). This is a pure data addition to the
+ * existing `NavChild` literal shape already used by every other nested
+ * item here — no new nesting level, no change to `Sidebar`'s click
+ * contract or to any of the 3 already-shipped OnSide children.
  *
  * AMBIGUITY RESOLVED — default expand state (§3.1): the spec is explicit
  * that Connect ships expanded by default ("not collapsed-by-default like
@@ -75,6 +85,7 @@ const NAV: NavTopItem[] = [
     id: 'onside',
     label: 'OnSide',
     children: [
+      { id: 'onside.overview', label: 'Overview' },
       { id: 'onside.feed', label: 'Regulatory feed' },
       { id: 'onside.documents', label: 'Documents' },
       { id: 'onside.ownership', label: 'Ownership' },

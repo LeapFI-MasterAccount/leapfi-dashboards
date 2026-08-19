@@ -48,6 +48,24 @@
  * data or switching logic (that belongs to whichever data/App file owns
  * the persona list), it only provides the disclosure chrome and the hook
  * surface the brief asks for.
+ *
+ * PARITY-ASSEMBLY ADDITION — `notificationSlot` (parity_ia_addendum.md
+ * §1.5 "Shell-level: Notification Bell" / §6 Batch 7): `NotificationBell`
+ * (this file, internal/unexported) is a plain count-badge with a single
+ * `onPress` — it has no popover of its own, and the addendum's real bell
+ * surface is `views/NotificationBellPanel.tsx`, a self-contained composite
+ * (its own file header explains why: it cannot be built by extending this
+ * file's internal, unexported `NotificationBell`, since that function
+ * cannot be imported from outside this file). Rather than duplicate that
+ * panel's trigger chrome a second time inside this file, `notificationSlot`
+ * follows the exact `themeToggleSlot` precedent immediately above: an
+ * optional `ReactNode` extension point the integrating shell can fill with
+ * a real composite. When supplied, it renders in the bell's own §3.2
+ * region position, in place of (not alongside) the internal count-badge
+ * button — a screen with a real notification feed should show one bell,
+ * not two. `notificationCount`/`onOpenNotifications` are left fully
+ * backward-compatible: omitting `notificationSlot` reproduces this file's
+ * exact pre-existing behavior.
  */
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
@@ -84,9 +102,11 @@ export interface TopbarProps {
   /** BoardDeckButton (§3.2 G10) — ghost weight, deliberately not primary (see spec rationale). */
   onOpenBoardDeck: () => void;
   boardDeckLabel?: string;
-  /** NotificationBell (Icon `bell` + count Tag). Omit `onOpenNotifications` if there is nowhere to route the click yet. */
+  /** NotificationBell (Icon `bell` + count Tag). Omit `onOpenNotifications` if there is nowhere to route the click yet. Ignored when `notificationSlot` is supplied. */
   notificationCount?: number;
   onOpenNotifications?: () => void;
+  /** See file header "PARITY-ASSEMBLY ADDITION — notificationSlot." Renders in place of the internal count-badge NotificationBell when supplied. */
+  notificationSlot?: ReactNode;
   /** DateDisplay (Label, body-secondary) — pre-formatted text; this component does no date formatting. */
   date: string;
   profile: TopbarProfile;
@@ -304,6 +324,7 @@ export function Topbar({
   boardDeckLabel = 'Open board deck',
   notificationCount,
   onOpenNotifications,
+  notificationSlot,
   date,
   profile,
   profileMenuItems,
@@ -323,7 +344,7 @@ export function Topbar({
 
       <Button label={boardDeckLabel} variant="ghost" onPress={onOpenBoardDeck} />
 
-      <NotificationBell count={notificationCount} onPress={onOpenNotifications} />
+      {notificationSlot ?? <NotificationBell count={notificationCount} onPress={onOpenNotifications} />}
 
       <span style={LABEL_STYLE}>{date}</span>
 

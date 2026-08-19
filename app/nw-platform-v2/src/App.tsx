@@ -36,32 +36,70 @@
  * "at-root ↔ one-level-back" binary the spec describes, with no history
  * depth beyond one hop.
  *
- * OUT-OF-SCOPE SIDEBAR DESTINATIONS (AMBIGUITY RESOLVED): `Sidebar.tsx`
- * (a sibling dispatch, unmodified here) ships leaf nav items this program's
- * 7 script screens do not cover — OnSide·Ownership, Connect·AllRailz,
- * Connect·Vantage, Reporting, Settings·Toggles, Settings·About.
- * design_system_spec.md §9 explicitly scopes these out ("Reporting...
- * Out of arc"; "Settings... not one of the 7 screens, minimal coverage per
- * scope"; Ownership isn't named in §5 at all; Connect/AllRailz/Vantage's
- * Soon splash is reached only via `Roadmap`'s own Step-6 flow, never via a
- * direct Sidebar click per §5.6). Building real screens for these is
- * outside this dispatch's ALLOWLIST and outside design_system_spec.md's own
- * 7-screen scope. Silently redirecting a Sidebar click on one of these to
- * some other screen would misrepresent what happened (Core Principle 3 —
- * never fabricate a state); this file instead renders `OutOfScopeScreen`, a
- * plain, honestly-labelled placeholder (still inside Topbar+Sidebar shell
- * chrome for wayfinding) rather than a fabricated full screen or a silent
- * no-op. STOP-item if a future dispatch builds real screens for any of
- * these — this file's `default` switch branch is the integration point.
+ * PARITY-ASSEMBLY DISPATCH (parity_ia_addendum.md, D16): this file was
+ * revised by the parity-assembly dispatch to route/host the addendum's new
+ * screens whose "home" is a self-contained `screens/` file (the addendum's
+ * own vocabulary, its "Method note" section) — `OnSideOverview`,
+ * `OnSideOwnership`, `Cases`, `Reporting`, `SettingsToggles`,
+ * `SettingsAbout` — plus the shell-level Notification Bell (§1.5). See
+ * "OUT-OF-SCOPE SIDEBAR DESTINATIONS" and "NOTIFICATION BELL" below for
+ * what changed and the STOP-item on what deliberately did not.
  *
- * NOTIFICATION BELL: `Topbar`'s `notificationCount`/`onOpenNotifications`
- * are both omitted (per `Topbar.tsx`'s own doc: "Omit `onOpenNotifications`
- * if there is nowhere to route the click yet") — no ported dataset in this
- * worktree carries a per-notification shape (`data/onside.ts`'s `DIGEST` is
- * a cadence *setting* object, not a notification list; see
- * `OnSideFeed.tsx`'s identical finding). Fabricating a count with no data
- * anchor would violate Core Principle 3. STOP-item for whichever dispatch
- * ports a real digest/notification feed.
+ * OUT-OF-SCOPE SIDEBAR DESTINATIONS (AMBIGUITY RESOLVED, updated by the
+ * parity-assembly dispatch): `Sidebar.tsx` ships leaf nav items; six of the
+ * seven non-script destinations now route to real screens (see the switch
+ * below) — only `Connect · AllRailz` and `Connect · Vantage` still fall
+ * through to `OutOfScopeScreen`, matching design_system_spec.md §5.6's own
+ * disposition that those two are reached only via `Roadmap`'s Step-6 flow,
+ * never via a direct Sidebar click, and parity_ia_addendum.md assigns no
+ * new content to either. Silently redirecting a Sidebar click on one of
+ * these to some other screen would misrepresent what happened (Core
+ * Principle 3 — never fabricate a state); this file still renders
+ * `OutOfScopeScreen` for them, a plain, honestly-labelled placeholder
+ * (still inside Topbar+Sidebar shell chrome for wayfinding) rather than a
+ * fabricated full screen or a silent no-op.
+ *
+ * STOP-ITEM (ALLOWLIST boundary, not improvised past — persona directive
+ * 4): three parity_ia_addendum.md batches assign new content to a *section
+ * inside an already-shipped script screen* (the addendum's own "views/"
+ * vocabulary) rather than to a new `screens/` file: Batch 2's
+ * `views/RegulatoryFeedSources.tsx` + `RegulatoryFeedLifecycle.tsx` +
+ * `RegulatoryFeedInforce.tsx` (compose into `OnSideFeed.tsx`), Batch 7's
+ * `views/HomeCustomizeBar.tsx` + `HomePanels.tsx` (compose into `Home.tsx`),
+ * and Batch 8's `views/ChatIntakeWizard.tsx` (composes into
+ * `StudioAsk.tsx`). Every one of those three files' own headers documents
+ * the identical finding independently (e.g. `RegulatoryFeedSources.tsx`:
+ * "the persona's HARD RULES forbid touching it ('never touch ... existing
+ * screens')"). This dispatch's own HARD RULES state the same prohibition
+ * verbatim, and its ALLOWLIST names `App.tsx`/`App.css`/`Sidebar.tsx`/
+ * `Topbar.tsx`/the new view files/minimal build-error fixes — not
+ * `Home.tsx`, `OnSideFeed.tsx`, or `StudioAsk.tsx`. Those three files are
+ * therefore NOT imported or modified here; the six view files above ship
+ * unwired (still compiling cleanly, per their own file-level STOP-items),
+ * pending a follow-up dispatch whose ALLOWLIST explicitly includes the
+ * three existing screens they compose into. Also unbuilt, and out of scope
+ * for the same reason on the data side: Batch 8's board-log sub-flow
+ * (`views/BoardLogForm.tsx` + `data/boardLog.ts`) — neither file exists in
+ * this worktree as of this dispatch (confirmed by directory listing), so
+ * there is nothing for this file to wire even if `Reporting.tsx`'s
+ * `regchange` report were in scope for it.
+ *
+ * NOTIFICATION BELL (updated by the parity-assembly dispatch):
+ * `Topbar`'s new `notificationSlot` extension point (this dispatch's own
+ * `Topbar.tsx` addition) is filled with `views/NotificationBellPanel.tsx`,
+ * wired to `data/cases.ts`'s real `NOTIFS` array, role-filtered to the
+ * active persona. `NOTIFS` starts empty until `seedCases()` runs; this file
+ * imports `./screens/Cases` unconditionally for routing, and that module's
+ * own top-level guard (`if (CASES.length === 0) seedCases(DOCLIB)`) runs as
+ * an import-time side effect the moment this file loads — so real case/
+ * notification data is seeded before first paint, not deferred until a user
+ * happens to open the Cases screen. Opening a bell row calls
+ * `handleOpenCaseFromBell`, which navigates to `cases` and remounts that
+ * screen (via a `key` keyed on the target case id) so its `initialCaseId`
+ * prop is honored even when the bell is opened while already on the Cases
+ * screen — `Cases.tsx` itself is unmodified; this is a pure parent-side
+ * `key` composition technique, not a change to that screen's own state
+ * model.
  *
  * PERSONA / USER-SWITCHER WIRING (TASK line): `profileMenuItems` is built
  * from `data/studio.ts`'s `USERS` (unmodified, six seeded personas);
@@ -134,10 +172,16 @@ import './App.css'
 import { Home } from './screens/Home'
 import { OnSideFeed } from './screens/OnSideFeed'
 import { OnSideDocuments } from './screens/OnSideDocuments'
+import { OnSideOverview } from './screens/OnSideOverview'
+import { OnSideOwnership } from './screens/OnSideOwnership'
 import { StudioAsk } from './screens/StudioAsk'
 import { InvestmentDesign } from './screens/InvestmentDesign'
 import { Roadmap } from './screens/Roadmap'
 import { BoardDeck } from './screens/BoardDeck'
+import { Cases } from './screens/Cases'
+import { Reporting } from './screens/Reporting'
+import { SettingsToggles } from './screens/SettingsToggles'
+import { SettingsAbout } from './screens/SettingsAbout'
 import { Sidebar } from './components/Sidebar'
 import type { SidebarProps } from './components/Sidebar'
 import { Topbar } from './components/Topbar'
@@ -146,7 +190,9 @@ import { PresenterRail } from './components/PresenterRail'
 import type { PresenterRailHandle } from './components/PresenterRail'
 import { Toast } from './components/Toast'
 import { Switch } from './components/primitives/Switch'
+import { NotificationBellPanel } from './views/NotificationBellPanel'
 import { CURRENT, USERS } from './data/studio'
+import { NOTIFS } from './data/cases'
 import { DEFAULT_SCRIPT_KEY, resolveTarget, SCRIPTS } from './data/script'
 
 type Theme = 'dark' | 'light'
@@ -170,6 +216,7 @@ const ACTIVE_SCRIPT = SCRIPTS[DEFAULT_SCRIPT_KEY]
 /** Every screen id this shell can switch to — the 7 script-navigable ids (data/script.ts `ScriptTargetId`) plus the Sidebar leaf items no script targets. Single source of truth for the `ScreenId` type below. */
 const SCREEN_IDS = [
   'home',
+  'onside.overview',
   'onside.feed',
   'onside.documents',
   'onside.ownership',
@@ -181,6 +228,7 @@ const SCREEN_IDS = [
   'reporting',
   'settings.toggles',
   'settings.about',
+  'cases',
   'board-deck',
 ] as const
 
@@ -192,6 +240,7 @@ function isScreenId(id: string): id is ScreenId {
 
 const SCREEN_LABEL: Record<ScreenId, string> = {
   home: 'Home',
+  'onside.overview': 'OnSide · Overview',
   'onside.feed': 'OnSide · Regulatory feed',
   'onside.documents': 'OnSide · Documents',
   'onside.ownership': 'OnSide · Ownership',
@@ -203,6 +252,7 @@ const SCREEN_LABEL: Record<ScreenId, string> = {
   reporting: 'Reporting',
   'settings.toggles': 'Settings · Toggles',
   'settings.about': 'Settings · About',
+  cases: 'Cases',
   'board-deck': 'Board deck',
 }
 
@@ -259,6 +309,10 @@ function App() {
   const [previousScreenId, setPreviousScreenId] = useState<ScreenId | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string>(CURRENT.id)
   const [designPartnerToast, setDesignPartnerToast] = useState(false)
+  // See file header "NOTIFICATION BELL" — the case a bell row asked to
+  // open; also doubles as the Cases screen's remount key so a bell press
+  // while already on `cases` still lands on the right case detail.
+  const [pendingCaseId, setPendingCaseId] = useState<string | null>(null)
   const presenterRailRef = useRef<PresenterRailHandle>(null)
 
   useEffect(() => {
@@ -268,6 +322,12 @@ function App() {
 
   function navigateToScreen(id: string): void {
     if (!isScreenId(id)) return
+    // Every generic path into Cases (OnSideOverview's "Cases · approvals"
+    // row, Reporting's gapboard "Open cases →" link, ...) lands on the
+    // list — only the dedicated bell path (handleOpenCaseFromBell, which
+    // does not call this function) opens a specific case. See file header
+    // "NOTIFICATION BELL."
+    if (id === 'cases') setPendingCaseId(null)
     if (id === screenId) return
     setPreviousScreenId(id === 'home' ? null : screenId)
     setScreenId(id)
@@ -284,11 +344,28 @@ function App() {
 
   function handleRestart(): void {
     setCurrentUserId(CURRENT.id)
+    setPendingCaseId(null)
     navigateToScreen('home')
   }
 
   function handleDesignPartnerRequest(): void {
     setDesignPartnerToast(true)
+  }
+
+  /** See file header "NOTIFICATION BELL." Does not go through
+   * `navigateToScreen` — that function clears `pendingCaseId` on every
+   * generic nav to `cases` (see its own comment) and early-returns when
+   * already on the target screen, neither of which this handler wants:
+   * opening a bell row must always honor the specific case id, including
+   * when the bell is opened while Cases is already the active screen (the
+   * `key` on the `case 'cases'` render below then forces the remount that
+   * makes `initialCaseId` take effect again). */
+  function handleOpenCaseFromBell(caseId: string): void {
+    setPendingCaseId(caseId)
+    if (screenId !== 'cases') {
+      setPreviousScreenId(screenId)
+      setScreenId('cases')
+    }
   }
 
   const currentUser = USERS.find((user) => user.id === currentUserId) ?? CURRENT
@@ -311,22 +388,57 @@ function App() {
     profile: { name: currentUser.name, initials: currentUser.ini },
     profileMenuItems,
     themeToggleSlot: <Switch checked={theme === 'light'} label="Light theme" onChange={(checked) => setTheme(checked ? 'light' : 'dark')} />,
+    // See file header "NOTIFICATION BELL" — raw NOTIFS singleton passed
+    // through; NotificationBellPanel does its own role filtering (matches
+    // the base engine's own `myNotifs()` scoping, per its file header).
+    notificationSlot: (
+      <NotificationBellPanel
+        notifs={NOTIFS}
+        currentRoleKey={currentUser.roleKey}
+        currentRoleLabel={currentUser.role}
+        onOpenCase={handleOpenCaseFromBell}
+      />
+    ),
   }
 
   function renderActiveScreen(): ReactNode {
     switch (screenId) {
       case 'home':
         return <Home topbar={topbarProps} onNavigate={navigateToScreen} onStartDemo={handleStartDemo} />
+      case 'onside.overview':
+        return <OnSideOverview topbar={topbarProps} onNavigate={navigateToScreen} />
       case 'onside.feed':
         return <OnSideFeed topbar={topbarProps} onNavigate={navigateToScreen} />
       case 'onside.documents':
         return <OnSideDocuments topbar={topbarProps} onNavigate={navigateToScreen} />
+      case 'onside.ownership':
+        return <OnSideOwnership topbar={topbarProps} onNavigate={navigateToScreen} />
       case 'studio.ask':
         return <StudioAsk topbar={topbarProps} onNavigate={navigateToScreen} />
       case 'studio.investment-design':
         return <InvestmentDesign topbar={topbarProps} onNavigate={navigateToScreen} />
       case 'studio.roadmap':
         return <Roadmap topbar={topbarProps} onNavigate={navigateToScreen} />
+      case 'reporting':
+        return <Reporting topbar={topbarProps} onNavigate={navigateToScreen} />
+      case 'settings.toggles':
+        return <SettingsToggles topbar={topbarProps} onNavigate={navigateToScreen} />
+      case 'settings.about':
+        return <SettingsAbout topbar={topbarProps} onNavigate={navigateToScreen} />
+      case 'cases':
+        // `key`: see file header "NOTIFICATION BELL" — forces a remount so
+        // `initialCaseId` is re-honored when a bell row is opened while
+        // Cases is already the active screen (Cases.tsx itself is
+        // unmodified; this is a pure parent-side composition technique).
+        return (
+          <Cases
+            key={pendingCaseId ?? 'cases-list'}
+            topbar={topbarProps}
+            onNavigate={navigateToScreen}
+            currentUser={currentUser}
+            {...(pendingCaseId !== null ? { initialCaseId: pendingCaseId } : {})}
+          />
+        )
       case 'board-deck':
         return <BoardDeck topbar={topbarProps} onDesignPartnerRequest={handleDesignPartnerRequest} />
       default:
