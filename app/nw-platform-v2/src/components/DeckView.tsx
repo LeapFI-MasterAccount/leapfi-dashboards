@@ -145,7 +145,8 @@ export function DeckView({ slides, initialIndex = 0, onIndexChange }: DeckViewPr
       onKeyDown={handleKeyDown}
       style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', height: '100%', boxSizing: 'border-box' }}
     >
-      <div role="status" aria-live="polite" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
+      {/* top/left pinned to 0 is load-bearing — see the invariant note on DataTable.tsx's `srOnlyStyle` */}
+      <div role="status" aria-live="polite" style={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
         {announcement}
       </div>
 

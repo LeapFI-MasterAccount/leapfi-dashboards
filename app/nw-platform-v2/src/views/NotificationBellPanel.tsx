@@ -194,8 +194,15 @@ const rowStyle: CSSProperties = { display: 'flex', alignItems: 'center', justify
 const rowTextWrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.15rem', minWidth: 0 };
 const rowTitleStyle: CSSProperties = { fontSize: '0.875rem', fontWeight: 600, color: 'var(--ink)' };
 const emptyStyle: CSSProperties = { margin: 0, padding: '0.75rem 0.625rem', fontSize: '0.8125rem', color: 'var(--ink2)' };
+// Visually-hidden recipe — `top`/`left` pinned to 0 is load-bearing;
+// see the invariant note on `DataTable.tsx`'s `srOnlyStyle`. Without it
+// an unpositioned absolute box falls back to its in-flow static
+// position, which can extend `html.scrollHeight` past whatever
+// scroll container this view is rendered inside.
 const srOnlyStyle: CSSProperties = {
   position: 'absolute',
+  top: 0,
+  left: 0,
   width: 1,
   height: 1,
   padding: 0,

@@ -125,7 +125,8 @@ export function PlanTable({ rows, onOpenPlay, loading = false }: PlanTableProps)
               Gate
             </th>
             <th scope="col" style={thStyle}>
-              <span className="sr-only" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+              {/* top/left pinned to 0 is load-bearing — see the invariant note on DataTable.tsx's `srOnlyStyle` */}
+              <span className="sr-only" style={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
                 Actions
               </span>
             </th>

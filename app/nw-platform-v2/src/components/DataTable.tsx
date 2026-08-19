@@ -122,8 +122,24 @@ export interface DataTableProps<T> {
   isRowClickable?: (row: T) => boolean;
 }
 
+/** Visually-hidden (sr-only) recipe — INVARIANT: `top`/`left` MUST be
+ * pinned to 0. Without them, an absolutely-positioned box with no
+ * positioned ancestor falls back to its in-flow "static position" —
+ * wherever it would have rendered as a normal-flow box — which can sit
+ * far down a scrolled container (e.g. deep inside a scrolling `<main>`)
+ * while still being sized by the *initial containing block* (the root),
+ * extending `html.scrollHeight` well past the visible app shell even
+ * though the box itself is a clipped 1px square nobody sees. Pinning
+ * `top:0; left:0` anchors the box at its containing block's origin
+ * instead — screen readers do not care where the box sits, and a 1px
+ * box at the origin can never itself extend page scroll. See also each
+ * screen's `MAIN_STYLE`, which now also carries `position: 'relative'`
+ * so any absolute descendant (this pattern or a future third-party one)
+ * resolves inside the scrolling region rather than against the root. */
 const srOnlyStyle: CSSProperties = {
   position: 'absolute',
+  top: 0,
+  left: 0,
   width: 1,
   height: 1,
   padding: 0,

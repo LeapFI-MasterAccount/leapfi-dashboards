@@ -300,10 +300,16 @@ const SCREEN_STYLE: CSSProperties = {
 };
 const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
 const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
+// `position: 'relative'` makes this scrolling region the containing
+// block for any absolutely-positioned descendant (sr-only spans today,
+// third-party overlays tomorrow) so an unpinned absolute box resolves
+// inside the scroll context instead of against the document root —
+// see the invariant note on DataTable.tsx's `srOnlyStyle`.
 const MAIN_STYLE: CSSProperties = {
   flex: '1 1 auto',
   minWidth: 0,
   overflowY: 'auto',
+  position: 'relative',
   boxSizing: 'border-box',
   padding: '2rem',
   display: 'flex',
@@ -339,7 +345,14 @@ const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column',
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.125rem', fontWeight: 700, color: 'var(--ink)' };
 const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
 const SR_ONLY_STYLE: CSSProperties = {
+  // Visually-hidden recipe — `top`/`left` pinned to 0 is load-bearing;
+  // see the invariant note on `DataTable.tsx`'s `srOnlyStyle`. Without
+  // it an unpositioned absolute box falls back to its in-flow static
+  // position, which can extend `html.scrollHeight` past this screen's
+  // scrolling `<main>` (now also `position: 'relative'`, same reason).
   position: 'absolute',
+  top: 0,
+  left: 0,
   width: 1,
   height: 1,
   padding: 0,

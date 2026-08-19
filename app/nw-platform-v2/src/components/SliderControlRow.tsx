@@ -133,8 +133,15 @@ const warnBannerStyle: CSSProperties = {
   padding: '0.625rem 0.8125rem',
 };
 
+// Visually-hidden recipe — `top`/`left` pinned to 0 is load-bearing;
+// see the invariant note on `DataTable.tsx`'s `srOnlyStyle`. Without it
+// an unpositioned absolute box falls back to its in-flow static
+// position, which can extend `html.scrollHeight` past whatever
+// scroll container this composite is rendered inside.
 const srOnly: CSSProperties = {
   position: 'absolute',
+  top: 0,
+  left: 0,
   width: 1,
   height: 1,
   padding: 0,

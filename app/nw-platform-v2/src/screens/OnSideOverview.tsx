@@ -253,10 +253,16 @@ const SCREEN_STYLE: CSSProperties = {
 };
 const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
 const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
+// `position: 'relative'` makes this scrolling region the containing
+// block for any absolutely-positioned descendant (sr-only spans today,
+// third-party overlays tomorrow) so an unpinned absolute box resolves
+// inside the scroll context instead of against the document root —
+// see the invariant note on DataTable.tsx's `srOnlyStyle`.
 const MAIN_STYLE: CSSProperties = {
   flex: '1 1 auto',
   minWidth: 0,
   overflowY: 'auto',
+  position: 'relative',
   boxSizing: 'border-box',
   padding: '2rem',
   display: 'flex',
@@ -324,7 +330,14 @@ function DomainPostureCard({ domain, onOpen }: { domain: OnsideDomain; onOpen: (
   return (
     <div style={{ ...CARD_STYLE, position: 'relative' }} data-lf-composite="domain-posture-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
-        <div style={{ minWidth: 0 }}>
+        {/* flex column + gap — matches the sibling composite convention
+            (SetupCard.tsx's `BODY_STYLE`) so the domain-name title
+            (button) and its "bodies · N obligations in scope" meta line
+            (Label) always render on distinct lines, never concatenated
+            onto one run of text (both are inline-level elements with no
+            `display` of their own — this wrapper's stacking is what
+            separates them). */}
+        <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
           <button
             type="button"
             onClick={() => onOpen(domain.key)}
@@ -555,7 +568,9 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
           </h1>
 
           <section aria-labelledby="onside-overview-kpis-heading" style={SECTION_STYLE}>
-            <h2 id="onside-overview-kpis-heading" style={{ ...SUBHEADING_STYLE, position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+            {/* Visually-hidden — `top`/`left` pinned to 0 is load-bearing;
+                see the invariant note on DataTable.tsx's `srOnlyStyle`. */}
+            <h2 id="onside-overview-kpis-heading" style={{ ...SUBHEADING_STYLE, position: 'absolute', top: 0, left: 0, width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
               Key figures
             </h2>
             <div style={KPI_GRID_STYLE}>
@@ -626,7 +641,9 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
           </section>
 
           <section aria-labelledby="onside-overview-cases-heading" style={SECTION_STYLE}>
-            <h2 id="onside-overview-cases-heading" style={{ ...SUBHEADING_STYLE, position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+            {/* Visually-hidden — `top`/`left` pinned to 0 is load-bearing;
+                see the invariant note on DataTable.tsx's `srOnlyStyle`. */}
+            <h2 id="onside-overview-cases-heading" style={{ ...SUBHEADING_STYLE, position: 'absolute', top: 0, left: 0, width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
               Cases and approvals
             </h2>
             <SetupCard

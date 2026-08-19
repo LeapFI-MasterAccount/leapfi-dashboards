@@ -153,10 +153,16 @@ const SIDEBAR_REGION_STYLE: CSSProperties = {
   flex: '0 0 240px',
 };
 
+// `position: 'relative'` makes this scrolling region the containing
+// block for any absolutely-positioned descendant (sr-only spans today,
+// third-party overlays tomorrow) so an unpinned absolute box resolves
+// inside the scroll context instead of against the document root —
+// see the invariant note on DataTable.tsx's `srOnlyStyle`.
 const MAIN_STYLE: CSSProperties = {
   flex: '1 1 auto',
   minWidth: 0,
   overflowY: 'auto',
+  position: 'relative',
   boxSizing: 'border-box',
   padding: '2rem',
   display: 'flex',

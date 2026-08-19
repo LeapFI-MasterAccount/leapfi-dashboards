@@ -240,7 +240,15 @@ const headerButtonStyle: CSSProperties = {
 };
 
 const nameStyle: CSSProperties = { fontSize: '0.9375rem', fontWeight: 700, color: 'var(--ink)' };
-const scopeStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)', marginTop: '0.15rem' };
+const scopeStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
+/** Title + meta wrapper — matches the sibling composite convention
+ * (SetupCard.tsx's `BODY_STYLE`: flex column + gap) so the domain name
+ * and its "bodies · N obligations in scope" meta line always render on
+ * distinct lines, gapped, never concatenated onto one run of text. Both
+ * children are plain inline `<span>`s (nameStyle/scopeStyle carry no
+ * `display`), so the stacking here — not their own display value — is
+ * what keeps them apart. */
+const titleMetaWrapStyle: CSSProperties = { flex: '1 1 auto', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.15rem' };
 const bodyWrapStyle: CSSProperties = {
   borderTop: '1px solid var(--border)',
   padding: '1rem 1.25rem 1.25rem',
@@ -336,7 +344,7 @@ export function DomainsAccordion({ domains, expandedKeys, onToggle, pendingScrol
               aria-controls={open ? bodyId : undefined}
               onClick={() => onToggle(domain.key)}
             >
-              <span style={{ flex: '1 1 auto', minWidth: 0 }}>
+              <span style={titleMetaWrapStyle}>
                 <span id={headingId} style={nameStyle}>
                   {domain.name}
                 </span>

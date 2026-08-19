@@ -167,8 +167,15 @@ const panelStyle: CSSProperties = {
   background: 'var(--panel)',
 };
 const noteStyle: CSSProperties = { flexBasis: '100%', marginTop: '0.25rem' };
+// Visually-hidden recipe — `top`/`left` pinned to 0 is load-bearing;
+// see the invariant note on `DataTable.tsx`'s `srOnlyStyle`. Without it
+// an unpositioned absolute box falls back to its in-flow static
+// position, which can extend `html.scrollHeight` past whatever
+// scroll container this view is rendered inside.
 const srOnlyStyle: CSSProperties = {
   position: 'absolute',
+  top: 0,
+  left: 0,
   width: 1,
   height: 1,
   padding: 0,
