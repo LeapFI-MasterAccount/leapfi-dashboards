@@ -51,13 +51,59 @@
  * dispatch's allowlist — flagged for the Button.tsx-owning lane rather than
  * reached-around by editing a file outside this dispatch's scope.
  *
- * Not implemented, deliberately: click-outside-to-close. Nothing in the C5
- * row or its a11y baseline names it, and the two disclosure interactions
- * the baseline does name (the trigger button toggle, and — per the
- * STOP-item above — Escape-to-close) are both implemented; adding
- * additional interaction surface beyond what the spec asks for is exactly
- * the kind of unrequested-deliverable scope creep the dispatch rules warn
- * against.
+ * T5 FIX (live defect — "huge floating tower of stacked pill Chips
+ * overlapping page content", reported against OnSideFeed's "Regulatory
+ * feed" screen, Source group, 15 SRC_ROWS options) — this file's panel
+ * previously had no `maxWidth`, no `maxHeight`/scroll, and laid its
+ * (44px-tall, pill-shaped) option Chips out with `flexWrap: 'wrap'` and
+ * no width tied to the trigger that opened it: with 12+ options that
+ * produced exactly the reported "tower" — a wide-open, unbounded box that
+ * could sprawl over or past unrelated page content. Two changes, both
+ * scoped to this file (+ an additive, backward-compatible `density` prop
+ * on Chip, primitives/Chip.tsx):
+ *   1. Panel geometry — `panelStyle` now lays options out as a vertical,
+ *      non-wrapping menu list (`flexDirection: 'column'`), width
+ *      `minWidth: '100%'` (100% of `groupWrapStyle`'s content box, which
+ *      resolves to the trigger's own rendered width — the trigger is the
+ *      only in-flow child once the panel is excluded from flow by its own
+ *      `position: absolute`, so this is a real per-group tie to the
+ *      trigger that opened it, not a fixed magic number) capped at
+ *      `maxWidth: 'min(22rem, 90vw)'`, and `maxHeight: '24rem'` with
+ *      `overflowY: 'auto'` so a 12+-option list scrolls internally
+ *      instead of growing the box without bound. `zIndex` raised 10→50 to
+ *      match every other utility-disclosure panel already shipped in this
+ *      codebase (`Topbar.tsx` ProfileMenu, `NotificationBellPanel.tsx`) —
+ *      previously the odd one out at 10, which is also part of "correct
+ *      ... z-order" for a panel meant to sit above ordinary page content.
+ *      `maxHeight`/`overflowY`/width-cap are lifted directly from
+ *      `NotificationBellPanel.tsx`'s already-shipped `panelStyle` (same
+ *      C4-sibling utility-disclosure shape); `padding: '0.375rem'` and
+ *      `borderRadius: 'var(--radius-sm, 6px)'` likewise match that panel
+ *      and `Topbar.tsx`'s ProfileMenu list container exactly.
+ *   2. Row density — panel options now render `<Chip density="compact">`
+ *      (new, additive, default-`'default'` prop on Chip; every other Chip
+ *      caller in this codebase is unmodified) instead of the 44px
+ *      primary-weight pill: a 32px-tall, left-aligned, full-width menu row
+ *      matching `Topbar.tsx`'s `MenuButtonItem` / `NotificationBellPanel`
+ *      row precedent and the v1 reference's own compact filter-chip
+ *      density (`leapfi-platform.html`, pin 1c230fe, `.dchip`). See
+ *      Chip.tsx's own file header for the full sourcing and the contrast
+ *      math on why `compact` hover uses `--bg2` (never `--panel`).
+ * Both changes are made once, here and in Chip.tsx, so all 7 FilterBar
+ * consumers get the fix uniformly — none of the 7 needed a source change
+ * of their own (`groups` prop is unchanged; no consumer had to adapt).
+ *
+ * Click-outside-to-close — REVISED from "deliberately not implemented"
+ * (this file's earlier state) to implemented, matching the dispatch's
+ * explicit requirement and this codebase's own established disclosure
+ * precedent: `Topbar.tsx`'s ProfileMenu and `NotificationBellPanel.tsx`
+ * both already close on an outside `mousedown` in addition to Escape (the
+ * latter's own header even calls it "Port of ProfileMenu's own open/close
+ * effect"), so a C5 "proper ... disclosure" sitting beside two sibling
+ * disclosures that both already behave this way was the actual gap, not
+ * scope creep beyond it. Implemented identically below: a `mousedown`
+ * listener, active only while a group is open, that closes on any target
+ * outside both the open panel and its own trigger.
  */
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent } from 'react';
@@ -95,18 +141,42 @@ const groupWrapStyle: CSSProperties = {
   flexDirection: 'column',
 };
 
+// Geometry contract — see file header "T5 FIX" note for full sourcing.
+// `minWidth: 'max(100%, 14rem)'` ties the panel to the trigger that
+// opened it (the `100%` term — 100% of `groupWrapStyle`'s content box,
+// which, panel excluded from flow by its own `position: absolute`,
+// resolves to the trigger's own rendered width) while guaranteeing a
+// readable floor for short triggers with long option labels (the `14rem`
+// term — this file's own pre-fix value, kept as the floor rather than
+// invented fresh). AMBIGUITY CAUGHT LIVE, not just reasoned about: an
+// earlier version of this fix used a bare `minWidth: '100%'` with no
+// floor and, verified against the running app (OnSideFeed's real "Source"
+// trigger — a short, unselected "Source" label), rendered a panel exactly
+// as narrow as that trigger, wrapping every long source name onto 3-4
+// lines each — a narrower but equally tall "tower," not the fix. `max()`
+// closes that gap: whichever of the two is larger wins, so a wide trigger
+// (e.g. "Source (5)") still genuinely constrains the panel, and a narrow
+// one never crushes long option text. `maxWidth` then caps the other end
+// so a long option label can never sprawl the panel past a sane menu
+// width or off a narrow viewport; `maxHeight` + `overflowY` bound a
+// 12+-option list to internal scroll instead of unbounded vertical growth
+// (both values match `NotificationBellPanel.tsx` panelStyle exactly —
+// same C4-sibling utility-disclosure shape).
 const panelStyle: CSSProperties = {
   position: 'absolute',
   top: 'calc(100% + 0.4rem)',
   left: 0,
-  zIndex: 10,
+  zIndex: 50,
   display: 'flex',
-  flexWrap: 'wrap',
-  gap: '0.5rem',
-  minWidth: '14rem',
+  flexDirection: 'column',
+  gap: '0.125rem',
+  minWidth: 'max(100%, 14rem)',
+  maxWidth: 'min(22rem, 90vw)',
+  maxHeight: '24rem',
+  overflowY: 'auto',
   boxSizing: 'border-box',
-  padding: '0.75rem',
-  borderRadius: 'var(--radius-md, 10px)',
+  padding: '0.375rem',
+  borderRadius: 'var(--radius-sm, 6px)',
   border: '1px solid var(--border)',
   background: 'var(--panel)',
 };
@@ -162,6 +232,27 @@ export function FilterBar({ groups }: FilterBarProps) {
     const group = groups.find((candidate) => candidate.id === groupId);
     if (group) setAnnouncement(`${group.label} filters expanded`);
   };
+
+  // Outside-click-to-close (T5 fix; see file header "Click-outside-to-
+  // close" note) — mirrors Topbar.tsx's ProfileMenu / NotificationBellPanel
+  // .tsx's own identical effect: active only while a group is open, closes
+  // on any pointerdown whose target lands outside both the open panel and
+  // its own trigger. No focus restore here, matching both precedents —
+  // Escape (the panel's own onKeyDown, below) is the dismiss path that
+  // restores focus; an outside click has already moved the user's
+  // attention elsewhere.
+  useEffect(() => {
+    if (!openGroupId) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const panel = panelRefs.current[openGroupId];
+      const trigger = triggerWrapRefs.current[openGroupId];
+      if (panel?.contains(target) || trigger?.contains(target)) return;
+      closeGroup(openGroupId, false);
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, [openGroupId]);
 
   const handleTriggerPress = (groupId: string) => {
     if (openGroupId === groupId) {
@@ -219,6 +310,7 @@ export function FilterBar({ groups }: FilterBarProps) {
                     key={option.id}
                     text={option.count !== undefined ? `${option.label} (${option.count})` : option.label}
                     variant="filter"
+                    density="compact"
                     selected={group.selectedIds.includes(option.id)}
                     onPress={() => group.onToggle(option.id)}
                   />
