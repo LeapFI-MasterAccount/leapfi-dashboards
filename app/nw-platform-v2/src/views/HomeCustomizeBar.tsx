@@ -11,6 +11,35 @@
  * instead of data filtering (this dispatch's brief: "Button (ghost,
  * trigger — same disclosure shape FilterBar already uses)").
  *
+ * T5 PARITY FIX — that "same disclosure shape" claim went stale, then was
+ * restored true. `FilterBar.tsx`'s own T5 dispatch (live "tower" defect:
+ * unbounded panel, `flexWrap: 'wrap'`, no `maxHeight`/scroll, no width tie
+ * to the trigger, `zIndex` 10) tightened the shared C4/C5 disclosure-panel
+ * contract; this file's independently hand-rolled copy of the same panel
+ * shape carried the identical pre-fix defect and did not move with it (a
+ * prior dispatch found the drift and flagged it as a STOP-item — same
+ * symptom, different file). This dispatch brings `panelStyle` back onto
+ * `FilterBar.tsx`'s exact current contract, ported verbatim: column menu
+ * (`flexDirection: 'column'`, no more `flexWrap: 'wrap'`), width tied to
+ * the trigger and capped (`minWidth: 'max(100%, 14rem)'` /
+ * `maxWidth: 'min(22rem, 90vw)'`), height-bounded with internal scroll
+ * (`maxHeight: '24rem'` + `overflowY: 'auto'`), `zIndex` 10→50 to match
+ * every other utility-disclosure panel, `Chip density="compact"` on the 5
+ * panel-toggle option rows (not the "Clear all"/"Reset layout" command
+ * chips — those stay the original `default`-density pill, matching
+ * `FilterBar.tsx`'s own scoping of `compact` to option-toggle rows only),
+ * and outside-click-to-close added alongside the pre-existing Escape
+ * handling (see `toggleOpen`/the new pointerdown effect below). One
+ * addition beyond a literal port: `barWrapStyle` gained
+ * `alignSelf: 'flex-start'` — see that const's own comment for why it is
+ * load-bearing here in a way `FilterBar.tsx`'s `groupWrapStyle` never
+ * needed (this file's root sits in a *column*-direction flex parent in
+ * `Home.tsx`, where width is the stretch-by-default *cross* axis, unlike
+ * `FilterBar.tsx`'s *row*-direction parent, where width shrink-wraps for
+ * free on the main axis) — without it the trigger-tied `100%` width term
+ * would resolve against the full content-column width instead, silently
+ * recreating the tower defect on a different axis.
+ *
  * "kpis" (`HP`'s first entry, "Top metrics") IS `Home.tsx`'s existing,
  * byte-identical StatCard row — the hard constraint this whole batch is
  * built under ("never touch that existing top-of-page region... demo-flow
@@ -90,11 +119,17 @@
  * Irreversibility gate: N/A — every action here is a reversible display
  * preference, not a claim about a server-side operation's completion.
  *
- * STOP-item — no executable test run: matches every sibling file in this
- * worktree — no test runner installed (`package.json`, outside this
- * dispatch's ALLOWLIST). Verified via `npx tsc --noEmit` (strict,
- * `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`) against the
- * whole `src/` tree instead.
+ * Test coverage — the "no executable test run" STOP-item this header
+ * previously carried is now stale: a test runner (vitest) is installed and
+ * this file has an executable suite,
+ * `src/__tests__/shell/home-customize-bar-t5-parity-fix.test.tsx`, mirroring
+ * `filter-bar-t5-tower-fix.test.tsx`'s own geometry-contract-pin structure
+ * (style-value assertions, not measured pixel layout — jsdom has no layout
+ * engine, same doctrine as every other geometry pin in this codebase) plus
+ * a commit-semantics regression check confirming `HOME_ORDER`/`onChange`
+ * behavior is unchanged by this restyle. Also verified via
+ * `npx tsc --noEmit` (strict, `exactOptionalPropertyTypes`,
+ * `noUncheckedIndexedAccess`) against the whole `src/` tree.
  */
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent } from 'react';
@@ -148,25 +183,57 @@ export interface HomeCustomizeBarProps {
   onChange: (nextVisibleKeys: readonly HomePanelKey[]) => void;
 }
 
-const barWrapStyle: CSSProperties = { position: 'relative', display: 'flex', flexDirection: 'column' };
+// `alignSelf: 'flex-start'` — T5 PARITY FIX, see file header. This bar's
+// root is rendered as a direct child of `Home.tsx`'s `MAIN_STYLE`
+// (`display:'flex', flexDirection:'column'`, no `alignItems` override, so
+// the default `stretch` applies). Without opting out, `barWrapStyle` would
+// be stretched to the *full content-column width* by that ancestor — unlike
+// `FilterBar.tsx`'s `groupWrapStyle`, which shrink-wraps "for free" because
+// its parent (`barStyle`) is a *row*-direction flex container, where width
+// is the main axis and default `flex: 0 1 auto` already shrink-wraps
+// without needing any extra property. Here width is the *cross* axis, so
+// shrink-wrap has to be requested explicitly. Left unfixed, the panel's
+// `minWidth: 'max(100%, 14rem)'` below would resolve its `100%` term
+// against that full-column width — and per CSS's min/max resolution order
+// (min-width wins over a conflicting max-width), the panel would render at
+// that full width, reproducing the exact unbounded-sprawl "tower" this
+// whole fix exists to prevent, just on a different axis.
+const barWrapStyle: CSSProperties = { position: 'relative', display: 'flex', flexDirection: 'column', alignSelf: 'flex-start' };
+
+// Geometry contract — ported verbatim from `FilterBar.tsx`'s own
+// `panelStyle` (see that file's "T5 FIX" header note for full sourcing);
+// this file previously carried an independent, hand-rolled copy of the same
+// pre-fix defect (no `maxHeight`/`overflowY`, `flexWrap: 'wrap'`, a bare
+// `minWidth: '20rem'` untied to the trigger, `zIndex: 10`). Column menu
+// list, width tied to the trigger (the `100%` term, real here because of
+// `barWrapStyle`'s `alignSelf` above) with a `14rem` readable floor, capped
+// `maxWidth`, `maxHeight` + `overflowY` scroll instead of unbounded growth,
+// `zIndex` raised to match every other utility-disclosure panel
+// (`Topbar.tsx` ProfileMenu, `NotificationBellPanel.tsx`, `FilterBar.tsx`).
 const panelStyle: CSSProperties = {
   position: 'absolute',
   top: 'calc(100% + 0.4rem)',
   left: 0,
-  zIndex: 10,
+  zIndex: 50,
   display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'center',
+  flexDirection: 'column',
   gap: '0.5rem',
-  minWidth: '20rem',
-  maxWidth: '36rem',
+  minWidth: 'max(100%, 14rem)',
+  maxWidth: 'min(22rem, 90vw)',
+  maxHeight: '24rem',
+  overflowY: 'auto',
   boxSizing: 'border-box',
   padding: '0.875rem',
   borderRadius: 'var(--radius-md, 10px)',
   border: '1px solid var(--border)',
   background: 'var(--panel)',
 };
-const noteStyle: CSSProperties = { flexBasis: '100%', marginTop: '0.25rem' };
+// `flexBasis: '100%'` (old) forced the note block onto its own line under
+// the previous `flexWrap: 'wrap'` row layout; under the new column layout
+// every child is already on its own line, and `flexBasis` governs the
+// *main* axis (height) in a column container, so the old value is not just
+// unneeded but actively wrong there — dropped.
+const noteStyle: CSSProperties = { marginTop: '0.25rem' };
 // Visually-hidden recipe — `top`/`left` pinned to 0 is load-bearing;
 // see the invariant note on `DataTable.tsx`'s `srOnlyStyle`. Without it
 // an unpositioned absolute box falls back to its in-flow static
@@ -215,6 +282,25 @@ export function HomeCustomizeBar({ roleKey, roleFirstName, visibleKeys, onChange
     }
   }
 
+  // Outside-click-to-close — T5 PARITY FIX, ported verbatim from
+  // FilterBar.tsx's own identical effect (see that file's header "Click-
+  // outside-to-close" note): active only while the panel is open, closes on
+  // any pointerdown whose target lands outside both the panel and its own
+  // trigger. No focus restore here, matching FilterBar.tsx / ProfileMenu /
+  // NotificationBellPanel.tsx precedent — Escape (handlePanelKeyDown, below)
+  // is the dismiss path that restores focus; an outside click has already
+  // moved the user's attention elsewhere.
+  useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (panelRef.current?.contains(target) || triggerWrapRef.current?.contains(target)) return;
+      closeBar(false);
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, [open]);
+
   function handlePanelKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
     if (event.key === 'Escape') {
       event.stopPropagation();
@@ -257,7 +343,16 @@ export function HomeCustomizeBar({ roleKey, roleFirstName, visibleKeys, onChange
           {HOME_PANEL_DEFS.map(({ key, label }) => {
             const pos = visibleKeys.indexOf(key);
             const shown = pos >= 0;
-            return <Chip key={key} text={shown ? `${pos + 1}. ${label}` : label} variant="filter" selected={shown} onPress={() => togglePanel(key)} />;
+            return (
+              <Chip
+                key={key}
+                text={shown ? `${pos + 1}. ${label}` : label}
+                variant="filter"
+                density="compact"
+                selected={shown}
+                onPress={() => togglePanel(key)}
+              />
+            );
           })}
           <Chip text="Clear all" variant="suggestion" onPress={clearAll} />
           <Chip text="Reset layout" variant="suggestion" onPress={resetLayout} />
