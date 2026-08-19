@@ -16,11 +16,18 @@
  * KPI literals below are sums over the verbatim-ported base DOMAINS
  * values (docs: 517, appl: 488, met: 333) — deriving them any other way
  * would test the implementation against itself.
+ *
+ * B3 dispatch: added direct-prop coverage of the screen's migrated
+ * 'domain'-kind `deepLink`/`onDeepLinkConsumed` consumption (see
+ * `OnSideOverview.tsx`'s own header "DEEP-LINK CONTRACT MIGRATION"). The
+ * end-to-end App.tsx path (bell→deepLink→this screen, through the real
+ * shell) stays pinned separately in `src/__tests__/shell/deep-link.test.tsx`.
  */
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OnSideOverview } from '../../screens/OnSideOverview'
+import type { DeepLinkTarget } from '../../App'
 import { DOMAINS, SRC_ITEMS } from '../../data/onside'
 import { makeTopbarProps } from './helpers'
 
@@ -85,5 +92,37 @@ describe('OnSide overview · Cases entry point (base 3069–3084 osOverview; add
 
     await user.click(screen.getByRole('button', { name: /Cases · approvals/ }))
     expect(onNavigate).toHaveBeenCalledWith('cases')
+  })
+})
+
+describe("OnSide overview · 'domain' deep-link consumption (B3 dispatch — migrated off the legacy deepLinkDomainKey prop onto App.tsx's deepLink/onDeepLinkConsumed contract)", () => {
+  it('a domain deep link force-expands and focuses the matching accordion row, and consumes its nonce (base onsideShow domKey branch, source 3021–3054)', async () => {
+    const onDeepLinkConsumed = vi.fn()
+    const deepLink: DeepLinkTarget = { screen: 'onside.overview', kind: 'domain', id: 'mrm', nonce: 1 }
+    render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} deepLink={deepLink} onDeepLinkConsumed={onDeepLinkConsumed} />)
+
+    const rowButton = screen.getByRole('button', { name: /Model Risk Management/, expanded: true })
+    expect(rowButton).toHaveAttribute('aria-expanded', 'true')
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(1)
+
+    // The 80ms scroll+focus handoff (base setTimeout(...,80), source 3052).
+    await waitFor(() => {
+      const row = document.querySelector('[data-lf-composite="domains-accordion-row"][data-state="open"]')
+      expect(row).toHaveFocus()
+    })
+  })
+
+  it('a deepLink of a different kind is ignored — never mistaken for a domain press', () => {
+    const onDeepLinkConsumed = vi.fn()
+    const deepLink: DeepLinkTarget = { screen: 'onside.overview', kind: 'obligation', id: 'mrm:MRM-08', nonce: 1 }
+    render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} deepLink={deepLink} onDeepLinkConsumed={onDeepLinkConsumed} />)
+
+    expect(screen.queryByRole('button', { name: /Model Risk Management/, expanded: true })).not.toBeInTheDocument()
+    expect(onDeepLinkConsumed).not.toHaveBeenCalled()
+  })
+
+  it('the legacy deepLinkDomainKey prop alone no longer drives any behavior (accepted only for App.tsx compile compatibility — see file header)', () => {
+    render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} deepLinkDomainKey="mrm" />)
+    expect(screen.queryByRole('button', { name: /Model Risk Management/, expanded: true })).not.toBeInTheDocument()
   })
 })

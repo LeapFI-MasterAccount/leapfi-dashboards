@@ -35,12 +35,23 @@
  * StatValue's `aria-label` attribute, not to added visible text nodes, and
  * AT support for announcing attribute-only changes inside a live region
  * without `aria-atomic` is inconsistent across screen readers.
+ *
+ * CLICK-AFFORDANCE STANDARD (D19b, `affordance_standard.md` §2.2, §5 item
+ * 4): optional `onPress` adds a clickable variant, mirroring
+ * `SetupCard.tsx`'s already-shipped `interactive` variant state-for-state
+ * (real `<button type="button">`, `--bg2`/`--accent` border on hover+active,
+ * `--focus-ring` on focus, accent `chevron-right` at rest — never
+ * hover-gated, per §0) so the two tile types read as one visual language.
+ * Omitting `onPress` renders exactly as before this change: `role="group"`
+ * div, no cursor/hover/chevron (§2.2's "honest" non-clickable contrast,
+ * the tile-level twin of DataTable's §1.3 rule) — backward compatible.
  */
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { StatValue } from './primitives/StatValue';
 import type { StatValueProps, StatValueState } from './primitives/StatValue';
 import { Label } from './primitives/Label';
+import { Icon } from './primitives/Icon';
 
 export type StatCardState = 'loading' | 'loaded' | 'updating';
 
@@ -52,6 +63,9 @@ export interface StatCardProps {
   value: string | number;
   unit?: string;
   state?: StatCardState;
+  /** Clickable variant (§2.2, §5 item 4). Omit for the non-clickable
+   * `role="group"` tile (today's only shape). */
+  onPress?: () => void;
 }
 
 const STATE_TO_STATVALUE: Record<StatCardState, StatValueState> = {
@@ -72,8 +86,29 @@ const cardStyle: CSSProperties = {
   boxSizing: 'border-box',
 };
 
-export function StatCard({ label, value, unit, state = 'loaded' }: StatCardProps) {
+const interactiveCardBaseStyle: CSSProperties = {
+  ...cardStyle,
+  textAlign: 'left',
+  font: 'inherit',
+  cursor: 'pointer',
+  outline: 'none',
+  transition: 'background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease',
+};
+
+const labelRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: '0.5rem',
+  width: '100%',
+};
+
+export function StatCard({ label, value, unit, state = 'loaded', onPress }: StatCardProps) {
   const labelId = useId();
+  const [hover, setHover] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [active, setActive] = useState(false);
+  const interactive = Boolean(onPress);
 
   // Built conditionally (rather than `unit={unit}` directly) because the
   // project's `exactOptionalPropertyTypes` tsconfig setting treats an
@@ -88,6 +123,61 @@ export function StatCard({ label, value, unit, state = 'loaded' }: StatCardProps
     ...(unit !== undefined ? { unit } : {}),
   };
 
+  // Non-interactive shape is untouched (same DOM as before this standard)
+  // — the label is not wrapped in the flex row used to lay out the
+  // trailing chevron, so a screen not passing `onPress` renders identically.
+  const labelBlock = interactive ? (
+    <span style={labelRowStyle}>
+      <span id={labelId}>
+        <Label text={label} variant="eyebrow" />
+      </span>
+      <Icon name="chevron-right" size={16} tone="interactive" />
+    </span>
+  ) : (
+    <span id={labelId}>
+      <Label text={label} variant="eyebrow" />
+    </span>
+  );
+
+  const body = (
+    <>
+      {labelBlock}
+      <div aria-live="polite" aria-atomic="true">
+        <StatValue {...statValueProps} />
+      </div>
+    </>
+  );
+
+  if (interactive) {
+    // Mirrors SetupCard.tsx's `interactive` variant state-for-state (§2.2).
+    return (
+      <button
+        type="button"
+        data-lf-composite="stat-card"
+        data-state={state}
+        aria-labelledby={labelId}
+        onClick={onPress}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => {
+          setHover(false);
+          setActive(false);
+        }}
+        onMouseDown={() => setActive(true)}
+        onMouseUp={() => setActive(false)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{
+          ...interactiveCardBaseStyle,
+          background: hover || active ? 'var(--bg2)' : 'var(--panel)',
+          borderColor: focused ? 'transparent' : hover || active ? 'var(--accent)' : 'var(--border)',
+          boxShadow: focused ? 'var(--focus-ring)' : 'none',
+        }}
+      >
+        {body}
+      </button>
+    );
+  }
+
   return (
     <div
       role="group"
@@ -96,12 +186,7 @@ export function StatCard({ label, value, unit, state = 'loaded' }: StatCardProps
       data-state={state}
       style={cardStyle}
     >
-      <span id={labelId}>
-        <Label text={label} variant="eyebrow" />
-      </span>
-      <div aria-live="polite" aria-atomic="true">
-        <StatValue {...statValueProps} />
-      </div>
+      {body}
     </div>
   );
 }

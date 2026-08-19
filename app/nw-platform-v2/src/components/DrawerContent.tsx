@@ -23,8 +23,31 @@
  * `IconName` type only). Per dispatch instructions these may reference
  * sibling-dispatch files by the spec's naming even where this dispatch
  * does not itself build them — integration is checked later.
+ *
+ * CLICK-AFFORDANCE STANDARD (D19b, `affordance_standard.md` §3, §5 items
+ * 6–7):
+ *  - `DrawerContentField.onPress` (§3.2) renders the field's `<dd>` value
+ *    as an inline navigating-link — `--accent` text, no button chrome,
+ *    trailing `arrow-right` Icon (the "leaves the current drawer subject"
+ *    glyph, distinct from `chevron-right`'s in-place-reveal meaning),
+ *    underline added on hover as the one legitimate hover-only signal
+ *    this standard keeps (§0: legitimate because the accent color is
+ *    already present at rest). Implemented as `<button type="button">`
+ *    styled as inline text, not `<a>`, since the destination is in-app
+ *    state, not a URL — this is what keeps it keyboard-operable and
+ *    `--focus-ring`-eligible for free (§3.2). A field without `onPress`
+ *    renders exactly as before this change: plain text, no button —
+ *    backward compatible.
+ *  - `MAX_PRIMARY_ACTIONS` (§5 item 7) makes R3 ("never two competing
+ *    primaries") a dev-time build-time-adjacent guarantee for the footer
+ *    `actions` slot: a `console.error` fires when more than one action
+ *    carries `variant: 'primary'`. This is a diagnostic, not a filter —
+ *    it does not mutate what renders, so a violating screen's actions
+ *    still all render (loudly flagged) rather than being silently
+ *    dropped, which would hide the authoring bug instead of surfacing it.
  */
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
+import { Icon } from './primitives/Icon';
 import type { IconName } from './primitives/Icon';
 import { Button } from './primitives/Button';
 import type { ButtonVariant } from './primitives/Button';
@@ -45,6 +68,11 @@ export type DrawerContentKind = 'signal' | 'play' | 'doc' | 'source';
 export interface DrawerContentField {
   label: string;
   value: string;
+  /** Inline navigating-link treatment (§3.2) — a cross-reference the
+   * reader can optionally follow while looking at the current field,
+   * never the drawer's main verb (that stays a footer `actions` Button,
+   * §3.1). Omit for plain text (today's only shape). */
+  onPress?: () => void;
 }
 
 export interface DrawerContentTag {
@@ -72,7 +100,78 @@ export interface DrawerContentProps {
 
 const SKELETON_ROW_COUNT = 4;
 
+/** §5 item 7 — "never two competing primaries" (R3), enforced structurally
+ * for the footer `actions` slot rather than left as a convention
+ * implementers have to remember. Diagnostic only (see file header note):
+ * fires `console.error` and lets the offending render proceed, so the bug
+ * is loud in dev without the component silently deciding which primary to
+ * drop. `import.meta.env.DEV` gates it out of production bundles. */
+const MAX_PRIMARY_ACTIONS = 1;
+
+function assertAtMostOnePrimaryAction(actions: DrawerContentAction[] | undefined): void {
+  if (!actions || !import.meta.env.DEV) return;
+  const primaryCount = actions.filter((action) => action.variant === 'primary').length;
+  if (primaryCount > MAX_PRIMARY_ACTIONS) {
+    console.error(
+      `DrawerContent: at most ${MAX_PRIMARY_ACTIONS} action may carry variant="primary" (received ${primaryCount}). ` +
+        'Two competing primary actions confuse which is the drawer\'s own verb — affordance_standard.md §3.1 (R3).',
+    );
+  }
+}
+
+interface DrawerContentFieldValueProps {
+  value: string;
+  onPress?: () => void;
+}
+
+/** Local subcomponent (not exported), same reasoning as the sibling
+ * per-row/per-cell subcomponents elsewhere in this dispatch: hover/focus
+ * need a real per-field hook instance, which a plain `.map()` callback in
+ * the parent's render body cannot provide without violating the rules of
+ * hooks. */
+function DrawerContentFieldValue({ value, onPress }: DrawerContentFieldValueProps) {
+  const [hover, setHover] = useState(false);
+  const [focused, setFocused] = useState(false);
+
+  if (!onPress) {
+    // Backward compatible: no `onPress` renders exactly as before this
+    // standard — plain text, no button chrome.
+    return <>{value}</>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onPress}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.25rem',
+        background: 'transparent',
+        border: 'none',
+        padding: 0,
+        margin: 0,
+        font: 'inherit',
+        color: 'var(--accent)',
+        cursor: 'pointer',
+        textDecoration: hover ? 'underline' : 'none',
+        borderRadius: 'var(--radius-xs, 4px)',
+        boxShadow: focused ? 'var(--focus-ring)' : 'none',
+      }}
+    >
+      {value}
+      <Icon name="arrow-right" size={16} tone="interactive" />
+    </button>
+  );
+}
+
 export function DrawerContent({ kind, fields, tags, actions, loading = false }: DrawerContentProps) {
+  assertAtMostOnePrimaryAction(actions);
+
   return (
     <div data-lf-composite="drawer-content" data-kind={kind} data-state={loading ? 'loading' : 'loaded'}>
       {tags && tags.length > 0 ? (
@@ -122,7 +221,9 @@ export function DrawerContent({ kind, fields, tags, actions, loading = false }: 
               <dt style={{ margin: 0 }}>
                 <Label text={field.label} variant="body-secondary" />
               </dt>
-              <dd style={{ margin: 0, color: 'var(--ink)', fontSize: '0.9375rem', alignSelf: 'start' }}>{field.value}</dd>
+              <dd style={{ margin: 0, color: 'var(--ink)', fontSize: '0.9375rem', alignSelf: 'start' }}>
+                <DrawerContentFieldValue value={field.value} {...(field.onPress ? { onPress: field.onPress } : {})} />
+              </dd>
             </Fragment>
           ))}
         </dl>

@@ -50,17 +50,77 @@
  * is a plain string (`DrawerContentField.value: string`, out of this
  * dispatch's allowlist to widen), so the field stays the joined text
  * summary, but the composite's `actions` slot (real `Button`s, its own
- * documented vocabulary) now carries one action per touch — routed by
- * `onNavigate` to the touch's home screen (`obl`/`dom` → `onside.overview`,
- * `doc` → `onside.documents`) — plus the "Open the full lifecycle →"
- * action (`onside.feed`). This is generic nav, not a deep-link-with-payload
- * (`HomePanels.tsx` has no `onDeepLink` seam: `Home.tsx`, the only caller,
- * is outside this dispatch's allowlist and does not thread App.tsx's
- * NAV-PAYLOAD contract through) — every action lands on the right SCREEN,
- * not (yet) scrolled/expanded to the specific item, same honest partial-
- * fidelity pattern `OnSideOverview.tsx`'s own STOP-items already use
- * elsewhere in this codebase. Flagged for whichever dispatch next holds
- * `Home.tsx`: thread `onDeepLink` down so these can target the exact item.
+ * documented vocabulary) now carries one action per touch, PLUS "Open the
+ * full lifecycle →".
+ *
+ * SEAM 1 RESOLVED (B3 dispatch, closing this note's own earlier STOP-item):
+ * `Home.tsx` now threads App.tsx's NAVIGATION-WITH-PAYLOAD contract's FIRE
+ * half down to this file as an optional `onDeepLink` prop
+ * (`HomePanelsProps`, below) — see `Home.tsx`'s own header for why only
+ * `onDeepLink`, not the full `DeepLinkScreenProps` triple, is threaded
+ * (this component is never itself a deep-link target). Every action below
+ * that has a real per-item id now fires `onDeepLink` via the local
+ * `fireOrDeepLink` helper when a caller has wired it, falling back to the
+ * identical plain `onNavigate(screen)` this file always used when it has
+ * not — so every pre-existing base-anchor test in `home-panels.test.tsx`
+ * (none of which pass `onDeepLink`) keeps its exact previous assertions,
+ * never a regression:
+ *   - PostureBand's row "Open →" — `kind: 'domain'`, id = the row's own
+ *     domain key (base `onsideShow('dom-'+d.key)`, source 4217) — now
+ *     targets the EXACT domain, not just the Overview screen; delivers
+ *     end to end (`OnSideOverview.tsx`'s own B3 migration onto the same
+ *     contract, its header "DEEP-LINK CONTRACT MIGRATION").
+ *   - Strategic signal's per-touch actions — `obl`/`dom`/`doc` tuples map
+ *     onto the exact `'obligation'`/`'domain'`/`'doc-redline'` kinds
+ *     App.tsx's KIND VOCABULARY defines (id encodings verbatim from that
+ *     header) via `touchToDeepLinkRequest` below, plus "Open the full
+ *     lifecycle →" now firing `kind: 'section', id: 'lifecycle'` (base
+ *     openSignal's own button, source 4111, goes to `goOnside('feed-
+ *     lifecycle')`). Delivers to the right SCREEN today; item-level
+ *     opening on the receiving end depends on that screen's own
+ *     consumption (`onside.overview` consumes `'domain'` today via the
+ *     migration above; `'obligation'`/`'doc-redline'` and `onside.feed`'s
+ *     `'section'` kind have no consumer yet anywhere in this worktree —
+ *     honest partial fidelity, not a regression from this file's prior
+ *     plain-nav behavior, which delivered no more than screen-level nav
+ *     either).
+ *   - The Investment panel's `TopPlaysList` "Open →" per play — `kind:
+ *     'play'`, id = the play's own name (base `openPlay(o.n)`, source
+ *     4249-region) — DELIVERS END TO END: `InvestmentDesign.tsx` already
+ *     consumes this exact kind (its own "PLAY DEEP-LINK CONSUMPTION"
+ *     note), so this is a genuine functional fix, not just contract
+ *     symmetry — previously every play's "Open →" landed on Investment
+ *     Design's list view regardless of which of the four rows was
+ *     pressed; now each opens that exact play's own drawer.
+ *   - The "Platform ROI →" panel-header link — `kind: 'report', id:
+ *     'roi'` (base `openReport('roi')`, source 872, the literal example
+ *     App.tsx's own header cites for this exact link) — also DELIVERS END
+ *     TO END: `Reporting.tsx` already consumes `'report'`-kind deep links.
+ *   - The "Full lifecycle →" (legis) panel-header link now also fires
+ *     `kind: 'section', id: 'lifecycle'` (base `goOnside('feed-
+ *     lifecycle')`, source 869 — the same line App.tsx's own header cites
+ *     alongside `'roi'` in "THE CONTRACT the screen batches wire their
+ *     consumers against"). `onside.feed` does not yet consume `'section'`
+ *     (STOP-item — see `OnSideFeed.tsx`'s own header "ALSO STILL OPEN," a
+ *     gap this same B3 dispatch discovered but left for a follow-up scoped
+ *     to that file), so this link still lands on the plain screen today;
+ *     using `onDeepLink` here regardless matches the documented contract
+ *     and needs no further change here once that screen adds the consumer.
+ *   - "Gaps & levers →" (posture header, base `goOnside('domains')`) and
+ *     "Work the levers →" (invest header, base `goStudio('design')`) carry
+ *     no per-item id in App.tsx's KIND VOCABULARY at all — these stay
+ *     plain `onNavigate`, unchanged; not every base cross-screen click is
+ *     a payload-carrying one.
+ *   - "All open items →" (queue header, base `goOnside('gaps')`) is
+ *     DELIBERATELY NOT converted (STOP-item, not an oversight): App.tsx's
+ *     KIND VOCABULARY text and `InvestmentDesign.tsx`'s own 'section'/
+ *     'gaps' deep link both name `onside.feed` as this id's target screen,
+ *     but every other "gaps" row in THIS file (`buildQueueBucket`'s
+ *     `q-gaps`/`q-below` rows) — and this exact link, pre-existing —
+ *     targets `onside.documents` instead, matching
+ *     `home-panels.test.tsx`'s own pinned assertion. Picking either target
+ *     silently would contradict one of the two; see the code comment at
+ *     this link's own `case 'queue'` for the full note.
  *
  * DRAWER OWNERSHIP: this view mounts its own local `<Drawer>` instance for
  * the Strategic signal panel — matching `OnSideFeed.tsx`'s own documented
@@ -120,10 +180,11 @@
  * happened to carry — persona directive 4 — and the adjacent link already
  * reaches the identical destination, so nothing is lost). The Investment
  * panel additionally regains its "four largest, by annual value" `lrow`
- * list (source 4249-region) with an `Open →` action per play. All of these
- * route through the plain `onNavigate` this component already has — see
- * the "CLICKABLE TOUCH CHIPS" note above for why item-level deep-linking
- * (the exact report kind, the exact play) is out of this file's reach.
+ * list (source 4249-region) with an `Open →` action per play. B3 dispatch
+ * (see "SEAM 1 RESOLVED" above): 'Platform ROI →' and each play's
+ * `Open →` now fire real deep links that deliver to the exact report/play;
+ * the other three panel-header links stay plain `onNavigate` (either no
+ * matching KIND VOCABULARY id, or a matching id with no consumer yet).
  *
  * Accessibility gate (persona directive 7): every panel is a labelled
  * `<section>`; posture/signal/queue panels are real `DataTable` (C6)
@@ -140,9 +201,10 @@
  *
  * TESTS: covered by `src/__tests__/shell/home.test.tsx` (customization /
  * visibleKeys flow) and `src/__tests__/shell/home-panels.test.tsx`
- * (SH-5 name resolution, SH-9 CRO row, SH-6 live-lever recompute), run
- * under Vitest; plus `npx tsc --noEmit` (strict,
- * `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`).
+ * (SH-5 name resolution, SH-9 CRO row, SH-6 live-lever recompute, B3
+ * SEAM 1 `onDeepLink` firing + plain-`onNavigate` fallback), run under
+ * Vitest; plus `npx tsc --noEmit` (strict, `exactOptionalPropertyTypes`,
+ * `noUncheckedIndexedAccess`).
  */
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -169,6 +231,7 @@ import { OPPS } from '../data/studio';
 import { deriveRecomputeView, fmt } from '../engine/plan';
 import type { SliderState, PlanOpportunity } from '../engine/plan';
 import { getDemoSliders, useDemoStore } from '../state/demoStore';
+import type { DeepLinkRequest } from '../App';
 
 // See file header "CASES SEEDING."
 if (CASES.length === 0) {
@@ -199,6 +262,38 @@ function touchLabel(t: SignalTouch): string {
   if (t[0] === 'doc') return DOCLIB[t[1]]?.t ?? t[1];
   const dm = DOMAINS.find((d) => d.key === t[1]);
   return `${dm ? (DOM_SHORT[t[1]] ?? dm.name) : t[1]} register`;
+}
+
+/** B3 — App.tsx's KIND VOCABULARY id encodings (that file's header,
+ * "NAVIGATION-WITH-PAYLOAD / DEEP LINKS") applied to a `SignalTouch`
+ * tuple: `obl` -> `'obligation'`, id `${domKey}:${oblId}` (only when the
+ * tuple actually carries an obligation id — every `SIGNAL` `obl` entry in
+ * `data/misc.ts` does, but the type itself makes the third element
+ * optional, so this stays a real, checked guard rather than a `!`
+ * assertion); `doc` -> `'doc-redline'`, id = the doc id; `dom` ->
+ * `'domain'`, id = the domain key. Returns `null` for a shape the
+ * vocabulary has no kind for (never observed today, but not a case to
+ * silently mis-target). */
+function touchToDeepLinkRequest(t: SignalTouch): DeepLinkRequest | null {
+  if (t[0] === 'doc') return { screen: 'onside.documents', kind: 'doc-redline', id: t[1] };
+  if (t[0] === 'dom') return { screen: 'onside.overview', kind: 'domain', id: t[1] };
+  if (t[0] === 'obl' && t[2]) return { screen: 'onside.overview', kind: 'obligation', id: `${t[1]}:${t[2]}` };
+  return null;
+}
+
+/** B3 — fires the richer deep link when a caller has wired `onDeepLink`
+ * (SEAM 1, see file header); otherwise falls back to the identical plain
+ * `onNavigate(screen)` this file always used, so a caller that has not
+ * wired `onDeepLink` (every pre-existing base-anchor test in
+ * `home-panels.test.tsx`) keeps its exact previous behavior — never a
+ * regression, never a dead click. */
+function fireOrDeepLink(
+  onDeepLink: ((request: DeepLinkRequest) => void) | undefined,
+  onNavigate: (id: string) => void,
+  request: DeepLinkRequest,
+): void {
+  if (onDeepLink) onDeepLink(request);
+  else onNavigate(request.screen);
 }
 
 /** Ported verbatim, `caseWaitingOn` (leapfi-platform.html 2617-2622) — same
@@ -347,6 +442,8 @@ export interface HomePanelsProps {
   currentRoleKey: string;
   /** Generic screen navigation (`Sidebar.tsx`'s own `onNavigate` shape) — see file header "NAVIGATION TARGETS." */
   onNavigate: (id: string) => void;
+  /** B3 — the FIRE half of App.tsx's NAVIGATION-WITH-PAYLOAD contract, threaded down from `Home.tsx` (see that file's header + this file's own "SEAM 1 RESOLVED"). Optional: every consumer below falls back to plain `onNavigate` when this is absent. */
+  onDeepLink?: (request: DeepLinkRequest) => void;
   /** Unused by any row this dispatch's own scope reaches (see file header) — accepted for prop-shape symmetry with `NotificationBellPanel`'s identical dependency; present so this component's shape doesn't need to change once a queue row deep-links to a specific case. */
   onOpenCase?: (caseId: string) => void;
   /** Testing/override hook only. When absent (the app's real path), the LIVE shared lever state (`state/demoStore.ts` `getDemoSliders()`) is read on every render — see file header "LIVE LEVERS" (SH-6). */
@@ -381,7 +478,13 @@ const itemCellStyle: CSSProperties = { display: 'flex', flexDirection: 'column',
 const itemTitleStyle: CSSProperties = { color: 'var(--ink)', fontSize: '0.9375rem', fontWeight: 600 };
 const itemSubStyle: CSSProperties = { color: 'var(--ink2)', fontSize: '0.8125rem' };
 
-function PostureBand({ onOpenDomains }: { onOpenDomains: () => void }) {
+function PostureBand({
+  onNavigate,
+  onDeepLink,
+}: {
+  onNavigate: (id: string) => void;
+  onDeepLink: ((request: DeepLinkRequest) => void) | undefined;
+}) {
   const columns: DataTableColumn<OnsideDomain>[] = [
     { id: 'domain', header: 'Domain', sortable: true, sortValue: (d) => d.name, render: (d) => <span style={itemTitleStyle}>{d.name}</span> },
     {
@@ -398,7 +501,13 @@ function PostureBand({ onOpenDomains }: { onOpenDomains: () => void }) {
     },
     { id: 'status', header: 'Status', render: (d) => <Tag text={DOMAIN_STATUS_LABEL[statusOf(d)]} variant={DOMAIN_STATUS_VARIANT[statusOf(d)]} /> },
   ];
-  const rowAction: DataTableRowAction<OnsideDomain> = { label: () => 'Open →', onPress: onOpenDomains };
+  // B3 (SEAM 1) — base `onsideShow('dom-'+d.key)` per row (source 4217):
+  // now the row's own domain, not just the Overview screen (see file
+  // header "SEAM 1 RESOLVED").
+  const rowAction: DataTableRowAction<OnsideDomain> = {
+    label: () => 'Open →',
+    onPress: (d) => fireOrDeepLink(onDeepLink, onNavigate, { screen: 'onside.overview', kind: 'domain', id: d.key }),
+  };
   return (
     <div style={scrollWrapStyle}>
       <DataTable caption="Risk posture by domain" columns={columns} rows={DOMAINS} getRowId={(d) => d.key} rowAction={rowAction} defaultSortColumnId="domain" />
@@ -410,15 +519,22 @@ interface SignalRow extends SignalEntry {
   rowId: string;
 }
 
-/** B-07: routes a single 'Would touch' tuple to its home screen — `obl`/`dom`
- * tuples live in the Domains accordion (`onside.overview`), `doc` tuples in
- * the document universe (`onside.documents`). Generic nav only (no
- * `onDeepLink` seam here — see file header "CLICKABLE TOUCH CHIPS"). */
+/** B-07: the plain-nav fallback screen for a 'Would touch' tuple — `obl`/
+ * `dom` tuples live in the Domains accordion (`onside.overview`), `doc`
+ * tuples in the document universe (`onside.documents`). Used only when a
+ * caller has not wired `onDeepLink` (see `fireOrDeepLink`) or a tuple shape
+ * `touchToDeepLinkRequest` returns `null` for. */
 function touchScreenId(t: SignalTouch): string {
   return t[0] === 'doc' ? 'onside.documents' : 'onside.overview';
 }
 
-function StrategicSignalPanel({ onNavigate }: { onNavigate: (id: string) => void }) {
+function StrategicSignalPanel({
+  onNavigate,
+  onDeepLink,
+}: {
+  onNavigate: (id: string) => void;
+  onDeepLink: ((request: DeepLinkRequest) => void) | undefined;
+}) {
   const [openRowId, setOpenRowId] = useState<string | null>(null);
   const rows: SignalRow[] = SIGNAL.map((s, index) => ({ ...s, rowId: `sig-${index}` }));
   const selected = rows.find((r) => r.rowId === openRowId) ?? null;
@@ -450,18 +566,28 @@ function StrategicSignalPanel({ onNavigate }: { onNavigate: (id: string) => void
       ]
     : [];
 
-  // B-07: one action per 'would touch' item (base per-chip navigation,
-  // source 4049-4056) plus the base's "Open the full lifecycle" button
-  // (source 4111) — see file header note for why these are screen-level
-  // nav, not item-level deep links.
+  // B-07 / B3 (SEAM 1): one action per 'would touch' item (base per-chip
+  // navigation, source 4049-4056) plus the base's "Open the full
+  // lifecycle" button (source 4111, `goOnside('feed-lifecycle')`). Each
+  // touch fires the exact deep-link kind `touchToDeepLinkRequest` resolves
+  // when a caller has wired `onDeepLink`; falls back to the same plain
+  // screen-level `onNavigate` this file always used otherwise (see file
+  // header "SEAM 1 RESOLVED" for which of these deliver end to end today).
   const actions = selected
     ? [
-        ...selected.touch.map((t) => ({
-          label: touchLabel(t),
+        ...selected.touch.map((t) => {
+          const request = touchToDeepLinkRequest(t);
+          return {
+            label: touchLabel(t),
+            variant: 'ghost' as const,
+            onPress: () => (request ? fireOrDeepLink(onDeepLink, onNavigate, request) : onNavigate(touchScreenId(t))),
+          };
+        }),
+        {
+          label: 'Open the full lifecycle →',
           variant: 'ghost' as const,
-          onPress: () => onNavigate(touchScreenId(t)),
-        })),
-        { label: 'Open the full lifecycle →', variant: 'ghost' as const, onPress: () => onNavigate('onside.feed') },
+          onPress: () => fireOrDeepLink(onDeepLink, onNavigate, { screen: 'onside.feed', kind: 'section', id: 'lifecycle' }),
+        },
       ]
     : [];
 
@@ -496,12 +622,12 @@ const lrowStyle: CSSProperties = {
   color: 'inherit',
 };
 
-function TopPlaysList({ plays, onOpenPlay }: { plays: PlanOpportunity[]; onOpenPlay: () => void }) {
+function TopPlaysList({ plays, onOpenPlay }: { plays: PlanOpportunity[]; onOpenPlay: (playName: string) => void }) {
   return (
     <div>
       <Label text="The four largest, by annual value" variant="eyebrow" />
       {plays.map((o) => (
-        <button key={o.n} type="button" style={{ ...lrowStyle, borderTop: '1px solid var(--border)' }} onClick={onOpenPlay}>
+        <button key={o.n} type="button" style={{ ...lrowStyle, borderTop: '1px solid var(--border)' }} onClick={() => onOpenPlay(o.n)}>
           <span style={itemCellStyle}>
             <span style={itemTitleStyle}>{o.n}</span>
             <span style={itemSubStyle}>{`${fmt(o.val)} a year · ${o.c}`}</span>
@@ -513,9 +639,24 @@ function TopPlaysList({ plays, onOpenPlay }: { plays: PlanOpportunity[]; onOpenP
   );
 }
 
-function InvestmentReturnPanel({ sliders, opportunities, onNavigate }: { sliders: SliderState; opportunities: PlanOpportunity[]; onNavigate: (id: string) => void }) {
+function InvestmentReturnPanel({
+  sliders,
+  opportunities,
+  onNavigate,
+  onDeepLink,
+}: {
+  sliders: SliderState;
+  opportunities: PlanOpportunity[];
+  onNavigate: (id: string) => void;
+  onDeepLink: ((request: DeepLinkRequest) => void) | undefined;
+}) {
   const view = deriveRecomputeView(sliders, opportunities);
   const topFunded = [...view.plan.funded].sort((a, b) => b.val - a.val).slice(0, 4);
+  // B-08 / B3 (SEAM 1): base `top=P.funded...slice(0,4)` list (source
+  // 4249-region), each row an `openPlay(n)` click-through — `kind: 'play'`,
+  // id = the play's own name, DELIVERS END TO END (see file header "SEAM 1
+  // RESOLVED": `InvestmentDesign.tsx` already consumes this exact kind).
+  const openPlay = (playName: string) => fireOrDeepLink(onDeepLink, onNavigate, { screen: 'studio.investment-design', kind: 'play', id: playName });
   return (
     <>
       <div style={statRowStyle}>
@@ -525,10 +666,7 @@ function InvestmentReturnPanel({ sliders, opportunities, onNavigate }: { sliders
         <StatCard label="Payback period" value={view.economics.paybackText} />
         <StatCard label="Compliance capacity freed" value={fmt(540000)} unit="/yr" />
       </div>
-      {/* B-08: base `top=P.funded...slice(0,4)` list (source 4249-region),
-        * each row an `openPlay(n)` click-through — screen-level nav here
-        * (`studio.investment-design`), see file header note. */}
-      {topFunded.length > 0 ? <TopPlaysList plays={topFunded} onOpenPlay={() => onNavigate('studio.investment-design')} /> : null}
+      {topFunded.length > 0 ? <TopPlaysList plays={topFunded} onOpenPlay={openPlay} /> : null}
     </>
   );
 }
@@ -584,7 +722,7 @@ function QuickActionsPanel({ onNavigate }: { onNavigate: (id: string) => void })
   );
 }
 
-export function HomePanels({ visibleKeys, currentRoleKey, onNavigate, sliders, opportunities }: HomePanelsProps) {
+export function HomePanels({ visibleKeys, currentRoleKey, onNavigate, onDeepLink, sliders, opportunities }: HomePanelsProps) {
   // Subscribe to every demo-store write (lever moves, accepted plays,
   // resetDemo) so these panels recompute live — base renderHome's
   // computePlan()-over-live-levers behavior (source 4197+); SH-6.
@@ -596,11 +734,11 @@ export function HomePanels({ visibleKeys, currentRoleKey, onNavigate, sliders, o
   function renderPanel(key: HomePanelKey) {
     switch (key) {
       case 'posture':
-        return <PostureBand onOpenDomains={() => onNavigate('onside.overview')} />;
+        return <PostureBand onNavigate={onNavigate} onDeepLink={onDeepLink} />;
       case 'legis':
-        return <StrategicSignalPanel onNavigate={onNavigate} />;
+        return <StrategicSignalPanel onNavigate={onNavigate} onDeepLink={onDeepLink} />;
       case 'invest':
-        return <InvestmentReturnPanel sliders={liveSliders} opportunities={liveOpportunities} onNavigate={onNavigate} />;
+        return <InvestmentReturnPanel sliders={liveSliders} opportunities={liveOpportunities} onNavigate={onNavigate} onDeepLink={onDeepLink} />;
       case 'queue':
         return <YourQueuePanel roleKey={currentRoleKey} onNavigate={onNavigate} sliders={liveSliders} opportunities={liveOpportunities} />;
       case 'qa':
@@ -610,21 +748,40 @@ export function HomePanels({ visibleKeys, currentRoleKey, onNavigate, sliders, o
     }
   }
 
-  // B-08: base `.panel-h .go2` header links (source 868/869/872/878) — see
-  // file header "PANEL-HEADER GO-LINKS." `qa` (Quick actions) carries none
-  // in the base either.
+  // B-08 / B3 (SEAM 1): base `.panel-h .go2` header links (source
+  // 868/869/872/878) — see file header "PANEL-HEADER GO-LINKS" +
+  // "SEAM 1 RESOLVED" for which of these now fire a real deep link (with
+  // an id App.tsx's KIND VOCABULARY actually defines) versus which stay
+  // plain `onNavigate` (no matching id in that vocabulary). `qa` (Quick
+  // actions) carries none in the base either.
   function headerLinks(key: HomePanelKey): Array<{ label: string; onPress: () => void }> {
     switch (key) {
       case 'posture':
+        // base `goOnside('domains')` — no per-item id, stays plain nav.
         return [{ label: 'Gaps & levers →', onPress: () => onNavigate('onside.overview') }];
       case 'legis':
-        return [{ label: 'Full lifecycle →', onPress: () => onNavigate('onside.feed') }];
+        // base `goOnside('feed-lifecycle')` -> kind 'section', id 'lifecycle'.
+        return [{ label: 'Full lifecycle →', onPress: () => fireOrDeepLink(onDeepLink, onNavigate, { screen: 'onside.feed', kind: 'section', id: 'lifecycle' }) }];
       case 'invest':
         return [
+          // base `goStudio('design')` — no per-item id, stays plain nav.
           { label: 'Work the levers →', onPress: () => onNavigate('studio.investment-design') },
-          { label: 'Platform ROI →', onPress: () => onNavigate('reporting') },
+          // base `openReport('roi')` -> kind 'report', id 'roi' — DELIVERS
+          // END TO END (Reporting.tsx already consumes 'report').
+          { label: 'Platform ROI →', onPress: () => fireOrDeepLink(onDeepLink, onNavigate, { screen: 'reporting', kind: 'report', id: 'roi' }) },
         ];
       case 'queue':
+        // base `goOnside('gaps')`. NOT converted to `onDeepLink` (STOP-item,
+        // not an oversight): App.tsx's KIND VOCABULARY text and
+        // `InvestmentDesign.tsx`'s own 'section'/'gaps' deep link both name
+        // `onside.feed` as this id's target screen, but every other "gaps"
+        // row in THIS file (`buildQueueBucket`'s `q-gaps`/`q-below` rows,
+        // above) — and this exact link, pre-existing — targets
+        // `onside.documents` instead, matching `home-panels.test.tsx`'s own
+        // pinned assertion. Picking either target silently would either
+        // contradict this file's own established convention or break a
+        // passing base-anchor test; flagged for the record rather than
+        // resolved by guessing which side is stale.
         return [{ label: 'All open items →', onPress: () => onNavigate('onside.documents') }];
       default:
         return [];

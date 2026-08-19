@@ -55,9 +55,23 @@
  * inside a column's own `render(row)` function — the generic column model
  * is already the escape hatch, so no second dedicated action slot was
  * added.
+ *
+ * CLICK-AFFORDANCE STANDARD (D19b, `affordance_standard.md` §1, §5 items
+ * 1–3): `onRowClick`/`isRowClickable` add a whole-row click affordance —
+ * trailing `rowAffordance` chevron (accent, at rest per §0), `--bg2` hover,
+ * `--focus-ring` on keyboard focus, `tabIndex={0}` + Enter/Space on the
+ * `<tr>` itself (native `<table>` semantics preserved — no `role="button"`
+ * on the row). Non-clickable rows in a mixed table get an empty spacer
+ * cell, never a dimmed chevron (§1.3 "honest mixed table" rule). Per
+ * stop-item 3 (§7.3), `rowAction` and `onRowClick` are NOT combined on the
+ * same table: when `rowAction` is present it owns the trailing column and
+ * the whole-row click affordance is not rendered — that co-presence is
+ * explicitly out of this standard's scope, not an assumption baked in
+ * here. Omitting `onRowClick` renders exactly as before this change
+ * (backward compatible, zero visual change until a screen wires it).
  */
 import { useMemo, useState } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 import { Label } from './primitives/Label';
 import { Icon } from './primitives/Icon';
 import { Button } from './primitives/Button';
@@ -99,6 +113,13 @@ export interface DataTableProps<T> {
   rowAction?: DataTableRowAction<T>;
   defaultSortColumnId?: string;
   defaultSortDirection?: DataTableSortDirection;
+  /** Whole-row click affordance (§1, §5 items 1–3). Ignored when
+   * `rowAction` is also supplied — see the file header note above. */
+  onRowClick?: (row: T) => void;
+  /** Per-row predicate; defaults to "every row" when `onRowClick` is
+   * supplied, mirroring `rowAction.disabled`'s existing shape. Only
+   * consulted when `onRowClick` is present. */
+  isRowClickable?: (row: T) => boolean;
 }
 
 const srOnlyStyle: CSSProperties = {
@@ -204,6 +225,72 @@ function SortHeaderButton({ label, active, direction, onPress }: SortHeaderButto
   );
 }
 
+interface DataTableRowProps<T> {
+  row: T;
+  columns: readonly DataTableColumn<T>[];
+  isUpdating: boolean;
+  /** Whole-row click affordance state (§1.2) — false renders identically
+   * to today's plain `<tr>` (§1.3 "honest mixed table" rule: absence of
+   * hover/focus/cursor is the inert signal, not a dimmed treatment). */
+  clickable: boolean;
+  onRowClick?: (row: T) => void;
+  /** Trailing cell content: the `rowAction` Button, the `rowAffordance`
+   * chevron/spacer, or `null` when the table has neither (today's shape). */
+  trailingCell: ReactNode;
+}
+
+/** Local subcomponent (not exported), same reasoning as `SortHeaderButton`
+ * above: hover/focus need a real per-row hook instance, which a plain
+ * `.map()` callback inside the parent's render body cannot provide without
+ * violating the rules of hooks. */
+function DataTableRow<T>({ row, columns, isUpdating, clickable, onRowClick, trailingCell }: DataTableRowProps<T>) {
+  const [hover, setHover] = useState(false);
+  const [focused, setFocused] = useState(false);
+
+  const handleClick = () => {
+    if (clickable && onRowClick) onRowClick(row);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLTableRowElement>) => {
+    if (!clickable || !onRowClick) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onRowClick(row);
+    }
+  };
+
+  const baseStyle = isUpdating ? { ...trStyle, ...trUpdatingStyle } : trStyle;
+  const style: CSSProperties = clickable
+    ? {
+        ...baseStyle,
+        cursor: 'pointer',
+        background: hover ? 'var(--bg2)' : baseStyle.background,
+        boxShadow: focused ? 'var(--focus-ring)' : 'none',
+      }
+    : baseStyle;
+
+  return (
+    <tr
+      data-row-state={isUpdating ? 'updating' : 'default'}
+      style={style}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={clickable ? handleClick : undefined}
+      onKeyDown={clickable ? handleKeyDown : undefined}
+      onMouseEnter={clickable ? () => setHover(true) : undefined}
+      onMouseLeave={clickable ? () => setHover(false) : undefined}
+      onFocus={clickable ? () => setFocused(true) : undefined}
+      onBlur={clickable ? () => setFocused(false) : undefined}
+    >
+      {columns.map((column) => (
+        <td key={column.id} style={{ ...tdStyle, textAlign: column.align === 'end' ? 'right' : 'left' }}>
+          {column.render(row)}
+        </td>
+      ))}
+      {trailingCell}
+    </tr>
+  );
+}
+
 export function DataTable<T>({
   caption,
   columns,
@@ -216,6 +303,8 @@ export function DataTable<T>({
   rowAction,
   defaultSortColumnId,
   defaultSortDirection,
+  onRowClick,
+  isRowClickable: isRowClickablePredicate,
 }: DataTableProps<T>) {
   const [sort, setSort] = useState<{ columnId: string; direction: DataTableSortDirection } | null>(() =>
     defaultSortColumnId
@@ -252,7 +341,13 @@ export function DataTable<T>({
     });
   };
 
-  const columnCount = columns.length + (rowAction ? 1 : 0);
+  // Per stop-item 3 (affordance_standard.md §7.3): `rowAction` and
+  // `onRowClick` are not combined on the same table — a named row action
+  // owns the trailing column and the whole-row click affordance is not
+  // rendered when it is present, rather than inventing co-presence
+  // behavior the standard leaves for a future design decision.
+  const hasAffordanceColumn = Boolean(onRowClick) && !rowAction;
+  const columnCount = columns.length + (rowAction ? 1 : 0) + (hasAffordanceColumn ? 1 : 0);
   const showMessageRow = state === 'loading' || state === 'empty' || sortedRows.length === 0;
 
   return (
@@ -287,6 +382,11 @@ export function DataTable<T>({
               <span style={srOnlyStyle}>Actions</span>
             </th>
           ) : null}
+          {hasAffordanceColumn ? (
+            <th scope="col" style={thStyle}>
+              <span style={srOnlyStyle}>Actions</span>
+            </th>
+          ) : null}
         </tr>
       </thead>
       <tbody>
@@ -303,31 +403,38 @@ export function DataTable<T>({
             const rowId = getRowId(row);
             const isUpdating = updatingRowIds?.has(rowId) ?? false;
             const isRowActionDisabled = rowAction?.disabled ? rowAction.disabled(row) : false;
+            const isRowClickable = hasAffordanceColumn && (!isRowClickablePredicate || isRowClickablePredicate(row));
+
+            let trailingCell: ReactNode = null;
+            if (rowAction) {
+              trailingCell = (
+                <td style={tdStyle}>
+                  <Button
+                    variant="row"
+                    label={rowAction.label(row)}
+                    onPress={() => rowAction.onPress(row)}
+                    disabled={isRowActionDisabled}
+                  />
+                </td>
+              );
+            } else if (hasAffordanceColumn) {
+              trailingCell = (
+                <td style={tdStyle}>
+                  {isRowClickable ? <Icon name="chevron-right" size={16} tone="interactive" /> : null}
+                </td>
+              );
+            }
+
             return (
-              <tr
+              <DataTableRow
                 key={rowId}
-                data-row-state={isUpdating ? 'updating' : 'default'}
-                style={isUpdating ? { ...trStyle, ...trUpdatingStyle } : trStyle}
-              >
-                {columns.map((column) => (
-                  <td
-                    key={column.id}
-                    style={{ ...tdStyle, textAlign: column.align === 'end' ? 'right' : 'left' }}
-                  >
-                    {column.render(row)}
-                  </td>
-                ))}
-                {rowAction ? (
-                  <td style={tdStyle}>
-                    <Button
-                      variant="row"
-                      label={rowAction.label(row)}
-                      onPress={() => rowAction.onPress(row)}
-                      disabled={isRowActionDisabled}
-                    />
-                  </td>
-                ) : null}
-              </tr>
+                row={row}
+                columns={columns}
+                isUpdating={isUpdating}
+                clickable={isRowClickable}
+                {...(onRowClick ? { onRowClick } : {})}
+                trailingCell={trailingCell}
+              />
             );
           })
         )}

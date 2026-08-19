@@ -5,6 +5,16 @@
  * NotificationBell (Icon+Tag), ProfileMenu (Avatar+dropdown of Buttons),
  * DateDisplay (Label), BoardDeckButton (Button/ghost)."
  *
+ * STALE AS OF D20 (decisions.md; task B1): the §2.2/§3.2 "Built from" list
+ * and region map quoted above are the spec's original wording and are left
+ * verbatim for citation purposes, but BackChip no longer exists in this
+ * component — struck and replaced by a LeapFI-logo Home nav control. See
+ * the "D20 — BACKCHIP STRUCK, LOGO-AS-HOME-NAV ADDED" section further down
+ * this header for the current, correct leading-region behavior; treat
+ * every "BackChip" mention above and in the two AMBIGUITY-RESOLVED notes
+ * immediately below as historical record of a now-superseded decision, not
+ * current behavior.
+ *
  * Region map, left -> right (§3.2, followed literally over the
  * alphabetical "Built from" list order above, since §3.2 explicitly
  * labels itself the region map): BackChip -> Breadcrumb -> [flex space]
@@ -100,6 +110,92 @@
  * not two. `notificationCount`/`onOpenNotifications` are left fully
  * backward-compatible: omitting `notificationSlot` reproduces this file's
  * exact pre-existing behavior.
+ *
+ * D20 — BACKCHIP STRUCK, LOGO-AS-HOME-NAV ADDED (decisions.md D20; task
+ * B1): the top-left "Back to <screen>" BackChip (this file's earlier
+ * AMBIGUITY-RESOLVED section above, now historical — it documents a
+ * rendering choice for a control this revision removes outright, kept only
+ * so the reasoning trail isn't silently deleted) is gone. In its place, the
+ * region's leading slot renders the LeapFI wordmark as a Home navigation
+ * control:
+ *
+ *   - ASSETS: the two committed brandkit master PNGs (fd038b6,
+ *     ASSET-1/D10 — binding masters, place-as-is, never redrawn/recolored/
+ *     reconstructed in CSS) — `LeapFI-Logo-WithoutTagline-Black.png` and
+ *     `-Transparent.png` — imported as Vite asset URLs (inlined to
+ *     data-URIs by `vite-plugin-singlefile` at build time; confirmed via
+ *     the gate, not re-verified per-dispatch here). LOGO-3: Without-Tagline
+ *     is correct for this "interior/compact/repeated" chrome placement.
+ *     LOGO-6: no recolor/stretch/skew — both `<img>`s render at a fixed
+ *     `height` with `width: auto`, preserving the asset's native aspect
+ *     ratio (LOGO-1's stated 4.770:1) exactly.
+ *
+ *   - THEME SWAP WITHOUT OWNING THEME STATE: this component has never held
+ *     theme state (the `themeToggleSlot` note above is explicit that theme
+ *     lives in `App.tsx`, outside this file's allowlist) and still doesn't
+ *     — `App.tsx` stamps `data-theme` on `document.documentElement`
+ *     (verbatim D13 mechanism), so the swap is done in pure CSS against
+ *     that ancestor attribute rather than by threading a new theme prop
+ *     through every screen's `TopbarProps` call site. Both `<img>`s are
+ *     always mounted; a scoped `<style>` (rendered once, module-level
+ *     constant `LOGO_SWAP_CSS`) hides whichever variant doesn't match
+ *     `[data-theme]`, defaulting to the dark/Black variant when the
+ *     attribute is absent yet (`:root:not([data-theme='light'])` — same
+ *     default tokens.css itself uses for its own `:root, [data-theme=
+ *     'dark']` shared block). Verified empirically against jsdom's actual
+ *     `getComputedStyle` cascade (attribute-selector `display` rules from
+ *     an injected `<style>` DO apply in this test environment — not
+ *     assumed) — see `topbar.test.tsx`'s theme-swap coverage.
+ *
+ *   - LOGO-4/LOGO-5 TENSION, ACKNOWLEDGED: LOGO-5's stated digital minimum
+ *     for the Without-Tagline lockup is 80px tall; a 56px-tall topbar
+ *     cannot host an 80px logo without either growing the whole bar (out
+ *     of this dispatch's scope — Topbar's `BAR_STYLE.minHeight` predates
+ *     this change and no other region demands more room) or shrinking the
+ *     mark. `LOGO_HEIGHT` below is 28px — a legible compact-chrome
+ *     precedent (roughly double `NotificationBell`'s 24px icon), scaled
+ *     proportionally per LOGO-6, not a redraw. This is a knowing deviation
+ *     from LOGO-5's stated minimum for this one compact placement, not a
+ *     doctrine change; flagged in the dispatch return rather than silently
+ *     shipped. Clear space (LOGO-4, "≥ height of the L") is approximated
+ *     via the button's own padding — the source PNG is a flattened raster
+ *     with no accessible glyph metrics to measure the cap-height of the
+ *     "L" from at build time, so exact clear space isn't mechanically
+ *     verifiable here; the padding chosen is generously larger than the
+ *     glyph-in-lockup would need at this scale.
+ *
+ *   - ACCESSIBLE NAME / KEYBOARD: a native `<button>` (not a styled `<a>`
+ *     or div) carries `aria-label="LeapFI — Home"` (the button's only
+ *     content is two `alt=""` decorative images, so the label is the sole
+ *     accessible name source) and is keyboard-focusable and operable by
+ *     default — no custom key handling needed, unlike ProfileMenu's
+ *     disclosure. Hover/focus treatment mirrors `NotificationBell`'s own
+ *     pattern immediately below (panel-tint hover, `--focus-ring` glow) for
+ *     one consistent chrome-control visual language.
+ *
+ *   - `onNavigateHome` (new, optional `TopbarProps` member) fires on press.
+ *     STOP-ITEM / KNOWN GAP (reported, not silently improvised): `App.tsx`
+ *     is outside this dispatch's allowlist and does not pass
+ *     `onNavigateHome` in its `topbarProps` object today, so in the
+ *     currently-running app the Home logo control renders correctly
+ *     (visible, focusable, correct accessible name, correct theme variant)
+ *     but is not yet WIRED to actually navigate — pressing it is a no-op
+ *     until a follow-on dispatch adds `onNavigateHome: () =>
+ *     navigateToScreen('home')` to `App.tsx`'s `topbarProps` (App.tsx isn't
+ *     touched here for the same reason `backTarget`'s deprecation below
+ *     doesn't touch it either). This mirrors the existing
+ *     `themeToggleSlot`/`notificationSlot` precedent of this component
+ *     exposing an extension point a separate integrating dispatch fills.
+ *
+ *   - `backTarget`/`TopbarBackTarget` DEPRECATED, NOT REMOVED: the prop and
+ *     exported type stay in `TopbarProps` — accepted, silently ignored,
+ *     never rendered — purely so `App.tsx` (which still builds and passes
+ *     a `backTarget` value derived from `previousScreenId`) keeps
+ *     type-checking without this dispatch touching it. That
+ *     `previousScreenId`/`backTarget`-construction plumbing in `App.tsx` is
+ *     now dead weight with no consumer; its removal is census-gap cleanup
+ *     for whichever dispatch next has `App.tsx` in its allowlist, per the
+ *     TASK line's own framing — not done here.
  */
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
@@ -108,7 +204,15 @@ import { Button } from './primitives/Button';
 import { Icon } from './primitives/Icon';
 import { Tag } from './primitives/Tag';
 import { resetDemo } from '../state/demoStore';
+import logoBlack from '../assets/LeapFI-Logo-WithoutTagline-Black.png';
+import logoTransparent from '../assets/LeapFI-Logo-WithoutTagline-Transparent.png';
 
+/** @deprecated D20: the BackChip this described is struck (removed
+ * outright). The type stays exported, and `TopbarProps.backTarget` stays
+ * accepted-but-ignored, only so `App.tsx` — which still constructs a value
+ * of this shape from `previousScreenId` — keeps type-checking without this
+ * dispatch touching that file. See the file header "D20 — BACKCHIP STRUCK"
+ * section for the full scope note. */
 export interface TopbarBackTarget {
   label: string;
   onPress: () => void;
@@ -129,8 +233,15 @@ export interface TopbarProfileMenuItem {
 export interface TopbarProps {
   /** Breadcrumb text (Label, body-secondary). */
   breadcrumb: string;
-  /** BackChip state machine (§3.2): omit/null = `at-root` (chip not rendered). Present = `one-level-back`. */
+  /** @deprecated D20: the BackChip is struck. Accepted for `App.tsx`
+   * compile compatibility only — never read, never rendered. See
+   * `TopbarBackTarget`'s own `@deprecated` note. */
   backTarget?: TopbarBackTarget | null;
+  /** D20: fires when the LeapFI logo (rendered as the Home nav control) is
+   * pressed. Optional — see file header "D20" STOP-ITEM note: `App.tsx`
+   * does not yet pass this, so the control is currently unwired in the
+   * running app pending a follow-on dispatch. */
+  onNavigateHome?: () => void;
   /** LivePill (Tag, status-positive). Defaults to shown; pass `live={false}` to omit it entirely rather than rendering a contradictory "not live" pill. */
   live?: boolean;
   liveLabel?: string;
@@ -172,6 +283,92 @@ const LABEL_STYLE: CSSProperties = {
   color: 'var(--ink2)',
   whiteSpace: 'nowrap',
 };
+
+// D20: LOGO-6-safe fixed height, width left `auto` so the asset's native
+// 4.770:1 (LOGO-1) aspect ratio is never stretched/skewed. See file header
+// "D20" for the LOGO-5 80px-minimum tension this compact value knowingly
+// trades off.
+const LOGO_HEIGHT = 28;
+
+// D20: theme-variant swap done in pure CSS against the `data-theme`
+// attribute App.tsx stamps on `document.documentElement` — this component
+// owns no theme state (see file header). Both `<img>`s always mount;
+// exactly one is hidden per theme. Default (attribute absent) matches
+// tokens.css's own `:root, [data-theme='dark']` shared-default block.
+const LOGO_SWAP_CSS = `
+  [data-theme='light'] [data-lf-logo-variant='black'] { display: none; }
+  :root:not([data-theme='light']) [data-lf-logo-variant='transparent'] { display: none; }
+`;
+
+function HomeLogoButton({ onPress }: { onPress?: (() => void) | undefined }) {
+  const [hover, setHover] = useState(false);
+  const [focused, setFocused] = useState(false);
+  return (
+    // <style> is metadata content, not valid inside <button>'s phrasing-
+    // content model — it's a sibling here, ahead of the button, not nested
+    // inside it.
+    <>
+      <style>{LOGO_SWAP_CSS}</style>
+      <button
+        type="button"
+        aria-label="LeapFI — Home"
+        onClick={onPress}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        data-lf-composite="topbar-home-logo"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          // LOGO-4 clear space, approximated — see file header "D20" note
+          // on why exact glyph cap-height isn't mechanically measurable
+          // from a flattened master PNG.
+          padding: '0.375rem 0.5rem',
+          minHeight: 44,
+          border: 'none',
+          borderRadius: 'var(--radius-sm, 6px)',
+          background: hover ? 'var(--panel)' : 'transparent',
+          boxShadow: focused ? 'var(--focus-ring)' : 'none',
+          cursor: 'pointer',
+          outline: 'none',
+          flex: '0 0 auto',
+        }}
+      >
+        <img
+          src={logoBlack}
+          alt=""
+          data-lf-logo-variant="black"
+          // No `display` here (deliberately): the LOGO_SWAP_CSS stylesheet
+          // rule sets `display: none` on whichever variant the current
+          // theme hides, and an inline style always wins over a
+          // stylesheet rule regardless of the stylesheet's own
+          // specificity — an inline `display: 'block'` here would
+          // silently defeat the swap. Flexbox blockifies the visible
+          // image's box automatically (both `<img>`s are children of the
+          // `inline-flex` button above), so no explicit display is needed
+          // for layout either.
+          style={{ height: LOGO_HEIGHT, width: 'auto' }}
+        />
+        <img
+          src={logoTransparent}
+          alt=""
+          data-lf-logo-variant="transparent"
+          // No `display` here (deliberately): the LOGO_SWAP_CSS stylesheet
+          // rule sets `display: none` on whichever variant the current
+          // theme hides, and an inline style always wins over a
+          // stylesheet rule regardless of the stylesheet's own
+          // specificity — an inline `display: 'block'` here would
+          // silently defeat the swap. Flexbox blockifies the visible
+          // image's box automatically (both `<img>`s are children of the
+          // `inline-flex` button above), so no explicit display is needed
+          // for layout either.
+          style={{ height: LOGO_HEIGHT, width: 'auto' }}
+        />
+      </button>
+    </>
+  );
+}
 
 function ProfileMenu({ profile, items }: { profile: TopbarProfile; items: TopbarProfileMenuItem[] }) {
   const [open, setOpen] = useState(false);
@@ -412,7 +609,7 @@ function NotificationBell({
 
 export function Topbar({
   breadcrumb,
-  backTarget,
+  onNavigateHome,
   live = true,
   liveLabel = 'Live',
   onOpenBoardDeck,
@@ -427,9 +624,9 @@ export function Topbar({
 }: TopbarProps) {
   return (
     <header role="banner" data-lf-composite="topbar" style={BAR_STYLE}>
-      {backTarget ? (
-        <Button label={backTarget.label} variant="ghost" icon="chevron-left" onPress={backTarget.onPress} />
-      ) : null}
+      {/* D20: BackChip struck, replaced by the LeapFI logo as the Home nav
+          control. See file header "D20" section. */}
+      <HomeLogoButton onPress={onNavigateHome} />
 
       {/* A-overlap-05: base .crumb truncation (source 66) — nowrap + hidden
           overflow + ellipsis, with minWidth:0 so flex can actually shrink it. */}

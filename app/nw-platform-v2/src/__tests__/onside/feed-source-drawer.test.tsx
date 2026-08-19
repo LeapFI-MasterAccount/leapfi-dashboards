@@ -20,11 +20,18 @@
  * Connector phase, Immediate alerts — plus the alert toggle action whose
  * label refreshes while the Drawer stays open.
  */
-import { describe, expect, it } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OnSideFeed } from '../../screens/OnSideFeed'
+import type { DeepLinkTarget } from '../../App'
 import { makeTopbarProps } from './helpers'
+
+beforeAll(() => {
+  // jsdom has no scrollIntoView; the "Open in Sources & connectors →" deep-
+  // link fallback action (B3 SEAM 2) calls it via `handleOpenSources`.
+  Element.prototype.scrollIntoView = vi.fn()
+})
 
 function renderFeed() {
   return render(<OnSideFeed topbar={makeTopbarProps()} onNavigate={() => {}} />)
@@ -126,5 +133,104 @@ describe('OnSide feed · source-detail Drawer union (base 3389–3450, 3365–33
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
     expect(screen.queryByRole('dialog', { name: /^Signal — / })).not.toBeInTheDocument()
     expect(within(dialog).getAllByRole('term')).toHaveLength(6)
+  })
+})
+
+describe("B3 SEAM 2 — 'feed-source' deep-link consumption (App.tsx KIND VOCABULARY: id = source key)", () => {
+  function makeDeepLink(id: string, nonce: number): DeepLinkTarget {
+    return { screen: 'onside.feed', kind: 'feed-source', id, nonce }
+  }
+
+  it('opens the named source in the shared Drawer with the four static fields, omitting "Immediate alerts" (no live truth reachable here — file header "PARTIAL FIDELITY")', () => {
+    const onDeepLinkConsumed = vi.fn()
+    render(
+      <OnSideFeed
+        topbar={makeTopbarProps()}
+        onNavigate={() => {}}
+        deepLink={makeDeepLink('OCC · 12 CFR Ch. I', 1)}
+        onDeepLinkConsumed={onDeepLinkConsumed}
+      />,
+    )
+
+    const dialog = screen.getByRole('dialog', { name: 'Source — OCC · 12 CFR Ch. I' })
+    const fieldLabels = within(dialog)
+      .getAllByRole('term')
+      .map((dt) => dt.textContent)
+    expect(fieldLabels).toEqual(['Source', 'Regulatory layer', 'Method', '30-day activity', 'Connector phase'])
+    const fieldValues = within(dialog)
+      .getAllByRole('definition')
+      .map((dd) => dd.textContent)
+    expect(fieldValues).toEqual(['OCC · 12 CFR Ch. I', 'Financial · banking regulators', 'eCFR Versioner API', '2', 'Live'])
+
+    // Never the row-click "source" branch's live alert-toggle Button.
+    expect(within(dialog).queryByRole('button', { name: /Turn alerts (on|off)/ })).not.toBeInTheDocument()
+
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(1)
+  })
+
+  it('"Open in Sources & connectors →" closes the drawer and scrolls/focuses the live sources section', async () => {
+    const user = userEvent.setup()
+    render(
+      <OnSideFeed
+        topbar={makeTopbarProps()}
+        onNavigate={() => {}}
+        deepLink={makeDeepLink('OCC · 12 CFR Ch. I', 1)}
+        onDeepLinkConsumed={() => {}}
+      />,
+    )
+
+    const dialog = screen.getByRole('dialog', { name: 'Source — OCC · 12 CFR Ch. I' })
+    await user.click(within(dialog).getByRole('button', { name: 'Open in Sources & connectors →' }))
+
+    // Drawer.tsx's own exit transition (TRANSITION_MS) keeps the dialog
+    // mounted briefly in a "closing" phase before it unmounts.
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalled()
+  })
+
+  it('an unknown source key consumes the nonce but opens no Drawer (never fabricated content)', () => {
+    const onDeepLinkConsumed = vi.fn()
+    render(
+      <OnSideFeed
+        topbar={makeTopbarProps()}
+        onNavigate={() => {}}
+        deepLink={makeDeepLink('Not A Real Source', 7)}
+        onDeepLinkConsumed={onDeepLinkConsumed}
+      />,
+    )
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(7)
+  })
+
+  it('a fresh nonce on the SAME source key still re-fires (App.tsx CONSUME contract: keyed on nonce, never a bare value compare)', async () => {
+    const user = userEvent.setup()
+    const onDeepLinkConsumed = vi.fn()
+    const { rerender } = render(
+      <OnSideFeed
+        topbar={makeTopbarProps()}
+        onNavigate={() => {}}
+        deepLink={makeDeepLink('OCC · 12 CFR Ch. I', 1)}
+        onDeepLinkConsumed={onDeepLinkConsumed}
+      />,
+    )
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(1)
+
+    // Close the drawer (simulating the user dismissing it) — a same-id,
+    // fresh-nonce re-press must still reopen it.
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+    rerender(
+      <OnSideFeed
+        topbar={makeTopbarProps()}
+        onNavigate={() => {}}
+        deepLink={makeDeepLink('OCC · 12 CFR Ch. I', 2)}
+        onDeepLinkConsumed={onDeepLinkConsumed}
+      />,
+    )
+
+    expect(screen.getByRole('dialog', { name: 'Source — OCC · 12 CFR Ch. I' })).toBeInTheDocument()
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(2)
   })
 })

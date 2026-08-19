@@ -28,13 +28,19 @@
  * none of the 7 screens has cross-screen drawer content that would justify
  * lifting ownership up to this file.
  *
- * BackChip one-level-back (AMBIGUITY RESOLVED, §3.2 state machine):
- * `previousScreenId` tracks a single value, never a stack, per the spec's
- * own "never a stack" wording. Landing on `home` always clears it (Home is
- * the arc's root — §5.1 — so it never shows a Back chip); landing anywhere
- * else sets it to whatever screen was just left. This is exactly the
- * "at-root ↔ one-level-back" binary the spec describes, with no history
- * depth beyond one hop.
+ * BackChip one-level-back (SUPERSEDED by Topbar D20 — struck outright, see
+ * that file's header "D20 — BACKCHIP STRUCK, LOGO-AS-HOME-NAV ADDED"): this
+ * section originally documented `previousScreenId`'s role feeding a
+ * `backTarget` derivation into the now-removed BackChip. Topbar.tsx D20
+ * struck BackChip and deprecated `TopbarProps.backTarget` to
+ * accepted-but-ignored, flagging its own header ("census-gap cleanup for
+ * whichever dispatch next has App.tsx in its allowlist") that the
+ * `previousScreenId`/`backTarget`-construction plumbing here was dead
+ * weight. This wave's App-side cleanup task removes that plumbing outright
+ * — no `previousScreenId` state, no `backTarget` derivation — and wires the
+ * D20 replacement instead: `topbarProps.onNavigateHome` calls
+ * `navigateToScreen('home')`, matching the logo-as-home-nav control Topbar
+ * now renders in BackChip's old region.
  *
  * PARITY-ASSEMBLY DISPATCH (parity_ia_addendum.md, D16): this file was
  * revised by the parity-assembly dispatch to route/host the addendum's new
@@ -141,7 +147,7 @@
  *     App stamps a session-monotonic `nonce` (a ref counter that never
  *     resets and never reuses a value, even after consumption — the SH-8
  *     lesson: an Object.is-equal payload must still read as a NEW press)
- *     and switches `screenId` with normal BackChip semantics. It does NOT
+ *     and switches `screenId` with normal navigation semantics. It does NOT
  *     route through `navigateToScreen` (which clears payloads and
  *     early-returns on same-screen): a deep link aimed at the
  *     already-active screen still delivers its payload.
@@ -151,7 +157,8 @@
  *     `onDeepLinkConsumed(deepLink.nonce)`. App clears only while the
  *     nonce still matches, so a rapid second press is never clobbered by
  *     a stale consume.
- *   - GENERIC NAV CLEARS: `navigateToScreen` (Sidebar, BackChip, rail)
+ *   - GENERIC NAV CLEARS: `navigateToScreen` (Sidebar, Topbar's D20 Home logo
+ *     control, rail)
  *     drops any unconsumed payload — a plain click means "open the screen
  *     plain", exactly like that function's existing `pendingCaseId` clear.
  *   - KIND VOCABULARY (id encodings): 'doc-redline' → onside.documents,
@@ -170,14 +177,17 @@
  *     simply ignores them (JSX spread performs no excess-property check);
  *     the moment a screen batch adds `extends DeepLinkScreenProps`, the
  *     same spread type-checks against its declaration. The 'domain' kind
- *     is additionally BRIDGED today onto OnSideOverview's already-shipped
- *     `deepLinkDomainKey` prop (resolving that header's "STOP-item for
- *     the wiring dispatch"), so goOnside('dom-KEY') semantics work end to
- *     end. Known legacy-prop limit: `deepLinkDomainKey`'s own
- *     lastDeepLinkRef cannot re-fire a same-key re-press while the screen
- *     stays mounted — the owning screen batch should migrate it to
- *     consume `deepLink`/`onDeepLinkConsumed` (flagged; OnSideOverview.tsx
- *     is outside this dispatch's allowlist).
+ *     resolves purely through that same `deepLink`/`onDeepLinkConsumed`
+ *     contract now — LEGACY BRIDGE REMOVED (App-side cleanup, this wave):
+ *     `OnSideOverview.tsx`'s own header ("DEEP-LINK CONTRACT MIGRATION",
+ *     B3 dispatch) migrated its 'domain'-kind consumption fully onto
+ *     `deepLink` and flagged its now-inert `deepLinkDomainKey` prop as a
+ *     STOP-item for whichever dispatch next held `App.tsx` — this file no
+ *     longer constructs or passes that prop in the `case 'onside.overview'`
+ *     branch below (`OnSideOverviewProps.deepLinkDomainKey` itself stays
+ *     declared, since `OnSideOverview.tsx` is outside this dispatch's
+ *     allowlist; dropping the prop from that interface is the next
+ *     follow-on).
  *   - The bell→Cases path (previous section) stays on its dedicated
  *     pendingCaseId + key-remount technique — Cases consumes
  *     `initialCaseId` via remount, not an effect; unifying it onto
@@ -280,7 +290,7 @@ import { Cases } from './screens/Cases'
 import { Reporting } from './screens/Reporting'
 import { SettingsToggles } from './screens/SettingsToggles'
 import { SettingsAbout } from './screens/SettingsAbout'
-import type { TopbarBackTarget, TopbarProfileMenuItem, TopbarProps } from './components/Topbar'
+import type { TopbarProfileMenuItem, TopbarProps } from './components/Topbar'
 import { PresenterRail } from './components/PresenterRail'
 import { Toast } from './components/Toast'
 import { Switch } from './components/primitives/Switch'
@@ -342,7 +352,7 @@ export type DeepLinkKind =
   | 'feed-source' // base onsideShow('feed-sources') + source focus — id is the source key
   | 'report' // base openReport(kind) — id is the report kind, e.g. 'roi' (source 872, 4242)
   | 'section' // base goOnside(section) — id is a section key on the target screen, e.g. 'lifecycle' (source 869, 878)
-  | 'domain' // base goOnside('dom-KEY') — id is the domain key; bridged to OnSideOverview's `deepLinkDomainKey` today
+  | 'domain' // base goOnside('dom-KEY') — id is the domain key; OnSideOverview consumes it via `deepLink` (no legacy bridge, this wave's App-side cleanup)
 
 /** A screen's deep-link request: navigate to `screen` AND open the `kind`/`id` item there. */
 export interface DeepLinkRequest {
@@ -388,7 +398,6 @@ const SCREEN_LABEL: Record<ScreenId, string> = {
 function App() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const [screenId, setScreenId] = useState<ScreenId>('home')
-  const [previousScreenId, setPreviousScreenId] = useState<ScreenId | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string>(CURRENT.id)
   // C-unbounded-growth-04 fix: ONE app-level toast slot, not two
   // independent booleans (the former `designPartnerToast`/`restartToast`
@@ -447,7 +456,6 @@ function App() {
     // above).
     setDeepLinkTarget(null)
     if (id === screenId) return
-    setPreviousScreenId(id === 'home' ? null : screenId)
     setScreenId(id)
   }
 
@@ -495,7 +503,6 @@ function App() {
     setBellPressNonce((nonce) => nonce + 1)
     setPendingCaseId(caseId)
     if (screenId !== 'cases') {
-      setPreviousScreenId(screenId)
       setScreenId('cases')
     }
   }
@@ -510,7 +517,6 @@ function App() {
     deepLinkNonceRef.current += 1
     setDeepLinkTarget({ ...request, nonce: deepLinkNonceRef.current })
     if (request.screen !== screenId) {
-      setPreviousScreenId(request.screen === 'home' ? null : screenId)
       setScreenId(request.screen)
     }
   }
@@ -541,13 +547,15 @@ function App() {
     onPress: () => setCurrentUserId(user.id),
   }))
 
-  const backTarget: TopbarBackTarget | null = previousScreenId
-    ? { label: `Back to ${SCREEN_LABEL[previousScreenId]}`, onPress: () => navigateToScreen(previousScreenId) }
-    : null
-
   const topbarProps: TopbarProps = {
     breadcrumb: SCREEN_LABEL[screenId],
-    backTarget,
+    // D20 (Topbar.tsx header "BACKCHIP STRUCK, LOGO-AS-HOME-NAV ADDED"):
+    // BackChip/`backTarget` is struck; the LeapFI logo Home nav control
+    // fills that region now. `backTarget` itself is deliberately omitted
+    // here (Topbar's own prop stays `@deprecated` accepted-but-ignored for
+    // any other caller, but this shell no longer constructs or passes a
+    // value — the `previousScreenId` plumbing that fed it is removed).
+    onNavigateHome: () => navigateToScreen('home'),
     onOpenBoardDeck: () => navigateToScreen('board-deck'),
     date: DEMO_DATE_LABEL,
     profile: { name: currentUser.name, initials: currentUser.ini },
@@ -584,20 +592,14 @@ function App() {
           />
         )
       case 'onside.overview':
-        // The 'domain' kind is bridged onto the screen's already-shipped
-        // `deepLinkDomainKey` prop (base goOnside('dom-KEY') semantics) —
-        // see file header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS", incl.
-        // the legacy prop's same-key re-press limit flagged there.
-        return (
-          <OnSideOverview
-            topbar={topbarProps}
-            onNavigate={navigateToScreen}
-            {...deepLinkProps}
-            {...(deepLinkTarget !== null && deepLinkTarget.screen === 'onside.overview' && deepLinkTarget.kind === 'domain'
-              ? { deepLinkDomainKey: deepLinkTarget.id }
-              : {})}
-          />
-        )
+        // The 'domain' kind resolves through the real `deepLink`/
+        // `onDeepLinkConsumed` contract only — see file header
+        // "NAVIGATION-WITH-PAYLOAD / DEEP LINKS". The former
+        // `deepLinkDomainKey` legacy-prop bridge is removed (App-side
+        // cleanup, this wave): `OnSideOverview.tsx` migrated off it
+        // (B3 dispatch, that file's header "DEEP-LINK CONTRACT
+        // MIGRATION") and its own logic never read it.
+        return <OnSideOverview topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
       case 'onside.feed':
         return <OnSideFeed topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
       case 'onside.documents':

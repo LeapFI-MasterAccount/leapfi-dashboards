@@ -15,6 +15,15 @@
  *    always agrees with Investment Design's just-moved sliders. The twin's
  *    live lever state is `state/demoStore.ts` (`setDemoSliders`), which
  *    `HomePanels` subscribes to via `useDemoStore()`.
+ *  - B3 (SEAM 1): every describe block above renders `<HomePanels>` with no
+ *    `onDeepLink` prop and pins the plain `onNavigate(screen)` fallback —
+ *    that is deliberate base-anchor coverage of the "caller has not wired
+ *    `onDeepLink`" path (`HomePanels.tsx`'s own `fireOrDeepLink` helper),
+ *    left unchanged by this dispatch. The "B3 SEAM 1" describe block below
+ *    is the new coverage: the SAME actions, this time with `onDeepLink`
+ *    wired, asserting the real `{screen, kind, id}` payload each one fires
+ *    (base `onsideShow('dom-'+d.key)`/`sigTouch`/`openPlay`/`openReport`/
+ *    `goOnside('feed-lifecycle')`, sources cited per action below).
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
@@ -204,5 +213,111 @@ describe('Investment panel recomputes from the LIVE levers (SH-6, base renderHom
     expect(
       within(screen.getByRole('group', { name: 'One-time build cost' })).getByText(view.economics.buildCostText),
     ).toBeInTheDocument()
+  })
+})
+
+describe('B3 SEAM 1 — onDeepLink threaded from Home.tsx (App.tsx NAV-PAYLOAD contract, header 120-188)', () => {
+  it('PostureBand row "Open →" fires the exact domain (base onsideShow(\'dom-\'+d.key), source 4217)', async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    const onDeepLink = vi.fn()
+    render(<HomePanels visibleKeys={['posture']} currentRoleKey="cro" onNavigate={onNavigate} onDeepLink={onDeepLink} />)
+
+    const row = screen.getByText('Model Risk Management').closest('tr')
+    expect(row).not.toBeNull()
+    await user.click(within(row as HTMLElement).getByRole('button', { name: 'Open →' }))
+
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.overview', kind: 'domain', id: 'mrm' })
+    expect(onNavigate).not.toHaveBeenCalled()
+  })
+
+  it('Strategic signal touch actions fire domain/doc-redline kinds, and "Open the full lifecycle →" fires a section deep link', async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    const onDeepLink = vi.fn()
+    render(<HomePanels visibleKeys={['legis']} currentRoleKey="cro" onNavigate={onNavigate} onDeepLink={onDeepLink} />)
+
+    // SIGNAL[1] (Reg O NPRM): touch = [['dom','capital'],['dom','fairlend'],['doc','capital-narr']].
+    const row = screen.getByText('Fed & FDIC joint NPRM · Regulation O · insider credit').closest('tr')
+    await user.click(within(row as HTMLElement).getByRole('button', { name: 'Review' }))
+    const dialog = screen.getByRole('dialog')
+
+    await user.click(within(dialog).getByRole('button', { name: 'Capital register' }))
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.overview', kind: 'domain', id: 'capital' })
+
+    onDeepLink.mockClear()
+    await user.click(within(dialog).getByRole('button', { name: 'Capital Narrative · CBLR' }))
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.documents', kind: 'doc-redline', id: 'capital-narr' })
+
+    onDeepLink.mockClear()
+    await user.click(within(dialog).getByRole('button', { name: 'Open the full lifecycle →' }))
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.feed', kind: 'section', id: 'lifecycle' })
+
+    // Never falls back to plain nav once onDeepLink is wired.
+    expect(onNavigate).not.toHaveBeenCalled()
+  })
+
+  it('Strategic signal touch actions fire the obligation kind with the domKey:oblId id encoding', async () => {
+    const user = userEvent.setup()
+    const onDeepLink = vi.fn()
+    render(<HomePanels visibleKeys={['legis']} currentRoleKey="cro" onNavigate={noNavigate} onDeepLink={onDeepLink} />)
+
+    // SIGNAL[0]: [['obl','mrm','MRM-11'],['obl','mrm','MRM-01'],['obl','mrm','MRM-09'],...].
+    const row = screen.getByText('Interagency RFI 2026-04 · generative & agentic AI in model risk').closest('tr')
+    await user.click(within(row as HTMLElement).getByRole('button', { name: 'Review' }))
+    const dialog = screen.getByRole('dialog')
+
+    await user.click(within(dialog).getByRole('button', { name: 'MRM-11' }))
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.overview', kind: 'obligation', id: 'mrm:MRM-11' })
+  })
+
+  it('Investment panel top-play "Open →" fires the exact play (base openPlay(o.n), source 4249-region) — Investment Design already consumes this kind end to end', async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    const onDeepLink = vi.fn()
+    render(<HomePanels visibleKeys={['invest']} currentRoleKey="cro" onNavigate={onNavigate} onDeepLink={onDeepLink} />)
+
+    const view = deriveRecomputeView({ ...DEFAULT_SLIDERS }, OPPS)
+    const topFunded = [...view.plan.funded].sort((a, b) => b.val - a.val).slice(0, 4)
+    const firstPlay = topFunded[0]
+    expect(firstPlay).toBeDefined()
+
+    const openButtons = screen.getAllByRole('button', { name: /Open →$/ })
+    await user.click(openButtons[0] as HTMLElement)
+
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'studio.investment-design', kind: 'play', id: firstPlay!.n })
+    expect(onNavigate).not.toHaveBeenCalled()
+  })
+
+  it('"Platform ROI →" fires the report kind (base openReport(\'roi\'), source 872) — Reporting.tsx already consumes this kind end to end', async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    const onDeepLink = vi.fn()
+    render(<HomePanels visibleKeys={['invest']} currentRoleKey="cro" onNavigate={onNavigate} onDeepLink={onDeepLink} />)
+
+    await user.click(screen.getByRole('button', { name: 'Platform ROI →' }))
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'reporting', kind: 'report', id: 'roi' })
+
+    // "Work the levers →" carries no per-item id in the KIND VOCABULARY — stays plain nav even with onDeepLink wired.
+    onDeepLink.mockClear()
+    await user.click(screen.getByRole('button', { name: 'Work the levers →' }))
+    expect(onDeepLink).not.toHaveBeenCalled()
+    expect(onNavigate).toHaveBeenCalledWith('studio.investment-design')
+  })
+
+  it('"Gaps & levers →" and "All open items →" stay plain onNavigate even with onDeepLink wired (no matching per-item id / deliberate STOP-item — see file header)', async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    const onDeepLink = vi.fn()
+    render(<HomePanels visibleKeys={['posture', 'queue']} currentRoleKey="cro" onNavigate={onNavigate} onDeepLink={onDeepLink} />)
+
+    await user.click(screen.getByRole('button', { name: 'Gaps & levers →' }))
+    expect(onNavigate).toHaveBeenCalledWith('onside.overview')
+
+    onNavigate.mockClear()
+    await user.click(screen.getByRole('button', { name: 'All open items →' }))
+    expect(onNavigate).toHaveBeenCalledWith('onside.documents')
+
+    expect(onDeepLink).not.toHaveBeenCalled()
   })
 })

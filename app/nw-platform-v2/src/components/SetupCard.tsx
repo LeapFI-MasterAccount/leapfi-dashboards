@@ -36,6 +36,14 @@
  * Cross-composite reference: consumed by SoonSplash (C16, same
  * dispatch) and by screens outside this dispatch's allowlist (Roadmap's
  * "what's next" row, §5.6) which are wired up later.
+ *
+ * CLICK-AFFORDANCE STANDARD CORRECTION (D19b, `affordance_standard.md`
+ * §0, §2.1, §5 item 5): the `interactive` variant's trailing chevron tone
+ * is unconditionally `'interactive'` (accent, at rest) — previously
+ * hover/active-gated, which was exactly D19's "not obvious what the CTAs
+ * are" failure mode, just already shipped here. No other change to this
+ * file; this component was already the reference implementation the
+ * standard generalizes to DataTable and StatCard.
  */
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -190,7 +198,7 @@ export function SetupCard(props: SetupCardProps) {
     >
       <SetupCardBody title={title} description={description} icon={icon} count={count} />
       <span aria-hidden="true" style={TRAILING_STYLE}>
-        <Icon name="chevron-right" size={16} tone={hover || active ? 'interactive' : 'default'} />
+        <Icon name="chevron-right" size={16} tone="interactive" />
       </span>
     </button>
   );

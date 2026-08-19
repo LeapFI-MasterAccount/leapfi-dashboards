@@ -17,9 +17,17 @@
  * `onDeepLinkConsumed`) as DOM — real layout is out of jsdom's reach, but
  * the handler/prop contract is exactly what these tests pin (D17:
  * observe, never adapt the app). `OnSideOverview` stays REAL: the
- * 'domain' kind bridges onto its shipped `deepLinkDomainKey` prop, so
- * that path is asserted end to end (accordion row expands + focuses —
- * the base onsideShow domKey branch, source 3021–3054).
+ * 'domain' kind is asserted end to end through the REAL `deepLink`/
+ * `onDeepLinkConsumed` contract (accordion row expands + focuses — the
+ * base onsideShow domKey branch, source 3021–3054). B3 dispatch: this
+ * screen migrated off its former `deepLinkDomainKey` bridge onto that
+ * same contract (`OnSideOverview.tsx`'s own header "DEEP-LINK CONTRACT
+ * MIGRATION") — `App.tsx` still passes the legacy prop alongside
+ * `deepLink` (both built from the same target, so this test's outcome is
+ * unchanged either way), a STOP-item that file's own header flags for a
+ * future App.tsx-owning dispatch to remove. Direct-prop coverage of the
+ * migrated consumption itself (bypassing `App.tsx`/the bell entirely)
+ * lives in `src/__tests__/onside/overview.test.tsx`.
  */
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'

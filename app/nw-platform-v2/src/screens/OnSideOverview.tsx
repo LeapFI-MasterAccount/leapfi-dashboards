@@ -85,18 +85,34 @@
  * added — C1's prop surface still has no slot for one — only the real
  * click-through source actually shipped.
  *
- * AMBIGUITY RESOLVED — `deepLinkDomainKey` prop (the `dom-KEY` navigation
- * entry point): no router or cross-screen navigation-with-payload
- * mechanism exists in this worktree yet — `Sidebar.tsx`'s `onNavigate` is
- * `(id: string) => void`, a bare id with no room for a domain-key payload,
- * and `App.tsx` (out of allowlist) is the only place such a mechanism
- * could be threaded. This screen exposes an optional `deepLinkDomainKey`
- * prop so a future integrator (e.g. `OnSideDocuments.tsx`'s post-Adopt
- * cascade, or a URL-hash parser in `App.tsx`) has a real prop to set —
- * the screen honors it correctly today (auto-expand + scroll-into-view,
- * matching `onsideShow`'s `domKey` branch exactly) even though nothing in
- * this worktree calls it with a real value yet. STOP-item for the wiring
- * dispatch, not a gap in this screen's own behavior.
+ * DEEP-LINK CONTRACT MIGRATION (B3 dispatch — closes this note's own
+ * STOP-item below, superseding it): `App.tsx`'s NAVIGATION-WITH-PAYLOAD
+ * contract (that file's header, lines 120-188) now exists and is spread
+ * onto every routed screen, `deepLink`/`onDeepLink`/`onDeepLinkConsumed`
+ * included. This screen has migrated its 'domain'-kind consumption fully
+ * onto that contract: `deepLink` is read in an effect keyed on
+ * `deepLink?.nonce` (App.tsx's documented CONSUME contract) — when
+ * `deepLink.kind === 'domain'`, `deepLink.id` auto-expands + scrolls to
+ * the matching domain's accordion row (unchanged end behavior, matching
+ * `onsideShow`'s `domKey` branch), then calls `onDeepLinkConsumed`. The
+ * former `lastDeepLinkRef`-based dedupe is gone — App's own nonce already
+ * guarantees a fresh value per press, so a same-key re-press no longer
+ * needs a local ref to detect it as new (the same SH-8-generalized
+ * guarantee every other nonce-consuming screen in this worktree relies
+ * on).
+ *
+ * LEGACY `deepLinkDomainKey` PROP (STOP-item, not this screen's gap):
+ * kept in `OnSideOverviewProps` and still accepted so `App.tsx`'s existing
+ * call site — out of this dispatch's ALLOWLIST — keeps compiling; `App.tsx`
+ * still passes it (its own `case 'onside.overview'` bridge, lines ~586-598)
+ * alongside the real `deepLink` payload for the 'domain' kind, both built
+ * from the same `deepLinkTarget`, so no behavior actually depends on the
+ * legacy prop anymore — this screen's own logic never reads it. STOP-item
+ * for whichever dispatch next holds `App.tsx`: delete the
+ * `deepLinkDomainKey: deepLinkTarget.id` bridge (that file's header lines
+ * 174-180 documents it as a "known legacy-prop limit" already superseded
+ * here) and drop the prop from `OnSideOverviewProps` once `App.tsx` stops
+ * passing it.
  *
  * AMBIGUITY RESOLVED — domain-posture-grid card is a bespoke composite:
  * the addendum's own component list for this row ("a small per-domain
@@ -150,6 +166,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import type { DeepLinkScreenProps } from '../App';
 import { Topbar } from '../components/Topbar';
 import type { TopbarProps } from '../components/Topbar';
 import { Sidebar } from '../components/Sidebar';
@@ -351,17 +368,17 @@ function DomainPostureCard({ domain, onOpen }: { domain: OnsideDomain; onOpen: (
   );
 }
 
-export interface OnSideOverviewProps {
+export interface OnSideOverviewProps extends DeepLinkScreenProps {
   /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as every other screen in this worktree). */
   topbar: TopbarProps;
   /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('onside.overview') and is not accepted as a prop. */
   onNavigate: SidebarProps['onNavigate'];
   sidebarVersionLabel?: string;
-  /** See file header "deepLinkDomainKey prop" note — a `dom-KEY` entry point for a future cross-screen deep link. Setting/changing this force-expands and scrolls to the matching domain's accordion row. */
+  /** LEGACY — see file header "LEGACY deepLinkDomainKey PROP." Superseded by `deepLink`/`onDeepLinkConsumed` (`DeepLinkScreenProps`, above); accepted only so `App.tsx`'s existing call site keeps compiling. No longer read by this screen's own logic. */
   deepLinkDomainKey?: string;
 }
 
-export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLinkDomainKey }: OnSideOverviewProps) {
+export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLink, onDeepLinkConsumed }: OnSideOverviewProps) {
   // Re-renders this screen on every demo-store write (Adopt cascade,
   // Discovery accepts, resetDemo) — see the ONSIDE-02 file-header note.
   useDemoStore();
@@ -380,7 +397,6 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
   const gapsToTarget = DOMAINS.reduce((sum, d) => sum + oblToClose(d), 0);
   const domainsAtOrAbove = DOMAINS.filter((d) => statusOf(d) !== 'below').length;
 
-  const lastDeepLinkRef = useRef<string | undefined>(undefined);
   // B-dead-interactions-14 — in-page scroll target for the KPI tiles whose
   // v1 destination (onsideShow('domains'/'targets')) is this same page's
   // Domains accordion, not a separate screen.
@@ -450,12 +466,22 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
     }, ADOPT_COMMIT_DELAY_MS);
   };
 
+  // DEEP-LINK CONTRACT MIGRATION (B3 dispatch, see file header) — same
+  // expand+scroll behavior the legacy `deepLinkDomainKey` effect used to
+  // perform (identical to `openDomain` below, inlined here since this
+  // effect fires before `openDomain` is declared in this component body),
+  // now driven by App.tsx's documented CONSUME contract: keyed on
+  // `deepLink?.nonce`, never a bare prop-value comparison, so App's own
+  // nonce (never reused, even after consumption) is what marks a re-press
+  // as new — no local ref needed to detect it.
   useEffect(() => {
-    if (!deepLinkDomainKey || deepLinkDomainKey === lastDeepLinkRef.current) return;
-    lastDeepLinkRef.current = deepLinkDomainKey;
-    setExpandedDomainKeys((prev) => (prev.has(deepLinkDomainKey) ? prev : new Set(prev).add(deepLinkDomainKey)));
-    setPendingScrollKey(deepLinkDomainKey);
-  }, [deepLinkDomainKey]);
+    if (!deepLink || deepLink.kind !== 'domain') return;
+    const domainKey = deepLink.id;
+    setExpandedDomainKeys((prev) => (prev.has(domainKey) ? prev : new Set(prev).add(domainKey)));
+    setPendingScrollKey(domainKey);
+    onDeepLinkConsumed?.(deepLink.nonce);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed read fresh from closure, not tracked as a re-trigger dep
+  }, [deepLink?.nonce]);
 
   const openDomain = (key: string) => {
     setExpandedDomainKeys((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));

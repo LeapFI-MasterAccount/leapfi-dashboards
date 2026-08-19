@@ -103,9 +103,26 @@
  * screen is covered by `src/__tests__/shell/home.test.tsx` and
  * `presenter-entry-d18.test.tsx`, plus `npx tsc --noEmit` (strict,
  * `exactOptionalPropertyTypes`).
+ *
+ * SEAM 1 RESOLVED (B3 dispatch) — `HomePanels.tsx`'s own file header
+ * ("CLICKABLE TOUCH CHIPS...") flagged this exact gap: `App.tsx`'s
+ * NAVIGATION-WITH-PAYLOAD contract (that file's header, lines 120-188) was
+ * spread onto this screen already (`{...deepLinkProps}` at the `Home` call
+ * site) but never threaded past it — every HomePanels go-link/drawer
+ * action fell back to plain `onNavigate`, landing on the right screen but
+ * never opening the specific item. `HomeProps` now `extends
+ * DeepLinkScreenProps`; only `onDeepLink` (the FIRE half) is threaded down
+ * to `HomePanels` — `deepLink`/`onDeepLinkConsumed` (the CONSUME half) are
+ * accepted here (App spreads all three unconditionally) but intentionally
+ * left unused: Home is never a deep-link TARGET screen in the KIND
+ * VOCABULARY (App.tsx header 157-167) — no kind routes back to `'home'` —
+ * so there is nothing for this screen to consume. See `HomePanels.tsx`'s
+ * own header for exactly which of its actions now deliver a real payload
+ * versus which stay plain screen-level nav (no id to carry).
  */
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
+import type { DeepLinkScreenProps } from '../App';
 import { Topbar } from '../components/Topbar';
 import type { TopbarProps } from '../components/Topbar';
 import { Sidebar } from '../components/Sidebar';
@@ -165,7 +182,7 @@ const CTA_ROW_STYLE: CSSProperties = {
   display: 'flex',
 };
 
-export interface HomeProps {
+export interface HomeProps extends DeepLinkScreenProps {
   /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as `BoardDeck.tsx`). */
   topbar: TopbarProps;
   /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('home') and is not accepted as a prop. */
@@ -181,7 +198,7 @@ export interface HomeProps {
   roleFirstName?: string;
 }
 
-export function Home({ topbar, onNavigate, sidebarVersionLabel, roleKey = CURRENT.roleKey, roleFirstName = CURRENT.first }: HomeProps) {
+export function Home({ topbar, onNavigate, sidebarVersionLabel, roleKey = CURRENT.roleKey, roleFirstName = CURRENT.first, onDeepLink }: HomeProps) {
   // Lifted customization state (HomeCustomizeBar.tsx "WIRING RECIPE"): the
   // bar's toggles and HomePanels' render set share this one array. Re-derived
   // when `roleKey` changes via React's adjust-state-during-render pattern so
@@ -238,7 +255,12 @@ export function Home({ topbar, onNavigate, sidebarVersionLabel, roleKey = CURREN
             visibleKeys={panelState.visibleKeys}
             onChange={(nextVisibleKeys) => setPanelState({ roleKey, visibleKeys: nextVisibleKeys })}
           />
-          <HomePanels visibleKeys={panelState.visibleKeys} currentRoleKey={roleKey} onNavigate={onNavigate} />
+          <HomePanels
+            visibleKeys={panelState.visibleKeys}
+            currentRoleKey={roleKey}
+            onNavigate={onNavigate}
+            {...(onDeepLink !== undefined ? { onDeepLink } : {})}
+          />
         </main>
       </div>
     </div>
