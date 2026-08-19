@@ -4,6 +4,34 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LeapFI Platform · NorthWinds Credit Union (V2)</title>
+    <!-- F14 (T7 brand audit): self-hosted Inter faces (weights 400/500/600/700,
+         latin subset, woff2 data URIs — src/theme/fonts.css). App.css's body
+         font-family stack has always named Inter first, but no @font-face
+         backed it, so the face never actually loaded; this link supplies it.
+         A <link rel="stylesheet"> (not a main.tsx import — main.tsx is
+         outside this dispatch's ALLOWLIST) so vite-plugin-singlefile inlines
+         it as a <style> block in the build the same way it inlines every
+         other same-origin stylesheet (vite.config.ts assetsInlineLimit is
+         effectively unbounded); the already-inline data URIs inside pass
+         through untouched, so the artifact gains zero external references. -->
+    <link rel="stylesheet" href="/src/theme/fonts.css" />
+    <!-- F8 (T7 brand audit): favicon plumbing. brand_doctrine.md "Chevron
+         mark": "Favicon: chevron mark only (32×32, 180×180)." The chevron
+         master PNGs (LeapFI-Chevron-{Black,Transparent}.png, Drive asset
+         folder 1pv4u7uA08vTJMIzgeM-n3RTx8IIQghnz) are not present in
+         src/assets/ — only the two WithoutTagline full-lockup PNGs are.
+         ASSET-1 forbids recreating/deriving a brand mark (no
+         cropping/regenerating a chevron out of the lockup PNGs), so this
+         dispatch does not synthesize one — see the evidence return's
+         STOP-item requesting both master PNGs from the brandkit Drive.
+         These two <link> tags are the wiring only — empty data-URI slots
+         that keep `npm run build` green with zero external refs today. Once
+         a master PNG lands, base64-encode it and paste the string after
+         "base64," in the matching href below (one line, no other file
+         needs to change) — vite-plugin-singlefile will pass an already-
+         inline data URI straight through unchanged. -->
+    <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64," />
+    <link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64," />
     <!-- SH-10: pre-paint theme stamp. The static data-theme="dark" above is
          only the no-preference default; a stored preference must be stamped
          BEFORE first paint (App.tsx's post-mount effect is too late — a

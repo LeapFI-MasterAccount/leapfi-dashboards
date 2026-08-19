@@ -160,7 +160,25 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
  * every descendant's inline `var(--ink)`/`var(--panel)` style resolves to
  * print colors. Overflow is forced visible on the drawer's scroll body and
  * the report tables' own `overflow-x:auto` wrappers so content paginates
- * instead of clipping at the viewport fold (base `.drawer{overflow:visible}`). */
+ * instead of clipping at the viewport fold (base `.drawer{overflow:visible}`).
+ *
+ * ACCENT OVERRIDE (T7 brand-audit fix, brief-cited F2/FORB-1 — see the
+ * implementer's evidence return for a citation-mismatch note against the
+ * repo's actual brand_audit.md, whose own F2/F8/F14 are unrelated findings
+ * about a different document; the underlying defect below was independently
+ * verified against this file): the port above never repointed `--accent`.
+ * Dark mode (this app's shipped default, index.html) sets `--accent:
+ * #00f2ff` (Brand Cyan) — doctrine's Accessibility section forbids exactly
+ * this pair ("Forbidden: Cyan on white"; ~1.3:1 contrast). Content rendered
+ * inside the drawer at print time (e.g. views/ReportView.tsx's `docLinkStyle`,
+ * `color: 'var(--accent)'`) inherited that unreconciled token straight onto
+ * the forced-white print panel — cyan text on white paper. Doctrine's own
+ * light-mode token set already resolves this exact tension (LM-PAL-6: Deep
+ * Teal `#006D75` is "THE ONLY primary accent in light mode (Cyan excluded)"
+ * — printed paper is a light surface); print reuses that same resolution
+ * rather than inventing a new one. `--accent2` (Cobalt `#2D5BFF`) is left
+ * untouched: doctrine's forbidden-pairs list names Cyan-on-white only, and
+ * light mode itself carries Cobalt through unchanged. */
 const PRINT_STYLE = `
 @media print {
   :root {
@@ -171,6 +189,8 @@ const PRINT_STYLE = `
     --ink: #111111 !important;
     --ink2: #333333 !important;
     --ink3: #555555 !important;
+    /* FORB-1 fix — see the ACCENT OVERRIDE note above this constant. */
+    --accent: #006d75 !important;
   }
   body * { visibility: hidden; }
   [data-lf-composite='drawer'], [data-lf-composite='drawer'] * { visibility: visible; }
