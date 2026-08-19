@@ -41,13 +41,34 @@
  * `activeId` is hardcoded here to `'reporting'` (`Sidebar.tsx`'s own `NAV`
  * entry id for this screen, already reserved per the dispatch brief).
  *
- * Wiring note (NOT in this dispatch's ALLOWLIST, per parity_ia_addendum.md §6
- * Batch 5's own "Wiring note" and this dispatch's HARD RULES barring edits to
- * `App.tsx`): `App.tsx`'s existing `reporting` case in `renderActiveScreen()`
- * currently falls through to `OutOfScopeScreen` (its `default` branch) and
- * needs one line swapped to `<Reporting topbar={topbarProps}
- * onNavigate={navigateToScreen} />` — left for the dispatch that owns
- * `App.tsx` integration.
+ * Wiring note (RESOLVED): `App.tsx`'s `reporting` case now mounts this screen
+ * directly (the parity-assembly dispatch landed that one-line swap).
+ *
+ * BOARD-LOG SUB-FLOW (parity-wiring wave, gate dispatch — addendum §1.8):
+ * the `regchange` report's per-row "Log an update →" affordance (gated on
+ * `status === 'open'`, see `views/ReportView.tsx`) swaps THIS screen's one
+ * shared Drawer's content to `views/BoardLogForm.tsx` — a sequential content
+ * swap of the same instance, never a second Drawer, exactly the base engine's
+ * own drawer-shaped behavior (`boardUpdate` showDrawer, source 3577;
+ * `boardSave` → `closeDrawer();openReport('regchange')`, source 3592). This
+ * screen owns everything `BoardLogForm`'s header assigns to its parent: the
+ * Drawer `title` ("Log an update · {id}", base `dtitle`), the controlled
+ * `date`/`text` field state, the `BOARD_LOG` mutation itself (unshift of
+ * `{txt, when: 'Aug 15, 2026', who: first+' '+(role||''), date}` — verbatim
+ * boardSave line 3589, `who` stamped from the live persona prop, see
+ * `currentUser` below), and the post-save sequencing: reveal the "Saved to
+ * the standing view" pill, then after the base's own 900ms delay swap the
+ * Drawer content back to the `regchange` report (base line 3592's
+ * setTimeout). Quirk replicated on purpose: as in the base, a presenter who
+ * closes the drawer during the 900ms window still gets the regchange report
+ * reopened by the pending timer (`closeDrawer();openReport('regchange')`
+ * runs unconditionally in source). One knowing divergence, flagged not
+ * hidden: our `BoardLogForm` receives the live `BOARD_LOG[id]` array, so the
+ * just-saved entry appears in the form's "Update history" during the 900ms
+ * pill window, where the base's string-built drawer stayed stale until
+ * reopened — React-idiomatic freshness, same data, no copy invented. The
+ * drawer's "Print / Save as PDF" ghost footer is omitted in form mode (the
+ * base `boardUpdate` drawer has no such control).
  *
  * STOP-item — no executable test run: identical to every sibling screen
  * already landed in this worktree — no test runner is installed
@@ -57,7 +78,7 @@
  * `exactOptionalPropertyTypes`) instead; recommending the same test-tooling
  * follow-up dispatch every sibling screen already recommends.
  */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Topbar } from '../components/Topbar';
 import type { TopbarProps } from '../components/Topbar';
@@ -68,6 +89,10 @@ import { Drawer } from '../components/Drawer';
 import { Button } from '../components/primitives/Button';
 import { ReportView, REPORT_KIND_ORDER, REPORT_META } from '../views/ReportView';
 import type { ReportKind } from '../views/ReportView';
+import { BoardLogForm } from '../views/BoardLogForm';
+import { BOARD_LOG } from '../data/boardLog';
+import { CURRENT } from '../data/studio';
+import type { StudioUser } from '../data/studio';
 
 const SCREEN_STYLE: CSSProperties = {
   display: 'flex',
@@ -100,18 +125,85 @@ export interface ReportingProps {
   /** Sidebar navigation hook, also reused to route `gapboard`'s "Open cases →" link (`onNavigate('cases')` — see file header STOP-item). `activeId` is intrinsic to this screen ('reporting') and is not accepted as a prop. */
   onNavigate: SidebarProps['onNavigate'];
   sidebarVersionLabel?: string;
+  /**
+   * Active persona — stamps `who` on committed board-log updates (base
+   * `boardSave`: `CURRENT.first+' '+(CURRENT.role||'')`, source 3589, where
+   * base `CURRENT` is the live persona-switcher global). Optional, defaulting
+   * to `CURRENT` (Rachel Fischer, CRO — the persona the app boots with and
+   * Restart resets to), the same default-persona pattern `Home.tsx`'s
+   * `roleKey` prop established; `App.tsx` passes the live switcher value.
+   */
+  currentUser?: StudioUser;
 }
 
-export function Reporting({ topbar, onNavigate, sidebarVersionLabel }: ReportingProps) {
+export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser = CURRENT }: ReportingProps) {
   const [selectedKind, setSelectedKind] = useState<ReportKind | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Board-log sub-flow state (see file header "BOARD-LOG SUB-FLOW"): when
+  // `boardLogId` is non-null the SAME shared Drawer instance renders
+  // BoardLogForm instead of ReportView — a sequential content swap, never a
+  // second Drawer. Field state is parent-owned per BoardLogForm's controlled
+  // contract (base `#bu-date`/`#bu-txt` DOM state).
+  const [boardLogId, setBoardLogId] = useState<string | null>(null);
+  const [boardLogDate, setBoardLogDate] = useState('');
+  const [boardLogText, setBoardLogText] = useState('');
+  const [boardLogSaved, setBoardLogSaved] = useState(false);
+  // Pending base-line-3592 `setTimeout(...,900)` — cleared only on unmount
+  // (base clears it never; see header on the replicated close-during-window
+  // quirk).
+  const savedTimerRef = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (savedTimerRef.current !== null) window.clearTimeout(savedTimerRef.current);
+    },
+    [],
+  );
 
   const openReport = (kind: ReportKind) => {
+    // Content is replaced wholesale, exactly like base `showDrawer` — a
+    // stale board-log form never survives into a report opened from a card.
+    setBoardLogId(null);
     setSelectedKind(kind);
     setDrawerOpen(true);
   };
   const closeReport = () => setDrawerOpen(false);
   const handleOpenCases = () => onNavigate('cases');
+
+  /** Base `boardUpdate(id)` (source 3577): swap the drawer to a fresh form
+   * for this row — fields empty on every open, like the base's rebuilt DOM. */
+  const openBoardLog = (id: string) => {
+    setBoardLogId(id);
+    setBoardLogDate('');
+    setBoardLogText('');
+    setBoardLogSaved(false);
+    setDrawerOpen(true);
+  };
+
+  /** Base `boardSave(id)` (source 3588-3593), verbatim sequence: guard empty
+   * text (restated parent-side; BoardLogForm's own guard already focuses the
+   * textarea and withholds the intent) → unshift the entry → reveal the
+   * saved pill → after 900ms, `closeDrawer();openReport('regchange')` — here
+   * the equivalent sequential swap back to the regchange report in the same
+   * open Drawer. */
+  const handleBoardLogSave = () => {
+    if (boardLogId === null) return;
+    const txt = boardLogText.trim();
+    if (!txt) return;
+    (BOARD_LOG[boardLogId] = BOARD_LOG[boardLogId] ?? []).unshift({
+      txt,
+      when: 'Aug 15, 2026',
+      who: currentUser.first + ' ' + (currentUser.role || ''),
+      date: boardLogDate.trim(),
+    });
+    setBoardLogSaved(true);
+    if (savedTimerRef.current !== null) window.clearTimeout(savedTimerRef.current);
+    savedTimerRef.current = window.setTimeout(() => {
+      savedTimerRef.current = null;
+      setBoardLogId(null);
+      setSelectedKind('regchange');
+      setDrawerOpen(true);
+    }, 900);
+  };
 
   // Built conditionally (rather than `versionLabel={sidebarVersionLabel}`
   // directly) — this project's `exactOptionalPropertyTypes` setting treats
@@ -123,7 +215,9 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel }: Reporting
     ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
   };
 
-  const drawerTitle = selectedKind ? REPORT_META[selectedKind].title : 'Report';
+  // Base `dtitle` in form mode: "Log an update · {id}" (source 3581).
+  const drawerTitle =
+    boardLogId !== null ? `Log an update · ${boardLogId}` : selectedKind ? REPORT_META[selectedKind].title : 'Report';
 
   return (
     <div data-lf-screen="reporting" style={SCREEN_STYLE}>
@@ -162,9 +256,25 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel }: Reporting
         open={drawerOpen}
         title={drawerTitle}
         onClose={closeReport}
-        footer={<Button variant="ghost" label="Print / Save as PDF" onPress={() => window.print()} />}
+        footer={
+          // No print footer in form mode — the base `boardUpdate` drawer has
+          // no such control (see file header "BOARD-LOG SUB-FLOW").
+          boardLogId !== null ? null : <Button variant="ghost" label="Print / Save as PDF" onPress={() => window.print()} />
+        }
       >
-        {selectedKind ? <ReportView kind={selectedKind} onOpenCases={handleOpenCases} /> : null}
+        {boardLogId !== null ? (
+          <BoardLogForm
+            entries={BOARD_LOG[boardLogId] ?? []}
+            date={boardLogDate}
+            onDateChange={setBoardLogDate}
+            text={boardLogText}
+            onTextChange={setBoardLogText}
+            onSave={handleBoardLogSave}
+            saved={boardLogSaved}
+          />
+        ) : selectedKind ? (
+          <ReportView kind={selectedKind} onOpenCases={handleOpenCases} onLogUpdate={openBoardLog} />
+        ) : null}
       </Drawer>
     </div>
   );

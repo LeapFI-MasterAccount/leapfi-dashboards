@@ -20,15 +20,46 @@
  * rendering, so it is hardcoded here to `'home'` rather than accepted as a
  * prop the integrator could get wrong.
  *
- * AMBIGUITY RESOLVED — "utility corner ... Customize tiles" (§5.1 region
- * map): the spec's own text gates this on "only if a customization entry
- * point is exposed per survey_map.md 4122–93... if not currently exposed,
- * this spec does not require adding one." No customization data/handler is
- * named anywhere in this dispatch's allowlist or its cited sources, so no
- * placeholder "Customize tiles" Button is added — adding one without a
- * real handler would be exactly the kind of fabricated intermediate state
- * this persona's Core Principle 3 rules out ("no fabricated intermediate
- * state"). STOP-item if a future dispatch surfaces real customization data.
+ * HOME CUSTOMIZATION (W2, parity_ia_addendum.md §1.7 + Batch 7 line 403 —
+ * resolves this header's original "STOP-item if a future dispatch surfaces
+ * real customization data"): that dispatch is this one. `HomeCustomizeBar`
+ * + `HomePanels` (both already landed, previously unwired) are composed
+ * below the existing CTA row, following `HomeCustomizeBar.tsx`'s own
+ * documented WIRING RECIPE verbatim: `visibleKeys` is lifted here (one
+ * piece of state, two consumers — bar toggles and panel render set can
+ * never drift). Placement is the addendum §1.7's own instruction ("**below**
+ * the existing, unchanged StatCard row + 'Start the demo' primary CTA, see
+ * §4 primacy audit") — NOT §5.1's "utility corner": everything above and
+ * including the CTA row is byte-identical to the pre-W2 file (same DOM,
+ * same order, same handlers — script-safety rule 4), the customize trigger
+ * is a ghost Button, and every panel surface is secondary (DataTable/
+ * StatCard/SetupCard), so "Start the demo" remains the single obvious
+ * primary action (R3).
+ *
+ * AMBIGUITY RESOLVED / STOP-item — persona props: the WIRING RECIPE needs
+ * the active persona's `roleKey`/`first`, which this screen has never
+ * received (`App.tsx`'s own header: "No other screen in this worktree reads
+ * the active persona (none of the 7 screens' props accept one)"), and
+ * `App.tsx`'s Home call site (line ~407) is outside this dispatch's
+ * ALLOWLIST (`Home.tsx` ONLY). Making the new props required would break
+ * `App.tsx`'s existing call under tsc — an out-of-allowlist edit by
+ * another name — so they are optional, defaulting to `CURRENT`
+ * (`data/studio.ts`, Rachel Fischer/'cro'): exactly the persona `App.tsx`
+ * boots with and resets to on Restart, so the defaults are correct for the
+ * scripted demo path today, not a fabrication. STOP-item for the follow-up
+ * `App.tsx` dispatch: pass `roleKey={currentUser.roleKey}`
+ * `roleFirstName={currentUser.first}` so the Topbar persona switcher
+ * propagates here; until then a persona switched mid-session sees the
+ * default (CRO) queue/preferences on Home — flagged, not silently
+ * approximated. If the integrator later passes a changing `roleKey`, the
+ * lifted `visibleKeys` state re-derives via the standard adjust-state-
+ * during-render pattern keyed on `roleKey` (see component body), so each
+ * role's stored `HOME_ORDER` layout is honored on switch.
+ *
+ * `HomePanels`' optional `onOpenCase` is deliberately not forwarded — its
+ * own prop doc states no row this wave reaches uses it ("accepted for
+ * prop-shape symmetry"); forwarding a handler this screen would also have
+ * to invent a prop for would widen this screen's API for a no-op.
  *
  * G11 label requirement (§5.1, cross-referenced from §5.7): "both the Home
  * StatCard ('cost capacity already freed') and the deck's economics
@@ -75,6 +106,7 @@
  * Recommending the same test-tooling follow-up dispatch `BoardDeck.tsx`
  * already recommends.
  */
+import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Topbar } from '../components/Topbar';
 import type { TopbarProps } from '../components/Topbar';
@@ -82,6 +114,10 @@ import { Sidebar } from '../components/Sidebar';
 import type { SidebarProps } from '../components/Sidebar';
 import { StatCard } from '../components/StatCard';
 import { Button } from '../components/primitives/Button';
+import { HomeCustomizeBar, resolveVisibleKeys } from '../views/HomeCustomizeBar';
+import type { HomePanelKey } from '../views/HomeCustomizeBar';
+import { HomePanels } from '../views/HomePanels';
+import { CURRENT } from '../data/studio';
 
 const SCREEN_STYLE: CSSProperties = {
   display: 'flex',
@@ -144,9 +180,29 @@ export interface HomeProps {
    * and owns the actual state machine.
    */
   onStartDemo: () => void;
+  /**
+   * Active persona's role key / first name for the customization surfaces
+   * (§1.7). Optional with `CURRENT` defaults — see file header "AMBIGUITY
+   * RESOLVED / STOP-item — persona props" for why these are not required
+   * and what the follow-up `App.tsx` dispatch should pass.
+   */
+  roleKey?: string;
+  roleFirstName?: string;
 }
 
-export function Home({ topbar, onNavigate, sidebarVersionLabel, onStartDemo }: HomeProps) {
+export function Home({ topbar, onNavigate, sidebarVersionLabel, onStartDemo, roleKey = CURRENT.roleKey, roleFirstName = CURRENT.first }: HomeProps) {
+  // Lifted customization state (HomeCustomizeBar.tsx "WIRING RECIPE"): the
+  // bar's toggles and HomePanels' render set share this one array. Re-derived
+  // when `roleKey` changes via React's adjust-state-during-render pattern so
+  // each role's own stored HOME_ORDER layout is honored on persona switch
+  // (the mismatched render's output is discarded by React before commit).
+  const [panelState, setPanelState] = useState<{ roleKey: string; visibleKeys: readonly HomePanelKey[] }>(() => ({
+    roleKey,
+    visibleKeys: resolveVisibleKeys(roleKey),
+  }));
+  if (panelState.roleKey !== roleKey) {
+    setPanelState({ roleKey, visibleKeys: resolveVisibleKeys(roleKey) });
+  }
   // Built conditionally (rather than `versionLabel={sidebarVersionLabel}`
   // directly) because this project's `exactOptionalPropertyTypes` setting
   // treats Sidebar's optional `versionLabel` as exactly `string`, not
@@ -179,6 +235,16 @@ export function Home({ topbar, onNavigate, sidebarVersionLabel, onStartDemo }: H
           <div style={CTA_ROW_STYLE}>
             <Button variant="primary" label="Start the demo" onPress={onStartDemo} />
           </div>
+          {/* W2 (addendum §1.7 / Batch 7): customization surfaces, strictly
+              below the unchanged StatCard row + primary CTA — see file
+              header "HOME CUSTOMIZATION." */}
+          <HomeCustomizeBar
+            roleKey={roleKey}
+            roleFirstName={roleFirstName}
+            visibleKeys={panelState.visibleKeys}
+            onChange={(nextVisibleKeys) => setPanelState({ roleKey, visibleKeys: nextVisibleKeys })}
+          />
+          <HomePanels visibleKeys={panelState.visibleKeys} currentRoleKey={roleKey} onNavigate={onNavigate} />
         </main>
       </div>
     </div>

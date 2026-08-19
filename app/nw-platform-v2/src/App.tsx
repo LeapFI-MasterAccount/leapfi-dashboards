@@ -59,30 +59,21 @@
  * (still inside Topbar+Sidebar shell chrome for wayfinding) rather than a
  * fabricated full screen or a silent no-op.
  *
- * STOP-ITEM (ALLOWLIST boundary, not improvised past — persona directive
- * 4): three parity_ia_addendum.md batches assign new content to a *section
- * inside an already-shipped script screen* (the addendum's own "views/"
- * vocabulary) rather than to a new `screens/` file: Batch 2's
- * `views/RegulatoryFeedSources.tsx` + `RegulatoryFeedLifecycle.tsx` +
- * `RegulatoryFeedInforce.tsx` (compose into `OnSideFeed.tsx`), Batch 7's
- * `views/HomeCustomizeBar.tsx` + `HomePanels.tsx` (compose into `Home.tsx`),
- * and Batch 8's `views/ChatIntakeWizard.tsx` (composes into
- * `StudioAsk.tsx`). Every one of those three files' own headers documents
- * the identical finding independently (e.g. `RegulatoryFeedSources.tsx`:
- * "the persona's HARD RULES forbid touching it ('never touch ... existing
- * screens')"). This dispatch's own HARD RULES state the same prohibition
- * verbatim, and its ALLOWLIST names `App.tsx`/`App.css`/`Sidebar.tsx`/
- * `Topbar.tsx`/the new view files/minimal build-error fixes — not
- * `Home.tsx`, `OnSideFeed.tsx`, or `StudioAsk.tsx`. Those three files are
- * therefore NOT imported or modified here; the six view files above ship
- * unwired (still compiling cleanly, per their own file-level STOP-items),
- * pending a follow-up dispatch whose ALLOWLIST explicitly includes the
- * three existing screens they compose into. Also unbuilt, and out of scope
- * for the same reason on the data side: Batch 8's board-log sub-flow
- * (`views/BoardLogForm.tsx` + `data/boardLog.ts`) — neither file exists in
- * this worktree as of this dispatch (confirmed by directory listing), so
- * there is nothing for this file to wire even if `Reporting.tsx`'s
- * `regchange` report were in scope for it.
+ * STOP-ITEM RESOLVED (parity-wiring wave): the six previously-unwired view
+ * files are now composed into their owning script screens by that wave's
+ * builders — Batch 2's `views/RegulatoryFeedSources.tsx` +
+ * `RegulatoryFeedLifecycle.tsx` + `RegulatoryFeedInforce.tsx` into
+ * `OnSideFeed.tsx` (W1), Batch 7's `views/HomeCustomizeBar.tsx` +
+ * `HomePanels.tsx` into `Home.tsx` (W2), and Batch 8's
+ * `views/ChatIntakeWizard.tsx` into `StudioAsk.tsx` (W3) — and Batch 8's
+ * board-log sub-flow (`views/BoardLogForm.tsx` + `data/boardLog.ts`, W4) is
+ * wired into `Reporting.tsx`/`views/ReportView.tsx` by the wave's gate
+ * dispatch. This file's wave-gate additions: `Home` now receives
+ * `roleKey`/`roleFirstName` (W2's flagged follow-up — the persona switcher
+ * propagates into Home's role-aware panels) and `Reporting` receives
+ * `currentUser` (stamps `who` on board-log commits). Nothing else here
+ * changed — the views' own screens import them; this shell still imports
+ * only `screens/` files plus `views/NotificationBellPanel.tsx`.
  *
  * NOTIFICATION BELL (updated by the parity-assembly dispatch):
  * `Topbar`'s new `notificationSlot` extension point (this dispatch's own
@@ -404,7 +395,20 @@ function App() {
   function renderActiveScreen(): ReactNode {
     switch (screenId) {
       case 'home':
-        return <Home topbar={topbarProps} onNavigate={navigateToScreen} onStartDemo={handleStartDemo} />
+        // `roleKey`/`roleFirstName`: W2's flagged follow-up wiring (Home.tsx
+        // header "WIRING RECIPE") — propagates the Topbar persona switcher
+        // into Home's role-aware queue/customization. Boot/Restart persona is
+        // CURRENT (Rachel, 'cro'), Home's own default, so the scripted first
+        // paint is unchanged.
+        return (
+          <Home
+            topbar={topbarProps}
+            onNavigate={navigateToScreen}
+            onStartDemo={handleStartDemo}
+            roleKey={currentUser.roleKey}
+            roleFirstName={currentUser.first}
+          />
+        )
       case 'onside.overview':
         return <OnSideOverview topbar={topbarProps} onNavigate={navigateToScreen} />
       case 'onside.feed':
@@ -420,7 +424,10 @@ function App() {
       case 'studio.roadmap':
         return <Roadmap topbar={topbarProps} onNavigate={navigateToScreen} />
       case 'reporting':
-        return <Reporting topbar={topbarProps} onNavigate={navigateToScreen} />
+        // `currentUser`: stamps `who` on committed board-log updates (the
+        // regchange report's "Log an update →" sub-flow — base boardSave
+        // reads the live persona global CURRENT, source 3589).
+        return <Reporting topbar={topbarProps} onNavigate={navigateToScreen} currentUser={currentUser} />
       case 'settings.toggles':
         return <SettingsToggles topbar={topbarProps} onNavigate={navigateToScreen} />
       case 'settings.about':

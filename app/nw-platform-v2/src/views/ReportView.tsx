@@ -85,23 +85,29 @@
  * adopted in a session. STOP-item for whichever dispatch lifts redline-adoption
  * state to shared scope.
  *
- * AMBIGUITY RESOLVED — `regchange`'s standing 7-row table is a LOCAL literal:
- * the addendum's own data-module note for `regchange` names a **new**
- * `data/boardLog.ts` (§2 item 2) as the source for this table — but that module
- * is explicitly Batch 8's deliverable, and Batch 8's own dependency line says it
- * "depends on Batch 5's ReportView.tsx existing to compose into, and on the new
- * data/boardLog.ts module... landing first" — i.e. Batch 8 depends on Batch 5,
- * so Batch 5 cannot depend on Batch 8's not-yet-existing file without a real
- * ordering cycle. Resolved conservatively: `STANDING_ROWS` below ports the
- * static 7-row table literal (source `boardStandingHTML`, lines 3594-3612)
- * directly into this file, the same "copy, not shared data, port verbatim as a
- * local literal" treatment `parity_ia_addendum.md` §6 Batch 6 already sanctions
- * for Settings·About's changelog. The "Log an update →" sub-flow itself
- * (`BoardLogForm.tsx`, session-appended `BOARD_LOG` entries) is Batch 8's
- * addition and is intentionally NOT built here — this file renders the standing
- * table read-only. STOP-item, flagged for whoever ratifies Batch 8: once
- * `data/boardLog.ts` lands, `STANDING_ROWS` here should be superseded by it
- * rather than kept as a second, drifting copy.
+ * STANDING_ROWS SUPERSEDED (parity-wiring wave, gate dispatch — closing this
+ * file's own original STOP-item "once `data/boardLog.ts` lands, `STANDING_ROWS`
+ * here should be superseded by it rather than kept as a second, drifting
+ * copy"): Batch 8's `data/boardLog.ts` has landed (W4), so the module-private
+ * `STANDING_ROWS` literal this file originally carried (lines 671-721 at HEAD
+ * eb0ebe9) is deleted and `RegchangeReport` now renders that module's
+ * `BOARD_STANDING_ROWS` — field values byte-identical to the deleted literal
+ * per that module's own "STANDING_ROWS SUPERSESSION" header, so the swap is
+ * render-identical for the pre-interaction standing table. The Batch 8
+ * "Log an update →" sub-flow is now wired too (addendum §1.8): rows gain the
+ * affordance gated on `status === 'open'` (data/boardLog.ts's own file-header
+ * guidance — reproduces the base's hand-written per-row cite gating exactly
+ * for this dataset, source lines 3596-3597), emitted through the new optional
+ * `onLogUpdate` prop; the composing screen (`Reporting.tsx`) owns the shared
+ * Drawer's sequential content swap to `BoardLogForm` and the `BOARD_LOG`
+ * commit (base `boardUpdate`/`boardSave` → `closeDrawer();openReport('regchange')`,
+ * source 3577-3593). Session-logged `BOARD_LOG[row.id]` entries render as
+ * secondary lines under the row's "What we are doing" cell so the reopened
+ * report shows the appended update (gate dispatch's "return to the regchange
+ * report showing it"; the base report itself never re-rendered BOARD_LOG —
+ * its "Saved to the standing view" pill claimed a landing the standing table
+ * never visually showed — flagged as an interpretive addition, empty-by-default
+ * so the scripted first paint is unchanged).
  *
  * AMBIGUITY RESOLVED — `plan`/`roadmap` (report kind) audience labels: these two
  * kinds are, per the addendum, "unreached in the base engine" (no
@@ -159,6 +165,8 @@ import type { OnsideDomain, ObligationRow, DomOpenItem } from '../data/onside';
 import { APPROVAL, CASES, CASE_STAGES_B } from '../data/cases';
 import type { Case } from '../data/cases';
 import { DOCLIB } from '../data/doclib';
+import { BOARD_LOG, BOARD_STANDING_ROWS } from '../data/boardLog';
+import type { BoardStandingRow, BoardStandingStatus } from '../data/boardLog';
 
 /* ============================================================
  * Local derive helpers — ported verbatim (see file header
@@ -657,85 +665,52 @@ function RoadmapReport() {
   );
 }
 
-type StandingStatus = 'open' | 'tracking' | 'closed';
-
-interface StandingRow {
-  title: string;
-  layer: string;
-  applies: string;
-  doing: string;
-  status: StandingStatus;
-}
-
-/** See file header "AMBIGUITY RESOLVED — regchange's standing 7-row table is a LOCAL literal." Ported verbatim from `boardStandingHTML()`, source lines 3595-3602. */
-const STANDING_ROWS: StandingRow[] = [
-  {
-    title: 'Interagency Guidance 2026-13 · Model Risk Management',
-    layer: 'Financial',
-    applies: 'Applies: model program in scope for all decisioning models',
-    doing: 'Policy updated Apr 2026 · validation clauses rolling into 9 legacy contracts. Target compliance Q1 2027 · last update Aug 12.',
-    status: 'open',
-  },
-  {
-    title: 'Reg B Circular 2026-C1 · adverse-action specificity',
-    layer: 'Financial',
-    applies: 'Applies: model-assisted denials in consumer lending',
-    doing: 'Attribution-to-code matrix redlined · quarterly accuracy testing drafted. Target compliance Nov 2026 · last update Aug 9.',
-    status: 'open',
-  },
-  {
-    title: 'New Mexico Artificial Intelligence Act',
-    layer: 'Regional',
-    applies: 'Applies: NM footprint · automated decision systems',
-    doing: 'Vendor disclosure clause pre-drafted · HB 210 extension tracked.',
-    status: 'tracking',
-  },
-  {
-    title: 'CFPB §1033 · Personal Financial Data Rights',
-    layer: 'Financial',
-    applies: 'Applies at our asset tier · compliance date tracked',
-    doing: 'Data-sharing interface assessment scheduled Q4.',
-    status: 'tracking',
-  },
-  {
-    title: 'CTA / BOI reporting volatility',
-    layer: 'Systemic',
-    applies: 'Applies: beneficial-ownership program',
-    doing: 'Lifecycle status watched · no policy change until scope settles.',
-    status: 'tracking',
-  },
-  {
-    title: 'OFAC · sanctions list update (Aug 8)',
-    layer: 'Systemic',
-    applies: 'Applies: screening program',
-    doing: 'Screening configuration re-verified same day via Connect.',
-    status: 'closed',
-  },
-  {
-    title: 'FFIEC CAT sunset transition',
-    layer: 'Systemic',
-    applies: 'Applies: information security program',
-    doing: 'Mapping to successor frameworks in progress.',
-    status: 'tracking',
-  },
-];
-
-const STANDING_STATUS_META: Record<StandingStatus, { label: string; variant: TagVariant }> = {
+/** Rows + row ids now come from `data/boardLog.ts` — see file header "STANDING_ROWS SUPERSEDED." */
+const STANDING_STATUS_META: Record<BoardStandingStatus, { label: string; variant: TagVariant }> = {
   open: { label: 'Open', variant: 'status-caution' },
   tracking: { label: 'Tracking', variant: 'count' },
   closed: { label: 'Closed', variant: 'status-positive' },
 };
 
-function RegchangeReport() {
-  const openCount = STANDING_ROWS.filter((r) => r.status === 'open').length;
-  const trackingCount = STANDING_ROWS.filter((r) => r.status === 'tracking').length;
-  const closedCount = STANDING_ROWS.filter((r) => r.status === 'closed').length;
+function RegchangeReport({ onLogUpdate }: { onLogUpdate?: (id: string) => void }) {
+  const openCount = BOARD_STANDING_ROWS.filter((r) => r.status === 'open').length;
+  const trackingCount = BOARD_STANDING_ROWS.filter((r) => r.status === 'tracking').length;
+  const closedCount = BOARD_STANDING_ROWS.filter((r) => r.status === 'closed').length;
 
-  const columns: DataTableColumn<StandingRow>[] = [
+  const columns: DataTableColumn<BoardStandingRow>[] = [
     { id: 'what', header: 'What changed', render: (r) => r.title },
     { id: 'layer', header: 'Layer', render: (r) => r.layer },
     { id: 'applies', header: 'Applies to us?', render: (r) => r.applies },
-    { id: 'doing', header: 'What we are doing', render: (r) => r.doing },
+    {
+      id: 'doing',
+      header: 'What we are doing',
+      render: (r) => {
+        // Session-logged updates for this row (`BOARD_LOG[r.id]`, newest
+        // first) — see file header "STANDING_ROWS SUPERSEDED" for why these
+        // render here. Affordance gating on `status === 'open'` reproduces
+        // the base's hand-written per-row cite markup exactly (source
+        // 3596-3597; data/boardLog.ts file-header guidance).
+        const logged = BOARD_LOG[r.id] ?? [];
+        const showLogAffordance = onLogUpdate !== undefined && r.status === 'open';
+        if (logged.length === 0 && !showLogAffordance) return r.doing;
+        return (
+          <span style={cellColumnStyle}>
+            <span>{r.doing}</span>
+            {logged.map((entry, index) => (
+              // eslint-disable-next-line react/no-array-index-key -- entries are prepend-only per save (boardSave unshifts); same justification as BoardLogForm.tsx's history rows
+              <span key={index} style={cellSecondaryStyle}>
+                {`${entry.txt} — logged ${entry.when} · ${entry.who}${entry.date ? ` · target ${entry.date}` : ''}`}
+              </span>
+            ))}
+            {showLogAffordance ? (
+              <span>
+                <Button variant="ghost" label="Log an update →" onPress={() => onLogUpdate(r.id)} />
+              </span>
+            ) : null}
+          </span>
+        );
+      },
+    },
     { id: 'status', header: 'Status', render: (r) => <Tag text={STANDING_STATUS_META[r.status].label} variant={STANDING_STATUS_META[r.status].variant} /> },
   ];
 
@@ -751,8 +726,8 @@ function RegchangeReport() {
         <StatCard label="Tracking" value={trackingCount} />
         <StatCard label="Closed" value={closedCount} />
       </div>
-      <TableSection heading={`The standing view · ${STANDING_ROWS.length} instruments`}>
-        <DataTable caption="Regulatory change standing view" columns={columns} rows={STANDING_ROWS} getRowId={(r) => r.title} />
+      <TableSection heading={`The standing view · ${BOARD_STANDING_ROWS.length} instruments`}>
+        <DataTable caption="Regulatory change standing view" columns={columns} rows={BOARD_STANDING_ROWS} getRowId={(r) => r.id} />
       </TableSection>
       <p style={bodyTextStyle}>
         <strong>Tracking</strong> = watching an item that has not become relevant yet · <strong>Open</strong> = it
@@ -1008,7 +983,7 @@ function RoiReport() {
  * Kind dispatch + exported component.
  * ============================================================ */
 
-function renderReportBody(kind: ReportKind, onOpenCases?: () => void): ReactNode {
+function renderReportBody(kind: ReportKind, onOpenCases?: () => void, onLogUpdate?: (id: string) => void): ReactNode {
   switch (kind) {
     case 'gapboard':
       return <GapboardReport {...(onOpenCases !== undefined ? { onOpenCases } : {})} />;
@@ -1021,7 +996,7 @@ function renderReportBody(kind: ReportKind, onOpenCases?: () => void): ReactNode
     case 'roadmap':
       return <RoadmapReport />;
     case 'regchange':
-      return <RegchangeReport />;
+      return <RegchangeReport {...(onLogUpdate !== undefined ? { onLogUpdate } : {})} />;
     case 'posture':
       return <PostureReport />;
     case 'mrm':
@@ -1045,9 +1020,18 @@ export interface ReportViewProps {
    * defensive pattern `Topbar`'s own `onOpenNotifications` already uses).
    */
   onOpenCases?: () => void;
+  /**
+   * Opens the "Log an update · {id}" board-log form for a standing row —
+   * the composing screen (`Reporting.tsx`) swaps the SAME shared Drawer's
+   * content to `BoardLogForm` (sequential content swap, never a second
+   * Drawer — base `boardUpdate`, source 3577). Consumed only by the
+   * `regchange` kind; omit to render the standing table without the
+   * affordance (same defensive pattern as `onOpenCases` above).
+   */
+  onLogUpdate?: (id: string) => void;
 }
 
-export function ReportView({ kind, onOpenCases }: ReportViewProps) {
+export function ReportView({ kind, onOpenCases, onLogUpdate }: ReportViewProps) {
   const meta = REPORT_META[kind];
   return (
     <div data-lf-view="report" data-kind={kind} style={sectionStyle}>
@@ -1055,7 +1039,7 @@ export function ReportView({ kind, onOpenCases }: ReportViewProps) {
         text={`LEAPFI · Reporting · ${meta.audience} · NorthWinds Credit Union · illustrative model on sample data`}
         variant="body-secondary"
       />
-      {renderReportBody(kind, onOpenCases)}
+      {renderReportBody(kind, onOpenCases, onLogUpdate)}
     </div>
   );
 }

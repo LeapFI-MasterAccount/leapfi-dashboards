@@ -85,6 +85,55 @@
  * unmodified) is real `<table>` semantics with a sortable Value/Cost
  * column pair, fully keyboard-operable.
  *
+ * BATCH 8 WIRING (parity_ia_addendum.md §1.6, dispatch W3) — chat intake
+ * wizard composed in: once an Ask lands in ChatHero's `no-match` state,
+ * this screen offers the base engine's own "Scope "<Query>" as a new use
+ * case" entry chip (route()'s no-match chips, leapfi-platform.html:
+ * 4469-4470; capitalization ported from 4470/4467-4468) below ChatHero,
+ * screen-owned — ChatHero itself is unmodified, and per its own contract
+ * its suggestion Chips only fill the Input, so this entry chip is a
+ * screen-level wiring decision exactly like ChatIntakeWizard.tsx's own
+ * documented chip-submit reasoning (base `chipPick` semantics for intake
+ * specifically). Pressing it mounts `ChatIntakeWizard` in the chat
+ * panel's message-list slot (below ChatHero — ChatHero exposes no
+ * injection slot and is out of allowlist, so the wizard's own message
+ * list renders adjacent, not interleaved; the intake transcript therefore
+ * lives in the wizard's list and unmounts with it, unlike the base
+ * engine's single shared chat log). The wizard's terminal intents are
+ * acted on here, porting the terminal behavior of `acceptProposed`/
+ * `discardProposed` (4401-4413) minus what this screen cannot reach:
+ *   - onComplete: prepend the scoped opportunity to the register
+ *     (`disc:true` ≙ `discovered: true`, "From Ask" badge + highlight +
+ *     the screen's one register live-region announcement — the identical
+ *     mechanic `registerAutoLoanOpportunity` already established, kept
+ *     duplicated rather than refactored so the untouchable seeded
+ *     auto-loan flow is not re-wired), then say acceptProposed's
+ *     confirmation line with its obligation arithmetic (3 + gates×2,
+ *     line 4410) and `domainsFor` display names (DOMMAP/domainsFor
+ *     ported verbatim below from 4299-4300 — never ported to `data/`,
+ *     so duplicated locally per this file's established convention).
+ *     The tolerance-conditional clause ("clears the gate at your current
+ *     tolerance" vs "sequence-gated") is omitted: it reads
+ *     `readLevers().threshold`, lever state this screen has no access to
+ *     — the same documented ambiguity resolution as the wizard's own
+ *     omitted Placement row. `DETAIL` stub creation, `SCOPE_EVENTS`,
+ *     `recompute()`/`renderHome()` (4403-4406) reach cross-module runtime
+ *     state and are out of scope — same reasoning as this header's
+ *     existing `addAutoLoan()` note.
+ *   - onDiscard / onCancel: unmount the wizard and say `discardProposed`'s
+ *     (4413) / route()'s cancel-branch (4437) exact line into the main
+ *     chat log (chatState is left untouched — appending a final assistant
+ *     message while `no-match` already yields ChatHero's one owned
+ *     status announcement and hides the stale no-match bubble).
+ * Script safety: first paint, the Ask primary Button, and every existing
+ * Ask-flow state transition are byte-for-byte untouched — the only edits
+ * inside `handleAsk` are two additive `setPendingScopeQuery` calls that
+ * record/clear the query for the entry chip. Known divergence, noted:
+ * asking a new question while the wizard is mounted leaves the wizard
+ * open (the base engine's intake mode consumes all input, ours cannot
+ * without re-wiring the untouchable Ask flow); the two flows are
+ * independent lists and cannot corrupt each other.
+ *
  * STOP-item — no executable test run: this worktree's `package.json` (out
  * of this dispatch's ALLOWLIST) has no test runner or component-testing
  * library installed, matching every sibling screen/composite already
@@ -111,6 +160,8 @@ import type { ChatCounter, ChatMessage, ChatHeroState } from '../components/Chat
 import { DataTable } from '../components/DataTable';
 import type { DataTableColumn } from '../components/DataTable';
 import { Tag } from '../components/primitives/Tag';
+import { Chip } from '../components/primitives/Chip';
+import { ChatIntakeWizard } from '../views/ChatIntakeWizard';
 import { COPILOT_QA, AUTO_LOAN_OPPORTUNITY, AUTO_LOAN_DETAIL } from '../data/misc';
 import { OPPS, CTRL } from '../data/studio';
 import type { StudioOpportunity, OppHorizon, OppRisk } from '../data/studio';
@@ -200,6 +251,44 @@ function buildAutoLoanOpportunityRow(): OpportunityRow {
   };
 }
 
+/** Verbatim port of the base engine's `DOMMAP` gate→display-domain map
+ * (leapfi-platform.html:4299) — never ported into `data/` (data/studio.ts
+ * carries only the slug-valued `CTRLDOM`), so duplicated locally per this
+ * file's established convention (see `buildAutoLoanOpportunityRow`'s
+ * identical `gateCalc` note). Consumed only by `domainsFor` below for the
+ * acceptProposed confirmation line. */
+const DOMMAP: Record<string, string> = {
+  'Fair Lending': 'Fair Lending',
+  'Adverse Action': 'Fair Lending',
+  'UDAAP': 'Consumer / UDAAP',
+  'BSA/AML': 'BSA / AML',
+  'Model Risk': 'Model Risk',
+  'Privacy': 'InfoSec / GLBA',
+  'InfoSec': 'InfoSec / GLBA',
+  'TPRM': 'Third-Party Risk',
+  'Govern': 'AI Governance',
+};
+
+/** Verbatim port of `domainsFor()` (leapfi-platform.html:4300): unique
+ * display-domain names for a gate list, first-seen order preserved. */
+function domainsFor(gates: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const gate of gates) {
+    const domain = DOMMAP[gate];
+    if (domain !== undefined && !seen.has(domain)) {
+      seen.add(domain);
+      out.push(domain);
+    }
+  }
+  return out;
+}
+
+/** Mirrors route()'s own scope-chip capitalization (`q.charAt(0).toUpperCase()+q.slice(1)`, leapfi-platform.html:4470 and 4467-4468). */
+function capitalizeFirst(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 /** ASK_SUBMIT_DELAY_MS / ASK_RENDER_DELAY_MS: implementer judgment calls
  * (design_system_spec.md §1.4 carries no timing values) — long enough that
  * ChatHero's `submitting`/`answer-rendering` states are visibly real
@@ -239,6 +328,8 @@ const CHAT_PANEL_STYLE: CSSProperties = {
   background: 'var(--panel)',
   padding: '1.5rem',
 };
+const SCOPE_CHIP_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' };
+const INTAKE_SLOT_STYLE: CSSProperties = { marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' };
 const SOURCES_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
 const SOURCES_HEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--ink2)', textTransform: 'uppercase', letterSpacing: '0.06em' };
 const SOURCES_LIST_STYLE: CSSProperties = { margin: 0, padding: '0 0 0 1.1rem', fontSize: '0.875rem', color: 'var(--ink)', lineHeight: 1.6 };
@@ -283,6 +374,10 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
   const [registeredOpportunities, setRegisteredOpportunities] = useState<OpportunityRow[]>(() => OPPS.map((o) => ({ ...o })));
   const [justRegisteredId, setJustRegisteredId] = useState<string | null>(null);
   const [registerAnnouncement, setRegisterAnnouncement] = useState('');
+  /** The last unmatched query, offered for scoping via the entry chip (base route() no-match chips, 4469-4470). Cleared when intake starts or a later Ask matches. */
+  const [pendingScopeQuery, setPendingScopeQuery] = useState<string | null>(null);
+  /** Non-null while the intake wizard is mounted — `startIntake(name)`'s own `name` (4363). */
+  const [intakeUseCaseName, setIntakeUseCaseName] = useState<string | null>(null);
 
   const requestSeqRef = useRef(0);
   const msgSeqRef = useRef(0);
@@ -332,16 +427,80 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
           setMessages((prev) => [...prev, assistantMessage]);
           setCitations(matched.citations);
           setChatState('answer-complete');
+          setPendingScopeQuery(null); // additive: a matched answer retires any stale scope offer (Batch 8 wiring)
           if (matched.opportunityMatch) registerAutoLoanOpportunity();
         } else {
           setCitations([]);
           setChatState('no-match');
+          setPendingScopeQuery(trimmed); // additive: recorded for the "Scope … as a new use case" entry chip (Batch 8 wiring)
         }
       }, ASK_RENDER_DELAY_MS);
     }, ASK_SUBMIT_DELAY_MS);
   };
 
+  /** Appends one assistant bubble to the main log — the port target for the
+   * wizard's three terminal `botSay` lines (4408, 4413, 4437). While
+   * `chatState` sits at `no-match` (final), ChatHero itself makes the last
+   * assistant message the one owned status announcement and hides the
+   * stale no-match fallback bubble — no screen-side state flip needed. */
+  const appendAssistantMessage = (text: string) => {
+    msgSeqRef.current += 1;
+    const assistantMessage: ChatMessage = { id: `msg-${msgSeqRef.current}`, role: 'assistant', text };
+    setMessages((prev) => [...prev, assistantMessage]);
+  };
+
+  /** Entry-chip press — mirrors route()'s scope-chip → `startIntake(name)` hand-off (4467-4470, 4363); the wizard owns the opening line and question sequencing from here. */
+  const handleStartIntake = () => {
+    if (pendingScopeQuery === null || intakeUseCaseName !== null) return;
+    setIntakeUseCaseName(capitalizeFirst(pendingScopeQuery));
+    setPendingScopeQuery(null);
+  };
+
+  /** Port of `acceptProposed()`'s terminal behavior (4401-4412) — see file
+   * header BATCH 8 WIRING for what is ported vs. out of reach. Register
+   * mechanics deliberately duplicate `registerAutoLoanOpportunity`'s
+   * pattern rather than refactor it (that function belongs to the
+   * untouchable seeded auto-loan script flow). */
+  const handleIntakeComplete = (opportunity: StudioOpportunity) => {
+    setIntakeUseCaseName(null);
+    const alreadyRegistered = registeredOpportunities.some((o) => o.n === opportunity.n);
+    const libraryCount = alreadyRegistered ? registeredOpportunities.length : registeredOpportunities.length + 1;
+    if (!alreadyRegistered) {
+      // Duplicate-name guard: `getRowId` keys the register by name; acceptProposed's own
+      // `chatState.proposed` null-guard serves the same double-add purpose in the base engine.
+      setRegisteredOpportunities((prev) => [{ ...opportunity, discovered: true }, ...prev]);
+    }
+    setJustRegisteredId(opportunity.n);
+    setRegisterAnnouncement(
+      `New opportunity registered: ${opportunity.n} — ${formatCurrency(opportunity.val)} annual value, gated on ${opportunity.g.join(', ')}.`,
+    );
+    if (registerTimeoutRef.current !== undefined) window.clearTimeout(registerTimeoutRef.current);
+    registerTimeoutRef.current = window.setTimeout(() => setJustRegisteredId(null), REGISTER_HIGHLIGHT_MS);
+    const obligations = 3 + opportunity.g.length * 2; // acceptProposed's own arithmetic, 4405/4410
+    appendAssistantMessage(
+      `Added. ${opportunity.n} is in the register. It pulls ${obligations} obligations into scope across ${domainsFor(opportunity.g).join(
+        ', ',
+      )}; OnSide has re-evaluated those domain targets. The library is at ${libraryCount}.`,
+    );
+  };
+
+  /** Port of `discardProposed()` (4413). */
+  const handleIntakeDiscard = () => {
+    setIntakeUseCaseName(null);
+    appendAssistantMessage('Discarded. Nothing was added to the register. What else is on your mind?');
+  };
+
+  /** Port of route()'s intake-cancel branch (4435-4439). */
+  const handleIntakeCancel = () => {
+    setIntakeUseCaseName(null);
+    appendAssistantMessage('Scoping cancelled. Nothing was added. Ask me anything, or describe another idea when you’re ready.');
+  };
+
   const showSources = chatState === 'answer-complete' && citations.length > 0;
+  // Chip persists past `no-match` (e.g. while the operator types) until intake starts
+  // or a later Ask matches — matching the base engine's chips, which persist until the
+  // next route() call replaces them.
+  const showScopeChip = pendingScopeQuery !== null && intakeUseCaseName === null;
 
   const opportunityColumns: DataTableColumn<OpportunityRow>[] = [
     {
@@ -393,6 +552,28 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
               onAsk={handleAsk}
               state={chatState}
             />
+
+            {showScopeChip && pendingScopeQuery !== null ? (
+              <div style={SCOPE_CHIP_ROW_STYLE} role="group" aria-label="Scope a new use case">
+                <Chip
+                  text={`Scope "${capitalizeFirst(pendingScopeQuery)}" as a new use case`}
+                  variant="suggestion"
+                  onPress={handleStartIntake}
+                />
+              </div>
+            ) : null}
+
+            {intakeUseCaseName !== null ? (
+              <div style={INTAKE_SLOT_STYLE}>
+                <ChatIntakeWizard
+                  key={intakeUseCaseName}
+                  useCaseName={intakeUseCaseName}
+                  onComplete={handleIntakeComplete}
+                  onDiscard={handleIntakeDiscard}
+                  onCancel={handleIntakeCancel}
+                />
+              </div>
+            ) : null}
           </div>
 
           {showSources ? (

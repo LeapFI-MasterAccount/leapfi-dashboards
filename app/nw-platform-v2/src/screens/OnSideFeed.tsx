@@ -102,6 +102,43 @@
  * (`package.json` out of allowlist). Verified via `npx tsc --noEmit`
  * against the whole `src/` tree instead; recommending the same test-tooling
  * follow-up dispatch.
+ *
+ * ──────────────────────────────────────────────────────────────────────────
+ * W1 AMENDMENT — Batch 2 composition (parity_ia_addendum.md line 335,
+ * "OnSide · Regulatory feed parity"; §1.1 rows `feed-sources`, `src:`,
+ * `feed-lifecycle`, `feed-inforce`): the three parity views
+ * (`RegulatoryFeedSources`, `RegulatoryFeedLifecycle`,
+ * `RegulatoryFeedInforce`) are composed as below-the-fold sections after
+ * the existing FilterBar+DataTable signal feed, in that order (1→2→3, per
+ * each view's own file header). The above-the-fold region — Topbar, title,
+ * FilterBar, signal DataTable, row-level "Review" primary action, and the
+ * signal-shaped Drawer path — is byte-for-byte behavior-equivalent to the
+ * pre-W1 file (SCRIPT SAFETY: this is the rail step-2 deep-link screen).
+ *
+ * W1 — Drawer/selectedRow extension per addendum §1.1 `src:` row + Batch 2
+ * wiring note: the existing single shared `<Drawer>` instance is reused
+ * (never a second one, survey_map.md §d-5). `selectedRow`/`drawerOpen`
+ * became a discriminated `DrawerSelection` union (`signal` | `source`);
+ * the signal branch's title/fields/tags are unchanged.
+ * `RegulatoryFeedSources`'s `onOpenSource` seam is wired exactly as its
+ * file header prescribes: set selection, open drawer, branch
+ * `drawerFields`/`drawerTags` on shape. The source detail renders the six
+ * fields that view's `SourceDetailRow` carries (name, layer, method,
+ * 30-day activity, connector phase, alert state) plus the alert toggle as
+ * a DrawerContent action; alert-state truth stays owned by
+ * `RegulatoryFeedSources` (its bound `onToggleAlert` closure) — this
+ * screen only refreshes its own display copy of `alertOn` on press so the
+ * open Drawer never shows a stale toggle label.
+ *
+ * W1 AMBIGUITY RESOLVED — `DrawerContentKind` has no `'source'` literal
+ * (`'signal' | 'play' | 'doc'` only) and `DrawerContent.tsx` is outside
+ * this dispatch's ALLOWLIST. The addendum's `src:` row says "`kind` stays
+ * a non-structural semantic hint ... no new component is needed", and
+ * DrawerContent's own header confirms `kind` is a `data-kind` attribute
+ * hint with zero structural branching — so the source detail passes
+ * `kind="signal"` (the nearest in-domain literal) rather than editing an
+ * out-of-allowlist file. STOP-item: a one-word follow-up edit should add
+ * `'source'` to `DrawerContentKind` and flip the literal here.
  */
 import { useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
@@ -115,8 +152,12 @@ import { DataTable } from '../components/DataTable';
 import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
 import { Drawer } from '../components/Drawer';
 import { DrawerContent } from '../components/DrawerContent';
-import type { DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
+import type { DrawerContentAction, DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
 import { Tag } from '../components/primitives/Tag';
+import { RegulatoryFeedSources } from '../views/RegulatoryFeedSources';
+import type { SourceDetailRow } from '../views/RegulatoryFeedSources';
+import { RegulatoryFeedLifecycle } from '../views/RegulatoryFeedLifecycle';
+import { RegulatoryFeedInforce } from '../views/RegulatoryFeedInforce';
 import { SRC_ITEMS, SRC_ROWS, SRC_LAYERS } from '../data/onside';
 
 /** Ports the source engine's `srcRow()`/`srcItems()` `.replace(/&amp;/g,'&')`
@@ -149,6 +190,13 @@ interface SignalRow {
   /** Raw, unexecuted source-code action token (see file header) — never rendered. */
   action: string;
 }
+
+/** W1 — discriminated selection for the single shared Drawer (see W1
+ * AMENDMENT in the file header): the pre-existing signal shape, extended
+ * to also accept a source-shaped row per addendum §1.1 `src:`. */
+type DrawerSelection =
+  | { kind: 'signal'; row: SignalRow }
+  | { kind: 'source'; row: SourceDetailRow };
 
 const LAYER_LABEL_BY_KEY = new Map<string, string>(SRC_LAYERS.map(([key, label]) => [key, label]));
 
@@ -284,7 +332,7 @@ export interface OnSideFeedProps {
 
 export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel }: OnSideFeedProps) {
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
-  const [selectedRow, setSelectedRow] = useState<SignalRow | null>(null);
+  const [selection, setSelection] = useState<DrawerSelection | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const filteredRows = useMemo(
@@ -314,28 +362,76 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel }: OnSideFe
   const rowAction: DataTableRowAction<SignalRow> = {
     label: () => 'Review',
     onPress: (row) => {
-      setSelectedRow(row);
+      setSelection({ kind: 'signal', row });
       setDrawerOpen(true);
     },
   };
 
+  // W1 — the seam `RegulatoryFeedSources`'s file header prescribes verbatim:
+  // set selection, open the existing shared Drawer (never a second instance).
+  const handleOpenSource = (row: SourceDetailRow) => {
+    setSelection({ kind: 'source', row });
+    setDrawerOpen(true);
+  };
+
   const handleDrawerClose = () => setDrawerOpen(false);
 
-  const drawerTitle = selectedRow ? `Signal — ${selectedRow.source}` : 'Signal';
+  // Signal branch below is behavior-identical to pre-W1 (same title format,
+  // same five fields, same badge Tag); the source branch is additive.
+  const drawerTitle =
+    selection === null
+      ? 'Signal'
+      : selection.kind === 'signal'
+        ? `Signal — ${selection.row.source}`
+        : `Source — ${selection.row.name}`;
 
-  const drawerFields: DrawerContentField[] = selectedRow
-    ? [
-        { label: 'Source', value: selectedRow.source },
-        { label: 'Regulatory layer', value: LAYER_LABEL_BY_KEY.get(selectedRow.layer) ?? selectedRow.layer },
-        { label: 'Date', value: selectedRow.date },
-        { label: 'Signal', value: selectedRow.title },
-        { label: 'Note', value: selectedRow.note },
-      ]
-    : [];
+  const drawerFields: DrawerContentField[] =
+    selection === null
+      ? []
+      : selection.kind === 'signal'
+        ? [
+            { label: 'Source', value: selection.row.source },
+            { label: 'Regulatory layer', value: LAYER_LABEL_BY_KEY.get(selection.row.layer) ?? selection.row.layer },
+            { label: 'Date', value: selection.row.date },
+            { label: 'Signal', value: selection.row.title },
+            { label: 'Note', value: selection.row.note },
+          ]
+        : [
+            { label: 'Source', value: selection.row.name },
+            { label: 'Regulatory layer', value: selection.row.layerLabel },
+            { label: 'Method', value: selection.row.method },
+            { label: '30-day activity', value: String(selection.row.activity30d) },
+            { label: 'Connector phase', value: selection.row.phaseLabel },
+            { label: 'Immediate alerts', value: selection.row.alertOn ? 'On' : 'Off' },
+          ];
 
-  const drawerTags: DrawerContentTag[] = selectedRow?.badge
-    ? [{ text: selectedRow.badge, variant: 'count' }]
-    : [];
+  const drawerTags: DrawerContentTag[] =
+    selection === null
+      ? []
+      : selection.kind === 'signal'
+        ? selection.row.badge
+          ? [{ text: selection.row.badge, variant: 'count' }]
+          : []
+        : selection.row.alertOn
+          ? [{ text: 'Alerts on', variant: 'hitl' }]
+          : [];
+
+  // W1 — alert toggle as a DrawerContent action; truth lives in
+  // `RegulatoryFeedSources` (bound `onToggleAlert` closure), this screen only
+  // refreshes its display copy so the open Drawer never shows a stale label.
+  const drawerActions: DrawerContentAction[] =
+    selection !== null && selection.kind === 'source'
+      ? [
+          {
+            label: selection.row.alertOn ? 'Turn alerts off' : 'Turn alerts on',
+            variant: 'secondary',
+            onPress: () => {
+              selection.row.onToggleAlert();
+              setSelection({ kind: 'source', row: { ...selection.row, alertOn: !selection.row.alertOn } });
+            },
+          },
+        ]
+      : [];
 
   // Built conditionally (rather than `versionLabel={sidebarVersionLabel}`
   // directly) — see `Home.tsx`'s identical note on `exactOptionalPropertyTypes`.
@@ -367,10 +463,18 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel }: OnSideFe
             defaultSortDirection="ascending"
             emptyMessage="No signals match the selected filters."
           />
+          {/* W1 — Batch 2 below-the-fold parity sections, order 1→2→3 per each
+              view's own file header. Nothing above this line changed. */}
+          <RegulatoryFeedSources onOpenSource={handleOpenSource} />
+          <RegulatoryFeedLifecycle />
+          <RegulatoryFeedInforce />
         </main>
       </div>
       <Drawer open={drawerOpen} title={drawerTitle} onClose={handleDrawerClose}>
-        <DrawerContent kind="signal" fields={drawerFields} tags={drawerTags} />
+        {/* kind="signal" for both shapes — see W1 AMBIGUITY RESOLVED in the
+            file header ('source' literal is an out-of-allowlist one-word edit
+            to DrawerContentKind; kind is a non-structural data-attribute hint). */}
+        <DrawerContent kind="signal" fields={drawerFields} tags={drawerTags} actions={drawerActions} />
       </Drawer>
     </div>
   );
