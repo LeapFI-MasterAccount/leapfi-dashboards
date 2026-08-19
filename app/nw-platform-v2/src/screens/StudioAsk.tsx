@@ -69,7 +69,44 @@
  * auto-loan answer rendering... with citations back to approved policy
  * documents" as visible content, so this screen renders a companion
  * "Sources" panel beneath ChatHero, populated from the matched seed's
- * `citations` list and shown once the answer is final.
+ * `citations` list and shown once the answer is final. Each source is a
+ * real button (fix B-dead-interactions-10; base `<span class="doclink"
+ * onclick="onsideShow('docs')">`, leapfi-platform.html:3636/1813) that
+ * navigates to OnSide · Documents via the existing `onNavigate` prop —
+ * clicking a cited policy is no longer a dead click.
+ *
+ * INTAKE TRANSCRIPT MERGES INTO CHATHERO'S ONE BOUNDED LOG (fix
+ * C-unbounded-growth-01; base anchor leapfi-platform.html:435 `#st-ask
+ * .chat-log{max-height:420px;overflow-y:auto}`, single log, scroll-to-
+ * latest on every botSay 4343/4348): `ChatIntakeWizard` no longer renders
+ * its own second, unbounded `<ul>` for the scoping conversation — it hands
+ * its transcript up via `onTranscriptChange`, and this screen merges it
+ * onto the SAME array passed to ChatHero's `messages` prop while the
+ * wizard is mounted, so the whole conversation (pre-intake Q&A + the
+ * intake's own Q&A) renders as one ordered, bounded, auto-scrolling log —
+ * never two. When the wizard terminates (complete/discard/cancel), its
+ * transcript is folded permanently into this screen's own `messages`
+ * state before the terminal confirmation line is appended, so the history
+ * a presenter scrolled through during intake is not lost, matching the
+ * base's single continuous `chat-log`.
+ *
+ * PLAY DETAIL FROM THE REGISTER + POST-ACCEPT CROSS-NAV (fix
+ * B-dead-interactions-03/10): every register row now carries a real
+ * "Detail →" row action (base `<div class="uc" onclick="openPlay(n)">…
+ * <span class="go">Detail →</span>`, leapfi-platform.html:4325) that fires
+ * `onDeepLink({ screen: 'studio.investment-design', kind: 'play', id })` —
+ * this screen owns no play-detail Drawer of its own (Drawer stays a
+ * single, screen-local instance per `InvestmentDesign.tsx`'s own
+ * "Drawer instance ownership" note; nav-payload is the shipped mechanism
+ * for "navigate AND open a specific item elsewhere," App.tsx file header
+ * "NAVIGATION-WITH-PAYLOAD / DEEP LINKS"), so the click lands on
+ * Investment Design's real drawer already showing that exact play. The
+ * seeded auto-loan answer also offers "See the governance work in OnSide"
+ * (base 4424, `goOnside('dom-mrm')`) before it's added, and once ANY play
+ * is added (seeded or wizard-scoped) the confirmation carries "See it in
+ * the register" (scrolls + re-highlights the row already on this screen)
+ * and "See the scope change in OnSide" (base 4411-ish region) — both dead
+ * in the prior build.
  *
  * Inline-tag stripping: `COPILOT_QA[].a` (`data/misc.ts`) carries `<b>...
  * </b>` emphasis spans the original source rendered via `innerHTML`.
@@ -95,19 +132,20 @@ import type { SidebarProps } from '../components/Sidebar';
 import { ChatHero } from '../components/ChatHero';
 import type { ChatCounter, ChatMessage, ChatHeroState } from '../components/ChatHero';
 import { DataTable } from '../components/DataTable';
-import type { DataTableColumn } from '../components/DataTable';
+import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
 import { Tag } from '../components/primitives/Tag';
 import { Chip } from '../components/primitives/Chip';
 import { Button } from '../components/primitives/Button';
 import { ChatIntakeWizard } from '../views/ChatIntakeWizard';
 import type { ChatIntakeWizardHandle } from '../views/ChatIntakeWizard';
 import { COPILOT_QA, AUTO_LOAN_OPPORTUNITY, AUTO_LOAN_DETAIL } from '../data/misc';
-import { OPPS, DETAIL, CTRL, domainsFor } from '../data/studio';
+import { OPPS, DETAIL, CTRL, CTRLDOM, domainsFor } from '../data/studio';
 import type { OppHorizon, OppRisk } from '../data/studio';
 import { DOCLIB } from '../data/doclib';
 import { fmt } from '../engine/plan';
 import type { PlanOpportunity } from '../engine/plan';
 import { acceptOpportunity, adoptionScaledValue, getLiveLevers, useDemoStore } from '../state/demoStore';
+import type { DeepLinkScreenProps } from '../App';
 
 interface SeedAnswer {
   text: string;
@@ -284,6 +322,19 @@ const INTAKE_SLOT_STYLE: CSSProperties = { marginTop: '1rem', paddingTop: '1rem'
 const SOURCES_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
 const SOURCES_HEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--ink2)', textTransform: 'uppercase', letterSpacing: '0.06em' };
 const SOURCES_LIST_STYLE: CSSProperties = { margin: 0, padding: '0 0 0 1.1rem', fontSize: '0.875rem', color: 'var(--ink)', lineHeight: 1.6 };
+/** Fix B-dead-interactions-10: base `.doclink` styling (underlined, accent-colored, inline) rendered as a real `<button>` so each source is keyboard-operable. */
+const CITATION_LINK_STYLE: CSSProperties = {
+  font: 'inherit',
+  fontSize: 'inherit',
+  color: 'var(--accent)',
+  background: 'transparent',
+  border: 'none',
+  padding: 0,
+  margin: 0,
+  textDecoration: 'underline',
+  cursor: 'pointer',
+  textAlign: 'left',
+};
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.125rem', fontWeight: 700, color: 'var(--ink)' };
 const SECTION_NOTE_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', color: 'var(--ink2)' };
@@ -309,7 +360,7 @@ const COUNTERS: ChatCounter[] = [
 
 const SUGGESTIONS: string[] = [...COPILOT_QA.map((item) => item.chips), SEEDED_AUTO_LOAN_QUESTION];
 
-export interface StudioAskProps {
+export interface StudioAskProps extends DeepLinkScreenProps {
   /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as `Home.tsx`). */
   topbar: TopbarProps;
   /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('studio.ask') and is not accepted as a prop. */
@@ -317,8 +368,20 @@ export interface StudioAskProps {
   sidebarVersionLabel?: string;
 }
 
-export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAskProps) {
+export function StudioAsk({ topbar, onNavigate, onDeepLink, sidebarVersionLabel }: StudioAskProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  /** The intake wizard's own transcript, mirrored up via
+   * `onTranscriptChange` (fix C-unbounded-growth-01) — merged into
+   * ChatHero's `messages` prop while the wizard is mounted so the whole
+   * conversation renders inside ChatHero's one bounded log, never a
+   * second unbounded list. Folded into `messages` permanently, then
+   * cleared, on every wizard terminal (complete/discard/cancel). */
+  const [intakeTranscript, setIntakeTranscript] = useState<ChatMessage[]>([]);
+  /** The most recently registered play (seeded add or wizard complete) —
+   * drives the post-accept "See it in the register" / "See the scope
+   * change in OnSide" offer (fix B-dead-interactions-10). Cleared at the
+   * start of the next Ask. */
+  const [lastAccepted, setLastAccepted] = useState<PlanOpportunity | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [chatState, setChatState] = useState<ChatHeroState>('idle');
   const [citations, setCitations] = useState<string[]>([]);
@@ -341,6 +404,8 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
   const msgSeqRef = useRef(0);
   const registerTimeoutRef = useRef<number | undefined>(undefined);
   const wizardRef = useRef<ChatIntakeWizardHandle | null>(null);
+  /** Scroll target for the post-accept "See it in the register" offer (fix B-dead-interactions-10). */
+  const registerSectionRef = useRef<HTMLElement>(null);
 
   /** Announcement + highlight for a register row that was ACTUALLY added
    * (STU-06: never re-announced for an unchanged table). Value figure is
@@ -379,6 +444,10 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
         ', ',
       )}; OnSide has re-evaluated those domain targets. The library is at ${OPPS.length}.`,
     );
+    // fix B-dead-interactions-10: drives the "See it in the register" /
+    // "See the scope change in OnSide" post-accept offer (base 4411
+    // region's acceptProposed buttons).
+    setLastAccepted(o);
   };
 
   const handleInputChange = (value: string) => {
@@ -413,6 +482,7 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
     setChatState('submitting');
+    setLastAccepted(null); // a fresh Ask retires the prior post-accept offer (B-dead-interactions-10)
 
     window.setTimeout(() => {
       if (requestSeqRef.current !== requestKey) return; // superseded by a newer Ask press
@@ -469,6 +539,16 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
     setAutoLoanOffer(false);
   };
 
+  /** Fix B-dead-interactions-10: base autoLoanAnswer's "See the governance
+   * work in OnSide" offer (leapfi-platform.html:4424, `goOnside('dom-mrm')`)
+   * — the seed's weakest gate is always Model Risk (`AUTO_LOAN_OPPORTUNITY.g`
+   * includes it), so this mirrors the base's hardcoded target via the same
+   * CTRLDOM routing-slug lookup the real weak-gate governance links use. */
+  const handleSeeGovernanceWork = () => {
+    const domainKey = CTRLDOM['Model Risk'];
+    if (domainKey) onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: domainKey });
+  };
+
   /** Entry-chip press — mirrors route()'s scope-chip → `startIntake(name)` hand-off (4467-4470, 4363); the wizard owns the opening line and question sequencing from here. */
   const handleStartIntake = () => {
     if (pendingScopeQuery === null || intakeUseCaseName !== null) return;
@@ -476,11 +556,25 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
     setPendingScopeQuery(null);
   };
 
+  /** Fix C-unbounded-growth-01: folds the wizard's own transcript
+   * (mirrored via `onTranscriptChange`) permanently into this screen's
+   * `messages` history before a terminal confirmation line is appended —
+   * so the intake Q&A a presenter scrolled through stays in the ONE
+   * continuous chat-log (base's single `chat-log`, never a second list
+   * that vanishes with the wizard). Both `setMessages`/`setIntakeTranscript`
+   * calls use the functional form, so they compose correctly with the
+   * `appendAssistantMessage` call each terminal handler makes right after. */
+  const finalizeIntakeTranscript = () => {
+    setMessages((prev) => [...prev, ...intakeTranscript]);
+    setIntakeTranscript([]);
+  };
+
   /** Port of `acceptProposed()`'s terminal behavior (4401-4412): the real
    * shared-register write via `demoStore.acceptOpportunity` (OPPS push +
    * DETAIL stub + SCOPE_EVENTS entry — STU-01), then the confirmation
    * line. Announcement/highlight only when a row was actually added. */
   const handleIntakeComplete = (opportunity: PlanOpportunity) => {
+    finalizeIntakeTranscript();
     setIntakeUseCaseName(null);
     setPendingScopeQuery(null); // base resetChips() on accept
     if (!OPPS.some((o) => o.n === opportunity.n)) {
@@ -492,6 +586,7 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
 
   /** Port of `discardProposed()` (4413). */
   const handleIntakeDiscard = () => {
+    finalizeIntakeTranscript();
     setIntakeUseCaseName(null);
     setPendingScopeQuery(null); // base resetChips()
     appendAssistantMessage('Discarded. Nothing was added to the register. What else is on your mind?');
@@ -499,14 +594,48 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
 
   /** Port of route()'s intake-cancel branch (4435-4439). */
   const handleIntakeCancel = () => {
+    finalizeIntakeTranscript();
     setIntakeUseCaseName(null);
     setPendingScopeQuery(null); // base resetChips()
     appendAssistantMessage('Scoping cancelled. Nothing was added. Ask me anything, or describe another idea when you’re ready.');
   };
 
+  /** Fix B-dead-interactions-10: scrolls the already-visible register
+   * section into view and re-triggers its highlight — the "See it in the
+   * register" post-accept offer. The row is already on this screen (no
+   * cross-screen nav needed, unlike "See the scope change in OnSide"
+   * below). */
+  const handleSeeInRegister = (o: PlanOpportunity) => {
+    registerSectionRef.current?.scrollIntoView({ block: 'start' });
+    announceRegistered(o);
+  };
+
+  /** Fix B-dead-interactions-10: base's post-accept "See the scope change
+   * in OnSide" cross-nav — opens the play's weakest-gate domain via the
+   * nav-payload mechanism (App.tsx "NAVIGATION-WITH-PAYLOAD / DEEP
+   * LINKS"), same target kind the pre-accept "See the governance work in
+   * OnSide" offer uses below. */
+  const handleSeeScopeChangeInOnSide = (o: PlanOpportunity) => {
+    const domainKey = CTRLDOM[o.weakGate] ?? CTRLDOM[o.g[0] ?? ''];
+    if (domainKey) onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: domainKey });
+  };
+
   const showSources = chatState === 'answer-complete' && citations.length > 0;
   const showScopeChip = pendingScopeQuery !== null && intakeUseCaseName === null;
   const showAutoLoanOffer = autoLoanOffer && chatState === 'answer-complete';
+  /** Fix B-dead-interactions-10: post-accept cross-nav offer, shown once
+   * any play is registered (seeded add or wizard complete) until the next
+   * Ask. */
+  const showPostAcceptOffer = lastAccepted !== null;
+
+  // Fix C-unbounded-growth-01: while the wizard is mounted, ChatHero
+  // renders the pre-intake conversation PLUS the wizard's own live
+  // transcript as one array — the intake's Q&A appears inside ChatHero's
+  // single bounded, auto-scrolling log instead of a second list beneath
+  // it. Once the wizard terminates, `intakeTranscript` is folded into
+  // `messages` and cleared (see `finalizeIntakeTranscript`), so this falls
+  // back to plain `messages` with no duplication.
+  const chatHeroMessages: ChatMessage[] = intakeUseCaseName !== null ? [...messages, ...intakeTranscript] : messages;
 
   // The register renders the LIVE pool, newest first (base renderRegister
   // reverses OPPS, 4322), values adoption-scaled (base 4325; STU-07).
@@ -543,6 +672,18 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
 
   const updatingRowIdsProp = justRegisteredId ? { updatingRowIds: new Set([justRegisteredId]) } : {};
 
+  /** Fix B-dead-interactions-03: base's per-row "Detail →" affordance
+   * (`<div class="uc" onclick="openPlay(n)">…<span class="go">Detail
+   * →</span>`, leapfi-platform.html:4325) — every register row now opens
+   * the real play drawer on Investment Design via the nav-payload
+   * mechanism (this screen owns no Drawer of its own). */
+  const registerRowAction: DataTableRowAction<PlanOpportunity> | undefined = onDeepLink
+    ? {
+        label: () => 'Detail →',
+        onPress: (row) => onDeepLink({ screen: 'studio.investment-design', kind: 'play', id: row.n }),
+      }
+    : undefined;
+
   const sidebarProps: SidebarProps = {
     activeId: 'studio.ask',
     onNavigate,
@@ -564,7 +705,7 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
           <div style={CHAT_PANEL_STYLE}>
             <ChatHero
               counters={COUNTERS}
-              messages={messages}
+              messages={chatHeroMessages}
               suggestions={SUGGESTIONS}
               inputValue={inputValue}
               onInputChange={handleInputChange}
@@ -576,6 +717,8 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
               <div style={SCOPE_CHIP_ROW_STYLE} role="group" aria-label="Register the scoped opportunity">
                 {/* Base autoLoanAnswer's explicit add action (4426); `secondary` — "Ask" is this screen's one primary (spec §5.4/§6). */}
                 <Button label="Add to the opportunity register" variant="secondary" onPress={handleAddAutoLoan} />
+                {/* Fix B-dead-interactions-10: base 4424 `goOnside('dom-mrm')`. */}
+                <Button label="See the governance work in OnSide" variant="ghost" onPress={handleSeeGovernanceWork} />
               </div>
             ) : null}
 
@@ -589,6 +732,14 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
               </div>
             ) : null}
 
+            {showPostAcceptOffer && lastAccepted !== null ? (
+              <div style={SCOPE_CHIP_ROW_STYLE} role="group" aria-label="After registering">
+                {/* Fix B-dead-interactions-10: base's post-accept cross-nav buttons (4411 region). */}
+                <Button label="See it in the register" variant="ghost" onPress={() => handleSeeInRegister(lastAccepted)} />
+                <Button label="See the scope change in OnSide" variant="ghost" onPress={() => handleSeeScopeChangeInOnSide(lastAccepted)} />
+              </div>
+            ) : null}
+
             {intakeUseCaseName !== null ? (
               <div style={INTAKE_SLOT_STYLE}>
                 <ChatIntakeWizard
@@ -598,6 +749,7 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
                   onComplete={handleIntakeComplete}
                   onDiscard={handleIntakeDiscard}
                   onCancel={handleIntakeCancel}
+                  onTranscriptChange={setIntakeTranscript}
                 />
               </div>
             ) : null}
@@ -608,13 +760,18 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
               <h2 style={SOURCES_HEADING_STYLE}>Sources</h2>
               <ul style={SOURCES_LIST_STYLE}>
                 {citations.map((citation) => (
-                  <li key={citation}>{citation}</li>
+                  <li key={citation}>
+                    {/* Fix B-dead-interactions-10: base `<span class="doclink" onclick="onsideShow('docs')">` (leapfi-platform.html:3636/1813). */}
+                    <button type="button" onClick={() => onNavigate('onside.documents')} style={CITATION_LINK_STYLE}>
+                      {citation}
+                    </button>
+                  </li>
                 ))}
               </ul>
             </div>
           ) : null}
 
-          <section aria-labelledby="studio-ask-register-heading" style={SECTION_STYLE}>
+          <section ref={registerSectionRef} aria-labelledby="studio-ask-register-heading" style={SECTION_STYLE}>
             <h2 id="studio-ask-register-heading" style={SUBHEADING_STYLE}>
               Opportunity register
             </h2>
@@ -632,6 +789,7 @@ export function StudioAsk({ topbar, onNavigate, sidebarVersionLabel }: StudioAsk
                 rows={registerRows}
                 getRowId={(row) => row.n}
                 {...updatingRowIdsProp}
+                {...(registerRowAction ? { rowAction: registerRowAction } : {})}
                 defaultSortColumnId="value"
                 defaultSortDirection="descending"
               />

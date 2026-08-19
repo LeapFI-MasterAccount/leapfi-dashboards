@@ -58,19 +58,32 @@
  * module-scope KPI constants could never see an adoption and contradicted
  * OnSideDocuments two clicks away.
  *
- * AMBIGUITY RESOLVED — StatCard (C1) has no press affordance and no
- * subtitle/caption slot (`StatCardProps` is `label`/`value`/`unit?`/
- * `state?` only — see `components/StatCard.tsx`), while source's `kpi()`
- * helper renders every KPI as a clickable card carrying a full descriptive
- * subtext line (e.g. "applicable to NorthWinds' profile & use cases").
- * Per the addendum's own component assignment ("StatCard (C1) ×6 for
- * osKpis" — no companion caption composite named), this dispatch does not
- * invent an unlisted extra text element or wrap StatCard in a synthetic
- * button to recover click-through: the 6 cards render as pure, correct,
- * non-interactive stats with a short `unit` qualifier only. Flagged as a
- * documented fidelity gap versus source (no long subtext, no per-KPI
- * navigation), not a defect — this is what C1's own closed prop surface
- * supports today.
+ * FIX WAVE (B-dead-interactions-14) — StatCard (C1) still has no press
+ * affordance or subtitle slot of its own (`StatCardProps` is
+ * `label`/`value`/`unit?`/`state?` only — `components/StatCard.tsx` is
+ * outside this dispatch's allowlist, unmodified), but source's `kpi()`
+ * helper (leapfi-platform.html:4194, `osKpis` 3055-3068) rendered every
+ * KPI as a clickable `.kpi.click` card with a `→` affordance navigating
+ * onsideShow('docs'/'domains'/'gaps'/'targets'/'feed-lifecycle') — a real,
+ * shipped v1 interaction, not a cosmetic one (the previous revision of
+ * this note mischaracterized the gap as "not a defect"; the hostile-review
+ * finding is CONFIRMED). Recovered here the same way `DomainPostureCard`
+ * below already recovers click-through around a non-interactive
+ * primitive: a local, unexported `KpiNavCard` wraps StatCard in a real
+ * `<button>` (StatCard's own markup is a non-interactive `role="group"`
+ * div/span/div — safe to nest inside a button, no interactive-in-
+ * interactive violation) rather than modifying StatCard.tsx. Targets:
+ * "Documents monitored" → OnSide · Documents (base `onsideShow('docs')`);
+ * "Gaps to your targets" → OnSide · Documents' gap board (base
+ * `onsideShow('gaps')` — the same screen two clicks away the finding's own
+ * scenario names); "Obligations in scope/met" and "Domains at/above
+ * target" → scroll+focus this page's own Domains accordion (base
+ * `onsideShow('domains'/'targets')`, both in-page destinations here, no
+ * separate screen exists for either); "Change events · 14 days" → OnSide ·
+ * Regulatory feed (base `onsideShow('feed-lifecycle')`, the lifecycle
+ * section rendered on that screen). No long descriptive subtext line is
+ * added — C1's prop surface still has no slot for one — only the real
+ * click-through source actually shipped.
  *
  * AMBIGUITY RESOLVED — `deepLinkDomainKey` prop (the `dom-KEY` navigation
  * entry point): no router or cross-screen navigation-with-payload
@@ -144,15 +157,31 @@ import type { SidebarProps } from '../components/Sidebar';
 import { StatCard } from '../components/StatCard';
 import { SetupCard } from '../components/SetupCard';
 import { PosturePillBar } from '../components/PosturePillBar';
+import { Drawer } from '../components/Drawer';
+import { DrawerContent } from '../components/DrawerContent';
+import type { DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
+import { Toast } from '../components/Toast';
 import { Button } from '../components/primitives/Button';
 import { Chip } from '../components/primitives/Chip';
 import { Label } from '../components/primitives/Label';
 import { Tag } from '../components/primitives/Tag';
-import { DomainsAccordion, DOMAIN_STATUS_LABEL, DOMAIN_STATUS_VARIANT, curOf, domainPostureSegments, oblToClose, statusOf } from '../views/DomainsAccordion';
-import { DOMAINS, SRC_ITEMS } from '../data/onside';
-import type { OnsideDomain } from '../data/onside';
-import { OPPS } from '../data/studio';
-import { getScopeEvents, useDemoStore } from '../state/demoStore';
+import type { TagVariant } from '../components/primitives/Tag';
+import {
+  DomainsAccordion,
+  DOMAIN_STATUS_LABEL,
+  DOMAIN_STATUS_VARIANT,
+  curOf,
+  domainPostureSegments,
+  findRedlineDocForObligation,
+  oblToClose,
+  statusOf,
+} from '../views/DomainsAccordion';
+import { DOMAINS, OBL, SRC_ITEMS } from '../data/onside';
+import type { ObligationRow, OnsideDomain } from '../data/onside';
+import { DOCLIB } from '../data/doclib';
+import type { DocEntry } from '../data/doclib';
+import { CURRENT, OPPS } from '../data/studio';
+import { applyGapClosure, getScopeEvents, useDemoStore } from '../state/demoStore';
 
 /** Source line 1855: `function feedEventCount(days){...}` — counts every
  * SRC_ITEMS entry whose `daysAgo` (tuple index 0) falls within `days`. */
@@ -167,6 +196,35 @@ function feedEventCount(days: number): number {
 }
 
 const OBJECTIVES_PREVIEW_COUNT = 8;
+
+/** B-dead-interactions-02 obligation drawer — same live-mutation shape
+ * `OnSideDocuments.tsx` uses for its own doc-adopt path (base rlAction
+ * 'adopted' marker, source 2478): runtime bookkeeping attached to the
+ * live DOCLIB entry, not part of `doclib.ts`'s seeded shape. */
+interface DocRlState {
+  act: 'adopted';
+  who: string;
+  when: string;
+}
+type LiveDoc = DocEntry & { rlState?: DocRlState };
+const LIVE_DOCLIB = DOCLIB as Record<string, LiveDoc>;
+
+function isDocAdopted(docId: string): boolean {
+  return LIVE_DOCLIB[docId]?.rlState?.act === 'adopted';
+}
+
+const OBL_STATUS_LABEL: Record<ObligationRow['st'], string> = { met: 'Met', partial: 'Partial', gap: 'Gap' };
+const OBL_STATUS_VARIANT: Record<ObligationRow['st'], TagVariant> = {
+  met: 'status-positive',
+  partial: 'status-caution',
+  gap: 'status-alert',
+};
+
+/** Same implementer-judgment value as `OnSideDocuments.tsx`'s own
+ * ADOPT_COMMIT_DELAY_MS — long enough that the Button's `loading` state is
+ * visibly a real wait (Core Principle 1: never claim done before the
+ * server has). */
+const ADOPT_COMMIT_DELAY_MS = 650;
 
 const SCREEN_STYLE: CSSProperties = {
   display: 'flex',
@@ -206,6 +264,31 @@ const CARD_STYLE: CSSProperties = {
 const SUB_TEXT_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', color: 'var(--ink2)' };
 const SCOPE_EVENT_ROW_STYLE: CSSProperties = { display: 'flex', gap: '0.625rem', fontSize: '0.8125rem', color: 'var(--ink2)' };
 const CHIP_STRIP_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' };
+
+/** B-dead-interactions-14 — local, unexported click-through wrapper around
+ * StatCard (C1); see file header note. `KPI_BUTTON_STYLE` strips all
+ * button chrome so the rendered result is visually identical to a bare
+ * StatCard, plus a real accessible press target and a `→` affordance
+ * matching source's `.kpi.click` cue (leapfi-platform.html:4194). */
+const KPI_BUTTON_STYLE: CSSProperties = {
+  display: 'block',
+  width: '100%',
+  textAlign: 'left',
+  background: 'transparent',
+  border: 'none',
+  padding: 0,
+  margin: 0,
+  cursor: 'pointer',
+  borderRadius: 'var(--radius-md, 10px)',
+};
+
+function KpiNavCard({ label, value, unit, onOpen }: { label: string; value: string | number; unit?: string; onOpen: () => void }) {
+  return (
+    <button type="button" style={KPI_BUTTON_STYLE} onClick={onOpen}>
+      <StatCard label={label} value={value} {...(unit !== undefined ? { unit } : {})} />
+    </button>
+  );
+}
 
 /** Local, unexported render helper — see file header "domain-posture-grid
  * card is a bespoke composite." Not a new shared component; composes only
@@ -298,6 +381,74 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
   const domainsAtOrAbove = DOMAINS.filter((d) => statusOf(d) !== 'below').length;
 
   const lastDeepLinkRef = useRef<string | undefined>(undefined);
+  // B-dead-interactions-14 — in-page scroll target for the KPI tiles whose
+  // v1 destination (onsideShow('domains'/'targets')) is this same page's
+  // Domains accordion, not a separate screen.
+  const domainsSectionRef = useRef<HTMLElement | null>(null);
+  const scrollToDomains = () => {
+    domainsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    domainsSectionRef.current?.focus();
+  };
+
+  // B-dead-interactions-02 — the obligation-detail drawer (base openObl,
+  // source 2949-2997): DomainsAccordion.tsx's "Gaps & partials" rows had
+  // no entry point anywhere in the twin. Target is a domain+obligation id
+  // pair (mirrors OnSideDocuments.tsx's own openObligation shape) so this
+  // screen's Drawer reads the live OBL/DOCLIB singletons directly rather
+  // than caching a stale row snapshot across the Adopt cascade.
+  const [openObligationTarget, setOpenObligationTarget] = useState<{ domain: string; id: string } | null>(null);
+  const [adoptingDocId, setAdoptingDocId] = useState<string | null>(null);
+  const [adoptToast, setAdoptToast] = useState<string | null>(null);
+  const requestSeqRef = useRef(0);
+  const lastObligationTargetRef = useRef<{ domain: string; id: string } | null>(null);
+  if (openObligationTarget) lastObligationTargetRef.current = openObligationTarget;
+  // Keeps the drawer showing the last real obligation through its ~200ms
+  // closing animation instead of blanking the instant the target clears
+  // (same pattern OnSideDocuments.tsx's own `lastOpenDocRef` uses).
+  const displayObligationTarget = openObligationTarget ?? lastObligationTargetRef.current;
+  const displayObligation: ObligationRow | null = displayObligationTarget
+    ? (OBL[displayObligationTarget.domain]?.find((row) => row.id === displayObligationTarget.id) ?? null)
+    : null;
+  const obligationRedlineDocId = displayObligationTarget
+    ? findRedlineDocForObligation(displayObligationTarget.domain, displayObligationTarget.id)
+    : null;
+  const obligationRedlineDoc = obligationRedlineDocId ? LIVE_DOCLIB[obligationRedlineDocId] : undefined;
+  const isObligationRedlineAdopted = obligationRedlineDocId ? isDocAdopted(obligationRedlineDocId) : false;
+
+  const handleOpenObligation = (domainKey: string, row: ObligationRow) => {
+    setOpenObligationTarget({ domain: domainKey, id: row.id });
+  };
+
+  const handleCloseObligation = () => setOpenObligationTarget(null);
+
+  // Same request-key idempotency guard as OnSideDocuments.tsx's own
+  // handleAdopt (Core Principle 1 / irreversibility gate — directive 6): a
+  // stale, superseded commit never applies, and the live rlState marker
+  // plus `adoptingDocId` both serialize Adopt globally.
+  const handleApproveAndAdopt = (docId: string) => {
+    if (isDocAdopted(docId) || adoptingDocId !== null) return;
+    const requestKey = ++requestSeqRef.current;
+    setAdoptingDocId(docId);
+    window.setTimeout(() => {
+      if (requestSeqRef.current !== requestKey) return;
+      const live = LIVE_DOCLIB[docId];
+      if (live) {
+        const versionMatch = /^v(\d+)\.(\d+)/.exec(live.v || '');
+        if (versionMatch) live.v = `v${versionMatch[1]}.${Number(versionMatch[2]) + 1}`;
+        live.status = 'good';
+        live.rlState = {
+          act: 'adopted',
+          who: `${CURRENT.first} ${CURRENT.role ? `(${CURRENT.role})` : ''}`.trim(),
+          when: 'Aug 15, 2026',
+        };
+      }
+      // Base-verbatim cascade (applyGapClosure) — re-renders every
+      // subscriber, this screen's KPI strip and posture grid included.
+      applyGapClosure(docId);
+      setAdoptingDocId(null);
+      setAdoptToast(live ? `${live.t} adopted.` : 'Redline adopted.');
+    }, ADOPT_COMMIT_DELAY_MS);
+  };
 
   useEffect(() => {
     if (!deepLinkDomainKey || deepLinkDomainKey === lastDeepLinkRef.current) return;
@@ -323,6 +474,43 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
   const objectivesPreview = OPPS.slice(0, OBJECTIVES_PREVIEW_COUNT);
   const objectivesRemaining = OPPS.length - objectivesPreview.length;
 
+  const obligationDrawerFields: DrawerContentField[] =
+    displayObligation && displayObligationTarget
+      ? [
+          { label: 'Domain', value: DOMAINS.find((d) => d.key === displayObligationTarget.domain)?.name ?? displayObligationTarget.domain },
+          { label: 'Requirement', value: displayObligation.s },
+          { label: 'Citation', value: displayObligation.cite },
+          ...(displayObligation.gp ? [{ label: 'Gap', value: displayObligation.gp }] : []),
+          ...(displayObligation.fx ? [{ label: 'Remediation plan', value: displayObligation.fx }] : []),
+          {
+            label: 'Evidence on file',
+            value: displayObligation.docs.length > 0 ? displayObligation.docs.map((docId) => LIVE_DOCLIB[docId]?.t ?? docId).join(', ') : 'None on file',
+          },
+        ]
+      : [];
+
+  const obligationDrawerTags: DrawerContentTag[] = displayObligation
+    ? [{ text: OBL_STATUS_LABEL[displayObligation.st], variant: OBL_STATUS_VARIANT[displayObligation.st] }]
+    : [];
+
+  // B-dead-interactions-02 "approve-&-adopt path" — only offered when a
+  // real redline draft closes this obligation (findRedlineDocForObligation)
+  // and it is not already adopted; base openObl's other action ("Attach
+  // evidence to close this item") has no backing mutation for
+  // non-redline-backed gaps in this worktree (no attach-evidence store
+  // exists) — never rendered as a live-looking control with nothing behind
+  // it (Core Principle 1).
+  const obligationDrawerFooter =
+    displayObligation && displayObligation.st !== 'met' && obligationRedlineDocId && obligationRedlineDoc?.redline && !isObligationRedlineAdopted ? (
+      <Button
+        variant="primary"
+        label="Approve & adopt"
+        loading={adoptingDocId === obligationRedlineDocId}
+        disabled={adoptingDocId !== null && adoptingDocId !== obligationRedlineDocId}
+        onPress={() => handleApproveAndAdopt(obligationRedlineDocId)}
+      />
+    ) : null;
+
   const sidebarProps: SidebarProps = {
     activeId: 'onside.overview',
     onNavigate,
@@ -346,12 +534,12 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
               Key figures
             </h2>
             <div style={KPI_GRID_STYLE}>
-              <StatCard label="Documents monitored" value={docsTotal} unit="documents" />
-              <StatCard label="Obligations in scope" value={obligationsInScope} unit="obligations" />
-              <StatCard label="Obligations met" value={obligationsMet} unit="obligations" />
-              <StatCard label="Gaps to your targets" value={gapsToTarget} unit="gaps" />
-              <StatCard label="Domains at / above target" value={`${domainsAtOrAbove} / ${DOMAINS.length}`} />
-              <StatCard label="Change events · 14 days" value={feedEventCount(14)} unit="events" />
+              <KpiNavCard label="Documents monitored" value={docsTotal} unit="documents" onOpen={() => onNavigate('onside.documents')} />
+              <KpiNavCard label="Obligations in scope" value={obligationsInScope} unit="obligations" onOpen={scrollToDomains} />
+              <KpiNavCard label="Obligations met" value={obligationsMet} unit="obligations" onOpen={scrollToDomains} />
+              <KpiNavCard label="Gaps to your targets" value={gapsToTarget} unit="gaps" onOpen={() => onNavigate('onside.documents')} />
+              <KpiNavCard label="Domains at / above target" value={`${domainsAtOrAbove} / ${DOMAINS.length}`} onOpen={scrollToDomains} />
+              <KpiNavCard label="Change events · 14 days" value={feedEventCount(14)} unit="events" onOpen={() => onNavigate('onside.feed')} />
             </div>
           </section>
 
@@ -413,7 +601,12 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
               the approved policy and configures itself instead.
             </p>
             <div>
-              <Button variant="ghost" label="Open Connect →" onPress={() => onNavigate('connect.allrailz')} />
+              {/* B-dead-interactions-09 — this button's own label and the
+                  base's identical card (leapfi-platform.html:3080
+                  onclick="go('connect')") both name the Connect module
+                  splash, not AllRailz; 'connect' is App.tsx's own routed
+                  ScreenId for that splash. */}
+              <Button variant="ghost" label="Open Connect →" onPress={() => onNavigate('connect')} />
             </div>
           </section>
 
@@ -429,7 +622,12 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
             />
           </section>
 
-          <section aria-labelledby="onside-overview-domains-heading" style={SECTION_STYLE}>
+          <section
+            ref={domainsSectionRef}
+            tabIndex={-1}
+            aria-labelledby="onside-overview-domains-heading"
+            style={SECTION_STYLE}
+          >
             <h2 id="onside-overview-domains-heading" style={SUBHEADING_STYLE}>
               Domains · gaps &amp; levers on one page
             </h2>
@@ -443,10 +641,27 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
               onToggle={toggleDomain}
               pendingScrollKey={pendingScrollKey}
               onScrollHandled={() => setPendingScrollKey(null)}
+              onOpenObligation={handleOpenObligation}
             />
           </section>
         </main>
       </div>
+
+      {/* B-dead-interactions-02 — obligation-detail Drawer (base openObl,
+          source 2949-2997): evidence-on-file field, and a real
+          "Approve & adopt" action when a redline draft actually closes the
+          obligation. Single local instance, matching every other screen's
+          own "one Drawer, routed one screen at a time" convention. */}
+      <Drawer
+        open={openObligationTarget !== null}
+        title={displayObligation ? `${displayObligation.id} · Obligation` : ''}
+        onClose={handleCloseObligation}
+        footer={obligationDrawerFooter}
+      >
+        {displayObligation ? <DrawerContent kind="doc" fields={obligationDrawerFields} tags={obligationDrawerTags} /> : null}
+      </Drawer>
+
+      {adoptToast ? <Toast variant="success" message={adoptToast} onDismiss={() => setAdoptToast(null)} /> : null}
     </div>
   );
 }

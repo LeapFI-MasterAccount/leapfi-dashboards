@@ -56,6 +56,20 @@
  * owned wording, out of this dispatch's allowlist); the screen's own
  * chip rows directly below carry the correct play semantics.
  *
+ * PLAY CHIPS OPEN FULL SCOPE (fix B-dead-interactions-04): every play chip
+ * across all three years now honors the Year-1 note's own shipped copy —
+ * "Click one for full scope." (`yearNoteStyle`, base leapfi-platform.html
+ * gantt chips `data-play` at 1324, delegated click on `gantt-body` →
+ * `openPlay`, 4493-4499) — as a real `<button>`, not the plain `<div>` it
+ * was. This screen mounts no Drawer of its own (matching
+ * `InvestmentDesign.tsx`'s "Drawer instance ownership" note — a single
+ * screen-local Drawer instance, never duplicated), so a chip press fires
+ * `onDeepLink({ screen: 'studio.investment-design', kind: 'play', id })`
+ * via the nav-payload mechanism (App.tsx file header "NAVIGATION-WITH-
+ * PAYLOAD / DEEP LINKS") — the presenter lands on Investment Design with
+ * that exact play's full drawer already open, the nearest twin-shaped
+ * equivalent to the base's single global overlay.
+ *
  * AMBIGUITY RESOLVED — "What's next" row membership: §5.6's region map
  * names the "Connect" SetupCard as the resolved primary CTA (§6 CTA map)
  * but also explicitly allows "optionally AllRailz/Vantage as additional
@@ -102,6 +116,7 @@ import { DETAIL } from '../data/studio';
 import { fmt } from '../engine/plan';
 import type { PlanOpportunity, PlanResult } from '../engine/plan';
 import { computeLivePlan, useDemoStore } from '../state/demoStore';
+import type { DeepLinkScreenProps } from '../App';
 
 /** One play chip in a year row/quarter — base `chip()` (1321-1326). */
 interface PlayChip {
@@ -368,9 +383,14 @@ const chipRowStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'rep
 const foundationLinkStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)', margin: 0, textAlign: 'center' };
 const yearNoteStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)', margin: 0 };
 
-function PlayChipCard({ chip }: { chip: PlayChip }) {
+/** Fix B-dead-interactions-04: a real, keyboard-operable button (base
+ * `data-play` chip, gantt delegated click → `openPlay`) rather than a
+ * plain `<div>` — see file header "PLAY CHIPS OPEN FULL SCOPE." */
+const chipButtonStyle: CSSProperties = { ...chipStyle, width: '100%', textAlign: 'left', font: 'inherit', cursor: 'pointer' };
+
+function PlayChipCard({ chip, onOpenPlay }: { chip: PlayChip; onOpenPlay: (name: string) => void }) {
   return (
-    <div style={chipStyle}>
+    <button type="button" style={chipButtonStyle} onClick={() => onOpenPlay(chip.play.n)}>
       <span style={chipNameStyle}>
         {chip.play.n}
         {chip.play.found ? ' · foundational' : ''}
@@ -378,11 +398,11 @@ function PlayChipCard({ chip }: { chip: PlayChip }) {
       </span>
       <span style={chipCatStyle}>{chip.play.c}</span>
       <span style={chipNoteStyle}>{chip.note}</span>
-    </div>
+    </button>
   );
 }
 
-export interface RoadmapProps {
+export interface RoadmapProps extends DeepLinkScreenProps {
   /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as `Home.tsx`/`BoardDeck.tsx`/`OnSideFeed.tsx`/`InvestmentDesign.tsx`). */
   topbar: TopbarProps;
   /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('studio.roadmap') and is not accepted as a prop. */
@@ -390,12 +410,18 @@ export interface RoadmapProps {
   sidebarVersionLabel?: string;
 }
 
-export function Roadmap({ topbar, onNavigate, sidebarVersionLabel }: RoadmapProps) {
+export function Roadmap({ topbar, onNavigate, onDeepLink, sidebarVersionLabel }: RoadmapProps) {
   // Re-derives the Gantt from the LIVE plan on every store write (lever
   // changes, Discovery accepts) — base recompute() calls renderGantt(P)
   // on every input (1302; fix-wave STU-11).
   useDemoStore();
   const roadmap = deriveRoadmap();
+
+  /** Fix B-dead-interactions-04 — see file header "PLAY CHIPS OPEN FULL
+   * SCOPE." */
+  const handleOpenPlay = (name: string) => {
+    onDeepLink?.({ screen: 'studio.investment-design', kind: 'play', id: name });
+  };
 
   // Built conditionally (rather than `versionLabel={sidebarVersionLabel}`
   // directly) — this project's `exactOptionalPropertyTypes` setting treats
@@ -455,7 +481,7 @@ export function Roadmap({ topbar, onNavigate, sidebarVersionLabel }: RoadmapProp
                         <span>{quarter.spendText}</span>
                       </div>
                       {quarter.chips.map((chip) => (
-                        <PlayChipCard key={chip.play.n} chip={chip} />
+                        <PlayChipCard key={chip.play.n} chip={chip} onOpenPlay={handleOpenPlay} />
                       ))}
                       <span style={quarterMarkerStyle}>{quarter.marker}</span>
                     </div>
@@ -465,7 +491,7 @@ export function Roadmap({ topbar, onNavigate, sidebarVersionLabel }: RoadmapProp
               {year.chips ? (
                 <div style={chipRowStyle}>
                   {year.chips.length ? (
-                    year.chips.map((chip) => <PlayChipCard key={chip.play.n} chip={chip} />)
+                    year.chips.map((chip) => <PlayChipCard key={chip.play.n} chip={chip} onOpenPlay={handleOpenPlay} />)
                   ) : (
                     <span style={chipNoteStyle}>{index === 1 ? 'Opens as controls close' : 'Shaped by Year 1 results'}</span>
                   )}

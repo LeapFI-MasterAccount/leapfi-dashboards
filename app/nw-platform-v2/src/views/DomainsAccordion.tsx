@@ -42,6 +42,18 @@
  * whoever lands the permission system: wire the lever in once a real
  * gate and a real commit path exist.
  *
+ * FIX WAVE (B-dead-interactions-02) — the "Gaps & partials" obligation
+ * register's rows were inert (no `rowAction`, matching base's oblRow
+ * `onclick="openObl(domKey,id)"`, source 3106, with nothing on the twin
+ * side): this file now accepts an optional `onOpenObligation` seam, fired
+ * per pressed row, plus an exported `findRedlineDocForObligation` helper
+ * the owning screen uses to offer a real "Approve & adopt" action when a
+ * redline draft actually closes the obligation. `OnSideOverview.tsx`
+ * (this dispatch's sibling file) wires both and hosts the obligation-
+ * detail Drawer; `OnSideDocuments.tsx`'s own obligation-register tables
+ * wire the same pattern independently (that screen already owns a Drawer
+ * and the live doc-adopt mutation it reuses).
+ *
  * A11y: each domain's obligation/open-items table is a real DataTable
  * (C6) with its own caption; the accordion header is a real `<button>`
  * with `aria-expanded`; PosturePillBar (C12) is reused verbatim from
@@ -57,14 +69,14 @@
 import { useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { DataTable } from '../components/DataTable';
-import type { DataTableColumn } from '../components/DataTable';
+import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
 import { PosturePillBar } from '../components/PosturePillBar';
 import { Icon } from '../components/primitives/Icon';
 import { Label } from '../components/primitives/Label';
 import { Tag } from '../components/primitives/Tag';
 import type { TagVariant } from '../components/primitives/Tag';
 import { BANDS } from '../data/studio';
-import { DOM_OPEN, OBL } from '../data/onside';
+import { DOM_OPEN, GAPS, OBL } from '../data/onside';
 import type { DomOpenItem, ObligationRow, OnsideDomain } from '../data/onside';
 import type { PostureSegment } from '../engine/plan';
 
@@ -124,6 +136,21 @@ export const DOMAIN_STATUS_VARIANT: Record<DomainStatus, TagVariant> = {
  * here (only its exported `PostureSegment` type is used) — no change to
  * that file.
  */
+/** B-dead-interactions-02 — the reverse lookup of `OnSideDocuments.tsx`'s
+ * own `cascadeTargetsForDoc`: given a domain + obligation id, find the
+ * GAPS entry that closes it and the redline doc id whose Adopt actually
+ * closes it (base openObl's "Approve & adopt" affordance, ~source
+ * 2988-2991), matching the exact `(g.rl||g.doc)` doc-closes-obligation
+ * semantics `applyGapClosure`/`cascadeTargetsForDoc` already use for the
+ * doc-driven path — one real closing mechanism, read in both directions.
+ * Returns null when no redline draft closes this obligation yet (most
+ * `gap`/`partial` rows: their `fx` remediation plan is a real-world task,
+ * not a redline waiting on Approve & adopt). */
+export function findRedlineDocForObligation(domainKey: string, oblId: string): string | null {
+  const gap = GAPS.find((g) => g.obl !== null && g.obl[0] === domainKey && g.obl[1] === oblId);
+  return gap ? (gap.rl ?? gap.doc ?? null) : null;
+}
+
 export function domainPostureSegments(current: number, target: number): PostureSegment[] {
   const currentIndex = Math.max(0, Math.min(BANDS.length - 1, Math.round(current) - 1));
   const targetIndex = Math.max(0, Math.min(BANDS.length - 1, target - 1));
@@ -248,9 +275,16 @@ export interface DomainsAccordionProps {
   /** Set by the owning screen when a domain must force-expand and scroll into view (posture-grid row action, or a `dom-KEY` deep link) — matching `onsideShow`'s `domKey` branch (source 3031, 3052). Cleared via `onScrollHandled` once applied so it does not re-fire on unrelated re-renders. */
   pendingScrollKey: string | null;
   onScrollHandled: () => void;
+  /** B-dead-interactions-02 — fired when a "Gaps & partials" obligation row
+   * is pressed (base every oblRow: `onclick="openObl(domKey,id)"`, source
+   * 3106). The owning screen opens the obligation-detail drawer. Optional
+   * so a caller with no drawer of its own (none exist yet) still renders
+   * the table as a plain register rather than a broken prop-required
+   * contract. */
+  onOpenObligation?: (domainKey: string, row: ObligationRow) => void;
 }
 
-export function DomainsAccordion({ domains, expandedKeys, onToggle, pendingScrollKey, onScrollHandled }: DomainsAccordionProps) {
+export function DomainsAccordion({ domains, expandedKeys, onToggle, pendingScrollKey, onScrollHandled, onOpenObligation }: DomainsAccordionProps) {
   const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -278,6 +312,10 @@ export function DomainsAccordion({ domains, expandedKeys, onToggle, pendingScrol
         const openItems = DOM_OPEN[domain.key] ?? [];
         const headingId = `dom-acc-heading-${domain.key}`;
         const bodyId = `dom-acc-body-${domain.key}`;
+        const domainKey = domain.key;
+        const obligationRowAction: DataTableRowAction<ObligationRow> | undefined = onOpenObligation
+          ? { label: () => 'Open', onPress: (row) => onOpenObligation(domainKey, row) }
+          : undefined;
 
         return (
           <div
@@ -350,6 +388,7 @@ export function DomainsAccordion({ domains, expandedKeys, onToggle, pendingScrol
                         rows={obligations.filter((o) => o.st !== 'met')}
                         getRowId={(row) => row.id}
                         emptyMessage="No open gaps or partials in this domain."
+                        {...(obligationRowAction ? { rowAction: obligationRowAction } : {})}
                       />
                     </div>
                     <div style={{ marginTop: '0.625rem' }}>

@@ -87,6 +87,18 @@
  * while the drawer is open, initial focus is re-placed on the (new)
  * heading — which also makes screen readers announce the swapped content,
  * the same announcement the open-time heading focus already provides.
+ *
+ * SCROLL RESET ON CONTENT SWAP (fix C-unbounded-growth-05; base anchors
+ * leapfi-platform.html:1431/1680/2376 — every `showDrawer` path ran
+ * `dr.scrollTop=0`, including boardUpdate/boardSave's swaps through
+ * closeDrawer();openReport(), source 3577/3592): the drawer's one scroll
+ * body ([data-lf-drawer-body]) persists across an in-place content swap,
+ * so swapped-in content inherited the previous content's scroll offset
+ * and could open mid-document with its fields above the fold. Fixed
+ * alongside the RPT-05 focus handoff (same title-change trigger, same
+ * base rebuild-the-drawer behavior): the body's scrollTop resets to 0 on
+ * every content swap — and on every (re)open, covering the reopen-while-
+ * closing path where the body DOM node never unmounted.
  */
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
@@ -188,6 +200,7 @@ export function Drawer({ open, title, onClose, children, footer, size = 'default
   const headingId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const [phase, setPhase] = useState<DrawerPhase>('closed');
 
@@ -209,6 +222,10 @@ export function Drawer({ open, title, onClose, children, footer, size = 'default
   // then move initial focus to the heading (C7 a11y baseline).
   useEffect(() => {
     if (phase !== 'opening') return;
+    // C-unbounded-growth-05: base showDrawer `dr.scrollTop=0` (1431/1680/
+    // 2376) — a reopen while the exit transition is still running reuses
+    // the same body DOM node, so the offset must be reset explicitly.
+    if (bodyRef.current) bodyRef.current.scrollTop = 0;
     const raf = window.requestAnimationFrame(() => {
       setPhase('open');
       headingRef.current?.focus();
@@ -227,6 +244,10 @@ export function Drawer({ open, title, onClose, children, footer, size = 'default
     if (prevTitleRef.current === title) return;
     prevTitleRef.current = title;
     if (phase === 'open' || phase === 'opening') {
+      // C-unbounded-growth-05: swapped-in content must open at the top —
+      // the persistent body node otherwise inherits the previous content's
+      // scroll offset (base showDrawer reset, 1431/1680/2376).
+      if (bodyRef.current) bodyRef.current.scrollTop = 0;
       headingRef.current?.focus();
     }
   }, [title, phase]);
@@ -355,7 +376,7 @@ export function Drawer({ open, title, onClose, children, footer, size = 'default
             <Button variant="ghost" icon="close" label="Close" onPress={onClose} />
           </span>
         </div>
-        <div data-lf-drawer-body style={{ flex: '1 1 auto', overflowY: 'auto', padding: '1.25rem' }}>{children}</div>
+        <div ref={bodyRef} data-lf-drawer-body style={{ flex: '1 1 auto', overflowY: 'auto', padding: '1.25rem' }}>{children}</div>
         {footer ? (
           <div
             data-lf-drawer-footer

@@ -13,9 +13,12 @@
  *
  * Region map: Topbar (shell) → page title → Approval-matrix card (full
  * width, matches source's `#approval-card` sitting above the two-column
- * `.set-grid`) → Identity & access card + Notifications card (two-column
- * row, 4 Switch (P8) each = 8 total, matching parity_ia_addendum.md's
- * exact "Switch (P8) ×8" component budget for this screen).
+ * `.set-grid` — now itself carrying one committee-vote Switch per tier
+ * plus the committee-name input, B-15) → Identity & access card +
+ * Notifications card (two-column row, 4 Switch (P8) each = 8, matching
+ * parity_ia_addendum.md's "Switch (P8) ×8" component budget for THOSE two
+ * cards specifically — see the B-15 header note below on why the matrix's
+ * own controls are additional, not counted against that figure).
  *
  * AMBIGUITY RESOLVED — Topbar/Sidebar data ownership: identical
  * passthrough pattern already landed by every sibling screen in this
@@ -34,20 +37,30 @@
  * toggle that silently claimed persistence it doesn't have would be the
  * violation, not the other way around).
  *
- * AMBIGUITY RESOLVED — Approval-matrix card carries no Switch: the base
- * engine's `renderApprovalSettings()` also renders a per-tier "Committee
- * vote" `.toggle` (`toggleTierCommittee`) and an editable committee-name
- * `<input>` (`setCommitteeName`). `data/cases.ts`'s own file header states
- * plainly that those two mutators are UI/controller behavior "intentionally
- * NOT ported" into the data file, and this screen's component budget per
- * parity_ia_addendum.md §1.4 is exactly "Switch (P8) ×8, Label (P3)" — the
- * 8 already accounts for Identity (4) + Notifications (4) only. Adding a
- * 9th–11th interactive Switch here (or an editable input with no engine
- * behind it) would both overrun the stated budget and fabricate
- * interactivity with nothing backing it (Core Principle 3). The matrix
- * below is read-only: tier name, description, example, live open-case
- * count (from `CASES`, already ported), and committee-requirement stated as
- * text, not a control.
+ * PER-TIER COMMITTEE-VOTE TOGGLE + EDITABLE COMMITTEE NAME RESTORED (B-15
+ * fix batch — supersedes this note's earlier "Approval-matrix card carries
+ * no Switch" resolution): the base engine's `renderApprovalSettings()`
+ * (source 3968-3983) rendered a per-tier "Committee vote" `.toggle`
+ * (`toggleTierCommittee`) and an editable committee-name `<input>`
+ * (`setCommitteeName`). Both are, by this same file's own earlier-cited
+ * `data/cases.ts` header, "a pure client-side visual flip with no server
+ * call, no confirmation, and no claim beyond 'this control now reads
+ * on/off'" — i.e. exactly the same no-persistence contract the Identity/
+ * Notification `Switch` rows above already implement as local `useState`.
+ * `data/cases.ts` (outside this dispatch's allowlist) still exports no
+ * `toggleTierCommittee`/`setCommitteeName` mutator, so these two controls
+ * are ported the identical way: local component state, seeded from
+ * `APPROVAL.tiers[].committee`/`APPROVAL.committee`, never written back to
+ * the shared `APPROVAL` singleton. This does overrun
+ * parity_ia_addendum.md §1.4's literal "Switch (P8) ×8" count (8 Identity/
+ * Notification Switches + `APPROVAL.tiers.length` committee-vote Switches +
+ * 1 committee-name input) — the ratified trim this note previously
+ * described is reversed by the fix dispatch's own brief, which named this
+ * finding directly; flagged for design-authority sign-off same as every
+ * other "AMBIGUITY RESOLVED" note in this file. `Cases.tsx`'s CS-12
+ * reconciliation note (that screen's header, outside this file) is updated
+ * to match: the "per-tier committee-vote toggle and editable committee
+ * name" reduction it recorded as sanctioned no longer holds.
  *
  * AMBIGUITY RESOLVED — live open-case count depends on `seedCases()` having
  * run: `data/cases.ts` exports `CASES` as `export let CASES: Case[] = []`,
@@ -215,6 +228,29 @@ const TIER_ROW_FIRST_STYLE: CSSProperties = { ...TIER_ROW_STYLE, borderTop: 'non
 const TIER_DESC_STYLE: CSSProperties = { margin: '0.125rem 0 0', fontSize: '0.875rem', color: 'var(--ink)', lineHeight: 1.5 };
 const TIER_META_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.25rem 1rem', marginTop: '0.125rem' };
 const STATIC_ROW_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0.75rem 0', borderTop: '1px solid var(--border)' };
+const srOnlyStyle: CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0,0,0,0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
+const COMMITTEE_NAME_INPUT_STYLE: CSSProperties = {
+  font: 'inherit',
+  fontSize: '0.875rem',
+  color: 'var(--ink)',
+  background: 'var(--bg)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-sm, 6px)',
+  padding: '0.4rem 0.6rem',
+  maxWidth: '22rem',
+  width: '100%',
+  boxSizing: 'border-box',
+};
 
 export interface SettingsTogglesProps {
   /** Full Topbar prop bundle — same passthrough pattern as every sibling screen. */
@@ -232,9 +268,23 @@ function initialToggleState(rows: ToggleRow[]): Record<string, boolean> {
   return state;
 }
 
+function initialCommitteeState(): Record<string, boolean> {
+  const state: Record<string, boolean> = {};
+  APPROVAL.tiers.forEach((tier) => {
+    state[tier.k] = tier.committee;
+  });
+  return state;
+}
+
 export function SettingsToggles({ topbar, onNavigate, sidebarVersionLabel }: SettingsTogglesProps) {
   const [identityState, setIdentityState] = useState<Record<string, boolean>>(() => initialToggleState(IDENTITY_TOGGLES));
   const [notificationState, setNotificationState] = useState<Record<string, boolean>>(() => initialToggleState(NOTIFICATION_TOGGLES));
+  // B-15: base `toggleTierCommittee`/`setCommitteeName` (source 3968-3983) —
+  // same local, unpersisted visual-flip contract as identity/notification
+  // toggles above (see file header). Seeded from the live `APPROVAL`
+  // singleton, never written back to it.
+  const [committeeState, setCommitteeState] = useState<Record<string, boolean>>(initialCommitteeState);
+  const [committeeName, setCommitteeName] = useState<string>(APPROVAL.committee);
 
   // See `Home.tsx`'s identical note: built conditionally because this
   // project's `exactOptionalPropertyTypes` setting treats an optional prop
@@ -294,7 +344,7 @@ export function SettingsToggles({ topbar, onNavigate, sidebarVersionLabel }: Set
             {APPROVAL.tiers.map((tier, index) => {
               const openCount = CASES.filter((c) => c.tier === tier.k).length;
               const caseCountText = `${openCount} open case${openCount === 1 ? '' : 's'}`;
-              const committeeText = tier.committee ? 'Committee vote required before final approval' : 'CRO approves directly, no committee vote';
+              const requiresCommittee = committeeState[tier.k] ?? tier.committee;
               return (
                 <div key={tier.k} style={index === 0 ? TIER_ROW_FIRST_STYLE : TIER_ROW_STYLE}>
                   <Label text={tier.n} variant="eyebrow" />
@@ -302,14 +352,28 @@ export function SettingsToggles({ topbar, onNavigate, sidebarVersionLabel }: Set
                   <Label text={`Example: ${tier.ex}`} variant="body-secondary" />
                   <div style={TIER_META_ROW_STYLE}>
                     <Label text={caseCountText} variant="body-secondary" />
-                    <Label text={committeeText} variant="body-secondary" />
                   </div>
+                  {/* B-15: base per-tier `.toggle` (`toggleTierCommittee`, source 3975). */}
+                  <Switch
+                    checked={requiresCommittee}
+                    label="Committee vote required before final approval"
+                    onChange={(checked) => setCommitteeState({ ...committeeState, [tier.k]: checked })}
+                  />
                 </div>
               );
             })}
             <div style={STATIC_ROW_STYLE}>
               <Label text="Approving committee" variant="eyebrow" />
-              <Label text={APPROVAL.committee} variant="body-secondary" />
+              {/* B-15: base editable committee-name `<input>` (`setCommitteeName`, source 3968-3983). */}
+              <label>
+                <span style={srOnlyStyle}>Approving committee name</span>
+                <input
+                  type="text"
+                  value={committeeName}
+                  onChange={(event) => setCommitteeName(event.target.value)}
+                  style={COMMITTEE_NAME_INPUT_STYLE}
+                />
+              </label>
             </div>
             <div style={STATIC_ROW_STYLE}>
               <Label text="Conditions the CRO can attach" variant="eyebrow" />

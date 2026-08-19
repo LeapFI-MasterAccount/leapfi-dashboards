@@ -106,6 +106,21 @@
  * mechanism exists from this screen (same gap OnSideOverview's
  * `deepLinkDomainKey` header note documents).
  *
+ * FIX WAVE (B-dead-interactions-07) — the instrument drawer's "Domains
+ * this instrument drives" field (base openInstr's domain chips → `dom-`
+ * deep links, source 2934) was a plain joined string here (this file's own
+ * earlier ONSIDE-08 note: "no navigation-with-payload mechanism exists
+ * from this screen"). App.tsx's NAVIGATION-WITH-PAYLOAD contract (its own
+ * file header) now exists and is already spread onto every routed screen,
+ * including this one, whether or not the screen had declared the props —
+ * this file now declares `extends DeepLinkScreenProps` (type-only import
+ * from `App.tsx`, erased at build) and renders one real `DrawerContent`
+ * action Button per domain, firing `onDeepLink({screen:'onside.overview',
+ * kind:'domain', id: domKey})` — the exact 'domain' kind the contract
+ * already bridges onto `OnSideOverview`'s `deepLinkDomainKey` prop. Falls
+ * back to no action buttons (never a dead click) if a consumer mounts this
+ * screen without wiring `onDeepLink`.
+ *
  * AMBIGUITY RESOLVED — the raw `action` tuple element (`SrcItem[4]`, e.g.
  * `"goOnside('dom-mrm')"`) is intentionally excluded from every rendered
  * field, including the Drawer. `onside.ts`'s own file header documents this
@@ -136,6 +151,23 @@
  * screen's regression suite lives in `src/__tests__/onside/` (the earlier
  * "no test runner installed" STOP-item recorded here is resolved and
  * removed).
+ *
+ * FIX WAVE (A-overlap-06) — the signal DataTable was the one table on this
+ * screen (and the only one app-wide) rendered without the per-table
+ * `overflowX:'auto'` wrapper every sibling table in this codebase uses (base
+ * anchor: `.raci-wrap{overflow-x:auto}`, leapfi-platform.html:146) — on a
+ * narrow viewport its nowrap header cells forced the whole `<main>` region
+ * (title, FilterBar, and the three below-the-fold sections included) to
+ * scroll horizontally as one unit instead of scrolling just the table. Now
+ * wrapped in the same `SCROLL_WRAP_STYLE` div every other screen's tables
+ * use.
+ *
+ * FIX WAVE (B-dead-interactions-16) — `RegulatoryFeedLifecycle`'s "Newly
+ * proposed" rows now fire `onOpenSources` (see that file's own header
+ * note); this screen scrolls/focuses its already-composed
+ * `RegulatoryFeedSources` section (ref'd via `sourcesSectionRef`, wrapping
+ * that section — not editing `RegulatoryFeedSources.tsx` itself, which is
+ * outside this dispatch's allowlist).
  *
  * ──────────────────────────────────────────────────────────────────────────
  * W1 AMENDMENT — Batch 2 composition (parity_ia_addendum.md line 335,
@@ -174,7 +206,7 @@
  * hint per DrawerContent's own header, so the nearest in-domain literal
  * stands for it, unchanged from the original W1 resolution).
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Topbar } from '../components/Topbar';
 import type { TopbarProps } from '../components/Topbar';
@@ -186,7 +218,7 @@ import { DataTable } from '../components/DataTable';
 import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
 import { Drawer } from '../components/Drawer';
 import { DrawerContent } from '../components/DrawerContent';
-import type { DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
+import type { DrawerContentAction, DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
 import { Button } from '../components/primitives/Button';
 import { Tag } from '../components/primitives/Tag';
 import { RegulatoryFeedSources } from '../views/RegulatoryFeedSources';
@@ -195,6 +227,7 @@ import { RegulatoryFeedLifecycle } from '../views/RegulatoryFeedLifecycle';
 import { RegulatoryFeedInforce } from '../views/RegulatoryFeedInforce';
 import { DOMAINS, INSTR, SRC_ITEMS, SRC_ROWS, SRC_LAYERS } from '../data/onside';
 import type { OnsideInstrument } from '../data/onside';
+import type { DeepLinkScreenProps } from '../App';
 
 /** Ports the source engine's `srcRow()`/`srcItems()` `.replace(/&amp;/g,'&')`
  * reconciliation (see file header) at the render layer. */
@@ -318,6 +351,12 @@ const TITLE_STYLE: CSSProperties = {
   color: 'var(--ink)',
 };
 
+/** A-overlap-06 — the per-table horizontal-scroll wrapper every other
+ * table in this codebase uses (base `.raci-wrap{overflow-x:auto}`,
+ * leapfi-platform.html:146); this screen's own signal table was the sole
+ * omission. */
+const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
+
 const SIGNAL_CELL_STYLE: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -367,7 +406,7 @@ const COLUMNS: DataTableColumn<SignalRow>[] = [
   },
 ];
 
-export interface OnSideFeedProps {
+export interface OnSideFeedProps extends DeepLinkScreenProps {
   /** Full Topbar prop bundle — same passthrough pattern as `Home.tsx`/`BoardDeck.tsx`. */
   topbar: TopbarProps;
   /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('onside.feed') and is not accepted as a prop. */
@@ -375,10 +414,17 @@ export interface OnSideFeedProps {
   sidebarVersionLabel?: string;
 }
 
-export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel }: OnSideFeedProps) {
+export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel, onDeepLink }: OnSideFeedProps) {
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [selection, setSelection] = useState<DrawerSelection | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // B-dead-interactions-16 — scroll/focus target for RegulatoryFeedSources'
+  // "Sources & connectors" section, below the fold.
+  const sourcesSectionRef = useRef<HTMLDivElement | null>(null);
+  const handleOpenSources = () => {
+    sourcesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    sourcesSectionRef.current?.focus();
+  };
 
   const filteredRows = useMemo(
     () =>
@@ -473,17 +519,20 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel }: OnSideFe
               // Verbatim base review line (source 2944).
               { label: 'Review', value: 'Nothing read from this instrument becomes authoritative before a qualified human approves it' },
               { label: 'Summary', value: normalizeAmp(selection.instrument.sum) },
-              ...(selection.instrument.doms.length > 0
-                ? [
-                    {
-                      label: 'Domains this instrument drives',
-                      value: selection.instrument.doms
-                        .map((domKey) => DOMAINS.find((d) => d.key === domKey)?.name ?? domKey)
-                        .join(' · '),
-                    },
-                  ]
-                : []),
             ];
+
+  // B-dead-interactions-07 — "Domains this instrument drives" un-flattened
+  // from a joined string into real deep-link action Buttons (see file
+  // header note). Only rendered when a consumer wired `onDeepLink` — never
+  // a dead click if one hasn't.
+  const drawerActions: DrawerContentAction[] =
+    selection !== null && selection.kind === 'instrument' && onDeepLink
+      ? selection.instrument.doms.map((domKey) => ({
+          label: `${DOMAINS.find((d) => d.key === domKey)?.name ?? domKey} →`,
+          variant: 'ghost' as const,
+          onPress: () => onDeepLink({ screen: 'onside.overview', kind: 'domain', id: domKey }),
+        }))
+      : [];
 
   const drawerTags: DrawerContentTag[] =
     selection === null
@@ -531,20 +580,24 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel }: OnSideFe
             Regulatory feed
           </h1>
           <FilterBar groups={filterGroups} />
-          <DataTable
-            caption="Regulatory signals feed"
-            columns={COLUMNS}
-            rows={filteredRows}
-            getRowId={(row) => row.id}
-            rowAction={rowAction}
-            defaultSortColumnId="date"
-            defaultSortDirection="descending"
-            emptyMessage="No signals match the selected filters."
-          />
+          <div style={SCROLL_WRAP_STYLE}>
+            <DataTable
+              caption="Regulatory signals feed"
+              columns={COLUMNS}
+              rows={filteredRows}
+              getRowId={(row) => row.id}
+              rowAction={rowAction}
+              defaultSortColumnId="date"
+              defaultSortDirection="descending"
+              emptyMessage="No signals match the selected filters."
+            />
+          </div>
           {/* W1 — Batch 2 below-the-fold parity sections, order 1→2→3 per each
               view's own file header. */}
-          <RegulatoryFeedSources onOpenSource={handleOpenSource} onOpenInstrument={handleOpenInstrument} />
-          <RegulatoryFeedLifecycle onOpenInstrument={handleOpenInstrument} />
+          <div ref={sourcesSectionRef} tabIndex={-1}>
+            <RegulatoryFeedSources onOpenSource={handleOpenSource} onOpenInstrument={handleOpenInstrument} />
+          </div>
+          <RegulatoryFeedLifecycle onOpenInstrument={handleOpenInstrument} onOpenSources={handleOpenSources} />
           <RegulatoryFeedInforce onOpenInstrument={handleOpenInstrument} />
         </main>
       </div>
@@ -556,6 +609,7 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel }: OnSideFe
           kind={selection !== null && selection.kind === 'source' ? 'source' : 'signal'}
           fields={drawerFields}
           tags={drawerTags}
+          actions={drawerActions}
         />
         {selection !== null && selection.kind === 'source' ? (
           // ONSIDE-04 — stable-node alert toggle; see the file-header note.

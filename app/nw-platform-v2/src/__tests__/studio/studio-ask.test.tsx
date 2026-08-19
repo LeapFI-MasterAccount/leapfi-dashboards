@@ -38,6 +38,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { StudioAsk } from '../../screens/StudioAsk';
+import type { StudioAskProps } from '../../screens/StudioAsk';
 import type { TopbarProps } from '../../components/Topbar';
 import { INTAKE } from '../../data/misc';
 import { resetDemo } from '../../state/demoStore';
@@ -50,8 +51,8 @@ const topbar: TopbarProps = {
   profileMenuItems: [],
 };
 
-function renderStudioAsk() {
-  return render(<StudioAsk topbar={topbar} onNavigate={() => {}} />);
+function renderStudioAsk(overrides?: Partial<StudioAskProps>) {
+  return render(<StudioAsk topbar={topbar} onNavigate={() => {}} {...overrides} />);
 }
 
 /** Types `question` into the Ask Input and presses the Ask primary Button,
@@ -313,7 +314,7 @@ describe('StudioAsk intake wizard terminal intents (base acceptProposed 4401-441
     expect(within(screen.getByRole('table')).queryByText(/Unicorn parade please/)).not.toBeInTheDocument();
   });
 
-  it('Cancel unmounts the wizard mid-flow and says the route() cancel-branch line (base 4435-4439); nothing is added', () => {
+  it('Cancel unmounts the wizard mid-flow, keeps the answered-so-far transcript in the ONE chat log (fix C-unbounded-growth-01 — base single chat-log, 435), and says the route() cancel-branch line (base 4435-4439); nothing is added', () => {
     reachWizard();
     act(() => {
       vi.advanceTimersByTime(700); // first question visible
@@ -322,11 +323,128 @@ describe('StudioAsk intake wizard terminal intents (base acceptProposed 4401-441
 
     fireEvent.click(screen.getByRole('button', { name: '✕ Cancel scoping' }));
 
+    // The wizard's own controls (answer chips, cancel button, its
+    // now-removed dedicated transcript list) are gone with it…
     expect(screen.queryByLabelText('Scoping conversation')).not.toBeInTheDocument();
-    expect(screen.queryByText(INTAKE[0]!.q)).not.toBeInTheDocument();
+    // …but the question the presenter was mid-answering stays in the ONE
+    // continuous chat log (fix C-unbounded-growth-01: the base ran the
+    // whole conversation through a single `chat-log`, never erasing prior
+    // turns on cancel — leapfi-platform.html:435) — folded up permanently
+    // via `onTranscriptChange` before the cancel confirmation line.
+    expect(screen.getByText(INTAKE[0]!.q)).toBeInTheDocument();
     expect(
       screen.getByText('Scoping cancelled. Nothing was added. Ask me anything, or describe another idea when you’re ready.'),
     ).toBeInTheDocument();
     expect(within(screen.getByRole('table')).queryByText(/Unicorn parade please/)).not.toBeInTheDocument();
+  });
+});
+
+describe('intake transcript renders inside ChatHero\'s ONE bounded log, never a second list (fix C-unbounded-growth-01 — base single `chat-log`, 435, with scroll-to-latest on every botSay, 4343/4348)', () => {
+  it('the wizard\'s opening line and questions/answers render inside the SAME "Conversation" list ChatHero owns — no separate "Scoping conversation" list exists at all', () => {
+    renderStudioAsk();
+    ask('unicorn parade please');
+    fireEvent.click(screen.getByRole('button', { name: 'Scope "Unicorn parade please" as a new use case' }));
+    act(() => {
+      vi.advanceTimersByTime(700); // OPENING_DELAY_MS → first question
+    });
+
+    // The wizard no longer owns a second, unbounded transcript list.
+    expect(screen.queryByLabelText('Scoping conversation')).not.toBeInTheDocument();
+
+    // Its opening line + first question render INSIDE ChatHero's single
+    // bounded, auto-scrolling "Conversation" list (ChatHero.tsx's
+    // `messageListStyle`: maxHeight 35rem + overflowY auto).
+    const conversation = screen.getByRole('list', { name: 'Conversation' });
+    expect(
+      within(conversation).getByText(/Good one\. I don't have a comparable for "Unicorn parade please" in the library yet/),
+    ).toBeInTheDocument();
+    expect(within(conversation).getByText(INTAKE[0]!.q)).toBeInTheDocument();
+
+    // Answering the first question appends BOTH the answer bubble and the
+    // next question into the same list, in order.
+    fireEvent.click(screen.getByRole('button', { name: '2 people · ~15 hrs/wk' }));
+    act(() => {
+      vi.advanceTimersByTime(700);
+    });
+    expect(within(conversation).getByText('2 people · ~15 hrs/wk')).toBeInTheDocument();
+    expect(within(conversation).getByText(INTAKE[1]!.q)).toBeInTheDocument();
+  });
+});
+
+describe('opportunity register rows open the play detail drawer (fix B-dead-interactions-03 — base per-row "Detail →", 4325)', () => {
+  it('a "Detail →" row action deep-links to Investment Design\'s play drawer for that exact row', () => {
+    const onDeepLink = vi.fn();
+    renderStudioAsk({ onDeepLink });
+    const table = screen.getByRole('table');
+    const row = within(table).getByRole('row', { name: /Loan-document summarization/ });
+    fireEvent.click(within(row).getByRole('button', { name: 'Detail →' }));
+    expect(onDeepLink).toHaveBeenCalledWith({
+      screen: 'studio.investment-design',
+      kind: 'play',
+      id: 'Loan-document summarization',
+    });
+  });
+
+  it('a newly-registered (from-Ask) row is just as clickable as a seeded catalog row', () => {
+    const onDeepLink = vi.fn();
+    renderStudioAsk({ onDeepLink });
+    ask('What are our rules on indirect auto lending?');
+    fireEvent.click(screen.getByRole('button', { name: 'Add to the opportunity register' }));
+
+    const table = screen.getByRole('table');
+    const row = within(table).getByRole('row', { name: /Auto loan origination platform/ });
+    fireEvent.click(within(row).getByRole('button', { name: 'Detail →' }));
+    expect(onDeepLink).toHaveBeenCalledWith({
+      screen: 'studio.investment-design',
+      kind: 'play',
+      id: 'Auto loan origination platform',
+    });
+  });
+});
+
+describe('answer sources and cross-nav offers are clickable (fix B-dead-interactions-10)', () => {
+  it('a cited source is a real button that navigates to OnSide · Documents (base doclink onclick="onsideShow(\'docs\')", 3636/1813)', () => {
+    const onNavigate = vi.fn();
+    renderStudioAsk({ onNavigate });
+    ask('What is our wire transfer limit for members?');
+
+    const sources = screen.getByLabelText('Answer sources');
+    fireEvent.click(within(sources).getByRole('button', { name: 'Funds Transfer Policy §3.1 · Limits & authorizations' }));
+    expect(onNavigate).toHaveBeenCalledWith('onside.documents');
+  });
+
+  it('the seeded auto-loan answer offers "See the governance work in OnSide" before it\'s added (base 4424, goOnside(\'dom-mrm\'))', () => {
+    const onDeepLink = vi.fn();
+    renderStudioAsk({ onDeepLink });
+    ask('What are our rules on indirect auto lending?');
+
+    fireEvent.click(screen.getByRole('button', { name: 'See the governance work in OnSide' }));
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.overview', kind: 'domain', id: 'mrm' });
+  });
+
+  it('once any play is registered, "See it in the register" and "See the scope change in OnSide" offers appear and work', () => {
+    const onDeepLink = vi.fn();
+    renderStudioAsk({ onDeepLink });
+    ask('What are our rules on indirect auto lending?');
+    fireEvent.click(screen.getByRole('button', { name: 'Add to the opportunity register' }));
+
+    // "See it in the register": the row is already on this screen — no
+    // cross-nav, just a scroll + re-highlight (jsdom-stubbed scrollIntoView).
+    expect(() => fireEvent.click(screen.getByRole('button', { name: 'See it in the register' }))).not.toThrow();
+
+    // "See the scope change in OnSide": the play's weakest gate (Adverse
+    // Action, g: Fair Lending/Adverse Action/Model Risk) → its CTRLDOM slug.
+    fireEvent.click(screen.getByRole('button', { name: 'See the scope change in OnSide' }));
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.overview', kind: 'domain', id: 'fairlend' });
+  });
+
+  it('a fresh Ask retires the post-accept offer (it does not linger once the conversation moves on)', () => {
+    renderStudioAsk();
+    ask('What are our rules on indirect auto lending?');
+    fireEvent.click(screen.getByRole('button', { name: 'Add to the opportunity register' }));
+    expect(screen.getByRole('button', { name: 'See it in the register' })).toBeInTheDocument();
+
+    ask('What is our wire transfer limit for members?');
+    expect(screen.queryByRole('button', { name: 'See it in the register' })).not.toBeInTheDocument();
   });
 });

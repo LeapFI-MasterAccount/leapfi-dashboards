@@ -102,6 +102,11 @@
  * (source 2306). The instrument detail itself renders in `OnSideFeed`'s
  * shared Drawer (that screen's `openInstr` port).
  *
+ * FIX WAVE (A-overlap-04 cleanup) — `Toast.tsx` is now self-positioning
+ * (fixed bottom-center, its own anchor); the local fixed top-right wrapper
+ * this view's toast render used is removed as the now-inert leftover that
+ * fix's header flagged for the screen-owning batch to clear.
+ *
  * Tests: this worktree now carries Vitest + Testing Library — regression
  * coverage lives in `src/__tests__/onside/` (the earlier "no test runner
  * installed" STOP-item recorded here is resolved and removed).
@@ -439,9 +444,9 @@ export function RegulatoryFeedSources({ onOpenSource, onOpenInstrument }: Regula
       {toast ? (
         // ONSIDE-09 — base toast() confirmations; auto-dismisses like the
         // base's transient toast, close control always present (C17).
-        <div style={{ position: 'fixed', top: '1.25rem', right: '1.25rem', zIndex: 60 }}>
-          <Toast key={toast.id} variant="info" message={toast.message} onDismiss={() => setToast(null)} autoDismissMs={4000} />
-        </div>
+        // Toast.tsx self-positions (fixed bottom-center) since the
+        // A-overlap-04 fix — no local fixed wrapper needed or wanted.
+        <Toast key={toast.id} variant="info" message={toast.message} onDismiss={() => setToast(null)} autoDismissMs={4000} />
       ) : null}
     </section>
   );

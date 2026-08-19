@@ -26,10 +26,23 @@
  * passes it in report mode. The `overflow-x: auto` wrappers on every
  * DataTable are kept as a defensive floor for narrow viewports.
  *
- * STOP-ITEM — base `head()`'s "Open full governance detail · OnSide →" utility
- * link (source line 1482) is still not built here — not named in any dispatch
- * brief so far; follow-up wiring, not this file's job. (The original companion
- * STOP-item on `onNavigate('cases')` is closed: `'cases'` is a wired ScreenId.)
+ * GOVERNANCE CROSS-NAVIGATION RESTORED (B-06 fix batch — supersedes this
+ * file's original STOP-item on base `head()`'s "Open full governance detail
+ * · OnSide →" utility link, source line 1482): every report now renders that
+ * link via the new optional `onOpenGovernance` prop (plain nav, base
+ * `closeDrawer();goOnside('overview')` — the drawer needs no explicit close
+ * since navigating `Reporting.tsx` away from `'reporting'` unmounts this
+ * screen, and with it the Drawer, exactly like the base's explicit call).
+ * The compliance control-family table's per-row doclink (control →
+ * `goOnside('dom-KEY')`, source ~1542) and its "Plays it blocks" cell
+ * (`playLink` → `openPlay(n)`) are restored via `onOpenDomain`/`onOpenPlay`,
+ * and the mrm/tprm "Open register items" tables regain their row → `openObl`
+ * click-through via `onOpenObligation` (source 1590/1612) — all four wired
+ * through `Reporting.tsx`'s `onDeepLink` (App.tsx's NAV-PAYLOAD contract;
+ * `onOpenGovernance` alone is a plain nav, not a deep link, since v1's own
+ * head-bar link carries no item payload). Every new prop is optional and
+ * defensively omitted-renders-nothing, the same pattern `onOpenCases`
+ * already established here.
  *
  * CASES note: `boardCases()` below is a verbatim-ported pure function over
  * whatever the live `CASES` singleton holds at render time — empty until a
@@ -121,7 +134,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { StatCard } from '../components/StatCard';
 import { DataTable } from '../components/DataTable';
-import type { DataTableColumn } from '../components/DataTable';
+import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
 import { DeckView } from '../components/DeckView';
 import type { DeckViewSlide } from '../components/DeckView';
 import { Label } from '../components/primitives/Label';
@@ -133,6 +146,7 @@ import type { RecomputeView, PlanOpportunity } from '../engine/plan';
 import { deriveLiveRecomputeView, useDemoStore } from '../state/demoStore';
 import {
   CTRL,
+  CTRLDOM,
   GREEN,
   GOV,
   REGMAP,
@@ -397,6 +411,32 @@ const listItemStyle: CSSProperties = { font: 'inherit', fontSize: '0.875rem', li
 const cellColumnStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.15rem' };
 const cellPrimaryStyle: CSSProperties = { color: 'var(--ink)', fontWeight: 600, fontSize: '0.875rem' };
 const cellSecondaryStyle: CSSProperties = { color: 'var(--ink3)', fontSize: '0.75rem' };
+
+/** Link-styled real `<button>` for an in-cell cross-navigation link — the
+ * base `.doclink` affordance, same accessible pattern
+ * `RegulatoryFeedInforce.tsx`'s `INSTRUMENT_LINK_STYLE` already established
+ * (B-06: control → domain, gated play → play, obligation register row →
+ * obligation). */
+const docLinkStyle: CSSProperties = {
+  background: 'transparent',
+  border: 'none',
+  padding: 0,
+  margin: 0,
+  font: 'inherit',
+  fontWeight: 700,
+  color: 'var(--accent)',
+  textDecoration: 'underline',
+  cursor: 'pointer',
+  textAlign: 'left',
+};
+
+function DocLink({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <button type="button" style={docLinkStyle} onClick={onPress}>
+      {label}
+    </button>
+  );
+}
 
 function TableSection({ heading, children }: { heading: string; children: ReactNode }) {
   return (
@@ -813,7 +853,7 @@ function BoardReport() {
   );
 }
 
-function ComplianceReport() {
+function ComplianceReport({ onOpenDomain, onOpenPlay }: { onOpenDomain?: (domainKey: string) => void; onOpenPlay?: (playName: string) => void }) {
   const view = liveReportView();
   const allKeys = Object.keys(CTRL);
   const orderedKeys = [...view.plan.toClose, ...allKeys.filter((k) => !view.plan.toClose.includes(k))];
@@ -830,17 +870,42 @@ function ComplianceReport() {
     {
       id: 'control',
       header: 'Control',
-      render: (r) => (
-        <span style={cellColumnStyle}>
-          <span style={cellPrimaryStyle}>{r.key}</span>
-          <span style={cellSecondaryStyle}>{REGMAP[r.key] ?? ''}</span>
-        </span>
-      ),
+      render: (r) => {
+        const domainKey = CTRLDOM[r.key];
+        return (
+          <span style={cellColumnStyle}>
+            {onOpenDomain && domainKey ? (
+              <DocLink label={r.key} onPress={() => onOpenDomain(domainKey)} />
+            ) : (
+              <span style={cellPrimaryStyle}>{r.key}</span>
+            )}
+            <span style={cellSecondaryStyle}>{REGMAP[r.key] ?? ''}</span>
+          </span>
+        );
+      },
     },
     { id: 'status', header: 'Status', render: (r) => <Tag text={r.open ? 'Open' : 'Green'} variant={r.open ? 'status-caution' : 'status-positive'} /> },
     { id: 'score', header: 'Now', render: (r) => `${r.score}%`, align: 'end', sortable: true, sortValue: (r) => r.score },
     { id: 'gap', header: 'Gap to 80', render: (r) => (r.open ? `${GREEN - r.score} pts` : '—'), align: 'end' },
-    { id: 'plays', header: 'Plays it blocks', render: (r) => playsGatedBy(r.key, view.plan.ready.concat(view.plan.gated)).join(', ') || '—' },
+    {
+      id: 'plays',
+      header: 'Plays it blocks',
+      render: (r) => {
+        const plays = playsGatedBy(r.key, view.plan.ready.concat(view.plan.gated));
+        if (plays.length === 0) return '—';
+        if (!onOpenPlay) return plays.join(', ');
+        return (
+          <span style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem 0.5rem' }}>
+            {plays.map((name, index) => (
+              <span key={name}>
+                <DocLink label={name} onPress={() => onOpenPlay(name)} />
+                {index < plays.length - 1 ? ',' : ''}
+              </span>
+            ))}
+          </span>
+        );
+      },
+    },
     { id: 'action', header: 'Action to close', render: (r) => (r.open ? GOV[r.key] ?? '' : '—') },
   ];
 
@@ -1120,10 +1185,13 @@ const OBLIGATION_COLUMNS: DataTableColumn<ObligationRow>[] = [
   },
 ];
 
-function MrmReport() {
+function MrmReport({ onOpenObligation }: { onOpenObligation?: (domainKey: string, obligationId: string) => void }) {
   const domain = domByKey('mrm');
   if (!domain) return <p style={bodyTextStyle}>Model Risk domain data is unavailable.</p>;
   const openItems = (OBL.mrm ?? []).filter((o) => o.st !== 'met');
+  const rowAction: DataTableRowAction<ObligationRow> | undefined = onOpenObligation
+    ? { label: () => 'Open →', onPress: (o) => onOpenObligation('mrm', o.id) }
+    : undefined;
 
   return (
     <div style={sectionStyle}>
@@ -1137,7 +1205,13 @@ function MrmReport() {
         <CaptionedStat label="Models in inventory" value={23} caption="14 internal · 9 vendor" />
       </div>
       <TableSection heading={`Open register items (${openItems.length})`}>
-        <DataTable caption="Model risk register — open items" columns={OBLIGATION_COLUMNS} rows={openItems} getRowId={(o) => o.id} />
+        <DataTable
+          caption="Model risk register — open items"
+          columns={OBLIGATION_COLUMNS}
+          rows={openItems}
+          getRowId={(o) => o.id}
+          {...(rowAction ? { rowAction } : {})}
+        />
       </TableSection>
       <TableSection heading="Validation calendar">
         {/* RPT-11c: the base writes its own link text here (docLink's second
@@ -1162,10 +1236,13 @@ function MrmReport() {
   );
 }
 
-function TprmReport() {
+function TprmReport({ onOpenObligation }: { onOpenObligation?: (domainKey: string, obligationId: string) => void }) {
   const domain = domByKey('tprm');
   if (!domain) return <p style={bodyTextStyle}>Third-Party Risk domain data is unavailable.</p>;
   const openItems = (OBL.tprm ?? []).filter((o) => o.st !== 'met');
+  const rowAction: DataTableRowAction<ObligationRow> | undefined = onOpenObligation
+    ? { label: () => 'Open →', onPress: (o) => onOpenObligation('tprm', o.id) }
+    : undefined;
 
   return (
     <div style={sectionStyle}>
@@ -1177,7 +1254,13 @@ function TprmReport() {
         <CaptionedStat label="SOC 2 on file" value="11 / 12" caption="core processor reviewed" />
       </div>
       <TableSection heading={`Open register items (${openItems.length})`}>
-        <DataTable caption="Third-party risk register — open items" columns={OBLIGATION_COLUMNS} rows={openItems} getRowId={(o) => o.id} />
+        <DataTable
+          caption="Third-party risk register — open items"
+          columns={OBLIGATION_COLUMNS}
+          rows={openItems}
+          getRowId={(o) => o.id}
+          {...(rowAction ? { rowAction } : {})}
+        />
       </TableSection>
       <TableSection heading="Program notes">
         {/* RPT-11c: base hand-written docLink text (source 1631-1633), not
@@ -1314,14 +1397,26 @@ function RoiReport() {
  * Kind dispatch + exported component.
  * ============================================================ */
 
-function renderReportBody(kind: ReportKind, onOpenCases?: () => void, onLogUpdate?: (id: string) => void): ReactNode {
+function renderReportBody(
+  kind: ReportKind,
+  onOpenCases: (() => void) | undefined,
+  onLogUpdate: ((id: string) => void) | undefined,
+  onOpenDomain: ((domainKey: string) => void) | undefined,
+  onOpenPlay: ((playName: string) => void) | undefined,
+  onOpenObligation: ((domainKey: string, obligationId: string) => void) | undefined,
+): ReactNode {
   switch (kind) {
     case 'gapboard':
       return <GapboardReport {...(onOpenCases !== undefined ? { onOpenCases } : {})} />;
     case 'board':
       return <BoardReport />;
     case 'compliance':
-      return <ComplianceReport />;
+      return (
+        <ComplianceReport
+          {...(onOpenDomain !== undefined ? { onOpenDomain } : {})}
+          {...(onOpenPlay !== undefined ? { onOpenPlay } : {})}
+        />
+      );
     case 'plan':
       return <PlanReport />;
     case 'roadmap':
@@ -1331,15 +1426,18 @@ function renderReportBody(kind: ReportKind, onOpenCases?: () => void, onLogUpdat
     case 'posture':
       return <PostureReport />;
     case 'mrm':
-      return <MrmReport />;
+      return <MrmReport {...(onOpenObligation !== undefined ? { onOpenObligation } : {})} />;
     case 'tprm':
-      return <TprmReport />;
+      return <TprmReport {...(onOpenObligation !== undefined ? { onOpenObligation } : {})} />;
     case 'infosec':
       return <InfosecReport />;
     case 'roi':
       return <RoiReport />;
   }
 }
+
+const chromeRowStyle: CSSProperties = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' };
+const chromeLabelsStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: 0 };
 
 export interface ReportViewProps {
   kind: ReportKind;
@@ -1360,9 +1458,22 @@ export interface ReportViewProps {
    * affordance (same defensive pattern as `onOpenCases` above).
    */
   onLogUpdate?: (id: string) => void;
+  /** B-06: base `head()`'s "Open full governance detail · OnSide →" link
+   * (source 1481-1482), rendered on every report kind. Plain navigation
+   * (no item payload) — omit to hide, same defensive pattern as above. */
+  onOpenGovernance?: () => void;
+  /** B-06: `compliance` kind's control-family doclink → the domain register
+   * (base `goOnside('dom-KEY')`, source ~1542). */
+  onOpenDomain?: (domainKey: string) => void;
+  /** B-06: `compliance` kind's "Plays it blocks" cell → a gated play's
+   * detail (base `openPlay(n)`, source ~1542). */
+  onOpenPlay?: (playName: string) => void;
+  /** B-06: `mrm`/`tprm` kinds' "Open register items" row → the obligation
+   * detail (base `openObl(domKey, oid)`, source 1590/1612). */
+  onOpenObligation?: (domainKey: string, obligationId: string) => void;
 }
 
-export function ReportView({ kind, onOpenCases, onLogUpdate }: ReportViewProps) {
+export function ReportView({ kind, onOpenCases, onLogUpdate, onOpenGovernance, onOpenDomain, onOpenPlay, onOpenObligation }: ReportViewProps) {
   // RPT-04: re-render the open report on every demo-store write (lever moves,
   // case advances, Discovery accepts) — the React equivalent of the base's
   // recompute-on-open (`var P=computePlan()`, source 1477).
@@ -1371,13 +1482,20 @@ export function ReportView({ kind, onOpenCases, onLogUpdate }: ReportViewProps) 
     <div data-lf-view="report" data-kind={kind} style={sectionStyle}>
       {/* Base head() chrome (source 1479-1481): the category line + the
         * per-report repmeta subtitle (RPT-11a — owner attributions and
-        * meeting framing restored; the generic audience line is gone). */}
-      <Label text="LEAPFI · Reporting · generated from the live record" variant="eyebrow" />
-      <Label
-        text={`${reportSub(kind)} · NorthWinds Credit Union · illustrative model on sample data`}
-        variant="body-secondary"
-      />
-      {renderReportBody(kind, onOpenCases, onLogUpdate)}
+        * meeting framing restored; the generic audience line is gone) — plus
+        * (B-06) the "Open full governance detail" utility link every base
+        * report head carried alongside them. */}
+      <div style={chromeRowStyle}>
+        <div style={chromeLabelsStyle}>
+          <Label text="LEAPFI · Reporting · generated from the live record" variant="eyebrow" />
+          <Label
+            text={`${reportSub(kind)} · NorthWinds Credit Union · illustrative model on sample data`}
+            variant="body-secondary"
+          />
+        </div>
+        {onOpenGovernance ? <Button variant="ghost" label="Open full governance detail · OnSide →" onPress={onOpenGovernance} /> : null}
+      </div>
+      {renderReportBody(kind, onOpenCases, onLogUpdate, onOpenDomain, onOpenPlay, onOpenObligation)}
     </div>
   );
 }

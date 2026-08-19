@@ -117,6 +117,73 @@
  * Object.is-equal setState, unchanged key, no remount). `Cases.tsx` itself
  * is unmodified; this is a pure parent-side `key` composition technique.
  *
+ * NAVIGATION-WITH-PAYLOAD / DEEP LINKS (P1a NAV-PAYLOAD dispatch — the
+ * mechanism `OnSideFeed.tsx`'s ONSIDE-08 note ("no navigation-with-payload
+ * mechanism exists") and `OnSideOverview.tsx`'s `deepLinkDomainKey` note
+ * both name as missing): the base's cross-screen verbs are never bare
+ * navigations — they navigate AND open a specific item there
+ * (goOnside('domains'/'feed-lifecycle'/'gaps') + openReport('roi') from
+ * Home's panel headers, source 868–878; every report head's "Open full
+ * governance detail · OnSide →" closeDrawer();goOnside('overview'),
+ * 1481–1482; report register rows openObl('mrm'/'tprm', id), 1590–1612;
+ * Home's top-play rows "Open" → openPlay(n), 4249). This shell owns the
+ * ported general mechanism — the bell's pendingCaseId/bellPressNonce
+ * pattern (previous section), generalized. THE CONTRACT the screen
+ * batches wire their consumers against:
+ *
+ *   - TYPES: `ScreenId`, `DeepLinkKind`, `DeepLinkRequest`,
+ *     `DeepLinkTarget`, and `DeepLinkScreenProps` are exported from this
+ *     file. A screen `import type`s them (type-only, erased at build — the
+ *     screens→App import adds no runtime cycle) and declares
+ *     `extends DeepLinkScreenProps` on its own Props interface (all three
+ *     members optional, so existing bare-mount screen tests keep passing).
+ *   - TRIGGER: call `onDeepLink({ screen, kind, id })` from any screen.
+ *     App stamps a session-monotonic `nonce` (a ref counter that never
+ *     resets and never reuses a value, even after consumption — the SH-8
+ *     lesson: an Object.is-equal payload must still read as a NEW press)
+ *     and switches `screenId` with normal BackChip semantics. It does NOT
+ *     route through `navigateToScreen` (which clears payloads and
+ *     early-returns on same-screen): a deep link aimed at the
+ *     already-active screen still delivers its payload.
+ *   - CONSUME: the mounted screen receives `deepLink` — non-null only
+ *     when `target.screen` is that screen — opens the named item in an
+ *     effect keyed on `deepLink?.nonce`, then calls
+ *     `onDeepLinkConsumed(deepLink.nonce)`. App clears only while the
+ *     nonce still matches, so a rapid second press is never clobbered by
+ *     a stale consume.
+ *   - GENERIC NAV CLEARS: `navigateToScreen` (Sidebar, BackChip, rail)
+ *     drops any unconsumed payload — a plain click means "open the screen
+ *     plain", exactly like that function's existing `pendingCaseId` clear.
+ *   - KIND VOCABULARY (id encodings): 'doc-redline' → onside.documents,
+ *     id = DOCLIB doc id (base openDocView, 2899/3175); 'obligation' →
+ *     id = `${domKey}:${oblId}`, e.g. 'mrm:MRM-08' (base
+ *     openObl(domKey, oid), 2949/3106/1590–1612); 'play' → id = the play
+ *     name `n` (base openPlay, 4249/4325); 'feed-source' → onside.feed,
+ *     id = source key (base onsideShow('feed-sources')); 'report' →
+ *     reporting, id = report kind, e.g. 'roi' (base openReport, 872/4242);
+ *     'section' → id = a section key on the target screen, e.g.
+ *     'lifecycle' on onside.feed (base goOnside('feed-lifecycle'), 869) or
+ *     'gaps' (878); 'domain' → onside.overview, id = domain key (base
+ *     goOnside('dom-mrm')).
+ *   - PLUMBED EVERYWHERE NOW: `{...deepLinkProps}` is spread onto every
+ *     routed screen below. A screen that has not yet declared the props
+ *     simply ignores them (JSX spread performs no excess-property check);
+ *     the moment a screen batch adds `extends DeepLinkScreenProps`, the
+ *     same spread type-checks against its declaration. The 'domain' kind
+ *     is additionally BRIDGED today onto OnSideOverview's already-shipped
+ *     `deepLinkDomainKey` prop (resolving that header's "STOP-item for
+ *     the wiring dispatch"), so goOnside('dom-KEY') semantics work end to
+ *     end. Known legacy-prop limit: `deepLinkDomainKey`'s own
+ *     lastDeepLinkRef cannot re-fire a same-key re-press while the screen
+ *     stays mounted — the owning screen batch should migrate it to
+ *     consume `deepLink`/`onDeepLinkConsumed` (flagged; OnSideOverview.tsx
+ *     is outside this dispatch's allowlist).
+ *   - The bell→Cases path (previous section) stays on its dedicated
+ *     pendingCaseId + key-remount technique — Cases consumes
+ *     `initialCaseId` via remount, not an effect; unifying it onto
+ *     `deepLink` would require touching Cases.tsx and is deliberately not
+ *     done here.
+ *
  * PERSONA / USER-SWITCHER WIRING (TASK line): `profileMenuItems` is built
  * from `data/studio.ts`'s `USERS` (unmodified, six seeded personas);
  * selecting one sets `currentUserId`, which drives `Topbar`'s `profile`
@@ -146,6 +213,22 @@
  * never claims a message was sent anywhere, since none is (Core Principle
  * 3: never fabricate a stronger claim than what actually happened). No
  * network call, no form submission, no data leaves the browser.
+ *
+ * TOAST WIRING (fix-wave gate dispatch — A-overlap-04 cleanup /
+ * C-unbounded-growth-04): `Toast.tsx` became self-positioning this wave
+ * (fixed bottom-center, its own internal anchor, base #toast geometry —
+ * see that file's header). The former local `TOAST_WRAP_STYLE` (`{
+ * position: 'fixed', top: '1.25rem', right: '1.25rem', zIndex: 60 }`) is
+ * removed here as the now-inert leftover that fix's header flagged for
+ * each screen-owning batch to clear — the other four mounts (Cases,
+ * OnSideDocuments, RegulatoryFeedSources) already did the same. Separately,
+ * the design-partner and restart toasts used to be two independent
+ * booleans (`designPartnerToast`/`restartToast`); `handleRestart` never
+ * cleared the former, so the two `Toast` instances could mount
+ * simultaneously at the identical anchor. They are now ONE `appToast` slot
+ * (see its state comment below), matching the base's own singleton
+ * `toast()` (source 3962–3966: every call replaces the text and re-arms
+ * the timer) — the two messages can never coexist.
  *
  * RESTART / resetDemo SCOPE (rewritten by the backbone fix-wave dispatch —
  * SH-2/RAIL-02/CS-04/RPT-02; supersedes the earlier claim that navigation
@@ -177,11 +260,11 @@
  * earlier header revision said no test runner was installed): Vitest is
  * installed and this shell is covered by `src/__tests__/shell/` (bell
  * panel, presenter rail, topbar, sidebar, home, theme toggle, live demo
- * state) and type-checked via `npx tsc --noEmit` (strict,
- * `exactOptionalPropertyTypes`).
+ * state, deep-link payload navigation) and type-checked via
+ * `npx tsc --noEmit` (strict, `exactOptionalPropertyTypes`).
  */
-import { useEffect, useState } from 'react'
-import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import './App.css'
 import { Home } from './screens/Home'
 import { ConnectSoon } from './screens/ConnectSoon'
@@ -245,10 +328,42 @@ const SCREEN_IDS = [
   'board-deck',
 ] as const
 
-type ScreenId = (typeof SCREEN_IDS)[number]
+export type ScreenId = (typeof SCREEN_IDS)[number]
 
 function isScreenId(id: string): id is ScreenId {
   return (SCREEN_IDS as readonly string[]).includes(id)
+}
+
+/** See file header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS" — the item kinds a deep link can open, one per base cross-screen verb (id encodings in the header's KIND VOCABULARY). */
+export type DeepLinkKind =
+  | 'doc-redline' // base openDocView(id) — OnSide·Documents doc/redline slide-out (source 2899, 3175)
+  | 'obligation' // base openObl(domKey, oid) — id is `${domKey}:${oblId}` (source 2949, 3106, 1590–1612)
+  | 'play' // base openPlay(n) — id is the play name (source 4249, 4325)
+  | 'feed-source' // base onsideShow('feed-sources') + source focus — id is the source key
+  | 'report' // base openReport(kind) — id is the report kind, e.g. 'roi' (source 872, 4242)
+  | 'section' // base goOnside(section) — id is a section key on the target screen, e.g. 'lifecycle' (source 869, 878)
+  | 'domain' // base goOnside('dom-KEY') — id is the domain key; bridged to OnSideOverview's `deepLinkDomainKey` today
+
+/** A screen's deep-link request: navigate to `screen` AND open the `kind`/`id` item there. */
+export interface DeepLinkRequest {
+  screen: ScreenId
+  kind: DeepLinkKind
+  id: string
+}
+
+/** The pending payload as delivered: the request plus App's session-monotonic press nonce (never reset, never reused — the SH-8 lesson generalized; see file header). */
+export interface DeepLinkTarget extends DeepLinkRequest {
+  nonce: number
+}
+
+/** The three props spread onto every routed screen — a screen declares `extends DeepLinkScreenProps` and consumes the subset it needs (see file header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS"). */
+export interface DeepLinkScreenProps {
+  /** Pending payload aimed at the mounted screen (null when none). Open the item in an effect keyed on `deepLink?.nonce`, then call `onDeepLinkConsumed(deepLink.nonce)`. */
+  deepLink?: DeepLinkTarget | null
+  /** Trigger a deep link — cross-screen or aimed at the calling screen itself. */
+  onDeepLink?: (request: DeepLinkRequest) => void
+  /** Mark the payload consumed. App clears only while the nonce still matches, so a newer press is never clobbered by a stale consume. */
+  onDeepLinkConsumed?: (nonce: number) => void
 }
 
 const SCREEN_LABEL: Record<ScreenId, string> = {
@@ -270,14 +385,25 @@ const SCREEN_LABEL: Record<ScreenId, string> = {
   'board-deck': 'Board deck',
 }
 
-const TOAST_WRAP_STYLE: CSSProperties = { position: 'fixed', top: '1.25rem', right: '1.25rem', zIndex: 60 }
-
 function App() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const [screenId, setScreenId] = useState<ScreenId>('home')
   const [previousScreenId, setPreviousScreenId] = useState<ScreenId | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string>(CURRENT.id)
-  const [designPartnerToast, setDesignPartnerToast] = useState(false)
+  // C-unbounded-growth-04 fix: ONE app-level toast slot, not two
+  // independent booleans (the former `designPartnerToast`/`restartToast`
+  // pair). Base `toast()` (source 3962–3966) is a singleton slot — every
+  // call replaces the text and re-arms the timer via
+  // `clearTimeout(window.__toastT)` — so a design-partner toast and a
+  // restart toast could never coexist there. The twin's two independent
+  // booleans could: `handleRestart` never cleared `designPartnerToast`, so
+  // pressing Restart within the design-partner toast's 5s window mounted a
+  // SECOND `Toast` at the identical fixed anchor, superimposing two opaque
+  // pills. `key` is a fresh nonce per call (same technique as Cases.tsx's
+  // CS-09 fix) so a same-kind repeat still remounts `Toast` and re-arms its
+  // auto-dismiss timer instead of reusing a stale one.
+  const [appToast, setAppToast] = useState<{ key: number; message: string } | null>(null)
+  const appToastNonceRef = useRef(0)
   // See file header "NOTIFICATION BELL" — the case a bell row asked to
   // open; also doubles as the Cases screen's remount key so a bell press
   // while already on `cases` still lands on the right case detail.
@@ -286,7 +412,15 @@ function App() {
   // SAME case from the bell still forces the remount (a bare case-id key
   // is Object.is-equal on the re-press and never remounts).
   const [bellPressNonce, setBellPressNonce] = useState(0)
-  const [restartToast, setRestartToast] = useState(false)
+  // See file header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS" — the one
+  // pending payload (null when none/consumed).
+  const [deepLinkTarget, setDeepLinkTarget] = useState<DeepLinkTarget | null>(null)
+  // Session-monotonic press counter for deep-link nonces — a ref, NOT
+  // derived from the current target, so a consumed (nulled) payload can
+  // never make a nonce value repeat (SH-8 generalized: consumers key
+  // effects on the nonce, and a repeated value would read as "already
+  // handled" and eat the press).
+  const deepLinkNonceRef = useRef(0)
 
   // Subscribe this shell to every demo-state write (state/demoStore.ts) —
   // the React stand-in for the base's renderBell()/renderHome() fan-out.
@@ -307,6 +441,11 @@ function App() {
     // does not call this function) opens a specific case. See file header
     // "NOTIFICATION BELL."
     if (id === 'cases') setPendingCaseId(null)
+    // Generic nav opens the screen plain: drop any unconsumed deep-link
+    // payload (file header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS" —
+    // GENERIC NAV CLEARS; the deep-link twin of the pendingCaseId clear
+    // above).
+    setDeepLinkTarget(null)
     if (id === screenId) return
     setPreviousScreenId(id === 'home' ? null : screenId)
     setScreenId(id)
@@ -324,11 +463,20 @@ function App() {
     setCurrentUserId(CURRENT.id) // base 3957 switchUser('rachel')
     setPendingCaseId(null)
     navigateToScreen('home') // base 3958 go('home')
-    setRestartToast(true) // base 3960 toast
+    // base 3960 toast(...) — see the appToast state comment above.
+    showAppToast('Demo reset. Every gap, redline, lever, filter, and conversation is back to the opening state.')
   }
 
   function handleDesignPartnerRequest(): void {
-    setDesignPartnerToast(true)
+    showAppToast('Design partner interest noted for this session.')
+  }
+
+  /** Base `toast(msg)` (source 3962–3966): one slot, always replaces the
+   * message and re-arms the auto-dismiss timer. See the `appToast` state
+   * comment for why this replaced the two independent booleans. */
+  function showAppToast(message: string): void {
+    appToastNonceRef.current += 1
+    setAppToast({ key: appToastNonceRef.current, message })
   }
 
   /** See file header "NOTIFICATION BELL." Does not go through
@@ -352,7 +500,40 @@ function App() {
     }
   }
 
+  /** See file header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS" — TRIGGER.
+   * Deliberately not routed through `navigateToScreen`: that function
+   * clears the payload and early-returns when the target screen is
+   * already active, and a deep link must deliver its payload either way
+   * (the same reasoning `handleOpenCaseFromBell` above documents for the
+   * bell's dedicated path). */
+  function handleDeepLink(request: DeepLinkRequest): void {
+    deepLinkNonceRef.current += 1
+    setDeepLinkTarget({ ...request, nonce: deepLinkNonceRef.current })
+    if (request.screen !== screenId) {
+      setPreviousScreenId(request.screen === 'home' ? null : screenId)
+      setScreenId(request.screen)
+    }
+  }
+
+  /** See file header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS" — CONSUME.
+   * Clears only while the nonce still matches: a stale consume (screen
+   * effect racing a rapid second press) must never clobber the newer
+   * payload. */
+  function handleDeepLinkConsumed(nonce: number): void {
+    setDeepLinkTarget((prev) => (prev !== null && prev.nonce === nonce ? null : prev))
+  }
+
   const currentUser = USERS.find((user) => user.id === currentUserId) ?? CURRENT
+
+  // Spread onto every routed screen below (file header "NAVIGATION-WITH-
+  // PAYLOAD / DEEP LINKS" — PLUMBED EVERYWHERE NOW). `deepLink` is
+  // pre-filtered to the mounted screen so consumers never re-check
+  // `target.screen`.
+  const deepLinkProps: DeepLinkScreenProps = {
+    deepLink: deepLinkTarget !== null && deepLinkTarget.screen === screenId ? deepLinkTarget : null,
+    onDeepLink: handleDeepLink,
+    onDeepLinkConsumed: handleDeepLinkConsumed,
+  }
 
   const profileMenuItems: TopbarProfileMenuItem[] = USERS.map((user) => ({
     id: user.id,
@@ -399,18 +580,32 @@ function App() {
             onNavigate={navigateToScreen}
             roleKey={currentUser.roleKey}
             roleFirstName={currentUser.first}
+            {...deepLinkProps}
           />
         )
       case 'onside.overview':
-        return <OnSideOverview topbar={topbarProps} onNavigate={navigateToScreen} />
+        // The 'domain' kind is bridged onto the screen's already-shipped
+        // `deepLinkDomainKey` prop (base goOnside('dom-KEY') semantics) —
+        // see file header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS", incl.
+        // the legacy prop's same-key re-press limit flagged there.
+        return (
+          <OnSideOverview
+            topbar={topbarProps}
+            onNavigate={navigateToScreen}
+            {...deepLinkProps}
+            {...(deepLinkTarget !== null && deepLinkTarget.screen === 'onside.overview' && deepLinkTarget.kind === 'domain'
+              ? { deepLinkDomainKey: deepLinkTarget.id }
+              : {})}
+          />
+        )
       case 'onside.feed':
-        return <OnSideFeed topbar={topbarProps} onNavigate={navigateToScreen} />
+        return <OnSideFeed topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
       case 'onside.documents':
-        return <OnSideDocuments topbar={topbarProps} onNavigate={navigateToScreen} />
+        return <OnSideDocuments topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
       case 'onside.ownership':
-        return <OnSideOwnership topbar={topbarProps} onNavigate={navigateToScreen} />
+        return <OnSideOwnership topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
       case 'studio.ask':
-        return <StudioAsk topbar={topbarProps} onNavigate={navigateToScreen} />
+        return <StudioAsk topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
       case 'studio.investment-design':
         // `initialSliders`: App-level live-lever provisioning (SH-6/RPT-04
         // backbone) — every mount starts from the store's live lever
@@ -419,9 +614,16 @@ function App() {
         // `setDemoSliders` (state/demoStore.ts header documents the
         // publish contract; the screen-side publish call is the studio
         // batch's wiring).
-        return <InvestmentDesign topbar={topbarProps} onNavigate={navigateToScreen} initialSliders={getDemoSliders()} />
+        return (
+          <InvestmentDesign
+            topbar={topbarProps}
+            onNavigate={navigateToScreen}
+            initialSliders={getDemoSliders()}
+            {...deepLinkProps}
+          />
+        )
       case 'studio.roadmap':
-        return <Roadmap topbar={topbarProps} onNavigate={navigateToScreen} />
+        return <Roadmap topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
       case 'connect':
       case 'connect.allrailz':
       case 'connect.vantage':
@@ -432,17 +634,18 @@ function App() {
             topbar={topbarProps}
             onNavigate={navigateToScreen}
             moduleKey={screenId === 'connect' ? 'connect' : screenId === 'connect.allrailz' ? 'allrailz' : 'vantage'}
+            {...deepLinkProps}
           />
         )
       case 'reporting':
         // `currentUser`: stamps `who` on committed board-log updates (the
         // regchange report's "Log an update →" sub-flow — base boardSave
         // reads the live persona global CURRENT, source 3589).
-        return <Reporting topbar={topbarProps} onNavigate={navigateToScreen} currentUser={currentUser} />
+        return <Reporting topbar={topbarProps} onNavigate={navigateToScreen} currentUser={currentUser} {...deepLinkProps} />
       case 'settings.toggles':
-        return <SettingsToggles topbar={topbarProps} onNavigate={navigateToScreen} />
+        return <SettingsToggles topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
       case 'settings.about':
-        return <SettingsAbout topbar={topbarProps} onNavigate={navigateToScreen} />
+        return <SettingsAbout topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
       case 'cases':
         // `key`: see file header "NOTIFICATION BELL" — forces a remount so
         // `initialCaseId` is re-honored when a bell row is opened while
@@ -455,10 +658,11 @@ function App() {
             onNavigate={navigateToScreen}
             currentUser={currentUser}
             {...(pendingCaseId !== null ? { initialCaseId: pendingCaseId } : {})}
+            {...deepLinkProps}
           />
         )
       case 'board-deck':
-        return <BoardDeck topbar={topbarProps} onDesignPartnerRequest={handleDesignPartnerRequest} />
+        return <BoardDeck topbar={topbarProps} onDesignPartnerRequest={handleDesignPartnerRequest} {...deepLinkProps} />
     }
   }
 
@@ -466,25 +670,14 @@ function App() {
     <>
       {renderActiveScreen()}
       <PresenterRail script={ACTIVE_SCRIPT} onNavigate={handlePresenterNavigate} onRestart={handleRestart} />
-      {designPartnerToast ? (
-        <div style={TOAST_WRAP_STYLE}>
-          <Toast
-            variant="success"
-            message="Design partner interest noted for this session."
-            onDismiss={() => setDesignPartnerToast(false)}
-            autoDismissMs={5000}
-          />
-        </div>
-      ) : null}
-      {restartToast ? (
-        <div style={TOAST_WRAP_STYLE}>
-          <Toast
-            variant="success"
-            message="Demo reset. Every gap, redline, lever, filter, and conversation is back to the opening state."
-            onDismiss={() => setRestartToast(false)}
-            autoDismissMs={5000}
-          />
-        </div>
+      {appToast ? (
+        <Toast
+          key={appToast.key}
+          variant="success"
+          message={appToast.message}
+          onDismiss={() => setAppToast(null)}
+          autoDismissMs={5000}
+        />
       ) : null}
     </>
   )

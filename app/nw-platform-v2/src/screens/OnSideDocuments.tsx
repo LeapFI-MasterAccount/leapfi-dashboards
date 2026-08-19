@@ -133,6 +133,37 @@
  * the previous module-scope `DOC_STATUS_COUNTS` snapshot advertised
  * pre-adoption counts while the filter yielded post-adoption rows.
  *
+ * FIX WAVE (B-dead-interactions-01 / -02 / -07) — the gap board and both
+ * domain-impact obligation registers had no `rowAction` at all (base
+ * anchors: gap-board rows onclick openObl/openDocView, leapfi-platform.html
+ * 3226; obligation-register rows onclick openObl, 3106) — the v1 obligation-
+ * detail drawer (evidence trail, "Approve & adopt" path) had no entry point
+ * anywhere in the twin. Both tables now carry a real `rowAction` that opens
+ * an obligation-detail Drawer (reusing this screen's existing single
+ * `<Drawer>` instance via a discriminated `openDocId`/`openObligation`
+ * target — never a second instance); the gap board opens the obligation
+ * drawer when a row's `obl` is set, else the doc drawer for its `doc`. The
+ * doc drawer's own "Obligations evidenced" field (previously a flattened,
+ * comma-joined string — B-dead-interactions-07) is now a row of real
+ * `DrawerContent` action Buttons, one per evidenced obligation id, each
+ * opening that obligation's own drawer (`findRedlineDocForObligation`,
+ * exported by this dispatch's sibling `views/DomainsAccordion.tsx`, locates
+ * the domain an obligation id belongs to and the redline doc — if any —
+ * whose Adopt actually closes it). "Approve & adopt" from the obligation
+ * drawer reuses this screen's existing `handleAdopt` verbatim (same
+ * request-key idempotency, same live DOCLIB mutation, same
+ * `applyGapClosure` cascade) — one real closing mechanism, opened from two
+ * entry points. Base's other openObl action ("Attach evidence to close this
+ * item") has no backing store mutation in this worktree for non-redline-
+ * backed gaps (no attach-evidence engine exists) and is not rendered as a
+ * live-looking control with nothing behind it (Core Principle 1).
+ *
+ * FIX WAVE (A-overlap-04 cleanup) — `Toast.tsx` is now self-positioning
+ * (fixed bottom-center, its own anchor) per that fix's own file header;
+ * this screen's local `TOAST_WRAP_STYLE` fixed top-right wrapper is
+ * removed as the now-inert leftover that fix's header flagged for the
+ * screen-owning batch to clear.
+ *
  * Layout constants (240px sidebar column, 2rem content padding): not in
  * design_system_spec.md §1.4's token-only scope by design; copied verbatim
  * from `Home.tsx`'s own documented implementer judgment call for visual
@@ -150,7 +181,7 @@ import { FilterBar } from '../components/FilterBar';
 import type { FilterGroup } from '../components/FilterBar';
 import { Drawer } from '../components/Drawer';
 import { DrawerContent } from '../components/DrawerContent';
-import type { DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
+import type { DrawerContentAction, DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
 import { RedlineDiffView } from '../components/RedlineDiffView';
 import { Toast } from '../components/Toast';
 import { Button } from '../components/primitives/Button';
@@ -161,6 +192,7 @@ import type { DocEntry, DocStatus } from '../data/doclib';
 import { DOMAINS, GAPS, OBL } from '../data/onside';
 import type { GapItem, ObligationRow } from '../data/onside';
 import { CURRENT } from '../data/studio';
+import { findRedlineDocForObligation } from '../views/DomainsAccordion';
 import { applyGapClosure, useDemoStore } from '../state/demoStore';
 
 /** Base rlAction's document-level adopted marker (source 2478) — runtime
@@ -268,6 +300,18 @@ function gapKey(gap: GapItem): string {
   return gap.t;
 }
 
+/** B-dead-interactions-07 — which domain's obligation register a given
+ * obligation id belongs to (OBL's own keying — obligation ids are not
+ * globally namespaced by domain in the data model, so this is a real
+ * lookup, not a string-prefix guess). Used to un-flatten a doc's
+ * "Obligations evidenced" list into real per-obligation drawer links. */
+function findObligationDomain(oblId: string): string | null {
+  for (const [domainKey, rows] of Object.entries(OBL)) {
+    if (rows.some((row) => row.id === oblId)) return domainKey;
+  }
+  return null;
+}
+
 /** ADOPT_COMMIT_DELAY_MS: implementer judgment call (no value in
  * design_system_spec.md §1.4's token-only scope) — long enough that the
  * Button's `loading` state is visibly a real wait, matching Core Principle
@@ -325,7 +369,6 @@ const COUNT_BADGE_STYLE: CSSProperties = {
 const DOMAIN_HEADING_STYLE: CSSProperties = { margin: '0 0 0.625rem', font: 'inherit', fontSize: '1rem', fontWeight: 700, color: 'var(--ink)' };
 const DOMAIN_SECTION_STYLE: CSSProperties = { outline: 'none' };
 const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
-const TOAST_WRAP_STYLE: CSSProperties = { position: 'fixed', top: '1.25rem', right: '1.25rem', zIndex: 60 };
 const SR_ONLY_STYLE: CSSProperties = {
   position: 'absolute',
   width: 1,
@@ -354,6 +397,12 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedRedlineFilter, setSelectedRedlineFilter] = useState<string[]>([]);
   const [openDocId, setOpenDocId] = useState<string | null>(null);
+  // B-dead-interactions-01/-02 — the obligation-detail drawer target
+  // (gap board + domain-impact registers). Mutually exclusive with
+  // `openDocId`: opening one clears the other (see `openObligationDrawer`/
+  // `handleDrawerClose` below) so the single shared Drawer never has to
+  // reconcile two simultaneous "which content" truths.
+  const [openObligation, setOpenObligation] = useState<{ domain: string; id: string } | null>(null);
   const [adoptingDocId, setAdoptingDocId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [updatingObligationIds, setUpdatingObligationIds] = useState<ReadonlySet<string>>(new Set());
@@ -363,6 +412,8 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
   const domainSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const updatingTimeoutRef = useRef<number | undefined>(undefined);
   const lastOpenDocRef = useRef<DocRow | null>(null);
+  const lastOpenObligationRef = useRef<{ domain: string; id: string } | null>(null);
+  const lastDrawerKindRef = useRef<'doc' | 'obligation' | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
 
   // Rebuilt per render from the LIVE DOCLIB singleton — adoption mutates
@@ -382,6 +433,33 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
   // Drawer (open=false, phase 'closed') still renders nothing at all, since
   // Drawer.tsx returns null in that phase regardless of what we pass it.
   const displayDoc = openDoc ?? lastOpenDocRef.current;
+
+  if (openObligation) lastOpenObligationRef.current = openObligation;
+  const displayObligationTarget = openObligation ?? lastOpenObligationRef.current;
+  const displayObligation: ObligationRow | null = displayObligationTarget
+    ? (OBL[displayObligationTarget.domain]?.find((row) => row.id === displayObligationTarget.id) ?? null)
+    : null;
+
+  // Which content the Drawer shows, including through its ~200ms closing
+  // transition (mirrors the `lastOpenDocRef`/`lastOpenObligationRef`
+  // pattern above — the last *opened* kind, not whichever id is
+  // currently non-null, since Adopt clears `openDocId` on success too).
+  if (openDocId !== null) lastDrawerKindRef.current = 'doc';
+  else if (openObligation !== null) lastDrawerKindRef.current = 'obligation';
+  const activeDrawerKind = lastDrawerKindRef.current;
+
+  /** B-dead-interactions-01/-02 — opens the obligation-detail drawer,
+   * closing the doc drawer if one was open (never two simultaneous
+   * targets on the one shared Drawer instance). */
+  function openObligationDrawer(domain: string, id: string) {
+    setOpenDocId(null);
+    setOpenObligation({ domain, id });
+  }
+
+  const handleDrawerClose = () => {
+    setOpenDocId(null);
+    setOpenObligation(null);
+  };
 
   const handleAdopt = (doc: DocRow) => {
     if (isDocAdopted(doc.id) || adoptingDocId !== null) return;
@@ -418,6 +496,10 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
 
       setAdoptingDocId(null);
       setOpenDocId(null);
+      // Also closes the obligation drawer when Adopt was pressed from
+      // there (B-dead-interactions-02 "Approve & adopt" path) — no-op
+      // when Adopt was pressed from the doc drawer instead.
+      setOpenObligation(null);
       setToast({ variant: 'success', message: `${decodeDocText(doc.t)} adopted.`, cascade });
 
       // ONSIDE-13 — if the Drawer's restore-to-trigger found the row
@@ -498,8 +580,37 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
 
   const rowAction: DataTableRowAction<DocRow> = {
     label: (row) => (row.redline ? 'Review' : 'View'),
-    onPress: (row) => setOpenDocId(row.id),
+    onPress: (row) => {
+      setOpenObligation(null);
+      setOpenDocId(row.id);
+    },
   };
+
+  /** B-dead-interactions-01 — gap board row action (base gap-board rows:
+   * onclick openObl/openDocView, leapfi-platform.html:3226): opens the
+   * obligation drawer when the gap names one, else the doc drawer for the
+   * gap's own document. */
+  const gapRowAction: DataTableRowAction<GapItem> = {
+    label: () => 'Open',
+    onPress: (gap) => {
+      if (gap.obl) {
+        openObligationDrawer(gap.obl[0], gap.obl[1]);
+      } else if (gap.doc) {
+        setOpenObligation(null);
+        setOpenDocId(gap.doc);
+      }
+    },
+  };
+
+  /** B-dead-interactions-01/-02 — domain-impact obligation register row
+   * action (base oblRow: onclick openObl, source 3106). One per domain
+   * section, closed over that section's own domain key. */
+  function obligationRowAction(domainKey: string): DataTableRowAction<ObligationRow> {
+    return {
+      label: () => 'Open',
+      onPress: (row) => openObligationDrawer(domainKey, row.id),
+    };
+  }
 
   const domainFilterGroup: FilterGroup = {
     id: 'domain',
@@ -541,15 +652,88 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
         { label: 'Type', value: displayDoc.type },
         { label: 'Owner', value: decodeDocText(displayDoc.owner) },
         { label: 'Summary', value: decodeDocText(displayDoc.line) },
-        ...(displayDoc.obl.length > 0 ? [{ label: 'Obligations evidenced', value: displayDoc.obl.join(', ') }] : []),
         ...displayDoc.secs.map(([heading, body]) => ({ label: heading, value: decodeDocText(body) })),
       ]
+    : [];
+
+  // B-dead-interactions-07 — "Obligations evidenced" un-flattened from a
+  // joined string into real action Buttons, one per obligation id, each
+  // opening that obligation's own drawer (findObligationDomain resolves
+  // which domain register it lives in). An id this dataset never enumerates
+  // in OBL (none currently exist) is simply omitted rather than rendered as
+  // a dead link.
+  const drawerActions: DrawerContentAction[] = displayDoc
+    ? displayDoc.obl
+        .map((oblId) => ({ oblId, domainKey: findObligationDomain(oblId) }))
+        .filter((entry): entry is { oblId: string; domainKey: string } => entry.domainKey !== null)
+        .map(({ oblId, domainKey }) => ({
+          label: `Obligation ${oblId} →`,
+          variant: 'ghost' as const,
+          onPress: () => openObligationDrawer(domainKey, oblId),
+        }))
     : [];
 
   const displayDocStatus: DocStatus = displayDoc ? (LIVE_DOCLIB[displayDoc.id]?.status ?? displayDoc.status) : 'good';
   const drawerTags: DrawerContentTag[] = displayDoc
     ? [{ text: STATUS_LABEL[displayDocStatus], variant: STATUS_TAG_VARIANT[displayDocStatus] }]
     : [];
+
+  // B-dead-interactions-02 obligation-detail drawer content (base openObl,
+  // source 2949-2997).
+  const obligationDrawerFields: DrawerContentField[] =
+    displayObligation && displayObligationTarget
+      ? [
+          { label: 'Domain', value: DOMAIN_LABEL[displayObligationTarget.domain] ?? displayObligationTarget.domain },
+          { label: 'Requirement', value: displayObligation.s },
+          { label: 'Citation', value: displayObligation.cite },
+          ...(displayObligation.gp ? [{ label: 'Gap', value: displayObligation.gp }] : []),
+          ...(displayObligation.fx ? [{ label: 'Remediation plan', value: displayObligation.fx }] : []),
+        ]
+      : [];
+
+  const obligationDrawerTags: DrawerContentTag[] = displayObligation
+    ? [{ text: OBL_STATUS_LABEL[displayObligation.st], variant: OBL_STATUS_VARIANT[displayObligation.st] }]
+    : [];
+
+  // "Evidence chips" — one action Button per evidence doc, opening that
+  // doc's own drawer (base openObl's evidence dchips → openDocView).
+  const obligationDrawerActions: DrawerContentAction[] = displayObligation
+    ? displayObligation.docs
+        .filter((docId) => LIVE_DOCLIB[docId] !== undefined)
+        .map((docId) => ({
+          label: `Evidence: ${decodeDocText(LIVE_DOCLIB[docId]!.t)} →`,
+          variant: 'ghost' as const,
+          onPress: () => {
+            setOpenObligation(null);
+            setOpenDocId(docId);
+          },
+        }))
+    : [];
+
+  const obligationRedlineDocId = displayObligationTarget
+    ? findRedlineDocForObligation(displayObligationTarget.domain, displayObligationTarget.id)
+    : null;
+  const obligationRedlineDoc = obligationRedlineDocId ? LIVE_DOCLIB[obligationRedlineDocId] : undefined;
+  const isObligationRedlineAdopted = obligationRedlineDocId ? isDocAdopted(obligationRedlineDocId) : false;
+
+  // B-dead-interactions-02 "approve-&-adopt path" — reuses handleAdopt
+  // verbatim (same request-key idempotency, same live-DOCLIB mutation,
+  // same applyGapClosure cascade) whenever a real redline draft closes
+  // this obligation. Base's other openObl action ("Attach evidence to
+  // close this item") has no backing mutation for non-redline-backed gaps
+  // in this worktree and is not rendered as a live-looking control with
+  // nothing behind it (Core Principle 1) — the evidence chips above are
+  // this drawer's real "attach/inspect evidence" surface.
+  const obligationDrawerFooter: ReactNode =
+    displayObligation && displayObligation.st !== 'met' && obligationRedlineDocId && obligationRedlineDoc?.redline && !isObligationRedlineAdopted ? (
+      <Button
+        variant="primary"
+        label="Approve & adopt"
+        loading={adoptingDocId === obligationRedlineDocId}
+        disabled={adoptingDocId !== null && adoptingDocId !== obligationRedlineDocId}
+        onPress={() => handleAdopt({ id: obligationRedlineDocId, ...obligationRedlineDoc })}
+      />
+    ) : null;
 
   const drawerFooter: ReactNode = displayDoc && displayDoc.redline && !isDisplayDocAdopted && (
     <>
@@ -633,7 +817,14 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
               <span style={COUNT_BADGE_STYLE}>{openGaps.length} open</span>
             </h2>
             <div style={SCROLL_WRAP_STYLE}>
-              <DataTable caption="Open governance gaps board" columns={gapColumns} rows={openGaps} getRowId={gapKey} emptyMessage="All tracked gaps closed." />
+              <DataTable
+                caption="Open governance gaps board"
+                columns={gapColumns}
+                rows={openGaps}
+                getRowId={gapKey}
+                emptyMessage="All tracked gaps closed."
+                rowAction={gapRowAction}
+              />
             </div>
           </section>
 
@@ -666,6 +857,7 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
                       rows={rows}
                       getRowId={(row) => row.id}
                       updatingRowIds={updatingObligationIds}
+                      rowAction={obligationRowAction(domainKey)}
                     />
                   </div>
                 </div>
@@ -675,10 +867,29 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
         </main>
       </div>
 
-      <Drawer open={openDocId !== null} title={displayDoc ? decodeDocText(displayDoc.t) : ''} onClose={() => setOpenDocId(null)} footer={drawerFooter}>
-        {displayDoc ? (
+      {/* B-dead-interactions-01/-02 — one shared Drawer, branched on which
+          kind was opened last (`activeDrawerKind`): the doc/redline
+          content (unchanged) or the obligation-detail content (evidence
+          chips + Approve & adopt). Never two simultaneous targets. */}
+      <Drawer
+        open={openDocId !== null || openObligation !== null}
+        title={
+          activeDrawerKind === 'obligation'
+            ? displayObligation
+              ? `${displayObligation.id} · Obligation`
+              : ''
+            : displayDoc
+              ? decodeDocText(displayDoc.t)
+              : ''
+        }
+        onClose={handleDrawerClose}
+        footer={activeDrawerKind === 'obligation' ? obligationDrawerFooter : drawerFooter}
+      >
+        {activeDrawerKind === 'obligation' ? (
+          displayObligation ? <DrawerContent kind="doc" fields={obligationDrawerFields} tags={obligationDrawerTags} actions={obligationDrawerActions} /> : null
+        ) : displayDoc ? (
           <>
-            <DrawerContent kind="doc" fields={drawerFields} tags={drawerTags} />
+            <DrawerContent kind="doc" fields={drawerFields} tags={drawerTags} actions={drawerActions} />
             {displayDoc.redline ? (
               <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
                 <RedlineDiffView
@@ -695,14 +906,12 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
       </Drawer>
 
       {toast ? (
-        <div style={TOAST_WRAP_STYLE}>
-          <Toast
-            variant={toast.variant}
-            message={toast.message}
-            onDismiss={() => setToast(null)}
-            {...(toast.cascade.length > 0 ? { linkLabel: 'View impact →', onLinkPress: handleViewImpact, dismissOnLinkPress: true } : {})}
-          />
-        </div>
+        <Toast
+          variant={toast.variant}
+          message={toast.message}
+          onDismiss={() => setToast(null)}
+          {...(toast.cascade.length > 0 ? { linkLabel: 'View impact →', onLinkPress: handleViewImpact, dismissOnLinkPress: true } : {})}
+        />
       ) : null}
     </div>
   );

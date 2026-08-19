@@ -57,6 +57,32 @@
  * base-faithful replacement. Absent any override or child activity, a
  * group falls back to `defaultExpanded`.
  *
+ * NAV SCROLL CONTAINMENT (fix A-overlap-03 / C-unbounded-growth-03; base
+ * anchor leapfi-platform.html:35 `.nav{flex:1;...;overflow-y:auto}`): the
+ * base's nav column was its own bounded scroll surface, so a fully
+ * expanded tree never grew the page or slid under fixed chrome (the
+ * PresenterRail's height inset makes this the demo path). The twin had
+ * dropped that overflow entirely — the item list here now carries
+ * `flex:1 1 auto; minHeight:0; overflowY:auto`, restoring the base's
+ * internal scroll chain: expanded groups scroll inside the sidebar and
+ * the version footer stays pinned below the list, exactly the base's
+ * `.nav` + footer split.
+ *
+ * C3 CONTRACT CHANGE — navigable group header (fix B-dead-interactions-11;
+ * base anchor leapfi-platform.html:803 `<span class="os-sub os-modlink"
+ * onclick="go('connect')">Connect`): the base's Connect group label was a
+ * real navigation to the Connect module splash, and demo_script_draft.md
+ * Step 6 literally directs "click Connect in the sidebar." C3's original
+ * contract here ("top-level items with children never call onNavigate")
+ * made that directed click a toggle-only dead end. NEW CONTRACT, flagged
+ * for design_system reconciliation: a group header whose id is itself a
+ * routed ScreenId (`navigable: true` in the NAV table below — today only
+ * `connect`, matching App.tsx's SCREEN_IDS) NAVIGATES AND EXPANDS on
+ * label press, while a separate chevron control toggles expansion only
+ * (SidebarItem's split-control mode). Non-navigable group headers
+ * (OnSide/Studio/Settings — no routed screen of their own) keep the
+ * original toggle-on-press contract unchanged.
+ *
  * DESIGN NOTE — footer version string (§3.1 "Footer: version string
  * only"): rendered as a plain token-styled span, not through the `Label`
  * primitive. `--ink3` is named in the token table (§1.1) specifically for
@@ -83,6 +109,10 @@ interface NavTopItem {
   icon?: IconName;
   children?: NavChild[];
   defaultExpanded?: boolean;
+  /** Group header whose id is ITSELF a routed ScreenId (App.tsx SCREEN_IDS):
+   * label press navigates AND expands; a split chevron control toggles only.
+   * See file header "C3 CONTRACT CHANGE" (B-11; base source 803). */
+  navigable?: boolean;
 }
 
 // See file header: icons intentionally omitted (STOP-item — closed
@@ -112,6 +142,9 @@ const NAV: NavTopItem[] = [
     id: 'connect',
     label: 'Connect',
     defaultExpanded: true,
+    // B-11: 'connect' is a routed ScreenId (the Connect module splash) —
+    // the base's group label navigated (`go('connect')`, source 803).
+    navigable: true,
     children: [
       { id: 'connect.allrailz', label: 'AllRailz' },
       { id: 'connect.vantage', label: 'Vantage' },
@@ -131,7 +164,9 @@ const NAV: NavTopItem[] = [
 export interface SidebarProps {
   /** Id of the current top-level item (leaf, e.g. 'home') or nested item (e.g. 'onside.feed'). */
   activeId: string;
-  /** Fires with a leaf item's id — top-level items with children never call this directly (they toggle expand instead). */
+  /** Fires with a leaf item's id — or with a `navigable` group header's own id
+   * (B-11: base os-modlink `go('connect')`, source 803; see file header "C3
+   * CONTRACT CHANGE"). Non-navigable group headers still only toggle expand. */
   onNavigate: (id: string) => void;
   /** Footer version string (§3.1 "Footer: version string only"). Defaults to the existing engine's value (survey_map.md 762–821). */
   versionLabel?: string;
@@ -154,6 +189,12 @@ const LIST_STYLE: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: '0.125rem',
+  // A-overlap-03 / C-unbounded-growth-03: the base nav scrolled internally
+  // (`.nav{flex:1;...;overflow-y:auto}`, source 35) — an expanded tree must
+  // never grow the page or slide under the fixed PresenterRail.
+  flex: '1 1 auto',
+  minHeight: 0,
+  overflowY: 'auto',
 };
 
 const NESTED_LIST_STYLE: CSSProperties = {
@@ -185,7 +226,11 @@ export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071' }: Side
   const [lastActiveId, setLastActiveId] = useState(activeId);
   if (lastActiveId !== activeId) {
     setLastActiveId(activeId);
-    const owningGroup = NAV.find((item) => item.children?.some((child) => child.id === activeId));
+    // B-11: a navigable group header's own screen (e.g. 'connect') also
+    // force-opens its group on arrival, same as a child destination.
+    const owningGroup = NAV.find(
+      (item) => item.children !== undefined && (item.id === activeId || item.children.some((child) => child.id === activeId)),
+    );
     if (owningGroup && overrides[owningGroup.id] === false) {
       setOverrides((prev) => ({ ...prev, [owningGroup.id]: true }));
     }
@@ -201,7 +246,10 @@ export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071' }: Side
         {NAV.map((item) => {
           const hasChildren = Boolean(item.children && item.children.length > 0);
           const childActive = hasChildren && item.children!.some((child) => child.id === activeId);
-          const isCurrentTop = !hasChildren && item.id === activeId;
+          // A navigable group header (B-11) is itself a routed screen, so it
+          // can be the current item; plain group headers never match activeId.
+          const isCurrentTop = item.id === activeId;
+          const isNavigableGroup = hasChildren && item.navigable === true;
           const expanded = hasChildren
             ? (overrides[item.id] ?? (childActive || item.defaultExpanded || false))
             : false;
@@ -217,12 +265,21 @@ export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071' }: Side
                 expandable={hasChildren}
                 expanded={expanded}
                 onPress={() => {
-                  if (hasChildren) {
-                    handleToggle(item.id, expanded);
-                  } else {
+                  if (!hasChildren) {
                     onNavigate(item.id);
+                    return;
                   }
+                  if (isNavigableGroup) {
+                    // B-11 contract: label press navigates AND expands (base
+                    // go('connect') navigation + force-open, source 803 /
+                    // 3813–3816). The chevron below is the toggle-only path.
+                    if (!expanded) handleToggle(item.id, false);
+                    onNavigate(item.id);
+                    return;
+                  }
+                  handleToggle(item.id, expanded);
                 }}
+                {...(isNavigableGroup ? { onChevronPress: () => handleToggle(item.id, expanded) } : {})}
               />
               {hasChildren && expanded ? (
                 <ul id={sidebarNestedListId(item.id)} aria-label={`${item.label} sections`} style={NESTED_LIST_STYLE}>

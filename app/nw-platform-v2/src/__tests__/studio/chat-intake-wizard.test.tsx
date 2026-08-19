@@ -21,29 +21,65 @@
  *    via domainsFor/DOMMAP (4299-4300, never CTRLDOM slugs), Placement
  *    (4394) — fix-wave STU-02/07/09
  *  - acceptProposed / discardProposed as intents: base 4401-4413
+ *  - single bounded chat-log, never a second list: base
+ *    `#st-ask .chat-log{max-height:420px;overflow-y:auto}` (435) — fix
+ *    C-unbounded-growth-01. `ChatIntakeWizard` no longer renders its own
+ *    transcript `<ul>`; it hands `buildMessages`'s output up via
+ *    `onTranscriptChange` for the composing screen to merge into its own
+ *    bounded log (`StudioAsk.tsx`). `renderWizard` below supplies a small
+ *    harness that mirrors that contract — the same merge shape
+ *    `StudioAsk.tsx` uses — so these tests keep observing the real
+ *    question-progression text via the real prop contract, not the
+ *    component's old (now-removed) self-rendered list.
  *
  * Lever state comes from state/demoStore.ts (DEFAULT_SLIDERS: eff 70 →
  * L.eff 0.70, tol 52 → threshold 65); resetDemo() in beforeEach restores
  * the store between tests.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { ChatIntakeWizard, computeScopedOpportunity } from '../../views/ChatIntakeWizard';
+import type { ChatMessage } from '../../components/ChatHero';
 import { INTAKE } from '../../data/misc';
 import { resetDemo } from '../../state/demoStore';
+
+/** Fix C-unbounded-growth-01 test harness: mirrors `StudioAsk.tsx`'s own
+ * `onTranscriptChange` → merged-list contract, so these tests observe the
+ * transcript exactly as a real composing screen renders it (in ONE list
+ * outside the wizard), not the wizard's old self-rendered `<ul>`. */
+function TranscriptHarness({ children }: { children: (onTranscriptChange: (messages: ChatMessage[]) => void) => ReactNode }) {
+  const [transcript, setTranscript] = useState<ChatMessage[]>([]);
+  return (
+    <>
+      <ul aria-label="Conversation">
+        {transcript.map((message) => (
+          <li key={message.id}>{message.text}</li>
+        ))}
+      </ul>
+      {children(setTranscript)}
+    </>
+  );
+}
 
 function renderWizard(overrides?: Partial<Parameters<typeof ChatIntakeWizard>[0]>) {
   const onComplete = vi.fn();
   const onDiscard = vi.fn();
   const onCancel = vi.fn();
   render(
-    <ChatIntakeWizard
-      useCaseName="Collections outreach drafting"
-      onComplete={onComplete}
-      onDiscard={onDiscard}
-      onCancel={onCancel}
-      {...overrides}
-    />,
+    <TranscriptHarness>
+      {(onTranscriptChange) => (
+        <ChatIntakeWizard
+          useCaseName="Collections outreach drafting"
+          onComplete={onComplete}
+          onDiscard={onDiscard}
+          onCancel={onCancel}
+          onTranscriptChange={onTranscriptChange}
+          {...overrides}
+        />
+      )}
+    </TranscriptHarness>,
   );
   return { onComplete, onDiscard, onCancel };
 }

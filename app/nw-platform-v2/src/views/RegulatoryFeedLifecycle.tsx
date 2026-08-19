@@ -47,6 +47,17 @@
  * plain text and renders as plain text — never a fabricated Tag for rows
  * that don't carry one in source.
  *
+ * FIX WAVE (B-dead-interactions-16) — "Newly proposed" rows were inert
+ * (no `rowAction`, unlike the sibling "Pending & tracked" table's
+ * instrument links): base makes every `NEW_RULES` row a whole-row hop into
+ * Sources & connectors (`<tr class="prow"
+ * onclick="onsideShow('feed-sources')">`, leapfi-platform.html:3466 — every
+ * row does the same thing, not a per-row destination). This view now
+ * accepts a required `onOpenSources` seam, fired from a real `rowAction` on
+ * that table; the owning screen (`OnSideFeed.tsx`) scrolls/focuses its
+ * already-composed `RegulatoryFeedSources` section (ordered first,
+ * per this file's own header "section order 1→2→3" note).
+ *
  * FIX WAVE (ONSIDE-08) — instrument deep-linking (`openInstr`, the
  * `TRACKED_RULES` rows whose second tuple element is an instrument key) is
  * now wired: rows carrying a key that resolves in `INSTR` render their
@@ -70,7 +81,7 @@
 import { useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { DataTable } from '../components/DataTable';
-import type { DataTableColumn } from '../components/DataTable';
+import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
 import { Chip } from '../components/primitives/Chip';
 import { Tag } from '../components/primitives/Tag';
 import { INSTR, NEW_RULES, TRACKED_RULES } from '../data/onside';
@@ -237,9 +248,23 @@ export interface RegulatoryFeedLifecycleProps {
    * instrLink → openInstr; see file header ONSIDE-08 note). The owning
    * screen renders the instrument detail in the shared Drawer. */
   onOpenInstrument: (instrumentKey: string) => void;
+  /** Fired when a "Newly proposed" row is pressed (base every NEW_RULES
+   * row: onclick="onsideShow('feed-sources')" — a whole-row hop into
+   * Sources & connectors, source 3466; see file header
+   * B-dead-interactions-16 note). The owning screen scrolls/focuses that
+   * section. */
+  onOpenSources: () => void;
 }
 
-export function RegulatoryFeedLifecycle({ onOpenInstrument }: RegulatoryFeedLifecycleProps) {
+/** B-dead-interactions-16 — every "Newly proposed" row does the same
+ * thing (base's own unconditional onclick, not a per-row destination), so
+ * the row action ignores its row argument by design. */
+const newRuleRowAction = (onOpenSources: () => void): DataTableRowAction<NewRuleTableRow> => ({
+  label: () => 'View source',
+  onPress: () => onOpenSources(),
+});
+
+export function RegulatoryFeedLifecycle({ onOpenInstrument, onOpenSources }: RegulatoryFeedLifecycleProps) {
   // Base LC_SCOPE (source 3452) — single-select officer scoping of BOTH
   // tables; see file header ONSIDE-05 note.
   const [scope, setScope] = useState('all');
@@ -276,6 +301,7 @@ export function RegulatoryFeedLifecycle({ onOpenInstrument }: RegulatoryFeedLife
             rows={scopedNewRules}
             getRowId={(row) => row.id}
             emptyMessage="No new proposals in this area."
+            rowAction={newRuleRowAction(onOpenSources)}
           />
         </div>
       </div>

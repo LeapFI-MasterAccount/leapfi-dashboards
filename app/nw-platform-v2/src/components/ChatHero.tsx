@@ -40,7 +40,25 @@
  * completes") is consistent with this reading. "Suggestion Chips fill
  * the Input only — they never auto-submit" (§5.4) is enforced directly:
  * a Chip's `onPress` only calls `onInputChange`, never `onAsk`.
+ *
+ * SCROLL-TO-LATEST (fix C-unbounded-growth-02; base anchors
+ * leapfi-platform.html:4343 `$('chat-log').scrollTop=
+ * $('chat-log').scrollHeight` inside addMsg — fired for EVERY appended
+ * line — and 4348, botSay's re-scroll when the typing placeholder swaps
+ * to the final answer; the bounded log is `#st-ask .chat-log
+ * {max-height:420px;overflow-y:auto}`, source 435): the twin's bounded
+ * message list (35rem max-height below) never moved its scroll position,
+ * so once the conversation exceeded the bound every new message — the
+ * answer included — rendered below the fold, invisible. Ported as an
+ * effect that scrolls the newest list item into view whenever `messages`
+ * or `state` changes (state covers the busy "Thinking…" bubble and the
+ * no-match bubble, which append without a `messages` change), via
+ * `scrollIntoView` — this codebase's established, jsdom-testable scroll
+ * idiom (test-setup.ts stubs it; DomainsAccordion/OnSideDocuments use
+ * the same call for the base's other scrollIntoView ports, source
+ * 3021–3054).
  */
+import { useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { Button } from './primitives/Button';
 import { Chip } from './primitives/Chip';
@@ -130,6 +148,15 @@ export function ChatHero({ counters, messages, suggestions, inputValue, onInputC
   const isFinal = state === 'answer-complete' || state === 'no-match';
   const lastMessage = messages[messages.length - 1];
   const showAnswerRegion = isFinal && lastMessage?.role === 'assistant';
+  const listRef = useRef<HTMLUListElement>(null);
+
+  // C-unbounded-growth-02: base scroll-to-latest on every appended line
+  // (addMsg 4343 / botSay 4348). `block:'nearest'` scrolls the bounded
+  // list just enough to reveal the newest bubble without yanking outer
+  // scroll containers past it.
+  useEffect(() => {
+    listRef.current?.lastElementChild?.scrollIntoView({ block: 'nearest' });
+  }, [messages, state]);
 
   const handleAsk = () => {
     if (inputValue.trim().length === 0 || busy) return;
@@ -144,7 +171,7 @@ export function ChatHero({ counters, messages, suggestions, inputValue, onInputC
         ))}
       </div>
 
-      <ul aria-label="Conversation" style={messageListStyle}>
+      <ul ref={listRef} aria-label="Conversation" style={messageListStyle}>
         {messages.map((message, index) => {
           const isLastAssistantFinal = isFinal && index === messages.length - 1 && message.role === 'assistant';
           return (

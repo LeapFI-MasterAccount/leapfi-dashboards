@@ -78,6 +78,18 @@
  * form mode (the base `boardUpdate` drawer has no such control; the print
  * affordance is backed by Drawer.tsx's ported base print stylesheet, RPT-01).
  *
+ * GOVERNANCE CROSS-NAVIGATION (B-06 fix batch): this screen now declares
+ * `extends DeepLinkScreenProps` (App.tsx's NAV-PAYLOAD contract) and both
+ * ends of it: it TRIGGERS deep links for `views/ReportView.tsx`'s new
+ * `onOpenDomain`/`onOpenPlay`/`onOpenObligation` props (the compliance
+ * control-family doclink, its "Plays it blocks" cell, and the mrm/tprm
+ * "Open register items" row → obligation click-through), and it CONSUMES
+ * kind `'report'` deep links aimed at `'reporting'` — opening straight to
+ * the named `ReportKind` (`isReportKind` narrows the wire `id` before ever
+ * calling `openReport`). `onOpenGovernance` (the base head()'s "Open full
+ * governance detail · OnSide →" link) is a plain `onNavigate('onside.overview')`
+ * call, not a deep link — v1's own link carried no item payload.
+ *
  * Tests: `src/__tests__/reporting_cases/` (vitest is installed; this
  * header's original "no test runner" STOP-item is obsolete and removed).
  */
@@ -96,6 +108,15 @@ import { BoardLogForm } from '../views/BoardLogForm';
 import { BOARD_LOG } from '../data/boardLog';
 import { CURRENT } from '../data/studio';
 import type { StudioUser } from '../data/studio';
+import type { DeepLinkScreenProps } from '../App';
+
+/** `deepLink.id` is a free-form string on the wire (App.tsx's NAV-PAYLOAD
+ * contract, kind `'report'`) — this narrows it to a real `ReportKind` before
+ * ever calling `openReport`, so a malformed/stale payload can never crash
+ * the switch in `views/ReportView.tsx`'s `renderReportBody`. */
+function isReportKind(id: string): id is ReportKind {
+  return (REPORT_KIND_ORDER as readonly string[]).includes(id);
+}
 
 const SCREEN_STYLE: CSSProperties = {
   display: 'flex',
@@ -122,7 +143,7 @@ const h1Style: CSSProperties = { font: 'inherit', fontSize: '1.625rem', fontWeig
 const ledeStyle: CSSProperties = { font: 'inherit', fontSize: '0.9375rem', color: 'var(--ink2)', margin: 0, maxWidth: 640 };
 const cardRowStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))', gap: '1rem' };
 
-export interface ReportingProps {
+export interface ReportingProps extends DeepLinkScreenProps {
   /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as every sibling screen). */
   topbar: TopbarProps;
   /** Sidebar navigation hook, also reused to route `gapboard`'s "Open cases →" link (`onNavigate('cases')` — see file header STOP-item). `activeId` is intrinsic to this screen ('reporting') and is not accepted as a prop. */
@@ -139,7 +160,7 @@ export interface ReportingProps {
   currentUser?: StudioUser;
 }
 
-export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser = CURRENT }: ReportingProps) {
+export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser = CURRENT, deepLink, onDeepLink, onDeepLinkConsumed }: ReportingProps) {
   const [selectedKind, setSelectedKind] = useState<ReportKind | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Board-log sub-flow state (see file header "BOARD-LOG SUB-FLOW"): when
@@ -186,6 +207,29 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser
     setDrawerOpen(false);
   };
   const handleOpenCases = () => onNavigate('cases');
+
+  // B-06/NAV-PAYLOAD: a deep link aimed at this screen with kind 'report'
+  // (App.tsx KIND VOCABULARY — id = a ReportKind, e.g. 'roi', base
+  // openReport(kind), source 872/4242) opens straight to that report,
+  // exactly like every other consumer of App.tsx's deep-link contract
+  // (opens in an effect keyed on the nonce, then marks it consumed so a
+  // stale re-fire never re-opens the same report against user intent).
+  useEffect(() => {
+    if (!deepLink || deepLink.kind !== 'report') return;
+    if (isReportKind(deepLink.id)) openReport(deepLink.id);
+    onDeepLinkConsumed?.(deepLink.nonce);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the nonce only, matching every other deep-link consumer in this codebase (App.tsx's own CONSUME contract)
+  }, [deepLink?.nonce]);
+
+  // B-06: report-drawer cross-navigation restored via `views/ReportView.tsx`'s
+  // new optional props — the head-bar "Open full governance detail" link is
+  // a plain nav (v1's own head() link carries no item payload); the
+  // control/play/obligation doclinks are real nav-payload deep links.
+  const handleOpenGovernance = () => onNavigate('onside.overview');
+  const handleOpenDomain = (domainKey: string) => onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: domainKey });
+  const handleOpenPlay = (playName: string) => onDeepLink?.({ screen: 'studio.investment-design', kind: 'play', id: playName });
+  const handleOpenObligation = (domainKey: string, obligationId: string) =>
+    onDeepLink?.({ screen: 'onside.overview', kind: 'obligation', id: `${domainKey}:${obligationId}` });
 
   /** Base `boardUpdate(id)` (source 3577): swap the drawer to a fresh form
    * for this row — fields empty on every open, like the base's rebuilt DOM. */
@@ -299,7 +343,15 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser
             saved={boardLogSaved}
           />
         ) : selectedKind ? (
-          <ReportView kind={selectedKind} onOpenCases={handleOpenCases} onLogUpdate={openBoardLog} />
+          <ReportView
+            kind={selectedKind}
+            onOpenCases={handleOpenCases}
+            onLogUpdate={openBoardLog}
+            onOpenGovernance={handleOpenGovernance}
+            onOpenDomain={handleOpenDomain}
+            onOpenPlay={handleOpenPlay}
+            onOpenObligation={handleOpenObligation}
+          />
         ) : null}
       </Drawer>
     </div>

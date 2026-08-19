@@ -31,9 +31,10 @@
  *    demo_script Step 6 say-line ordering, module records SOON (base
  *    3735-3769, ported verbatim in data/misc.ts)
  */
-import { beforeEach, describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { Roadmap } from '../../screens/Roadmap';
+import type { RoadmapProps } from '../../screens/Roadmap';
 import type { TopbarProps } from '../../components/Topbar';
 import { resetDemo } from '../../state/demoStore';
 
@@ -45,8 +46,8 @@ const topbar: TopbarProps = {
   profileMenuItems: [],
 };
 
-function renderScreen() {
-  return render(<Roadmap topbar={topbar} onNavigate={() => {}} />);
+function renderScreen(overrides?: Partial<RoadmapProps>) {
+  return render(<Roadmap topbar={topbar} onNavigate={() => {}} {...overrides} />);
 }
 
 beforeEach(() => {
@@ -142,5 +143,43 @@ describe("What's next module ordering (demo_script Step 6 say line; SOON base 37
     expect(screen.getByText('The MCP and API layer of LeapFI · OnSide')).toBeInTheDocument();
     expect(screen.getByText('The agentic runtime')).toBeInTheDocument();
     expect(screen.getByText('Agentic third-party oversight')).toBeInTheDocument();
+  });
+});
+
+describe('play chips open full scope (fix B-dead-interactions-04 — the year note\'s own "Click one for full scope." copy, base gantt data-play chips 1324, delegated click 4493-4499)', () => {
+  it('every chip is a real, keyboard-operable button — not the plain, inert div it was', () => {
+    renderScreen();
+    // Year 1 (quarters): the funded play used elsewhere in this suite as
+    // the first Year-1 chip.
+    expect(screen.getByRole('button', { name: /Loan-document summarization/ })).toBeInTheDocument();
+    // Year 2: the Unified data foundation chip.
+    expect(screen.getByRole('button', { name: /Unified data foundation/ })).toBeInTheDocument();
+  });
+
+  it('a Year-1 chip press deep-links to Investment Design\'s play drawer (nav-payload — App.tsx "NAVIGATION-WITH-PAYLOAD / DEEP LINKS")', () => {
+    const onDeepLink = vi.fn();
+    renderScreen({ onDeepLink });
+    fireEvent.click(screen.getByRole('button', { name: /Loan-document summarization/ }));
+    expect(onDeepLink).toHaveBeenCalledWith({
+      screen: 'studio.investment-design',
+      kind: 'play',
+      id: 'Loan-document summarization',
+    });
+  });
+
+  it('a Year-2/3 chip press deep-links with that play\'s own name (Year 2 leads with the Unified data foundation, base 1341-1343)', () => {
+    const onDeepLink = vi.fn();
+    renderScreen({ onDeepLink });
+    fireEvent.click(screen.getByRole('button', { name: /Unified data foundation/ }));
+    expect(onDeepLink).toHaveBeenCalledWith({
+      screen: 'studio.investment-design',
+      kind: 'play',
+      id: 'Unified data foundation',
+    });
+  });
+
+  it('without an onDeepLink prop, a chip press is a harmless no-op (optional prop — bare-mount screen tests keep passing)', () => {
+    renderScreen();
+    expect(() => fireEvent.click(screen.getByRole('button', { name: /Loan-document summarization/ }))).not.toThrow();
   });
 });

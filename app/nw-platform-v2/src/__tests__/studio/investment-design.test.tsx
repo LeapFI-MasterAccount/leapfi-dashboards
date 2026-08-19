@@ -23,9 +23,10 @@
  *  - budget greedy fill (base 1249-1251) at defaults funds 7 plays;
  *    at the $100k floor it funds 2.
  */
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { InvestmentDesign } from '../../screens/InvestmentDesign';
+import type { InvestmentDesignProps } from '../../screens/InvestmentDesign';
 import type { TopbarProps } from '../../components/Topbar';
 import { getDemoSliders, resetDemo } from '../../state/demoStore';
 
@@ -37,8 +38,8 @@ const topbar: TopbarProps = {
   profileMenuItems: [],
 };
 
-function renderScreen() {
-  return render(<InvestmentDesign topbar={topbar} onNavigate={() => {}} />);
+function renderScreen(overrides?: Partial<InvestmentDesignProps>) {
+  return render(<InvestmentDesign topbar={topbar} onNavigate={() => {}} {...overrides} />);
 }
 
 beforeEach(() => {
@@ -147,5 +148,107 @@ describe('play drawer — full base openPlay content (base 1391-1432; fix-wave S
     // are both empty for this play.
     expect(drawer).toHaveTextContent('No prerequisites; can start immediately.');
     expect(drawer).toHaveTextContent('Standalone; nothing downstream depends on it.');
+  });
+});
+
+describe('gated/bench rows open the same drawer (fix B-dead-interactions-05; base .gated-row[data-play] cursor:pointer + hover, 309-310; delegated click, 4493-4497)', () => {
+  it('a Sequence-gated row\'s "Open" button opens the real play drawer, not just the funded table', () => {
+    renderScreen();
+    // "Underwriting assist" (g: Fair Lending/Adverse Action/Model Risk,
+    // minGate 55 < threshold 65) sits in the gated side list, not the
+    // funded PlanTable, at the shipped defaults.
+    const gatedSection = screen.getByRole('table', { name: 'Plays waiting on control maturity' });
+    const row = within(gatedSection).getByRole('row', { name: /Underwriting assist/ });
+    fireEvent.click(within(row).getByRole('button', { name: 'Open' }));
+
+    const drawer = screen.getByRole('dialog');
+    expect(drawer).toHaveTextContent('Underwriting assist');
+    // Resolved via `planTableRowForPlay` (not the funded planRows mapping):
+    // same full drawer content — sequence-gated verdict included.
+    expect(drawer).toHaveTextContent(/Sequence-gated: blocked until Adverse Action reaches 80%/);
+  });
+
+  it('a Cleared-governance-outside-budget (bench) row\'s "Open" button opens the same drawer', () => {
+    renderScreen();
+    // "Deposit pricing optimization" (g: Model Risk, minGate 70 ≥ 65) is
+    // ready but outside the $450k budget — it sits on the bench list.
+    const benchSection = screen.getByRole('table', { name: 'Plays cleared for governance, waiting on budget' });
+    const row = within(benchSection).getByRole('row', { name: /Deposit pricing optimization/ });
+    fireEvent.click(within(row).getByRole('button', { name: 'Open' }));
+
+    const drawer = screen.getByRole('dialog');
+    expect(drawer).toHaveTextContent('Deposit pricing optimization');
+    expect(drawer).toHaveTextContent('✓ Ready now at your current risk tolerance; cleared to enter the funded portfolio.');
+  });
+});
+
+describe('play drawer deep-link actions (fix B-dead-interactions-07 — play-drawer call site): gov rows, gap queue, and deps/unlocks become real nav-payload actions', () => {
+  it('governance rows offer "Open <gate> in OnSide" actions targeting the CTRLDOM routing slug (base goOnside/openInstr, 1401-1402)', () => {
+    const onDeepLink = vi.fn();
+    renderScreen({ onDeepLink });
+    const gatedSection = screen.getByRole('table', { name: 'Plays waiting on control maturity' });
+    fireEvent.click(within(within(gatedSection).getByRole('row', { name: /Underwriting assist/ })).getByRole('button', { name: 'Open' }));
+
+    const drawer = screen.getByRole('dialog');
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Open Model Risk in OnSide' }));
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.overview', kind: 'domain', id: 'mrm' });
+
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Open Fair Lending in OnSide' }));
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.overview', kind: 'domain', id: 'fairlend' });
+  });
+
+  it('a sequence-gated play offers "See the gap queue" (base seqNote 1406-1407); a ready play does not', () => {
+    const onDeepLink = vi.fn();
+    renderScreen({ onDeepLink });
+    const gatedSection = screen.getByRole('table', { name: 'Plays waiting on control maturity' });
+    fireEvent.click(within(within(gatedSection).getByRole('row', { name: /Underwriting assist/ })).getByRole('button', { name: 'Open' }));
+    const gatedDrawer = screen.getByRole('dialog');
+    fireEvent.click(within(gatedDrawer).getByRole('button', { name: 'See the gap queue' }));
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.feed', kind: 'section', id: 'gaps' });
+
+    const row = screen.getByRole('row', { name: /Loan-document summarization/ });
+    fireEvent.click(within(row).getByRole('button', { name: 'Open' }));
+    const readyDrawer = screen.getByRole('dialog');
+    expect(within(readyDrawer).queryByRole('button', { name: 'See the gap queue' })).not.toBeInTheDocument();
+  });
+
+  it('Depends-on / Unlocks names become "Open <name>" actions that re-target the drawer to that play (base depChips → openPlay, 1390/1424-1428)', () => {
+    const onDeepLink = vi.fn();
+    renderScreen({ onDeepLink });
+    const gatedSection = screen.getByRole('table', { name: 'Plays waiting on control maturity' });
+    fireEvent.click(within(within(gatedSection).getByRole('row', { name: /Underwriting assist/ })).getByRole('button', { name: 'Open' }));
+    const drawer = screen.getByRole('dialog');
+
+    // "Underwriting assist" depends on both "Unified data foundation" and
+    // "AI adverse-action letter drafting" (data/studio.ts DETAIL_BASE).
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Open Unified data foundation' }));
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'studio.investment-design', kind: 'play', id: 'Unified data foundation' });
+    fireEvent.click(within(drawer).getByRole('button', { name: 'Open AI adverse-action letter drafting' }));
+    expect(onDeepLink).toHaveBeenCalledWith({
+      screen: 'studio.investment-design',
+      kind: 'play',
+      id: 'AI adverse-action letter drafting',
+    });
+  });
+});
+
+describe('play deep-link consumption (fix B-dead-interactions-03/04 — the CONSUME half of App.tsx\'s nav-payload contract)', () => {
+  it('a deep link with kind "play" opens the real drawer for that play and consumes the nonce', () => {
+    const onDeepLinkConsumed = vi.fn();
+    renderScreen({
+      deepLink: { screen: 'studio.investment-design', kind: 'play', id: 'Underwriting assist', nonce: 1 },
+      onDeepLinkConsumed,
+    });
+
+    const drawer = screen.getByRole('dialog');
+    expect(drawer).toHaveTextContent('Underwriting assist');
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(1);
+  });
+
+  it('a deep link resolves a gated/bench play too, not only a funded one (planTableRowForPlay)', () => {
+    renderScreen({
+      deepLink: { screen: 'studio.investment-design', kind: 'play', id: 'Deposit pricing optimization', nonce: 1 },
+    });
+    expect(screen.getByRole('dialog')).toHaveTextContent('Deposit pricing optimization');
   });
 });

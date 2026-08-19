@@ -38,6 +38,28 @@
  * any screen"): unlike Drawer (C7), this component never calls
  * `preventDefault`/traps Tab, and exit happens via the shell
  * (Sidebar/Topbar), which is outside this composite's concern.
+ *
+ * OVERFLOW DISCIPLINE (fix A-overlap-01; base anchor
+ * leapfi-platform.html:663 `.deck-stage{...overflow:hidden}`): the slide
+ * box clips horizontally and scrolls vertically inside itself when a
+ * slide's content is taller than the flex track. Without it, the
+ * `minHeight:0` flex squeeze let slide content paint straight through
+ * the later-DOM pagination row in both mounts (Reporting's board-pack
+ * drawer and the BoardDeck screen under the PresenterRail height inset).
+ * The base clipped hard (`overflow:hidden`); the twin adds internal
+ * vertical scroll so squeezed content stays reachable rather than
+ * silently truncated — containment identical, reachability strictly
+ * better.
+ *
+ * DOT NAVIGATION (fix B-dead-interactions-13; base anchors
+ * leapfi-platform.html:1524 `.deck-dots` in deck-nav, 1682–1683
+ * `dots[j].onclick = deckShow(j)`, CSS 692–694): the base rendered one
+ * clickable dot per slide between the count and Next — a per-slide jump
+ * affordance the twin had dropped to a static "n / total" span. Ported
+ * as real per-slide buttons (11px circles, `--border` inactive /
+ * `--accent` active, matching the base's --line2/--cyan pair), each with
+ * an accessible slide name and `aria-current` on the active dot. The
+ * count span stays, as in the base (order: Prev · count · dots · Next).
  */
 import { useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
@@ -127,18 +149,57 @@ export function DeckView({ slides, initialIndex = 0, onIndexChange }: DeckViewPr
         {announcement}
       </div>
 
-      <div data-lf-composite="deck-view-slide" aria-roledescription="slide" aria-labelledby={headingId} style={{ flex: '1 1 auto', minHeight: 0 }}>
+      <div
+        data-lf-composite="deck-view-slide"
+        aria-roledescription="slide"
+        aria-labelledby={headingId}
+        // A-overlap-01: base `.deck-stage{overflow:hidden}` (source 663) —
+        // clip sideways, scroll internally when the slide exceeds its track,
+        // so content never paints under the pagination row below.
+        style={{ flex: '1 1 auto', minHeight: 0, overflowX: 'hidden', overflowY: 'auto' }}
+      >
         <DeckSlide {...current} headingId={headingId} />
       </div>
 
       <div
         data-lf-composite="deck-view-pagination"
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1rem 1rem' }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.875rem', padding: '0 1rem 1rem' }}
       >
         <Button label="Prev slide" variant="ghost" icon="chevron-left" onPress={() => goTo(index - 1)} disabled={atStart} />
         <span style={{ font: 'inherit', fontSize: '0.8125rem', color: 'var(--ink3)' }}>
           {index + 1} / {total}
         </span>
+        {/* B-dead-interactions-13: base per-slide jump dots (deck-nav source
+            1524; wired 1682–1683 `dots[j].onclick = deckShow(j)`). */}
+        <div data-lf-composite="deck-view-dots" style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+          {slides.map((slide, dotIndex) => (
+            <button
+              key={slide.id}
+              type="button"
+              aria-label={`Go to slide ${dotIndex + 1}: ${slide.heading}`}
+              aria-current={dotIndex === index ? 'true' : undefined}
+              onClick={() => goTo(dotIndex)}
+              onFocus={(event) => {
+                event.currentTarget.style.boxShadow = 'var(--focus-ring)';
+              }}
+              onBlur={(event) => {
+                event.currentTarget.style.boxShadow = 'none';
+              }}
+              style={{
+                width: 11,
+                height: 11,
+                padding: 0,
+                border: 'none',
+                borderRadius: '50%',
+                // Base CSS 692–694: `.deck-dots span{background:var(--line2)}`
+                // / `.deck-dots span.on{background:var(--cyan)}`.
+                background: dotIndex === index ? 'var(--accent)' : 'var(--border)',
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+            />
+          ))}
+        </div>
         <Button label="Next slide" variant="ghost" icon="chevron-right" onPress={() => goTo(index + 1)} disabled={atEnd} />
       </div>
     </div>

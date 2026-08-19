@@ -35,6 +35,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OnSideFeed } from '../../screens/OnSideFeed'
+import type { OnSideFeedProps } from '../../screens/OnSideFeed'
 import { OnSideDocuments } from '../../screens/OnSideDocuments'
 import { OnSideOverview } from '../../screens/OnSideOverview'
 import { OnSideOwnership } from '../../screens/OnSideOwnership'
@@ -54,8 +55,8 @@ afterEach(() => {
   resetDemo()
 })
 
-function renderFeed() {
-  return render(<OnSideFeed topbar={makeTopbarProps()} onNavigate={() => {}} />)
+function renderFeed(extra: Partial<OnSideFeedProps> = {}) {
+  return render(<OnSideFeed topbar={makeTopbarProps()} onNavigate={() => {}} {...extra} />)
 }
 
 function renderDocuments() {
@@ -208,7 +209,27 @@ describe('ONSIDE-08 · instrument deep-links (base instrLink/openInstr)', () => 
     expect(
       within(dialog).getByText('Nothing read from this instrument becomes authoritative before a qualified human approves it'),
     ).toBeInTheDocument()
-    expect(within(dialog).getByText('Model Risk Management')).toBeInTheDocument()
+    // B-dead-interactions-07 — "Domains this instrument drives" is no
+    // longer a flattened joined-string field (moved to a real deep-link
+    // action Button, see the dedicated test below); with no `onDeepLink`
+    // wired, no action buttons render at all rather than a dead click.
+    expect(within(dialog).queryByText('Domains this instrument drives')).not.toBeInTheDocument()
+  })
+
+  it('B-dead-interactions-07 — a domain the instrument drives is a real deep-link action, not flattened text', async () => {
+    const user = userEvent.setup()
+    const onDeepLink = vi.fn()
+    renderFeed({ onDeepLink })
+    const inforceTable = screen.getByRole('table', { name: 'Enacted and in-force instruments' })
+    await user.click(
+      within(inforceTable).getByRole('button', { name: 'Interagency Guidance 2026-13 · Model Risk Management' }),
+    )
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Interagency Guidance 2026-13 · Model Risk Management',
+    })
+    // INSTR['2026-13'].doms === ['mrm'] — exactly one domain action Button.
+    await user.click(within(dialog).getByRole('button', { name: 'Model Risk Management →' }))
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.overview', kind: 'domain', id: 'mrm' })
   })
 
   it('a tracked lifecycle row with an instrument key opens its INSTR detail', async () => {

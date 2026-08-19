@@ -79,6 +79,52 @@
  * relationship), with the base's own default-DETAIL fallback (1394) for
  * plays without an entry.
  *
+ * DRAWER DEEP-LINKS (fix B-dead-interactions-07, scoped to this screen's
+ * own play-drawer call site): the base drawer's governance rows, gated
+ * status line, and Depends-on/Unlocks connections were all live clicks —
+ * gov rows `<span class="doclink" onclick="closeDrawer();goOnside(...)">`
+ * + `openInstr` (1401-1402), `seqNote`'s "See the gap queue →" (1406-1407),
+ * and `depChips`/unlocks chips → `openPlay` (1390, 1424-1428, delegated on
+ * `#drawer`, 4495). `DrawerContent` (C8, out of this allowlist) has no
+ * per-field action slot — only a flat bottom `actions` row — so
+ * `buildPlayDrawerContent` now also returns an `actions` array wired
+ * through the nav-payload mechanism (App.tsx "NAVIGATION-WITH-PAYLOAD /
+ * DEEP LINKS"): one "Open <gate> in OnSide" action per governance gate
+ * (`kind: 'domain'`, id = `CTRLDOM[gate]`, the same routing-slug map the
+ * 'domain' kind bridges onto `OnSideOverview.deepLinkDomainKey`), "See the
+ * gap queue" when the play is sequence-gated (`kind: 'section'`, id
+ * `'gaps'` on `onside.feed`), and one "Open <name>" action per
+ * depends-on/unlocks play (`kind: 'play'`, id = that play's name) — which
+ * this same screen now consumes (see "PLAY DEEP-LINK CONSUMPTION" below),
+ * so clicking one swaps the drawer straight to that play's own detail.
+ *
+ * GATED/BENCH ROWS OPEN THE DRAWER TOO (fix B-dead-interactions-05): the
+ * base styled these exact rows as clickable openPlay targets
+ * (`.gated-row[data-play]{cursor:pointer}` + cyan hover, 309-310;
+ * `gatedlist`/`benchlist` delegated clicks, 4493-4497) — only the funded
+ * `PlanTable` got a real "Open" row action here. `GatedTable`/`BenchTable`
+ * now render the identical `Button label="Open" variant="row"` affordance
+ * `PlanTable.tsx` already uses in its own 8th column (matching, not
+ * inventing, this codebase's row-activation pattern), resolving the play
+ * back to a full `PlanTableRow` via `planTableRowForPlay` below (gated/
+ * bench rows carry a smaller shape than the funded table's `PlanTableRow`,
+ * so the fields the drawer needs — risk label/variant, foundational/
+ * Discovery flags, payback — are recomputed from the underlying
+ * `PlanOpportunity` exactly as `engine/plan.ts`'s own `planRows` mapping
+ * does).
+ *
+ * PLAY DEEP-LINK CONSUMPTION (fix B-dead-interactions-03/04, the
+ * cross-screen half of the nav-payload contract): `Studio · Ask`'s
+ * register rows and `Roadmap`'s play chips own no Drawer of their own —
+ * per this file's "Drawer instance ownership" note below, Drawer stays a
+ * single screen-local instance, never duplicated — so both call
+ * `onDeepLink({ screen: 'studio.investment-design', kind: 'play', id })`
+ * instead, and this screen opens its real drawer on receipt (effect keyed
+ * on `deepLink?.nonce`, App.tsx's documented CONSUME contract). The same
+ * consumption path also serves the in-drawer deps/unlocks actions above
+ * when they target a play already open on THIS screen (a same-screen deep
+ * link still delivers its payload — App.tsx's TRIGGER note).
+ *
  * Shared lever state (fix-wave SH-6/RPT-04/STU-07 backbone contract):
  * every slider change is published to `state/demoStore.ts` via
  * `setDemoSliders`, and App seeds this screen with `getDemoSliders()` on
@@ -128,7 +174,7 @@
  * installed" STOP-item is stale and removed — the T6.5 regression-suite
  * dispatch installed vitest + @testing-library for the whole worktree.)
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Topbar } from '../components/Topbar';
 import type { TopbarProps } from '../components/Topbar';
@@ -138,13 +184,15 @@ import { SliderControlRow } from '../components/SliderControlRow';
 import { PlanTable } from '../components/PlanTable';
 import { Drawer } from '../components/Drawer';
 import { DrawerContent } from '../components/DrawerContent';
-import type { DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
+import type { DrawerContentAction, DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
 import { Tag } from '../components/primitives/Tag';
-import { deriveRecomputeView, fmt } from '../engine/plan';
+import { Button } from '../components/primitives/Button';
+import { deriveRecomputeView, fmt, riskLabel } from '../engine/plan';
 import type { SliderState, PlanOpportunity, PlanTableRow, GatedRow, BenchRow, Levers } from '../engine/plan';
-import { OPPS, DETAIL, CTRL, GREEN, GOV, REGMAP } from '../data/studio';
+import { OPPS, DETAIL, CTRL, CTRLDOM, GREEN, GOV, REGMAP } from '../data/studio';
 import type { StudioPlayDetail } from '../data/studio';
 import { setDemoSliders, useDemoStore } from '../state/demoStore';
+import type { DeepLinkRequest, DeepLinkScreenProps } from '../App';
 
 /**
  * Corrected initial lever state — survey_map.md §a line 59: "defaults
@@ -196,7 +244,7 @@ const miniTdNameStyle: CSSProperties = { ...miniTdStyle, borderLeft: '1px solid 
 const miniTdLastStyle: CSSProperties = { ...miniTdStyle, borderRight: '1px solid var(--border)', borderRadius: '0 0.625rem 0.625rem 0' };
 const emptyNoteStyle: CSSProperties = { font: 'inherit', fontSize: '0.8125rem', color: 'var(--ink2)', margin: 0 };
 
-export interface InvestmentDesignProps {
+export interface InvestmentDesignProps extends DeepLinkScreenProps {
   /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as `Home.tsx`/`BoardDeck.tsx`/`OnSideFeed.tsx`). */
   topbar: TopbarProps;
   /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('studio.investment-design') and is not accepted as a prop. */
@@ -229,22 +277,68 @@ function defaultPlayDetail(opportunity: PlanOpportunity): StudioPlayDetail {
 }
 
 /**
- * Builds this play's DrawerContent field rows + tags — the full base
- * openPlay drawer content (leapfi-platform.html:1391-1432; fix-wave
- * STU-13): summary, economics (incl. the 3-yr return tile), the
- * ready/sequence-gated verdict (`seqNote`), scope of work, technical
- * dependencies, per-gate governance detail (GOV + REGMAP with live
- * scores), the Financial block (run-cost estimate + build-number
- * explanation), controls-to-close, and the Depends-on / Unlocks
- * connections — rendered as DrawerContent (C8) field rows, plain text.
+ * Resolves any play name in the live catalog (`OPPS` — funded, gated,
+ * bench, or Discovery-added) to a full `PlanTableRow`, exactly the shape
+ * `engine/plan.ts`'s own `deriveRecomputeView` computes for `planRows`
+ * (source lines 529-539). Needed because `GatedRow`/`BenchRow` (and a
+ * cross-screen play deep-link's bare id) carry a smaller shape than the
+ * funded table's row — this is the one place `buildPlayDrawerContent`
+ * actually needs (row.category/riskLabel/riskVariant/isFoundational/
+ * isFromDiscovery/buildCostText/annualValueText/paybackMonths), so gated,
+ * bench, and deep-linked plays can open the identical drawer content the
+ * funded `PlanTable` already gets (fix B-dead-interactions-03/04/05).
  */
-function buildPlayDrawerContent(row: PlanTableRow, L: Levers): { fields: DrawerContentField[]; tags: DrawerContentTag[] } {
+function planTableRowForPlay(name: string, L: Levers): PlanTableRow | null {
+  const o: PlanOpportunity | undefined = OPPS.find((op) => op.n === name);
+  if (!o) return null;
+  return {
+    name: o.n,
+    isFoundational: Boolean(o.found),
+    isFromDiscovery: Boolean(o.disc),
+    category: o.c,
+    buildCostText: fmt(o.cost),
+    annualValueText: fmt(o.val * L.eff),
+    paybackMonths: Math.round((o.cost / (o.val * L.eff)) * 12),
+    riskLabel: riskLabel(o.r),
+    riskVariant: o.r === 'low' ? 'status-positive' : o.r === 'med' ? 'status-caution' : 'status-alert',
+  };
+}
+
+/** Dedupe while preserving first-seen order — a dep and its unlock inverse
+ * could otherwise both name the same play twice in the actions row.
+ * Duplicated locally (matches `ChatIntakeWizard.tsx`'s own `dedupe` — this
+ * codebase's established convention for small per-file duplication rather
+ * than a shared util for a two-line function). */
+function dedupe(values: string[]): string[] {
+  return values.filter((value, index) => values.indexOf(value) === index);
+}
+
+/**
+ * Builds this play's DrawerContent field rows + tags + actions — the full
+ * base openPlay drawer content (leapfi-platform.html:1391-1432; fix-wave
+ * STU-13, deep-links restored by B-dead-interactions-07): summary,
+ * economics (incl. the 3-yr return tile), the ready/sequence-gated verdict
+ * (`seqNote`), scope of work, technical dependencies, per-gate governance
+ * detail (GOV + REGMAP with live scores), the Financial block (run-cost
+ * estimate + build-number explanation), controls-to-close, and the
+ * Depends-on / Unlocks connections — rendered as DrawerContent (C8) field
+ * rows (plain text) plus a bottom `actions` row wired through the
+ * nav-payload mechanism (see file header "DRAWER DEEP-LINKS"). `onDeepLink`
+ * is optional purely so this function stays callable without it (e.g. a
+ * future unit test constructing content directly); the live render call
+ * below always has it via `DeepLinkScreenProps`.
+ */
+function buildPlayDrawerContent(
+  row: PlanTableRow,
+  L: Levers,
+  onDeepLink: ((request: DeepLinkRequest) => void) | undefined,
+): { fields: DrawerContentField[]; tags: DrawerContentTag[]; actions: DrawerContentAction[] } {
   const opportunity: PlanOpportunity | undefined = OPPS.find((o) => o.n === row.name);
   const fields: DrawerContentField[] = [{ label: 'Category', value: row.category }];
   const tags: DrawerContentTag[] = [{ text: row.riskLabel, variant: row.riskVariant }];
   if (row.isFoundational) tags.push({ text: 'Foundational', variant: 'count' });
   if (row.isFromDiscovery) tags.push({ text: 'From Discovery', variant: 'count' });
-  if (!opportunity) return { fields, tags };
+  if (!opportunity) return { fields, tags, actions: [] };
 
   const detail = DETAIL[row.name] ?? defaultPlayDetail(opportunity);
   const ready = opportunity.minGate >= L.threshold; // base 1399
@@ -315,10 +409,52 @@ function buildPlayDrawerContent(row: PlanTableRow, L: Levers): { fields: DrawerC
     },
   );
 
-  return { fields, tags };
+  // Fix B-dead-interactions-07 (play drawer call site): the base's
+  // in-drawer clicks — gov rows → goOnside/openInstr (1401-1402), seqNote's
+  // "See the gap queue →" (1406-1407), depChips/unlocks → openPlay
+  // (1390/1424-1428) — restored as `DrawerContent` bottom-row actions
+  // through the nav-payload mechanism (DrawerContent has no per-field
+  // action slot; see file header "DRAWER DEEP-LINKS").
+  const actions: DrawerContentAction[] = [];
+  if (onDeepLink) {
+    opportunity.g.forEach((gate) => {
+      const domainKey = CTRLDOM[gate];
+      if (domainKey) {
+        actions.push({
+          label: `Open ${gate} in OnSide`,
+          variant: 'ghost',
+          onPress: () => onDeepLink({ screen: 'onside.overview', kind: 'domain', id: domainKey }),
+        });
+      }
+    });
+    if (!ready) {
+      actions.push({
+        label: 'See the gap queue',
+        variant: 'ghost',
+        onPress: () => onDeepLink({ screen: 'onside.feed', kind: 'section', id: 'gaps' }),
+      });
+    }
+    dedupe([...detail.deps, ...detail.unlocks]).forEach((name) => {
+      actions.push({
+        label: `Open ${name}`,
+        variant: 'ghost',
+        onPress: () => onDeepLink({ screen: 'studio.investment-design', kind: 'play', id: name }),
+      });
+    });
+  }
+
+  return { fields, tags, actions };
 }
 
-function GatedTable({ rows }: { rows: GatedRow[] }) {
+/** Fix B-dead-interactions-05: the base styled these exact rows as
+ * clickable openPlay targets (`.gated-row[data-play]{cursor:pointer}` +
+ * hover, leapfi-platform.html:309-310; delegated click, 4493-4497) — this
+ * mirrors `PlanTable.tsx`'s own real "Open" row-action Button (its 8th
+ * column) rather than a div/tr click hack, so the row stays independently
+ * keyboard-operable. */
+const miniThActionStyle: CSSProperties = { ...miniThStyle, width: '1%' };
+
+function GatedTable({ rows, onOpenPlay }: { rows: GatedRow[]; onOpenPlay: (name: string) => void }) {
   if (rows.length === 0) {
     return <p style={emptyNoteStyle}>Nothing is sequence-gated at this tolerance — every risk-eligible play clears today&rsquo;s control gate.</p>;
   }
@@ -336,6 +472,11 @@ function GatedTable({ rows }: { rows: GatedRow[] }) {
             <th scope="col" style={miniThStyle}>
               Unlocks after
             </th>
+            <th scope="col" style={miniThActionStyle}>
+              <span className="sr-only" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+                Action
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -343,8 +484,11 @@ function GatedTable({ rows }: { rows: GatedRow[] }) {
             <tr key={row.name}>
               <td style={miniTdNameStyle}>{row.name}</td>
               <td style={miniTdStyle}>{row.annualValueText}</td>
-              <td style={miniTdLastStyle}>
+              <td style={miniTdStyle}>
                 {row.unlocksAfterControl} <Tag text={`${row.unlocksAfterControlScore}%`} variant="status-caution" />
+              </td>
+              <td style={{ ...miniTdLastStyle, textAlign: 'right' }}>
+                <Button label="Open" variant="row" onPress={() => onOpenPlay(row.name)} />
               </td>
             </tr>
           ))}
@@ -354,7 +498,7 @@ function GatedTable({ rows }: { rows: GatedRow[] }) {
   );
 }
 
-function BenchTable({ rows }: { rows: BenchRow[] }) {
+function BenchTable({ rows, onOpenPlay }: { rows: BenchRow[]; onOpenPlay: (name: string) => void }) {
   if (rows.length === 0) {
     return <p style={emptyNoteStyle}>Nothing cleared governance is waiting on budget right now.</p>;
   }
@@ -375,6 +519,11 @@ function BenchTable({ rows }: { rows: BenchRow[] }) {
             <th scope="col" style={miniThStyle}>
               To add
             </th>
+            <th scope="col" style={miniThActionStyle}>
+              <span className="sr-only" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+                Action
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -383,7 +532,10 @@ function BenchTable({ rows }: { rows: BenchRow[] }) {
               <td style={miniTdNameStyle}>{row.name}</td>
               <td style={miniTdStyle}>{row.annualValueText}</td>
               <td style={miniTdStyle}>{row.buildCostText}</td>
-              <td style={miniTdLastStyle}>{row.addCostText}</td>
+              <td style={miniTdStyle}>{row.addCostText}</td>
+              <td style={{ ...miniTdLastStyle, textAlign: 'right' }}>
+                <Button label="Open" variant="row" onPress={() => onOpenPlay(row.name)} />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -398,6 +550,9 @@ export function InvestmentDesign({
   sidebarVersionLabel,
   initialSliders = INITIAL_SLIDERS,
   opportunities,
+  deepLink,
+  onDeepLink,
+  onDeepLinkConsumed,
 }: InvestmentDesignProps) {
   const [sliders, setSliders] = useState<SliderState>(initialSliders);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -426,11 +581,33 @@ export function InvestmentDesign({
     setDrawerOpen(true);
   };
 
+  /** Fix B-dead-interactions-03/04/05: resolves a bare play name (from a
+   * gated/bench row, or a cross-screen/in-drawer deep link) to a full
+   * `PlanTableRow` and opens the same drawer the funded table uses. */
+  const handleOpenPlayByName = (name: string) => {
+    const row = planTableRowForPlay(name, view.L);
+    if (row) handleOpenPlay(row);
+  };
+
   const handleCloseDrawer = () => {
     setDrawerOpen(false);
   };
 
-  const drawerContent = activePlay ? buildPlayDrawerContent(activePlay, view.L) : null;
+  // Fix B-dead-interactions-03/04 (nav-payload CONSUME half — App.tsx file
+  // header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS"): Studio · Ask's register
+  // rows and Roadmap's play chips carry no Drawer of their own, so they
+  // deep-link here instead. Keyed on `deepLink?.nonce` per the documented
+  // contract — a same-screen deep link (e.g. an in-drawer "Open <dep>"
+  // action, B-dead-interactions-07) still delivers a fresh nonce and still
+  // fires this effect.
+  useEffect(() => {
+    if (!deepLink || deepLink.kind !== 'play') return;
+    handleOpenPlayByName(deepLink.id);
+    onDeepLinkConsumed?.(deepLink.nonce);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract; view/handleOpenPlayByName/onDeepLinkConsumed are read fresh from closure, not tracked as re-trigger deps
+  }, [deepLink?.nonce]);
+
+  const drawerContent = activePlay ? buildPlayDrawerContent(activePlay, view.L, onDeepLink) : null;
 
   // Built conditionally (rather than `versionLabel={sidebarVersionLabel}`
   // directly) — this project's `exactOptionalPropertyTypes` setting treats
@@ -469,18 +646,20 @@ export function InvestmentDesign({
           <div style={sideListsGridStyle}>
             <div style={sectionStyle}>
               <h2 style={sectionHeadingStyle}>Sequence-gated</h2>
-              <GatedTable rows={view.gatedRows} />
+              <GatedTable rows={view.gatedRows} onOpenPlay={handleOpenPlayByName} />
             </div>
             <div style={sectionStyle}>
               <h2 style={sectionHeadingStyle}>Cleared governance, outside budget</h2>
-              <BenchTable rows={view.benchRows} />
+              <BenchTable rows={view.benchRows} onOpenPlay={handleOpenPlayByName} />
             </div>
           </div>
         </main>
       </div>
 
       <Drawer open={drawerOpen} title={activePlay?.name ?? 'Play detail'} onClose={handleCloseDrawer}>
-        {drawerContent ? <DrawerContent kind="play" fields={drawerContent.fields} tags={drawerContent.tags} /> : null}
+        {drawerContent ? (
+          <DrawerContent kind="play" fields={drawerContent.fields} tags={drawerContent.tags} actions={drawerContent.actions} />
+        ) : null}
       </Drawer>
     </div>
   );

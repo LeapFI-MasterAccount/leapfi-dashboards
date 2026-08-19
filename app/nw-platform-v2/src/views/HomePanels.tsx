@@ -34,14 +34,33 @@
  * a *live* cross-check against `OBL`/gap state ("N in force would need
  * updating") — that impact calculation stays unported here, matching
  * `OnSideFeed.tsx`'s own signal Drawer (field rows, no live cross-domain
- * computation, no clickable sub-links). The "Would touch" field, however,
- * resolves DISPLAY NAMES exactly as base `sigTouch()` (source 4047-4058)
- * does — obl tuples render the obligation id (the base chip's visible
- * text), doc tuples resolve `DOCLIB[id].t`, dom tuples resolve
- * `DOM_SHORT[key] || domain.name` + " register" (fix-wave SH-5: an earlier
- * revision printed raw internal slugs like "capital-narr, gov-charter"
- * here; the base never shows a slug). Only the base's clickable per-touch
- * navigation is trimmed to plain text.
+ * computation). The "Would touch" field resolves DISPLAY NAMES exactly as
+ * base `sigTouch()` (source 4047-4058) does — obl tuples render the
+ * obligation id (the base chip's visible text), doc tuples resolve
+ * `DOCLIB[id].t`, dom tuples resolve `DOM_SHORT[key] || domain.name` + "
+ * register" (fix-wave SH-5: an earlier revision printed raw internal slugs
+ * like "capital-narr, gov-charter" here; the base never shows a slug).
+ *
+ * CLICKABLE TOUCH CHIPS + LIFECYCLE LINK RESTORED (B-07 fix batch —
+ * supersedes this note's earlier claim that "the base's clickable
+ * per-touch navigation is trimmed to plain text"): base `openSignal`
+ * rendered each 'Would touch' tuple as its own clickable chip (`tch` →
+ * `openObl`/`openDocView`/`goOnside`, source 4049-4056) plus an "Open the
+ * full lifecycle" button (source 4111). `DrawerContent`'s field-row value
+ * is a plain string (`DrawerContentField.value: string`, out of this
+ * dispatch's allowlist to widen), so the field stays the joined text
+ * summary, but the composite's `actions` slot (real `Button`s, its own
+ * documented vocabulary) now carries one action per touch — routed by
+ * `onNavigate` to the touch's home screen (`obl`/`dom` → `onside.overview`,
+ * `doc` → `onside.documents`) — plus the "Open the full lifecycle →"
+ * action (`onside.feed`). This is generic nav, not a deep-link-with-payload
+ * (`HomePanels.tsx` has no `onDeepLink` seam: `Home.tsx`, the only caller,
+ * is outside this dispatch's allowlist and does not thread App.tsx's
+ * NAV-PAYLOAD contract through) — every action lands on the right SCREEN,
+ * not (yet) scrolled/expanded to the specific item, same honest partial-
+ * fidelity pattern `OnSideOverview.tsx`'s own STOP-items already use
+ * elsewhere in this codebase. Flagged for whichever dispatch next holds
+ * `Home.tsx`: thread `onDeepLink` down so these can target the exact item.
  *
  * DRAWER OWNERSHIP: this view mounts its own local `<Drawer>` instance for
  * the Strategic signal panel — matching `OnSideFeed.tsx`'s own documented
@@ -90,6 +109,22 @@
  * member of `App.tsx`'s `SCREEN_IDS` union (App.tsx:212-230), so all row
  * and card actions work end to end.
  *
+ * PANEL-HEADER GO-LINKS + TOP-PLAY LIST RESTORED (B-08 fix batch): every
+ * base `renderHome()` panel head (`.panel-h`, source 868/869/872/878) paired
+ * its `<h2>` with a `.go2` "N →" link to the same destination — dropped
+ * entirely here pre-fix. `PANEL_HEADER_LINKS` below restores the visible
+ * link per panel ('Gaps & levers →', 'Full lifecycle →', 'Work the levers
+ * →' + 'Platform ROI →', 'All open items →'); the base's redundant
+ * `onclick` on the `<h2>` itself is deliberately NOT ported (a clickable,
+ * non-semantic heading is a real a11y regression the base's own markup
+ * happened to carry — persona directive 4 — and the adjacent link already
+ * reaches the identical destination, so nothing is lost). The Investment
+ * panel additionally regains its "four largest, by annual value" `lrow`
+ * list (source 4249-region) with an `Open →` action per play. All of these
+ * route through the plain `onNavigate` this component already has — see
+ * the "CLICKABLE TOUCH CHIPS" note above for why item-level deep-linking
+ * (the exact report kind, the exact play) is out of this file's reach.
+ *
  * Accessibility gate (persona directive 7): every panel is a labelled
  * `<section>`; posture/signal/queue panels are real `DataTable` (C6)
  * instances (semantic tables, sortable headers where meaningful, a single
@@ -120,6 +155,7 @@ import { Drawer } from '../components/Drawer';
 import { DrawerContent } from '../components/DrawerContent';
 import type { DrawerContentField } from '../components/DrawerContent';
 import { Tag } from '../components/primitives/Tag';
+import { Label } from '../components/primitives/Label';
 import { curOf, statusOf, oblToClose, domainPostureSegments, DOMAIN_STATUS_LABEL, DOMAIN_STATUS_VARIANT } from './DomainsAccordion';
 import type { HomePanelKey } from './HomeCustomizeBar';
 import { HOME_PANEL_DEFS } from './HomeCustomizeBar';
@@ -321,6 +357,21 @@ export interface HomePanelsProps {
 
 const sectionStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.75rem' };
 const sectionHeadingStyle: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--ink)' };
+// B-08: base `.panel-h` header row (h2 + `.go2` link(s), source 868/869/872/878).
+const panelHeaderRowStyle: CSSProperties = { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' };
+const panelHeaderLinksStyle: CSSProperties = { display: 'flex', gap: '1rem', flexWrap: 'wrap' };
+const panelHeaderLinkStyle: CSSProperties = {
+  background: 'transparent',
+  border: 'none',
+  padding: 0,
+  margin: 0,
+  font: 'inherit',
+  fontSize: '0.8125rem',
+  fontWeight: 700,
+  color: 'var(--accent)',
+  whiteSpace: 'nowrap',
+  cursor: 'pointer',
+};
 const sectionSubStyle: CSSProperties = { margin: 0, font: 'inherit', fontSize: '0.8125rem', color: 'var(--ink2)' };
 const statRowStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '1rem' };
 const setupCardRowStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))', gap: '1rem' };
@@ -359,7 +410,15 @@ interface SignalRow extends SignalEntry {
   rowId: string;
 }
 
-function StrategicSignalPanel() {
+/** B-07: routes a single 'Would touch' tuple to its home screen — `obl`/`dom`
+ * tuples live in the Domains accordion (`onside.overview`), `doc` tuples in
+ * the document universe (`onside.documents`). Generic nav only (no
+ * `onDeepLink` seam here — see file header "CLICKABLE TOUCH CHIPS"). */
+function touchScreenId(t: SignalTouch): string {
+  return t[0] === 'doc' ? 'onside.documents' : 'onside.overview';
+}
+
+function StrategicSignalPanel({ onNavigate }: { onNavigate: (id: string) => void }) {
   const [openRowId, setOpenRowId] = useState<string | null>(null);
   const rows: SignalRow[] = SIGNAL.map((s, index) => ({ ...s, rowId: `sig-${index}` }));
   const selected = rows.find((r) => r.rowId === openRowId) ?? null;
@@ -391,28 +450,86 @@ function StrategicSignalPanel() {
       ]
     : [];
 
+  // B-07: one action per 'would touch' item (base per-chip navigation,
+  // source 4049-4056) plus the base's "Open the full lifecycle" button
+  // (source 4111) — see file header note for why these are screen-level
+  // nav, not item-level deep links.
+  const actions = selected
+    ? [
+        ...selected.touch.map((t) => ({
+          label: touchLabel(t),
+          variant: 'ghost' as const,
+          onPress: () => onNavigate(touchScreenId(t)),
+        })),
+        { label: 'Open the full lifecycle →', variant: 'ghost' as const, onPress: () => onNavigate('onside.feed') },
+      ]
+    : [];
+
   return (
     <>
       <div style={scrollWrapStyle}>
         <DataTable caption="Strategic signal" columns={columns} rows={rows} getRowId={(r) => r.rowId} rowAction={rowAction} />
       </div>
       <Drawer open={selected !== null} title={selected ? `Strategic signal · ${selected.sc}` : 'Strategic signal'} onClose={() => setOpenRowId(null)}>
-        <DrawerContent kind="signal" fields={fields} />
+        <DrawerContent kind="signal" fields={fields} actions={actions} />
       </Drawer>
     </>
   );
 }
 
-function InvestmentReturnPanel({ sliders, opportunities }: { sliders: SliderState; opportunities: PlanOpportunity[] }) {
-  const view = deriveRecomputeView(sliders, opportunities);
+/** Base `lrow` list row (source 4249-region) — a real `<button>`-backed
+ * link/text/action row, same accessible-link pattern as `ReportView.tsx`'s
+ * `DocLink`. */
+const lrowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: '0.75rem',
+  padding: '0.625rem 0',
+  borderTop: '1px solid var(--border)',
+  background: 'transparent',
+  border: 'none',
+  width: '100%',
+  textAlign: 'left',
+  cursor: 'pointer',
+  font: 'inherit',
+  color: 'inherit',
+};
+
+function TopPlaysList({ plays, onOpenPlay }: { plays: PlanOpportunity[]; onOpenPlay: () => void }) {
   return (
-    <div style={statRowStyle}>
-      <StatCard label={`Return on investment · vs ${view.L.roiTgt.toFixed(1)}× hurdle`} value={view.plan.roi.toFixed(1)} unit="×" />
-      <StatCard label="One-time build cost" value={view.economics.buildCostText} />
-      <StatCard label="Recurring annual value" value={view.economics.annualValueText} />
-      <StatCard label="Payback period" value={view.economics.paybackText} />
-      <StatCard label="Compliance capacity freed" value={fmt(540000)} unit="/yr" />
+    <div>
+      <Label text="The four largest, by annual value" variant="eyebrow" />
+      {plays.map((o) => (
+        <button key={o.n} type="button" style={{ ...lrowStyle, borderTop: '1px solid var(--border)' }} onClick={onOpenPlay}>
+          <span style={itemCellStyle}>
+            <span style={itemTitleStyle}>{o.n}</span>
+            <span style={itemSubStyle}>{`${fmt(o.val)} a year · ${o.c}`}</span>
+          </span>
+          <span style={{ ...itemSubStyle, color: 'var(--accent)', fontWeight: 700, whiteSpace: 'nowrap' }}>Open →</span>
+        </button>
+      ))}
     </div>
+  );
+}
+
+function InvestmentReturnPanel({ sliders, opportunities, onNavigate }: { sliders: SliderState; opportunities: PlanOpportunity[]; onNavigate: (id: string) => void }) {
+  const view = deriveRecomputeView(sliders, opportunities);
+  const topFunded = [...view.plan.funded].sort((a, b) => b.val - a.val).slice(0, 4);
+  return (
+    <>
+      <div style={statRowStyle}>
+        <StatCard label={`Return on investment · vs ${view.L.roiTgt.toFixed(1)}× hurdle`} value={view.plan.roi.toFixed(1)} unit="×" />
+        <StatCard label="One-time build cost" value={view.economics.buildCostText} />
+        <StatCard label="Recurring annual value" value={view.economics.annualValueText} />
+        <StatCard label="Payback period" value={view.economics.paybackText} />
+        <StatCard label="Compliance capacity freed" value={fmt(540000)} unit="/yr" />
+      </div>
+      {/* B-08: base `top=P.funded...slice(0,4)` list (source 4249-region),
+        * each row an `openPlay(n)` click-through — screen-level nav here
+        * (`studio.investment-design`), see file header note. */}
+      {topFunded.length > 0 ? <TopPlaysList plays={topFunded} onOpenPlay={() => onNavigate('studio.investment-design')} /> : null}
+    </>
   );
 }
 
@@ -481,9 +598,9 @@ export function HomePanels({ visibleKeys, currentRoleKey, onNavigate, sliders, o
       case 'posture':
         return <PostureBand onOpenDomains={() => onNavigate('onside.overview')} />;
       case 'legis':
-        return <StrategicSignalPanel />;
+        return <StrategicSignalPanel onNavigate={onNavigate} />;
       case 'invest':
-        return <InvestmentReturnPanel sliders={liveSliders} opportunities={liveOpportunities} />;
+        return <InvestmentReturnPanel sliders={liveSliders} opportunities={liveOpportunities} onNavigate={onNavigate} />;
       case 'queue':
         return <YourQueuePanel roleKey={currentRoleKey} onNavigate={onNavigate} sliders={liveSliders} opportunities={liveOpportunities} />;
       case 'qa':
@@ -493,16 +610,51 @@ export function HomePanels({ visibleKeys, currentRoleKey, onNavigate, sliders, o
     }
   }
 
+  // B-08: base `.panel-h .go2` header links (source 868/869/872/878) — see
+  // file header "PANEL-HEADER GO-LINKS." `qa` (Quick actions) carries none
+  // in the base either.
+  function headerLinks(key: HomePanelKey): Array<{ label: string; onPress: () => void }> {
+    switch (key) {
+      case 'posture':
+        return [{ label: 'Gaps & levers →', onPress: () => onNavigate('onside.overview') }];
+      case 'legis':
+        return [{ label: 'Full lifecycle →', onPress: () => onNavigate('onside.feed') }];
+      case 'invest':
+        return [
+          { label: 'Work the levers →', onPress: () => onNavigate('studio.investment-design') },
+          { label: 'Platform ROI →', onPress: () => onNavigate('reporting') },
+        ];
+      case 'queue':
+        return [{ label: 'All open items →', onPress: () => onNavigate('onside.documents') }];
+      default:
+        return [];
+    }
+  }
+
   return (
     <>
-      {visibleKeys.map((key) => (
-        <section key={key} aria-labelledby={`home-panel-${key}-heading`} style={sectionStyle} data-lf-home-panel={key}>
-          <h2 id={`home-panel-${key}-heading`} style={sectionHeadingStyle}>
-            {labelByKey.get(key) ?? key}
-          </h2>
-          {renderPanel(key)}
-        </section>
-      ))}
+      {visibleKeys.map((key) => {
+        const links = headerLinks(key);
+        return (
+          <section key={key} aria-labelledby={`home-panel-${key}-heading`} style={sectionStyle} data-lf-home-panel={key}>
+            <div style={panelHeaderRowStyle}>
+              <h2 id={`home-panel-${key}-heading`} style={sectionHeadingStyle}>
+                {labelByKey.get(key) ?? key}
+              </h2>
+              {links.length > 0 ? (
+                <span style={panelHeaderLinksStyle}>
+                  {links.map((link) => (
+                    <button key={link.label} type="button" style={panelHeaderLinkStyle} onClick={link.onPress}>
+                      {link.label}
+                    </button>
+                  ))}
+                </span>
+              ) : null}
+            </div>
+            {renderPanel(key)}
+          </section>
+        );
+      })}
     </>
   );
 }

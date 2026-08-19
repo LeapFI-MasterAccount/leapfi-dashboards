@@ -16,7 +16,7 @@
  *    live lever state is `state/demoStore.ts` (`setDemoSliders`), which
  *    `HomePanels` subscribes to via `useDemoStore()`.
  */
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HomePanels } from '../../views/HomePanels'
@@ -76,6 +76,98 @@ describe('CRO queue "Rulemaking to watch" row (SH-9, base 4257)', () => {
     expect(screen.getByText('RFI 2026-04 comments due Sep 30')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Track' })).toBeInTheDocument()
     expect(screen.queryByText(/instruments? tracked this cycle/)).not.toBeInTheDocument()
+  })
+})
+
+describe('Strategic signal drawer touch chips + lifecycle link (B-07, base openSignal 4049-4056/4111)', () => {
+  it('renders one nav action per "would touch" item plus "Open the full lifecycle →", each routed to the right screen', async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    render(<HomePanels visibleKeys={['legis']} currentRoleKey="cro" onNavigate={onNavigate} />)
+
+    // SIGNAL[1] (Reg O NPRM): touch = [['dom','capital'],['dom','fairlend'],['doc','capital-narr']].
+    const row = screen.getByText('Fed & FDIC joint NPRM · Regulation O · insider credit').closest('tr')
+    await user.click(within(row as HTMLElement).getByRole('button', { name: 'Review' }))
+
+    const dialog = screen.getByRole('dialog')
+    await user.click(within(dialog).getByRole('button', { name: 'Capital register' }))
+    expect(onNavigate).toHaveBeenCalledWith('onside.overview')
+
+    onNavigate.mockClear()
+    await user.click(within(dialog).getByRole('button', { name: 'Capital Narrative · CBLR' }))
+    expect(onNavigate).toHaveBeenCalledWith('onside.documents')
+
+    onNavigate.mockClear()
+    await user.click(within(dialog).getByRole('button', { name: 'Open the full lifecycle →' }))
+    expect(onNavigate).toHaveBeenCalledWith('onside.feed')
+  })
+})
+
+describe('Home panel-header go-links (B-08, base .panel-h .go2 868/869/872/878)', () => {
+  it('Risk posture header link navigates to onside.overview', async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    render(<HomePanels visibleKeys={['posture']} currentRoleKey="cro" onNavigate={onNavigate} />)
+    await user.click(screen.getByRole('button', { name: 'Gaps & levers →' }))
+    expect(onNavigate).toHaveBeenCalledWith('onside.overview')
+  })
+
+  it('Strategic signal header link navigates to onside.feed', async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    render(<HomePanels visibleKeys={['legis']} currentRoleKey="cro" onNavigate={onNavigate} />)
+    await user.click(screen.getByRole('button', { name: 'Full lifecycle →' }))
+    expect(onNavigate).toHaveBeenCalledWith('onside.feed')
+  })
+
+  it('Investment and return header carries both "Work the levers →" and "Platform ROI →"', async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    render(<HomePanels visibleKeys={['invest']} currentRoleKey="cro" onNavigate={onNavigate} />)
+
+    await user.click(screen.getByRole('button', { name: 'Work the levers →' }))
+    expect(onNavigate).toHaveBeenCalledWith('studio.investment-design')
+
+    onNavigate.mockClear()
+    await user.click(screen.getByRole('button', { name: 'Platform ROI →' }))
+    expect(onNavigate).toHaveBeenCalledWith('reporting')
+  })
+
+  it('Your queue header link navigates to onside.documents', async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    render(<HomePanels visibleKeys={['queue']} currentRoleKey="cro" onNavigate={onNavigate} />)
+    await user.click(screen.getByRole('button', { name: 'All open items →' }))
+    expect(onNavigate).toHaveBeenCalledWith('onside.documents')
+  })
+
+  it('Quick actions carries no header go-link (base has none for this row)', () => {
+    render(<HomePanels visibleKeys={['qa']} currentRoleKey="cro" onNavigate={noNavigate} />)
+    expect(screen.queryByRole('button', { name: /→$/ })).not.toBeInTheDocument()
+  })
+})
+
+describe('Investment panel top-play list (B-08, base lrow top=P.funded...slice(0,4), 4249-region)', () => {
+  it('lists the four largest funded plays by annual value, each with an Open → action to Investment Design', async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    render(<HomePanels visibleKeys={['invest']} currentRoleKey="cro" onNavigate={onNavigate} />)
+
+    const view = deriveRecomputeView({ ...DEFAULT_SLIDERS }, OPPS)
+    const topFunded = [...view.plan.funded].sort((a, b) => b.val - a.val).slice(0, 4)
+    expect(topFunded.length).toBeGreaterThan(0)
+
+    const firstPlay = topFunded[0]
+    expect(firstPlay).toBeDefined()
+    expect(screen.getByText(firstPlay!.n)).toBeInTheDocument()
+
+    // The whole row is the clickable target (base `lrow` behavior, source
+    // 4249-region: `<div class="list-row lrc" onclick="...">`), so its
+    // accessible name is the row's full text ending in "Open →".
+    const openButtons = screen.getAllByRole('button', { name: /Open →$/ })
+    expect(openButtons).toHaveLength(topFunded.length)
+    await user.click(openButtons[0] as HTMLElement)
+    expect(onNavigate).toHaveBeenCalledWith('studio.investment-design')
   })
 })
 

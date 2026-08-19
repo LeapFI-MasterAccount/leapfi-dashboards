@@ -53,6 +53,31 @@
  * with live attributes after render — attribute addition to static text
  * announces nothing in JAWS/NVDA/VoiceOver).
  *
+ * TRANSCRIPT LIVES IN CHATHERO'S BOUNDED LOG, NOT A SECOND LIST (fix
+ * C-unbounded-growth-01; base anchor leapfi-platform.html:435 `#st-ask
+ * .chat-log{max-height:420px;overflow-y:auto}` — ONE bounded log for the
+ * whole conversation, intake questions included, with scroll-to-latest on
+ * every botSay, 4343/4348; the chips row sits OUTSIDE the log, `chat-chips`
+ * at 429/220): this component previously rendered its own `<ul
+ * aria-label="Scoping conversation">`, styled from a locally-duplicated
+ * copy of `ChatHero.tsx`'s `messageListStyle` that dropped the
+ * `maxHeight`/`overflowY` lines the original carries — an unbounded second
+ * list, mounted directly below ChatHero's own bounded one, so the
+ * conversation read as two out-of-order logs and grew the page without
+ * limit. This component no longer owns that list: `buildMessages`'s output
+ * (memoized on `[useCaseName, answers, phase]` so the array reference is
+ * stable across renders that don't actually change it) is handed to the
+ * composing screen via the new `onTranscriptChange` prop, and the screen
+ * merges it into the SAME array it passes to ChatHero's `messages` — so
+ * the intake's questions/answers render as ordinary bubbles inside
+ * ChatHero's one bounded, auto-scrolling `<ul>` (C-unbounded-growth-02),
+ * exactly the base's single-log shape. This component still renders its
+ * own transient "Thinking…" bubble (the phase 'opening'/'advancing'
+ * indicator) locally, as a non-list styled element below the (now
+ * screen-owned) transcript — it is never part of the growing history, so
+ * it does not need to live inside the bounded log to avoid the defect this
+ * fix addresses.
+ *
  * External input (STU-14): the base's intake mode consumes every submit
  * (`route()` 4434-4444: a 'cancel'-containing input cancels, anything else
  * is captured as the current answer). `handleExternalInput` on the
@@ -100,7 +125,7 @@
  * src/__tests__/engine_data/scoped-opportunity.test.ts execute this file's
  * behavior against the base anchors above (vitest + @testing-library).
  */
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Button } from '../components/primitives/Button';
 import { Chip } from '../components/primitives/Chip';
@@ -140,6 +165,14 @@ export interface ChatIntakeWizardProps {
   onDiscard: () => void;
   /** Fires on the ghost "Cancel" Button, visible at every question step — mirrors `route()`'s `mode==='intake'` cancel branch (4435-4439). */
   onCancel: () => void;
+  /** Fires whenever this component's own transcript (`buildMessages`'s
+   * output — intro + answered/pending Q&A) changes. See file header
+   * "TRANSCRIPT LIVES IN CHATHERO'S BOUNDED LOG, NOT A SECOND LIST" (fix
+   * C-unbounded-growth-01) — the composing screen merges this into the
+   * SAME array it hands ChatHero, so the whole conversation renders as one
+   * bounded, auto-scrolling log instead of two. Does not include the
+   * transient "Thinking…" indicator (still rendered locally). */
+  onTranscriptChange?: (messages: ChatMessage[]) => void;
 }
 
 /** Imperative surface for the composing screen — the port of route()'s
@@ -158,16 +191,7 @@ type WizardPhase = 'opening' | 'asking' | 'advancing' | 'reviewing';
 
 const rootStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 
-const messageListStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.625rem',
-  margin: 0,
-  padding: 0,
-  listStyle: 'none',
-};
-
-/** Duplicated from ChatHero.tsx's own (unexported) `bubbleStyle` — see file header "REUSE, not a new pattern." */
+/** Duplicated from ChatHero.tsx's own (unexported) `bubbleStyle` — see file header "REUSE, not a new pattern." Used here only for the local transient "Thinking…" indicator now (fix C-unbounded-growth-01 moved the persistent transcript bubbles up into ChatHero's own list, which owns this same style). */
 function bubbleStyle(role: ChatMessage['role']): CSSProperties {
   return {
     alignSelf: role === 'user' ? 'flex-end' : 'flex-start',
@@ -288,7 +312,7 @@ function buildMessages(useCaseName: string, answers: string[], revealNextQuestio
 }
 
 export const ChatIntakeWizard = forwardRef<ChatIntakeWizardHandle, ChatIntakeWizardProps>(function ChatIntakeWizard(
-  { useCaseName, onComplete, onDiscard, onCancel },
+  { useCaseName, onComplete, onDiscard, onCancel, onTranscriptChange },
   ref,
 ) {
   const [phase, setPhase] = useState<WizardPhase>('opening');
@@ -381,7 +405,21 @@ export const ChatIntakeWizard = forwardRef<ChatIntakeWizardHandle, ChatIntakeWiz
     onDiscard();
   };
 
-  const messages = buildMessages(useCaseName, answers, phase === 'asking');
+  // Memoized so the array reference is stable across renders that don't
+  // actually change useCaseName/answers/phase — `onTranscriptChange` below
+  // fires an effect keyed on this reference, and an unmemoized fresh array
+  // every render would re-fire (and re-render the composing screen) every
+  // single render, not just on real transcript changes.
+  const messages = useMemo(() => buildMessages(useCaseName, answers, phase === 'asking'), [useCaseName, answers, phase]);
+
+  // Fix C-unbounded-growth-01 — see file header "TRANSCRIPT LIVES IN
+  // CHATHERO'S BOUNDED LOG, NOT A SECOND LIST": hand the transcript up to
+  // the composing screen instead of rendering a second, unbounded `<ul>`
+  // here.
+  useEffect(() => {
+    onTranscriptChange?.(messages);
+  }, [messages, onTranscriptChange]);
+
   const currentQuestion = phase === 'asking' ? INTAKE[step] : undefined;
   const busy = phase === 'opening' || phase === 'advancing';
   const showCancel = phase === 'asking' || phase === 'advancing';
@@ -400,31 +438,16 @@ export const ChatIntakeWizard = forwardRef<ChatIntakeWizardHandle, ChatIntakeWiz
 
   return (
     <div style={rootStyle} data-lf-composite="chat-intake-wizard" data-phase={phase}>
-      <ul aria-label="Scoping conversation" style={messageListStyle}>
-        {messages.map((message, index) => {
-          // The latest assistant bubble is live FROM ITS FIRST RENDER —
-          // with the phase-gated reveal above, a question/intro bubble only
-          // ever becomes last in the render that inserts it, so the live
-          // region enters the DOM with its content (ChatHero's own
-          // pattern; STU-05).
-          const isLastAssistant = index === messages.length - 1 && message.role === 'assistant';
-          return (
-            <li
-              key={message.id}
-              style={bubbleStyle(message.role)}
-              role={isLastAssistant ? 'status' : undefined}
-              aria-live={isLastAssistant ? 'polite' : undefined}
-            >
-              {message.text}
-            </li>
-          );
-        })}
-        {busy ? (
-          <li style={{ ...bubbleStyle('assistant'), display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }} aria-hidden="true">
-            <Spinner variant="inline" size="small" /> Thinking…
-          </li>
-        ) : null}
-      </ul>
+      {/* Fix C-unbounded-growth-01: the persistent transcript (`messages`)
+          no longer renders here — it's handed to the composing screen via
+          `onTranscriptChange` above and rendered inside ChatHero's own
+          bounded, auto-scrolling `<ul>`. Only the transient "Thinking…"
+          indicator (never part of the growing history) stays local. */}
+      {busy ? (
+        <div style={{ ...bubbleStyle('assistant'), display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }} aria-hidden="true">
+          <Spinner variant="inline" size="small" /> Thinking…
+        </div>
+      ) : null}
 
       {currentQuestion ? (
         <div style={suggestionRowStyle} role="group" aria-label="Answer choices">

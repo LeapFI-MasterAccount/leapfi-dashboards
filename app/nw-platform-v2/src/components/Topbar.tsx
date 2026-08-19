@@ -55,6 +55,34 @@
  * the persona list), it only provides the disclosure chrome and the hook
  * surface the brief asks for.
  *
+ * BREADCRUMB TRUNCATION (fix A-overlap-05; base anchor
+ * leapfi-platform.html:66 `.crumb{...white-space:nowrap;overflow:hidden;
+ * text-overflow:ellipsis}`): the base explicitly ellipsized the crumb so
+ * the bar's right-hand cluster stayed on-screen at any width. The twin's
+ * nowrap breadcrumb had no shrink path, so a narrow window pushed the
+ * theme toggle and ProfileMenu past the viewport edge behind a document
+ * scrollbar. The breadcrumb span now carries `minWidth:0` + ellipsis
+ * overflow (and the bar itself `minWidth:0`), restoring the base's
+ * bounded-bar behavior. The bar deliberately does NOT get
+ * `overflow:hidden` — the ProfileMenu dropdown is an absolutely
+ * positioned descendant and must not be clipped.
+ *
+ * RESET DEMO ROW (fix B-dead-interactions-12; base anchor
+ * leapfi-platform.html:852 `<div class="pm-reset"
+ * onclick="resetDemo()">…Reset demo…`): the base's avatar menu carried a
+ * product-surface "Reset demo" row; the twin's only reset lived behind
+ * the hidden PresenterRail. ProfileMenu now always appends a "Reset
+ * demo" menuitem (after the caller-supplied items, below a separator)
+ * that calls the store's `resetDemo()` (state/demoStore.ts) directly —
+ * per the fix dispatch's contract. Scope notes, documented rather than
+ * silently exceeded: (1) the base's resetDemo also reset the persona and
+ * navigated Home (source 3957–3958) — those halves are App-owned state
+ * (App.handleRestart) outside this component's reach and this dispatch's
+ * allowlist; (2) the base's Shift+Alt+R chord (same row's copy) remains
+ * unported on the product surface (PresenterRail.tsx's header documents
+ * that), so the row's label here is "Reset demo" without the shortcut
+ * copy — advertising a dead chord would be its own defect.
+ *
  * PARITY-ASSEMBLY ADDITION — `notificationSlot` (parity_ia_addendum.md
  * §1.5 "Shell-level: Notification Bell" / §6 Batch 7): `NotificationBell`
  * (this file, internal/unexported) is a plain count-badge with a single
@@ -79,6 +107,7 @@ import { Avatar } from './primitives/Avatar';
 import { Button } from './primitives/Button';
 import { Icon } from './primitives/Icon';
 import { Tag } from './primitives/Tag';
+import { resetDemo } from '../state/demoStore';
 
 export interface TopbarBackTarget {
   label: string;
@@ -130,6 +159,10 @@ const BAR_STYLE: CSSProperties = {
   borderBottom: '1px solid var(--border)',
   boxSizing: 'border-box',
   minHeight: 56,
+  // A-overlap-05: let the bar shrink inside ancestor flex tracks instead of
+  // flooring the page at its nowrap min-content width (base bounded bar, .crumb
+  // source 66). No `overflow:hidden` here — the ProfileMenu dropdown must not clip.
+  minWidth: 0,
 };
 
 const LABEL_STYLE: CSSProperties = {
@@ -274,6 +307,19 @@ function ProfileMenu({ profile, items }: { profile: TopbarProfile; items: Topbar
               </div>
             ))
           )}
+          {/* B-12: base pm-reset row (source 852) — always present, below a
+              separator, calling the store's resetDemo(). See file header
+              "RESET DEMO ROW" for the App-owned persona/nav scope note. */}
+          <div role="none" aria-hidden="true" style={{ borderTop: '1px solid var(--border)', margin: '0.25rem 0' }} />
+          <div role="none">
+            <MenuButtonItem
+              label="Reset demo"
+              onSelect={() => {
+                setOpen(false);
+                resetDemo();
+              }}
+            />
+          </div>
         </div>
       ) : null}
     </div>
@@ -385,7 +431,21 @@ export function Topbar({
         <Button label={backTarget.label} variant="ghost" icon="chevron-left" onPress={backTarget.onPress} />
       ) : null}
 
-      <span style={{ ...LABEL_STYLE, fontWeight: 600, color: 'var(--ink)' }}>{breadcrumb}</span>
+      {/* A-overlap-05: base .crumb truncation (source 66) — nowrap + hidden
+          overflow + ellipsis, with minWidth:0 so flex can actually shrink it. */}
+      <span
+        style={{
+          ...LABEL_STYLE,
+          fontWeight: 600,
+          color: 'var(--ink)',
+          flex: '0 1 auto',
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {breadcrumb}
+      </span>
 
       <span style={{ flex: '1 1 auto' }} aria-hidden="true" />
 

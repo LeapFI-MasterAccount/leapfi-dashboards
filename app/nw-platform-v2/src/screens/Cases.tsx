@@ -45,20 +45,24 @@
  * RELEASE-NOTES RECONCILIATION (CS-12 — disposition note; every control
  * surface involved is outside this batch's allowlist, so the disposition
  * is recorded here per the dispatch's own allowance): `SettingsAbout.tsx`'s
- * verbatim-ported release notes still promise three affordances the twin
- * deliberately reduced — v1.060's per-tier committee-vote toggle and
- * editable committee name (the twin's approval matrix is read-only under
- * parity_ia_addendum.md §1.4's Switch-×8 budget — `SettingsToggles.tsx`),
- * v1.057's "Reset demo lives under your avatar, or Shift + Alt + R" (the
- * twin's full reset is the presenter rail's Restart →
+ * verbatim-ported release notes promised three affordances the twin had
+ * reduced. UPDATED (B-15 fix batch): the first of the three is now BUILT —
+ * `SettingsToggles.tsx`'s approval matrix regained v1.060's per-tier
+ * committee-vote toggle and editable committee name (both as local,
+ * unpersisted component state, the same no-backend contract the base's own
+ * `toggleTierCommittee`/`setCommitteeName` carried) — so that changelog
+ * entry is no longer a reduction to reconcile. The other two remain
+ * sanctioned reductions: v1.057's "Reset demo lives under your avatar, or
+ * Shift + Alt + R" (the twin's full reset is the presenter rail's Restart →
  * `state/demoStore.ts` `resetDemo()`; no avatar-menu reset entry or
  * Shift+Alt+R chord exists — `App.tsx`/`Topbar.tsx`), and v1.071's "the
  * Cases tab carries the count" (no Cases sidebar leaf by
  * design_system_spec.md §3.1's own disposition — see NO SIDEBAR LEAF
- * above). Each reduction is individually sanctioned; the residual defect
- * is the unreconciled changelog copy itself, which lives in
- * `SettingsAbout.tsx` — fix belongs there (annotate or trim those three
- * entries), by whichever dispatch holds that file.
+ * above). The residual defect is the unreconciled changelog copy itself
+ * (still promising all three verbatim), which lives in
+ * `SettingsAbout.tsx` — fix belongs there (trim/annotate the now-stale
+ * v1.060 entry, keep the other two flagged), by whichever dispatch holds
+ * that file.
  *
  * ROLE-GATED PRIMARY ACTION (task line, Core Principle 2): enforced in
  * `../views/CaseDetail.tsx`, not here — see that file's header. This screen
@@ -239,7 +243,6 @@ const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column',
 const NOTE_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', color: 'var(--ink2)', maxWidth: '52rem' };
 const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
 const CITE_STYLE: CSSProperties = { margin: '0.15rem 0 0', fontSize: '0.8125rem', color: 'var(--ink2)' };
-const TOAST_WRAP_STYLE: CSSProperties = { position: 'fixed', top: '1.25rem', right: '1.25rem', zIndex: 60 };
 
 export interface CasesProps {
   /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as `Home.tsx`/`OnSideDocuments.tsx`). */
@@ -576,11 +579,14 @@ export function Cases({ topbar, onNavigate, sidebarVersionLabel, currentUser = C
       </div>
 
       {toast ? (
-        <div style={TOAST_WRAP_STYLE}>
-          {/* `key` remounts the Toast per committed action (CS-09) so every
-              confirmation gets its full 5s — see the toast state note. */}
-          <Toast key={toast.key} variant={toast.variant} message={toast.message} onDismiss={() => setToast(null)} autoDismissMs={5000} />
-        </div>
+        // A-overlap-04: `Toast` is now self-positioning (fixed bottom-center,
+        // its own internal anchor — see components/Toast.tsx's
+        // SELF-POSITIONING note) — the screen-level fixed top-right wrapper
+        // this mount used is removed; it occluded the Topbar's bell/date/
+        // theme/profile cluster and is inert against Toast's own anchor
+        // regardless. `key` still remounts the Toast per committed action
+        // (CS-09) so every confirmation gets its full 5s.
+        <Toast key={toast.key} variant={toast.variant} message={toast.message} onDismiss={() => setToast(null)} autoDismissMs={5000} />
       ) : null}
     </div>
   );

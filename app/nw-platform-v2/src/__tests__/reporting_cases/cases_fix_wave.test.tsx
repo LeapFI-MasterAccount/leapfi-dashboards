@@ -294,6 +294,29 @@ describe('CS-09 — a replacement toast gets its own full auto-dismiss window', 
   });
 });
 
+describe('A-overlap-04 — the confirmation toast is no longer wrapped in a fixed top-right mount (base #toast is bottom-center, source 110)', () => {
+  it('renders the self-positioning Toast with no screen-level fixed top-right wrapper around it', () => {
+    render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
+
+    openCaseDetail('CASE-2026-001');
+    fireEvent.click(screen.getByRole('button', { name: 'Accept & route for approval' }));
+    commit();
+    expect(screen.getByText('Routed to the CRO. Notified in the app and by email.')).toBeInTheDocument();
+
+    // `Toast` (components/Toast.tsx) now renders its own fixed bottom-center
+    // anchor, tagged `data-lf-toast-anchor` — assert it exists and that no
+    // ancestor still carries the removed screen-level wrapper's inline
+    // `top: 1.25rem; right: 1.25rem` (the old `TOAST_WRAP_STYLE`).
+    const anchor = document.querySelector('[data-lf-toast-anchor]');
+    expect(anchor).not.toBeNull();
+    let node: HTMLElement | null = anchor as HTMLElement;
+    while (node) {
+      expect(node.style.top === '1.25rem' && node.style.right === '1.25rem').toBe(false);
+      node = node.parentElement;
+    }
+  });
+});
+
 describe('CS-10 — adopted diff carries the base closed-state captions (2872-2875)', () => {
   it("a closed case's language card shows the Adopted marker and 'adopted and in force'", () => {
     caseById('CASE-2026-001').stage = 'closed';
