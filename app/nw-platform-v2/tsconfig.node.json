@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    // Project-reference builds require this config to emit somewhere;
+    // redirect it into the (gitignored) node_modules cache so the app root
+    // stays free of generated vite.config.js/.d.ts / buildinfo clutter.
+    "outDir": "./node_modules/.tsc-out",
+    "tsBuildInfoFile": "./node_modules/.tsc-out/tsconfig.node.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "strict": true
+  },
+  "include": ["vite.config.ts"]
+}

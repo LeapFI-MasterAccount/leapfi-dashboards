@@ -1,0 +1,120 @@
+/*
+ * Theme tokens — LeapFI Platform V2 (NorthWinds Credit Union twin)
+ *
+ * SOURCES (values copied verbatim, no invented colors):
+ *   - Dark theme base + chart infra + semantic/categorical/sequential palettes:
+ *     /Users/joshsiegel/projects/github/leapfi/leapfi-documentation/08_Programs/nw_platform_demo/brand_doctrine.md
+ *     ("Core palette (web/digital)" + "Extended palettes" + "Accessibility" sections)
+ *   - Light theme token set (LM-*) + dark-mode corrected values (bundled fixes):
+ *     /Users/joshsiegel/projects/github/leapfi/leapfi-documentation/08_Programs/nw_platform_demo/lightmode_amendment_proposal.md
+ *     (S2 "Proposed light-mode token set", S4 "Bundled fix", S6.1 chart-panel axis label,
+ *     S7 "Theme-switching rules" token-name list, S8 verbatim clause replacements)
+ *   - Ratification: decisions.md D13 (RATIFIED AS PROPOSED, incl. bundled dark fixes)
+ *
+ * Theme-switching rule (S7 of the amendment): token-swap only, one attribute
+ * ([data-theme="dark"] or [data-theme="light"]) at the root swaps this block;
+ * layout/spacing/typography/component structure stay byte-identical between
+ * themes. Default theme: dark (S7 recommendation; D13 did not override).
+ */
+
+:root,
+[data-theme='dark'] {
+  /* Core palette — brand_doctrine.md "Core palette (web/digital)" */
+  --bg: #000000; /* Page background (primary) */
+  --bg2: #0d0d0d; /* Page background (secondary option) */
+  --panel: #0d1525; /* Card Blue — card/panel */
+  --border: #1e2d3d; /* Charcoal — border/divider */
+  --ink: #ffffff; /* Primary text */
+  --ink2: #9ba0a6; /* Cool Grey — secondary text (metadata/labels only; never on --panel) */
+  /* Tertiary text: PAL-5 corrected dark-mode value per amendment S4.1 (bundled fix).
+     Original doctrine hex #4A5568 measured 2.58-2.79:1 on BG-1 and failed AA;
+     #7B8794 passes (5.31-5.74:1). Amendment S8 PAL-5 replacement clause. */
+  --ink3: #7b8794;
+  --accent: #00f2ff; /* Brand Cyan — THE ONLY primary accent in dark mode */
+  --accent2: #2d5bff; /* Cobalt — secondary accent, gradient partner to Cyan only */
+  /* Focus treatment: brand_doctrine.md Accessibility — "Focus states visible, cyan glow preferred" */
+  --focus-ring: 0 0 0 2px #000000, 0 0 0 4px #00f2ff, 0 0 12px 2px rgba(0, 242, 255, 0.65);
+  --focus-ring-outline: 2px solid #00f2ff;
+
+  /* Chart infrastructure — brand_doctrine.md "Extended palettes" */
+  --chart-panel: #0d1525;
+  --chart-grid: #1e2d3d;
+  /* Axis labels: EXT-4 corrected dark-mode value per amendment S4.2 (bundled fix).
+     Original hex #64748B measured 3.83:1 on Card Blue chart panels and failed AA
+     for small text; #7C8CA3 passes (5.33-6.14:1). Amendment S8 EXT-4 replacement clause. */
+  --chart-axis: #7c8ca3;
+  --chart-light-label: #b0bec5; /* Mist — light labels */
+
+  /* Semantic (status ONLY) — brand_doctrine.md */
+  --sem-positive: #22c55e;
+  --sem-caution: #f59e0b;
+  --sem-alert: #ef4444;
+
+  /* Categorical (charts, <=6 series) — brand_doctrine.md, identities unchanged across themes */
+  --cat-1: #3a6eac; /* Steel Blue */
+  --cat-2: #2d5bff; /* Cobalt */
+  --cat-3: #00b2cc; /* Aqua */
+  --cat-4: #006d75; /* Deep Teal */
+  --cat-5: #6fc8d8; /* Glacier */
+  --cat-6: #0a2342; /* Midnight */
+
+  /* Sequential (low -> high) — brand_doctrine.md */
+  --seq-1: #002bff;
+  --seq-2: #006bff;
+  --seq-3: #0092ff;
+  --seq-4: #00b8ff;
+  --seq-5: #01dfd9;
+}
+
+[data-theme='light'] {
+  /* Light-mode token set — lightmode_amendment_proposal.md S2 "Proposed light-mode token set" */
+  --bg: #ffffff; /* LM-BG-1 — page background (primary) */
+  --bg2: #f7fafc; /* LM-BG-1b — Frost White, page background (secondary option) */
+  --panel: #f1f5f9; /* LM-PAL-1 — Frost Panel, card/panel */
+  --border: #d7dee7; /* LM-PAL-2 — Pale Slate, border/divider (decorative, no contrast floor applies) */
+  --ink: #0a2342; /* LM-PAL-3 — Midnight, primary text */
+  /* LM-PAL-4 secondary text: restricted to page background only (White/Frost
+     White) per amendment S3.2 — FAILS AA (4.34:1) on --panel (Frost Panel).
+     Never apply --ink2 to text rendered on --panel in light mode; use
+     --chart-axis (panel-seated variant) instead for panel-seated labels. */
+  --ink2: #64748b; /* LM-PAL-4 — Slate, secondary text (page-bg only) */
+  --ink3: #4a5568; /* LM-PAL-5 — Dim Grey, tertiary text (unchanged from dark-mode original) */
+  --accent: #006d75; /* LM-PAL-6 — Deep Teal, THE ONLY primary accent in light mode (Cyan excluded, S1/S3.5) */
+  --accent2: #2d5bff; /* LM-PAL-7 — Cobalt, secondary accent (unchanged) */
+  /* LM-FOCUS-1: solid ring, not a glow — a glow effect reads as dark-mode-
+     specific visual language (amendment S2 LM-FOCUS-1 row). */
+  --focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px #006d75;
+  --focus-ring-outline: 2px solid #006d75;
+
+  /* Chart infrastructure — panel/grid per LM-PAL-1/2; axis label is the
+     chart-panel-seated variant from amendment S6.1 (LM-PAL-4's page-only
+     Slate value fails on Frost Panel at 4.34:1, S3.2). */
+  --chart-panel: #f1f5f9;
+  --chart-grid: #d7dee7;
+  --chart-axis: #5a6b82; /* Slate, chart-panel variant — S6.1, 4.97:1 on Frost Panel / 5.44:1 on White */
+  --chart-light-label: #64748b; /* page-level LM-PAL-4 value, used off-panel only */
+
+  /* Semantic (status ONLY) — hexes unchanged (S6.3); flat-fill use on light
+     surfaces requires the 1.5px Midnight outline-ring treatment described in
+     amendment S6.3 (component-level concern, out of scope for token file). */
+  --sem-positive: #22c55e;
+  --sem-caution: #f59e0b;
+  --sem-alert: #ef4444;
+
+  /* Categorical identities unchanged (S9); Aqua/Glacier require the 1px
+     Midnight outline-stroke treatment on light fills per amendment S6.2
+     (component-level concern, out of scope for token file). */
+  --cat-1: #3a6eac; /* Steel Blue */
+  --cat-2: #2d5bff; /* Cobalt */
+  --cat-3: #00b2cc; /* Aqua — outline-stroke required on light fills, S6.2 */
+  --cat-4: #006d75; /* Deep Teal */
+  --cat-5: #6fc8d8; /* Glacier — outline-stroke required on light fills, S6.2 */
+  --cat-6: #0a2342; /* Midnight */
+
+  /* Sequential ramp — unchanged (amendment S2.1 reserves it for data encoding, both themes) */
+  --seq-1: #002bff;
+  --seq-2: #006bff;
+  --seq-3: #0092ff;
+  --seq-4: #00b8ff;
+  --seq-5: #01dfd9;
+}
