@@ -92,6 +92,95 @@
  * fish out a color would misrepresent the row's semantics for a cosmetic
  * shortcut, so this file references `var(--ink3)` directly instead —
  * still token-only, no raw hex, per the styling hard rule.
+ *
+ * SIDEBAR DARK-LOCK (decisions.md D21; dispatch closing Topbar.tsx's own
+ * D21 STOP-ITEM): D21 ratified the topbar's constant-dark-chrome band
+ * "consistent with the already-dark sidebar and the TalonFI dark-chrome
+ * inspiration" (decisions.md D21 row). Topbar.tsx's D21 file-header
+ * section flagged that premise as inaccurate against the code as shipped:
+ * this file rendered `NAV_STYLE.background` via the GLOBAL `--bg2` token,
+ * which tokens.css flips to Frost White (`#F7FAFC`) under
+ * `[data-theme='light']` — so the nav column was not actually dark-locked,
+ * it just happened to read as dark under the app's dark default. This
+ * section closes that gap using the exact mechanism Topbar.tsx's
+ * `TOPBAR_DARK_CHROME_CSS` established (design_system_spec.md's
+ * Talon-style dark sidebar; talonfi_layout_reference.md's dark-chrome
+ * inspiration), not a new one:
+ *
+ *   - MECHANISM: `SIDEBAR_DARK_CHROME_CSS` (module-level constant,
+ *     rendered once as a sibling `<style>` ahead of `<nav>` — `<style>` is
+ *     metadata content, invalid inside `<nav>`'s phrasing-content model,
+ *     same placement rule `TOPBAR_DARK_CHROME_CSS` follows relative to
+ *     `<header>`) redeclares the SAME 11 custom properties Topbar's block
+ *     does — `--bg`, `--bg2`, `--panel`, `--border`, `--ink`, `--ink2`,
+ *     `--ink3`, `--accent`, `--accent2`, `--focus-ring`,
+ *     `--focus-ring-outline` — scoped to `[data-lf-composite='sidebar']`
+ *     (this component's own root `<nav>`, no new attribute needed),
+ *     UNCONDITIONALLY, no `[data-theme=...]` gate. Every value is copied
+ *     VERBATIM from tokens.css's own `:root, [data-theme='dark']`
+ *     core-palette block — identical to `TOPBAR_DARK_CHROME_CSS`'s source,
+ *     not re-derived. Because CSS custom properties resolve per element
+ *     and a descendant's own inherited value always comes from its
+ *     nearest ancestor declaration, this single scoped block forces every
+ *     `var()` color this file (`NAV_STYLE`/`FOOTER_STYLE`/the version
+ *     span) and every descendant primitive `SidebarItem` composes
+ *     (`Icon`'s `--ink`/`--accent`/`--ink3` tone map, `Tag`'s `count`
+ *     variant `--panel`/`--ink`/`--border`) resolves to its dark value, in
+ *     both themes — without touching tokens.css's global blocks (every
+ *     other screen keeps reading those normally) and without editing
+ *     `SidebarItem.tsx` at all: `SidebarItem` already reads every color
+ *     exclusively via `var(--x)` (see that file's `ROW_BASE_STYLE`/
+ *     `rowStyle`/chevron-button styles), so it inherits the forced values
+ *     the same way Topbar's Button/Tag/Avatar/Icon primitives do — no
+ *     scoping needed in that file, confirmed by inspection, not assumed.
+ *
+ *   - NO POPOVER CARVE-OUT: Topbar.tsx's parallel mechanism narrows a
+ *     second rule back to page-theme values for the ProfileMenu popover
+ *     subtree, because that popover reads as a page-surface overlay
+ *     positioned above page content on open. Sidebar has no equivalent —
+ *     every row, including an expanded group's nested `<ul>`, renders
+ *     inline within the same fixed nav column, never as a floating
+ *     overlay — so there is no comparable surface to exempt; the nav
+ *     column is dark-locked in full, no exceptions.
+ *
+ *   - CONTRAST DISPOSITION (brief task — cite existing dark-palette pairs,
+ *     invent none): brand_doctrine.md's Accessibility section: "WCAG 2.1
+ *     AA minimum (AAA preferred). Approved: Cyan/Black ≈12.6:1; White/
+ *     Black 21:1; Cool Grey/Black ≈4.8:1." Concretely on this column:
+ *     default-state rows (`--ink` #FFFFFF text on the `--bg2` #0D0D0D
+ *     column background) are the White/Black-family pair that line
+ *     approves; the footer version string (`--ink3` #7B8794, tokens.css's
+ *     amendment-corrected dark-mode tertiary value, S4.1) reads at
+ *     5.31–5.74:1 on that same background per tokens.css's own comment.
+ *     Hover/active rows swap to `--panel` (#0D1525 Card Blue) underneath
+ *     the same `--ink` white — materially darker than the approved-pair
+ *     Black baseline, so contrast only improves. The current-item state
+ *     (`SidebarItem.tsx` `color: current ? 'var(--accent)' : 'var(--ink)'`
+ *     plus the `3px solid var(--accent)` left border) is Brand Cyan
+ *     (`--accent` #00F2FF) on that same dark surface — brand_doctrine.md's
+ *     own core-palette table is explicit this pairing is NOT
+ *     interchangeable with the light-theme swap: "Primary accent |
+ *     #00F2FF (Brand Cyan) | ... NEVER on white/light backgrounds (1.3:1 —
+ *     fails WCAG)" — exactly why `lightmode_amendment_proposal.md`
+ *     replaces `--accent` with Deep Teal `#006D75` for light-theme PAGE
+ *     content (LM-PAL-6). Dark-locking the column is what keeps Cyan
+ *     legal here: without this fix, a light-theme render would compute
+ *     `--accent` as the light-mode Deep Teal token while the column's
+ *     `background` (unscoped `--bg2`) also flipped light — a page-content
+ *     pairing, not a dark-chrome one, and never the failing raw
+ *     Cyan-on-white case either way; this mechanism keeps both the
+ *     surface AND the accent pinned to the dark-mode pair the doctrine
+ *     approves, constantly. Focus treatment on every focusable row is
+ *     tokens.css's dark `--focus-ring` (cyan glow, brand_doctrine.md
+ *     Accessibility: "Focus states visible, cyan glow preferred"), in
+ *     both themes — same token Topbar's band forces, same citation.
+ *
+ *   - TESTED VIA CSSOM: `sidebar.test.tsx`'s dark-lock coverage asserts
+ *     against the parsed `CSSStyleRule` objects on the injected `<style>`
+ *     sheet, not resolved computed colors — jsdom does not perform
+ *     `var()` substitution in `getComputedStyle()` (verified empirically
+ *     by the Topbar.tsx D21 author already; not re-verified per-dispatch
+ *     here, same limitation, same workaround).
  */
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -160,6 +249,33 @@ const NAV: NavTopItem[] = [
     ],
   },
 ];
+
+// SIDEBAR DARK-LOCK (file header "SIDEBAR DARK-LOCK" — full rationale,
+// sourcing, and contrast disposition there): forces every `var(--x)` color
+// role this component and its `SidebarItem`-composed descendants (Icon/Tag)
+// consume to its DARK value, unconditionally, scoped to this component's own
+// `[data-lf-composite='sidebar']` root — values copied verbatim from
+// tokens.css's `:root, [data-theme='dark']` core-palette block, identical
+// source to Topbar.tsx's `TOPBAR_DARK_CHROME_CSS`, no invented colors. No
+// second popover-restore rule (see file header "NO POPOVER CARVE-OUT" — the
+// sidebar has no overlay surface analogous to Topbar's ProfileMenu). Rendered
+// once, as a sibling `<style>` ahead of `<nav>` in `Sidebar`'s own return
+// below.
+const SIDEBAR_DARK_CHROME_CSS = `
+  [data-lf-composite='sidebar'] {
+    --bg: #000000;
+    --bg2: #0d0d0d;
+    --panel: #0d1525;
+    --border: #1e2d3d;
+    --ink: #ffffff;
+    --ink2: #9ba0a6;
+    --ink3: #7b8794;
+    --accent: #00f2ff;
+    --accent2: #2d5bff;
+    --focus-ring: 0 0 0 2px #000000, 0 0 0 4px #00f2ff, 0 0 12px 2px rgba(0, 242, 255, 0.65);
+    --focus-ring-outline: 2px solid #00f2ff;
+  }
+`;
 
 export interface SidebarProps {
   /** Id of the current top-level item (leaf, e.g. 'home') or nested item (e.g. 'onside.feed'). */
@@ -241,68 +357,75 @@ export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071' }: Side
   };
 
   return (
-    <nav aria-label="Primary" data-lf-composite="sidebar" style={NAV_STYLE}>
-      <ul style={LIST_STYLE}>
-        {NAV.map((item) => {
-          const hasChildren = Boolean(item.children && item.children.length > 0);
-          const childActive = hasChildren && item.children!.some((child) => child.id === activeId);
-          // A navigable group header (B-11) is itself a routed screen, so it
-          // can be the current item; plain group headers never match activeId.
-          const isCurrentTop = item.id === activeId;
-          const isNavigableGroup = hasChildren && item.navigable === true;
-          const expanded = hasChildren
-            ? (overrides[item.id] ?? (childActive || item.defaultExpanded || false))
-            : false;
+    // SIDEBAR DARK-LOCK: <style> is metadata content, not valid inside
+    // <nav>'s phrasing-content model — sibling here, ahead of the nav, not
+    // nested inside it (same placement rule TOPBAR_DARK_CHROME_CSS follows
+    // relative to <header>).
+    <>
+      <style>{SIDEBAR_DARK_CHROME_CSS}</style>
+      <nav aria-label="Primary" data-lf-composite="sidebar" style={NAV_STYLE}>
+        <ul style={LIST_STYLE}>
+          {NAV.map((item) => {
+            const hasChildren = Boolean(item.children && item.children.length > 0);
+            const childActive = hasChildren && item.children!.some((child) => child.id === activeId);
+            // A navigable group header (B-11) is itself a routed screen, so it
+            // can be the current item; plain group headers never match activeId.
+            const isCurrentTop = item.id === activeId;
+            const isNavigableGroup = hasChildren && item.navigable === true;
+            const expanded = hasChildren
+              ? (overrides[item.id] ?? (childActive || item.defaultExpanded || false))
+              : false;
 
-          return (
-            <li key={item.id}>
-              <SidebarItem
-                id={item.id}
-                label={item.label}
-                icon={item.icon}
-                level="top"
-                current={isCurrentTop}
-                expandable={hasChildren}
-                expanded={expanded}
-                onPress={() => {
-                  if (!hasChildren) {
-                    onNavigate(item.id);
-                    return;
-                  }
-                  if (isNavigableGroup) {
-                    // B-11 contract: label press navigates AND expands (base
-                    // go('connect') navigation + force-open, source 803 /
-                    // 3813–3816). The chevron below is the toggle-only path.
-                    if (!expanded) handleToggle(item.id, false);
-                    onNavigate(item.id);
-                    return;
-                  }
-                  handleToggle(item.id, expanded);
-                }}
-                {...(isNavigableGroup ? { onChevronPress: () => handleToggle(item.id, expanded) } : {})}
-              />
-              {hasChildren && expanded ? (
-                <ul id={sidebarNestedListId(item.id)} aria-label={`${item.label} sections`} style={NESTED_LIST_STYLE}>
-                  {item.children!.map((child) => (
-                    <li key={child.id}>
-                      <SidebarItem
-                        id={child.id}
-                        label={child.label}
-                        level="nested"
-                        current={child.id === activeId}
-                        onPress={() => onNavigate(child.id)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
-      <div style={FOOTER_STYLE}>
-        <span style={{ color: 'var(--ink3)', fontSize: '0.75rem', fontWeight: 500 }}>{versionLabel}</span>
-      </div>
-    </nav>
+            return (
+              <li key={item.id}>
+                <SidebarItem
+                  id={item.id}
+                  label={item.label}
+                  icon={item.icon}
+                  level="top"
+                  current={isCurrentTop}
+                  expandable={hasChildren}
+                  expanded={expanded}
+                  onPress={() => {
+                    if (!hasChildren) {
+                      onNavigate(item.id);
+                      return;
+                    }
+                    if (isNavigableGroup) {
+                      // B-11 contract: label press navigates AND expands (base
+                      // go('connect') navigation + force-open, source 803 /
+                      // 3813–3816). The chevron below is the toggle-only path.
+                      if (!expanded) handleToggle(item.id, false);
+                      onNavigate(item.id);
+                      return;
+                    }
+                    handleToggle(item.id, expanded);
+                  }}
+                  {...(isNavigableGroup ? { onChevronPress: () => handleToggle(item.id, expanded) } : {})}
+                />
+                {hasChildren && expanded ? (
+                  <ul id={sidebarNestedListId(item.id)} aria-label={`${item.label} sections`} style={NESTED_LIST_STYLE}>
+                    {item.children!.map((child) => (
+                      <li key={child.id}>
+                        <SidebarItem
+                          id={child.id}
+                          label={child.label}
+                          level="nested"
+                          current={child.id === activeId}
+                          onPress={() => onNavigate(child.id)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+        <div style={FOOTER_STYLE}>
+          <span style={{ color: 'var(--ink3)', fontSize: '0.75rem', fontWeight: 500 }}>{versionLabel}</span>
+        </div>
+      </nav>
+    </>
   );
 }
