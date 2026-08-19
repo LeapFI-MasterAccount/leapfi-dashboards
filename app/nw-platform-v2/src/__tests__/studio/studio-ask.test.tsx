@@ -3,18 +3,29 @@
  * citing its base-page line anchor (leapfi-platform.html @ 1c230fe) or
  * survey_map.md section. Tests observe the app — they never adapt it.
  *
+ * Fix-wave "studio" batch (TEST MAINTENANCE per the dispatch rule): the
+ * earlier suite pinned pre-fix deviations (auto-register without the
+ * explicit Add press, the two-sentence gutted answer, raw catalog values,
+ * the opening line without "Good one. "); expectations are updated here
+ * to the base-correct behavior (STU-01/06/07/08/15). Lever state comes
+ * from state/demoStore.ts (DEFAULT_SLIDERS: eff 70 → L.eff 0.70, tol 52 →
+ * threshold 65); resetDemo() in beforeEach restores the shared OPPS pool
+ * between tests.
+ *
  * Base anchors pinned here:
  *  - COPILOT_QA seeded Q&A: base 3613-3623 (ported verbatim in
  *    data/misc.ts, its own header cites the same lines)
- *  - auto-loan seeded answer + register add: base 4415-4429
- *    (autoLoanAnswer / addAutoLoan; AUTO_LOAN_OPPORTUNITY /
- *    AUTO_LOAN_DETAIL ported at data/misc.ts:4415-4429 note)
+ *  - auto-loan seeded answer (four grounding rows, lever-scaled envelope):
+ *    base 4417-4424 (autoLoanAnswer; STU-07/STU-08); the explicit "Add to
+ *    the opportunity register" press: base 4426-4429 (addAutoLoan →
+ *    acceptProposed; STU-06)
  *  - route() no-match fallback + 'Scope "<Query>" as a new use case'
  *    entry chip with capitalized query: base 4467-4470 (capitalization
  *    `q.charAt(0).toUpperCase()+q.slice(1)`, 4470)
  *  - intake terminal actions acted on by the screen:
  *    acceptProposed 4401-4412 (obligation arithmetic 3 + gates×2, line
- *    4410; domainsFor/DOMMAP 4299-4300), discardProposed 4413,
+ *    4410; tolerance clause 4410; domainsFor/DOMMAP 4299-4300; the real
+ *    shared-register write — STU-01), discardProposed 4413,
  *    route() intake-cancel branch 4435-4439
  *
  * Timing constants (ASK_SUBMIT_DELAY_MS=350 / ASK_RENDER_DELAY_MS=450,
@@ -28,8 +39,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { StudioAsk } from '../../screens/StudioAsk';
 import type { TopbarProps } from '../../components/Topbar';
-import { AUTO_LOAN_DETAIL } from '../../data/misc';
 import { INTAKE } from '../../data/misc';
+import { resetDemo } from '../../state/demoStore';
 
 const topbar: TopbarProps = {
   breadcrumb: 'Studio · Ask',
@@ -76,6 +87,7 @@ function answerIntake(answers: [string, string, string, string]) {
 }
 
 beforeEach(() => {
+  resetDemo(); // restore the shared OPPS pool / levers between tests (demoStore)
   vi.useFakeTimers();
 });
 
@@ -84,19 +96,22 @@ afterEach(() => {
 });
 
 describe('StudioAsk match path — seeded Q&A (base 3613-3623 COPILOT_QA, 4415-4429 auto-loan)', () => {
-  it('answers the seeded indirect-auto-lending question from AUTO_LOAN_DETAIL/AUTO_LOAN_OPPORTUNITY (base 4415-4429)', () => {
+  it('answers the seeded indirect-auto-lending question with the base four-row grounding card and the lever-scaled envelope (base autoLoanAnswer 4417-4424; STU-07/STU-08)', () => {
     renderStudioAsk();
     ask('What are our rules on indirect auto lending?');
 
-    // Answer composed from the verbatim-ported records: DETAIL.sum + gates
-    // + cost/value envelope (base addAutoLoan record: cost 350000 / val
-    // 520000 / g Fair Lending, Adverse Action, Model Risk — line 4427).
+    // Base autoLoanAnswer content (4417-4424): You have / Missing / OnSide
+    // flags (with live control scores) / Envelope — the "grounded in
+    // NorthWinds' own state, never a generic checklist" beat. Envelope
+    // value is adoption-scaled: 520000 × 0.70 = $364k (base 4423; STU-07).
     // Scoped to ChatHero's conversation list: the register's own sr-only
     // live region is a second role="status" on this screen.
     const answer = within(screen.getByRole('list', { name: 'Conversation' })).getByRole('status');
-    expect(answer).toHaveTextContent(AUTO_LOAN_DETAIL.sum);
-    expect(answer).toHaveTextContent('Governance gates before this ships: Fair Lending, Adverse Action, Model Risk.');
-    expect(answer).toHaveTextContent('Estimated build cost $350k, estimated annual value $520k.');
+    expect(answer).toHaveTextContent('Grounded in NorthWinds’ own state, never a generic checklist');
+    expect(answer).toHaveTextContent('You have: Core + LOS integration patterns');
+    expect(answer).toHaveTextContent('Missing: Real-time decisioning infrastructure');
+    expect(answer).toHaveTextContent('OnSide flags: Fair Lending 68% · open · Adverse Action 55% · open · Model Risk 70% · open.');
+    expect(answer).toHaveTextContent('Envelope: ≈ $350k build · ≈ $364k/yr at your adoption setting');
   });
 
   it('renders citations back to approved policy documents for the auto-loan answer (demo_script Step 4 "See" line; docs from data/doclib.ts corpus)', () => {
@@ -110,7 +125,7 @@ describe('StudioAsk match path — seeded Q&A (base 3613-3623 COPILOT_QA, 4415-4
     expect(within(sources).getByText('Quarterly Fair Lending Review')).toBeInTheDocument();
   });
 
-  it('registers the auto-loan opportunity in the register, badged "From Ask" (base addAutoLoan → acceptProposed mechanic, 4415-4429 / 4401-4412)', () => {
+  it('gates the register write behind the explicit "Add to the opportunity register" press, then registers badged "From Ask" (base addAutoLoan 4426-4429 → acceptProposed 4401-4412; STU-06)', () => {
     renderStudioAsk();
     // Register starts at the 15-play catalog (base OPPS, 1177-1195) without
     // the auto-loan play.
@@ -119,16 +134,34 @@ describe('StudioAsk match path — seeded Q&A (base 3613-3623 COPILOT_QA, 4415-4
 
     ask('What are our rules on indirect auto lending?');
 
+    // STU-06: the answer only OFFERS the add (base 4426) — the register
+    // must NOT have mutated yet.
+    expect(within(table).queryByText(/Auto loan origination platform/)).not.toBeInTheDocument();
+    const addButton = screen.getByRole('button', { name: 'Add to the opportunity register' });
+    // One-primary rule (spec §5.4/§6): "Ask" is the screen's only primary.
+    expect(addButton).toHaveAttribute('data-variant', 'secondary');
+
+    fireEvent.click(addButton);
+
     expect(within(table).getByText(/Auto loan origination platform/)).toBeInTheDocument();
     expect(within(table).getByText('From Ask')).toBeInTheDocument();
-    // Screen-owned live-region announcement for the register addition
-    // (a11y port of the base's visible register re-render, renderRegister
-    // 4315-4327).
+    // Screen-owned live-region announcement for the ACTUAL addition, value
+    // adoption-scaled (base renderRegister 4325: fmt(o.val*L.eff); STU-07).
     expect(
       screen.getByText(
-        'New opportunity registered: Auto loan origination platform — $520k annual value, gated on Fair Lending, Adverse Action, Model Risk.',
+        'New opportunity registered: Auto loan origination platform — $364k/yr at adoption, gated on Fair Lending, Adverse Action, Model Risk.',
       ),
     ).toBeInTheDocument();
+    // acceptProposed confirmation (4408-4411): tolerance clause (minGate 55
+    // < threshold 65 → sequence-gated), 3 + 3×2 = 9 obligations, DOMMAP
+    // display domains, live library count 15 → 16 (STU-01).
+    expect(
+      screen.getByText(
+        'Added. Auto loan origination platform is in the register, currently sequence-gated. Studio shows it with the control that unlocks it. It pulls 9 obligations into scope across Fair Lending, Model Risk; OnSide has re-evaluated those domain targets. The library is at 16.',
+      ),
+    ).toBeInTheDocument();
+    // The offer is consumed — a second Add affordance is not left dangling.
+    expect(screen.queryByRole('button', { name: 'Add to the opportunity register' })).not.toBeInTheDocument();
   });
 
   it('answers a seeded COPILOT_QA question with inline <b> tags stripped and its sources listed (base 3613-3623; base rendered via innerHTML, port is plain text)', () => {
@@ -170,6 +203,62 @@ describe('StudioAsk no-match path — route() fallback + scope entry chip (base 
   });
 });
 
+describe('StudioAsk matcher guard (base cpMatch 1799-1808; route() greeting/short-query guard 4471-4476; STU-03)', () => {
+  it('a greeting ("thanks") gets the base help line — never a policy answer and never a scope chip', () => {
+    renderStudioAsk();
+    ask('thanks');
+    expect(screen.getByText(/I can do three things from this box/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /as a new use case/ })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Answer sources')).not.toBeInTheDocument();
+  });
+
+  it('a short fragment ("in") can no longer substring-match a seeded policy answer (base cpMatch requires ≥2 overlapping words >4 chars)', () => {
+    renderStudioAsk();
+    ask('in');
+    // Pre-fix, `phrase.includes('in')` matched the data-sharing chip and
+    // rendered a confidently wrong cited policy answer. Base-correct: the
+    // <3-word guard answers with the help line, cites nothing.
+    expect(screen.getByText(/I can do three things from this box/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Answer sources')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /as a new use case/ })).not.toBeInTheDocument();
+  });
+});
+
+describe('StudioAsk intake mode consumes the main Ask input (base route() 4434-4444; STU-14)', () => {
+  function reachOpenWizard() {
+    renderStudioAsk();
+    ask('unicorn parade please');
+    fireEvent.click(screen.getByRole('button', { name: 'Scope "Unicorn parade please" as a new use case' }));
+    act(() => {
+      vi.advanceTimersByTime(700); // OPENING_DELAY_MS → first question
+    });
+  }
+
+  it('a mid-wizard Ask is captured as the current intake answer — no second conversation, no stale scope chip', () => {
+    reachOpenWizard();
+    expect(screen.getByText(INTAKE[0]!.q)).toBeInTheDocument();
+
+    // Free-typed text submitted through the MAIN Ask box (base 4440-4443:
+    // the typed text IS the answer). ask()'s 800ms of timer advances cover
+    // ADVANCE_DELAY_MS, so Q2 is up afterwards.
+    ask('It takes about a team and a half');
+    expect(screen.getByText(INTAKE[1]!.q)).toBeInTheDocument();
+    // The typed text landed as the intake answer bubble…
+    expect(screen.getByText('It takes about a team and a half')).toBeInTheDocument();
+    // …and never spawned a parallel no-match flow or scope offer.
+    expect(screen.queryByRole('button', { name: /as a new use case/ })).not.toBeInTheDocument();
+  });
+
+  it("a mid-wizard Ask containing 'cancel' cancels the intake (base cancel branch 4435-4439)", () => {
+    reachOpenWizard();
+    ask('cancel');
+    expect(screen.queryByLabelText('Scoping conversation')).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Scoping cancelled. Nothing was added. Ask me anything, or describe another idea when you’re ready.'),
+    ).toBeInTheDocument();
+  });
+});
+
 describe('StudioAsk intake wizard terminal intents (base acceptProposed 4401-4412, discardProposed 4413, cancel 4435-4439)', () => {
   function reachWizard() {
     renderStudioAsk();
@@ -177,11 +266,11 @@ describe('StudioAsk intake wizard terminal intents (base acceptProposed 4401-441
     fireEvent.click(screen.getByRole('button', { name: 'Scope "Unicorn parade please" as a new use case' }));
   }
 
-  it('pressing the scope chip mounts the wizard with the startIntake opening line for the capitalized name (base 4363-4368)', () => {
+  it('pressing the scope chip mounts the wizard with the startIntake opening line for the capitalized name (base 4363-4368, VERBATIM incl. "Good one. " — STU-15)', () => {
     reachWizard();
     expect(
       screen.getByText(
-        'I don\'t have a comparable for "Unicorn parade please" in the library yet, so let me scope it properly. Four quick questions and I\'ll come back with a build estimate, the controls and regulations it touches, and where it slots on the roadmap.',
+        'Good one. I don\'t have a comparable for "Unicorn parade please" in the library yet, so let me scope it properly. Four quick questions and I\'ll come back with a build estimate, the controls and regulations it touches, and where it slots on the roadmap.',
       ),
     ).toBeInTheDocument();
     // The chip is consumed — it does not linger once intake starts.
@@ -197,13 +286,15 @@ describe('StudioAsk intake wizard terminal intents (base acceptProposed 4401-441
 
     // Wizard unmounts; the terminal line lands in the main chat log.
     expect(screen.queryByLabelText('Scoping conversation')).not.toBeInTheDocument();
-    // 3 + 4×2 = 11 obligations (base 4410); domainsFor([FL, AA, MR,
-    // Privacy]) = Fair Lending, Model Risk, InfoSec / GLBA (base
-    // DOMMAP 4299: FL & AA → Fair Lending; Privacy → InfoSec / GLBA);
-    // library 15 → 16 (base 'The library is at '+OPPS.length).
+    // Base acceptProposed line (4408-4411) with the tolerance clause
+    // (minGate 55 < threshold 65 → sequence-gated, base 4410); 3 + 4×2 =
+    // 11 obligations (4410); domainsFor([FL, AA, MR, Privacy]) = Fair
+    // Lending, Model Risk, InfoSec / GLBA (base DOMMAP 4299: FL & AA →
+    // Fair Lending; Privacy → InfoSec / GLBA); library 15 → 16 — TRUE now
+    // that acceptOpportunity really pushed the play (STU-01).
     expect(
       screen.getByText(
-        'Added. Unicorn parade please is in the register. It pulls 11 obligations into scope across Fair Lending, Model Risk, InfoSec / GLBA; OnSide has re-evaluated those domain targets. The library is at 16.',
+        'Added. Unicorn parade please is in the register, currently sequence-gated. Studio shows it with the control that unlocks it. It pulls 11 obligations into scope across Fair Lending, Model Risk, InfoSec / GLBA; OnSide has re-evaluated those domain targets. The library is at 16.',
       ),
     ).toBeInTheDocument();
 

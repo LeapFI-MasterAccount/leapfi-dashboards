@@ -19,45 +19,24 @@
  * `../components/DeckView.tsx` / `DeckSlide.tsx`) read-only, per the same
  * addendum row — no deck-rendering code is duplicated here.
  *
- * STOP-ITEM — Drawer has no "wide" variant: the base engine's `#drawer` gets a
- * `.wide` CSS modifier for every report (`dr.classList.add('wide')`, source line
- * 1679), and this dispatch's brief describes Reporting as using "the existing
- * shared Drawer, wide variant." `../components/Drawer.tsx`'s own header already
- * flags this exact gap ("AMBIGUITY RESOLVED — no 'wide' variant... STOP-item if a
- * future screen composite needs the wider layout — that is new spec surface, not
- * a restyle") and design_system_spec.md §2.2 C7 lists no size variant at all.
- * Drawer.tsx is outside this dispatch's ALLOWLIST, so no `wide` prop is added
- * here or there. This file renders inside the Drawer's existing `min(480px,
- * 100vw)` width instead, and every DataTable below is wrapped in its own
- * `overflow-x: auto` container so a wide table scrolls inside the narrow drawer
- * rather than blowing out the layout. Flagged for design-authority / a future
- * Drawer `size`/`wide` prop addition — not silently worked around by widening
- * Drawer.tsx from this file.
+ * WIDE DRAWER RESOLVED (RPT-03 fix wave — supersedes this file's original
+ * STOP-item): `../components/Drawer.tsx` now ships the addendum-required
+ * `size="wide"` variant (base `dr.classList.add('wide')`, source 1679;
+ * `.drawer.wide{width:min(920px,97vw)}`, source 326) and `Reporting.tsx`
+ * passes it in report mode. The `overflow-x: auto` wrappers on every
+ * DataTable are kept as a defensive floor for narrow viewports.
  *
- * STOP-ITEM — forward references to not-yet-wired screens: (1) `gapboard`'s
- * "Open cases →" link is wired through the same `onNavigate` mechanism every
- * screen already uses (`onNavigate('cases')`), per this dispatch's brief
- * ("targets batch-4's Cases screen") — but `App.tsx`'s `SCREEN_IDS` union has no
- * `'cases'` entry yet (Batch 4's `screens/Cases.tsx` has not landed as of this
- * writing, only its `views/CaseDetail.tsx` sibling has), so today this call
- * silently no-ops via `navigateToScreen`'s `isScreenId` guard. (2) The base
- * engine's `head()` also renders an "Open full governance detail · OnSide →"
- * utility link on every report (source line 1482); this file does NOT build it —
- * it is not named in this dispatch's brief (only the gapboard/Cases link is), and
- * inventing it now would be new UX beyond the brief's stated scope even though
- * `screens/OnSideOverview.tsx` has since landed (its own `ScreenId` is likewise
- * not yet wired into `App.tsx`). Both are follow-up wiring, not this file's job.
+ * STOP-ITEM — base `head()`'s "Open full governance detail · OnSide →" utility
+ * link (source line 1482) is still not built here — not named in any dispatch
+ * brief so far; follow-up wiring, not this file's job. (The original companion
+ * STOP-item on `onNavigate('cases')` is closed: `'cases'` is a wired ScreenId.)
  *
- * STOP-ITEM — CASES starts empty: `data/cases.ts` exports `CASES` as
- * `export let CASES: Case[] = []`, populated only by that module's own
- * `seedCases(DOCLIB)`, which nothing in this worktree calls yet (Batch 4's
- * `Cases.tsx`, not landed, is the presumed caller). `boardCases()` below is a
- * verbatim-ported pure function over whatever `CASES` holds at render time — an
- * honest empty state today, and correct once Batch 4 lands and seeds/advances
- * real cases (ES module singleton, so this screen picks up that state without
- * any wiring of its own). This matches the base engine's own genuinely-empty
- * pre-interaction state for the Gap Closure Board report (source lines
- * 1503-1504's fallback message + "Open cases" link), not a defect.
+ * CASES note: `boardCases()` below is a verbatim-ported pure function over
+ * whatever the live `CASES` singleton holds at render time — empty until a
+ * board-tier case is conditionally approved, matching the base engine's own
+ * pre-interaction empty state (source 1503-1504). `Cases.tsx` seeds CASES at
+ * module scope, and this view re-renders on every store write via
+ * `useDemoStore()` (RPT-04 fix wave), so case advances appear live here.
  *
  * AMBIGUITY RESOLVED — domain-aggregate derive functions have no engine home:
  * `curOf`/`oblToClose`/`statusOf`/`domByKey`/`boardCases` (source lines
@@ -71,19 +50,13 @@
  * `Roadmap.tsx` (`buildRoadmapPhases`) already established for their own
  * screen-local derive helpers.
  *
- * AMBIGUITY RESOLVED — `gapsClosed()` always returns empty: the source's real
- * `gapsClosed()` (line 3203) filters on `gapState(g).k==='closed'`, which reads
- * `DOCLIB[key].rlState` — a mutable, per-document redline-adoption flag that
- * `OnSideDocuments.tsx` (this worktree) never writes back to the shared
- * `DOCLIB` module; per `App.tsx`'s own header note, every screen's adopted-
- * redline state stays screen-local React state, never lifted to shared scope.
- * There is therefore no real cross-screen signal this file can read for "which
- * gap closed." Rendering a fabricated non-zero count would violate Core
- * Principle 3 ("render server truth, including the unflattering parts"); this
- * file's `gapsClosed()` always returns `[]`, which is the honest answer today
- * and matches the base engine's own identical count before any redline is
- * adopted in a session. STOP-item for whichever dispatch lifts redline-adoption
- * state to shared scope.
+ * gapsClosed() UPDATE (fix wave): the shared adopt-cascade now lives in
+ * `state/demoStore.ts` (`applyGapClosure`, base 3205-3211 verbatim — stamps
+ * `applied` on the GAPS rows it closes). `gapsClosed()` below counts those
+ * `applied` rows: still honestly 0 before any adoption (identical to the base
+ * pre-interaction count), and live once the OnSide screens route adoption
+ * through the store. The original "always returns []" resolution is obsolete —
+ * a real cross-screen signal now exists.
  *
  * STANDING_ROWS SUPERSEDED (parity-wiring wave, gate dispatch — closing this
  * file's own original STOP-item "once `data/boardLog.ts` lands, `STANDING_ROWS`
@@ -120,20 +93,30 @@
  * design-authority confirmation, same category as `Roadmap.tsx`'s own
  * "AMBIGUITY RESOLVED" notes on inferred-not-sourced copy.
  *
- * DEFAULT_SLIDERS: `engine/plan.ts`'s `computePlan`/`deriveRecomputeView` take
- * lever state as a parameter (no default global position ships in that module).
- * `InvestmentDesign.tsx`'s own `INITIAL_SLIDERS` constant (same source anchor,
- * the base engine's initial DOM slider values) is not exported from that screen
- * file, so the identical literal is re-declared here as this file's own
- * `DEFAULT_SLIDERS` — same values, same source anchor, not re-derived.
+ * LIVE LEVERS (RPT-04 fix wave — supersedes this file's original
+ * "DEFAULT_SLIDERS" module-constant note): the base recomputes every report
+ * from the live lever state on each open (`openReport` begins
+ * `var P=computePlan(), L=P.L`, source 1477). This file's original
+ * `REPORT_VIEW` module constant froze the boot position forever, so reports
+ * contradicted whatever the presenter had just shown in Investment Design.
+ * Now every report body derives its view per render via
+ * `state/demoStore.ts`'s `deriveLiveRecomputeView()` (live sliders + live
+ * opportunity pool, including Discovery-accepted plays), and the exported
+ * `ReportView` subscribes with `useDemoStore()` so lever/store writes
+ * re-render the open report — the base's recompute-on-open behavior and
+ * better (live while open, matching React's continuous-render model).
  *
- * STOP-item — no executable test run: identical to every sibling screen already
- * landed in this worktree — no test runner is installed (`package.json`, out of
- * this dispatch's ALLOWLIST, has `dev`/`build`/`preview` scripts only). Verified
- * via `npx tsc --noEmit` against the whole `src/` tree (strict mode,
- * `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`) instead; recommending
- * the same test-tooling follow-up dispatch every sibling screen already
- * recommends.
+ * Report chrome (RPT-11 fix wave): base `head()` (source 1479-1482) renders
+ * the category line 'LEAPFI · Reporting · generated from the live record'
+ * plus a PER-REPORT `repmeta` subtitle ('Investment posture &
+ * recommendation', 'Register status · {owner} · Interagency Guidance
+ * 2026-13', …). `reportSub()` below ports every kind's subtitle verbatim;
+ * the original single generic audience line is gone. Base `tile()`
+ * sub-captions ('est. 10% of NIE', 'conservative 12%', 'of 87 in
+ * inventory', …) are restored via the local `CaptionedStat` wrapper.
+ *
+ * Tests: `src/__tests__/reporting_cases/` (vitest is installed; the original
+ * "no test runner" STOP-item is obsolete and removed).
  */
 import type { CSSProperties, ReactNode } from 'react';
 import { StatCard } from '../components/StatCard';
@@ -145,12 +128,9 @@ import { Label } from '../components/primitives/Label';
 import { Tag } from '../components/primitives/Tag';
 import type { TagVariant } from '../components/primitives/Tag';
 import { Button } from '../components/primitives/Button';
-import {
-  deriveRecomputeView,
-  fmt,
-  riskLabel,
-} from '../engine/plan';
-import type { SliderState, RecomputeView, PlanOpportunity } from '../engine/plan';
+import { fmt, riskLabel } from '../engine/plan';
+import type { RecomputeView, PlanOpportunity } from '../engine/plan';
+import { deriveLiveRecomputeView, useDemoStore } from '../state/demoStore';
 import {
   CTRL,
   GREEN,
@@ -160,8 +140,8 @@ import {
   CUR,
   DETAIL,
 } from '../data/studio';
-import { DOMAINS, OBL, DOM_OPEN, SRC_ROWS } from '../data/onside';
-import type { OnsideDomain, ObligationRow, DomOpenItem } from '../data/onside';
+import { DOMAINS, GAPS, OBL, DOM_OPEN, SRC_ROWS } from '../data/onside';
+import type { GapItem, OnsideDomain, ObligationRow, DomOpenItem } from '../data/onside';
 import { APPROVAL, CASES, CASE_STAGES_B } from '../data/cases';
 import type { Case } from '../data/cases';
 import { DOCLIB } from '../data/doclib';
@@ -220,9 +200,12 @@ function boardCases(): Case[] {
   );
 }
 
-/** See file header "AMBIGUITY RESOLVED — gapsClosed() always returns empty." */
-function gapsClosed(): unknown[] {
-  return [];
+/** See file header "gapsClosed() UPDATE": counts GAPS rows the shared
+ * adopt-cascade has closed (`state/demoStore.ts` `applyGapClosure` stamps
+ * `applied`, base 3209). 0 before any adoption — the base's own
+ * pre-interaction count (base gapsClosed, source 3203). */
+function gapsClosed(): GapItem[] {
+  return (GAPS as Array<GapItem & { applied?: boolean }>).filter((g) => g.applied === true);
 }
 
 /** Source ternary: `L.tol<34?'conservative':L.tol<67?'balanced':'aggressive'`. */
@@ -241,20 +224,15 @@ function caseStageMeta(stage: string): { label: string; variant: TagVariant } {
 }
 
 /* ============================================================
- * Default lever position — see file header "DEFAULT_SLIDERS."
+ * Live lever view — see file header "LIVE LEVERS" (RPT-04). Never
+ * cached at module scope: every report body calls this per render,
+ * the port of base openReport's `var P=computePlan(), L=P.L`
+ * (source 1477).
  * ============================================================ */
 
-const DEFAULT_SLIDERS: SliderState = {
-  amb: 3,
-  tol: 52,
-  speed: 50,
-  budget: 450000,
-  roi: 2.5,
-  eff: 70,
-};
-
-/** Computed once — same "seed data precomputed as a module constant" idiom `Roadmap.tsx`'s `ROADMAP_PHASES` already uses. */
-const REPORT_VIEW: RecomputeView = deriveRecomputeView(DEFAULT_SLIDERS);
+function liveReportView(): RecomputeView {
+  return deriveLiveRecomputeView();
+}
 
 /* ============================================================
  * Report kinds + index/drawer copy (single source of truth —
@@ -309,8 +287,10 @@ export const REPORT_META: Record<ReportKind, ReportMeta> = {
     indexTitle: 'Regulatory Change Briefing',
     title: 'Regulatory Change Briefing',
     audience: 'For the board',
+    // Base rc('regchange', …) card copy verbatim incl. the closing sentence
+    // (source 3715) — 'Updates logged in place.' was dropped pre-fix (RPT-08).
     description:
-      'The standing view: what changed, what applies to this institution, what we are doing, what remains open.',
+      'The standing view: what changed, what applies to this institution, what we are doing, what remains open. Updates logged in place.',
   },
   posture: {
     indexTitle: 'Risk Posture & Targets',
@@ -370,6 +350,39 @@ export const REPORT_META: Record<ReportKind, ReportMeta> = {
   },
 };
 
+/** Per-report `repmeta` subtitle — base `head()`'s second argument, ported
+ * verbatim per kind (RPT-11a; owner attributions and meeting framing were
+ * lost to a generic audience line pre-fix). Sources: gapboard 1486, board
+ * 1508, compliance 1534, plan 1546, roadmap 1553, regchange 1563, posture
+ * 1578, mrm 1591, tprm 1622, infosec 1641, roi 1663. Computed per call —
+ * the mrm/tprm/infosec owners read the live DOMAINS rows. */
+export function reportSub(kind: ReportKind): string {
+  switch (kind) {
+    case 'gapboard':
+      return `For the ${APPROVAL.committee} · Aug 2026 meeting`;
+    case 'board':
+      return 'Investment posture & recommendation';
+    case 'compliance':
+      return 'Control gaps blocking the portfolio';
+    case 'plan':
+      return 'Funded portfolio & backlog';
+    case 'roadmap':
+      return 'What to do, in what order';
+    case 'regchange':
+      return 'The standing view · what changed, what applies, what we are doing';
+    case 'posture':
+      return 'Every domain against the bar the institution set';
+    case 'mrm':
+      return `Register status · ${domByKey('mrm')?.owner ?? ''} · Interagency Guidance 2026-13`;
+    case 'tprm':
+      return `Register status · ${domByKey('tprm')?.owner ?? ''} · 2023 Interagency Guidance`;
+    case 'infosec':
+      return `GLBA safeguards & security posture · ${domByKey('infosec')?.owner ?? ''}`;
+    case 'roi':
+      return 'Why the investment pays for itself';
+  }
+}
+
 /* ============================================================
  * Shared layout + small local composites.
  * ============================================================ */
@@ -394,32 +407,56 @@ function TableSection({ heading, children }: { heading: string; children: ReactN
   );
 }
 
-/** Shared "Play/Category/Build/Annual value/Payback/Risk" columns — `plan` and `roi` kinds both render a funded-portfolio table with this exact shape (source 1549 vs 1672-1674). */
-const FUNDED_COLUMNS: DataTableColumn<PlanOpportunity>[] = [
-  { id: 'play', header: 'Play', render: (o) => o.n, sortable: true, sortValue: (o) => o.n },
-  { id: 'category', header: 'Category', render: (o) => o.c },
-  { id: 'build', header: 'Build', render: (o) => fmt(o.cost), align: 'end' },
-  { id: 'annual', header: 'Annual value', render: (o) => fmt(o.val * REPORT_VIEW.L.eff), align: 'end' },
-  {
-    id: 'payback',
-    header: 'Payback',
-    render: (o) => `${Math.round((o.cost / (o.val * REPORT_VIEW.L.eff)) * 12)} mo`,
-    align: 'end',
-  },
-  {
-    id: 'risk',
-    header: 'Risk',
-    render: (o) => (
-      <Tag text={riskLabel(o.r)} variant={o.r === 'low' ? 'status-positive' : o.r === 'med' ? 'status-caution' : 'status-alert'} />
-    ),
-  },
-];
+const statCaptionStyle: CSSProperties = { font: 'inherit', fontSize: '0.6875rem', color: 'var(--ink3)', margin: 0 };
 
-const BENCH_COLUMNS: DataTableColumn<PlanOpportunity>[] = [
-  { id: 'play', header: 'Play', render: (o) => o.n, sortable: true, sortValue: (o) => o.n },
-  { id: 'add-cost', header: 'To add', render: (o) => `+${fmt(o.cost)}`, align: 'end' },
-  { id: 'annual', header: 'Annual value', render: (o) => fmt(o.val * REPORT_VIEW.L.eff), align: 'end' },
-];
+/** StatCard plus the base `tile()` third-argument sub-caption (RPT-11b —
+ * the qualifier line under every base report tile: 'est. 10% of NIE',
+ * 'conservative 12%', 'of 87 in inventory', …). StatCard (C1) has no
+ * caption slot and is outside the fix dispatch's allowlist, so the caption
+ * renders as a footnote line under the card — every base qualifier restored,
+ * none invented. */
+function CaptionedStat({ label, value, unit, caption }: { label: string; value: string | number; unit?: string; caption?: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: 0 }}>
+      <StatCard label={label} value={value} {...(unit !== undefined ? { unit } : {})} />
+      {caption ? <p style={statCaptionStyle}>{caption}</p> : null}
+    </div>
+  );
+}
+
+/** Shared "Play/Category/Build/Annual value/Payback/Risk" columns — `plan` and
+ * `roi` kinds both render a funded-portfolio table with this exact shape
+ * (source 1549 vs 1672-1674). Built per render from the LIVE adoption lever
+ * (RPT-04) — value cells are `val*L.eff` (base 1549/1673), never raw `val`. */
+function fundedColumns(eff: number): DataTableColumn<PlanOpportunity>[] {
+  return [
+    { id: 'play', header: 'Play', render: (o) => o.n, sortable: true, sortValue: (o) => o.n },
+    { id: 'category', header: 'Category', render: (o) => o.c },
+    { id: 'build', header: 'Build', render: (o) => fmt(o.cost), align: 'end' },
+    { id: 'annual', header: 'Annual value', render: (o) => fmt(o.val * eff), align: 'end' },
+    {
+      id: 'payback',
+      header: 'Payback',
+      render: (o) => `${Math.round((o.cost / (o.val * eff)) * 12)} mo`,
+      align: 'end',
+    },
+    {
+      id: 'risk',
+      header: 'Risk',
+      render: (o) => (
+        <Tag text={riskLabel(o.r)} variant={o.r === 'low' ? 'status-positive' : o.r === 'med' ? 'status-caution' : 'status-alert'} />
+      ),
+    },
+  ];
+}
+
+function benchColumns(eff: number): DataTableColumn<PlanOpportunity>[] {
+  return [
+    { id: 'play', header: 'Play', render: (o) => o.n, sortable: true, sortValue: (o) => o.n },
+    { id: 'add-cost', header: 'To add', render: (o) => `+${fmt(o.cost)}`, align: 'end' },
+    { id: 'annual', header: 'Annual value', render: (o) => fmt(o.val * eff), align: 'end' },
+  ];
+}
 
 const GATED_COLUMNS: DataTableColumn<PlanOpportunity>[] = [
   { id: 'play', header: 'Play', render: (o) => o.n, sortable: true, sortValue: (o) => o.n },
@@ -461,9 +498,10 @@ function GapboardReport({ onOpenCases }: { onOpenCases?: () => void }) {
         as it reads here.
       </p>
       <div style={statRowStyle}>
-        <StatCard label="For a vote" value={pending.length} />
-        <StatCard label="Adopted since last" value={adopted.length} />
-        <StatCard label="Obligations closed" value={closedCount} />
+        {/* Base tile subs, source 1489-1491 (RPT-11b). */}
+        <CaptionedStat label="For a vote" value={pending.length} caption="conditionally approved, awaiting this meeting" />
+        <CaptionedStat label="Adopted since last" value={adopted.length} caption="voted and in force" />
+        <CaptionedStat label="Obligations closed" value={closedCount} caption="registers updated on adoption" />
       </div>
       <TableSection heading={`For the ${APPROVAL.committee} meeting`}>
         {cases.length === 0 ? (
@@ -479,6 +517,47 @@ function GapboardReport({ onOpenCases }: { onOpenCases?: () => void }) {
           <DataTable caption="Board approval cases" columns={columns} rows={cases} getRowId={(c) => c.id} />
         )}
       </TableSection>
+      {/* RPT-07: per-case language blocks — base source 1493-1502 renders,
+        * for every board case: the Why/Owner/Detected/Prepared-by line, the
+        * Before block (current in-force language, `rl-old`), the After block
+        * (the drafted language `c.lang`, 'for the committee's approval'), and
+        * the minutes line. This is the content the card copy promises ('with
+        * the language, why it is needed, and space for the minutes') and the
+        * intro's 'adopt the language exactly as it reads here' depends on. */}
+      {cases.map((c) => {
+        const doc = DOCLIB[c.doc];
+        const meta = caseStageMeta(c.stage);
+        return (
+          <div key={c.id} style={sectionStyle} data-lf-report-case={c.id}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ ...cellPrimaryStyle, fontSize: '1rem' }}>{`${c.id} · ${c.title}`}</span>
+              <Tag text={meta.label} variant={meta.variant} />
+            </div>
+            <p style={{ ...bodyTextStyle, fontSize: '0.8125rem' }}>
+              <strong>Why:</strong> {c.trigger}
+              <br />
+              <strong>Owner:</strong> {c.owner} · <strong>Detected:</strong> {c.detected} ·{' '}
+              <strong>Prepared by:</strong> P. Raman, Risk Analyst
+              {c.edited ? ' (language edited from the OnSide draft)' : ''}
+            </p>
+            <Label text="Before · in force until this is adopted" variant="eyebrow" />
+            <p style={{ ...bodyTextStyle, borderLeft: '2px solid var(--sem-alert)', paddingLeft: '0.75rem' }}>
+              {doc?.redline?.old ?? ''}
+            </p>
+            <Label text={'After · for the committee’s approval'} variant="eyebrow" />
+            <p style={{ ...bodyTextStyle, borderLeft: '2px solid var(--sem-positive)', paddingLeft: '0.75rem' }}>
+              {c.lang}
+            </p>
+            <p style={{ ...bodyTextStyle, fontSize: '0.8125rem' }}>
+              {c.minutes ? (
+                <strong>{c.minutes}</strong>
+              ) : (
+                'Minutes to be attached to the case after the vote. The case carries the full history from detection to adoption.'
+              )}
+            </p>
+          </div>
+        );
+      })}
       <TableSection heading="Recommended motion">
         <p style={bodyTextStyle}>
           {`That the ${APPROVAL.committee} approve the ${pending.length} policy change${pending.length === 1 ? '' : 's'} set out above as drafted, and authorise the Chief Risk Officer to adopt them in the policy record.`}
@@ -488,64 +567,254 @@ function GapboardReport({ onOpenCases }: { onOpenCases?: () => void }) {
   );
 }
 
-function BoardReport() {
-  const view = REPORT_VIEW;
-  const topThree = [...view.plan.funded].sort((a, b) => b.val * view.L.eff - a.val * view.L.eff).slice(0, 3);
+/** RPT-09 (fix wave): the base `board` report (source 1507-1532) renders the
+ * REAL board presentation — `DECK=boardDeck(P,L)` (source 2393-2447), with
+ * deck nav — followed by a separately headed, simultaneously visible
+ * appendix ('The appendix · the one-page read behind the deck': the rrec
+ * recommendation paragraph, 5 tiles, first-moves/governance/gated lists).
+ * The pre-fix version synthesized a third deck out of the appendix content
+ * and embedded no presentation at all. Now: `boardDeckSlides()` ports the
+ * base `boardDeck(P,L)` slide sequence (12 slides, risk then opportunity —
+ * per-slide anchors inline; the gauge/segBar/loop visualizations inside
+ * slides reduce to their own textual content per OQ-B), and the appendix
+ * renders flat below the deck, all sections visible at once, exactly the
+ * base structure. */
+function boardDeckSlides(view: RecomputeView): DeckViewSlide[] {
+  const { plan, L } = view;
+  const below = DOMAINS.filter((d) => statusOf(d) === 'below');
+  const gapsT = DOMAINS.reduce((sum, d) => sum + oblToClose(d), 0);
+  const meets = plan.roi >= L.roiTgt;
+  const docsTotal = DOMAINS.reduce((sum, d) => sum + d.docs, 0);
+  const openDomains = DOMAINS.filter((d) => oblToClose(d) > 0).sort((a, b) => oblToClose(b) - oblToClose(a));
+  const topFunded = [...plan.funded].sort((a, b) => b.val - a.val).slice(0, 5);
+  // Base OPPORTUNITY·3 ordering (source 2430): foundation play first, then
+  // by cost/value ratio; quartered across Q1-Q4.
+  const year1 = [...plan.funded].sort((a, b) => {
+    const f = (b.found ? 1 : 0) - (a.found ? 1 : 0);
+    if (f) return f;
+    return a.cost / (a.val || 1) - b.cost / (b.val || 1);
+  });
+  const perQuarter = Math.ceil(year1.length / 4) || 1;
+  const quarterLines = [0, 1, 2, 3].map((q) => {
+    const plays = year1.slice(q * perQuarter, (q + 1) * perQuarter);
+    return `Q${q + 1}: ${plays.length ? plays.map((o) => o.n).join(' · ') : 'Scoping capacity'}`;
+  });
+  const spine = plan.gated.filter((o) => (DETAIL[o.n]?.deps ?? []).includes('Unified data foundation'));
+  const waiting = plan.gated.concat(plan.bench).reduce((sum, o) => sum + o.val * L.eff, 0);
+  const moneyNet = Math.max(0, Math.round(4500000 * 0.12) + plan.annual - 180000);
 
-  const slides: DeckViewSlide[] = [
+  return [
+    // Title slide — source 2400.
     {
-      id: 'board-report-recommendation',
+      id: 'board-deck-title',
+      kind: 'generic',
+      eyebrow: 'LEAPFI PLATFORM · BOARD REVIEW · AUG 2026',
+      heading: 'NorthWinds Credit Union · AI Program · Risk & Opportunity',
+      body: ['Prepared for the Board Risk Committee · presented by the CEO · every figure generated live from the governance record'],
+    },
+    // THE ONE-SLIDE STORY — source 2401-2403.
+    {
+      id: 'board-deck-story',
       kind: 'economics',
-      eyebrow: 'Board presentation',
-      heading: 'Investment posture & recommendation',
-      body: [
-        `At a ${toleranceWord(view.L.tol)} risk tolerance and a ${view.levers.budgetLabel} annual budget, the plan funds ${view.plan.funded.length} of ${view.economics.totalOpportunities} plays for a one-time build of ${view.economics.buildCostText}, returning an expected ${view.economics.roiText} over three years (${view.economics.annualValueText}/yr at ${view.levers.adoptionLabel} adoption, ~${view.economics.paybackText} payback). Ambition is set to ${view.levers.ambitionLabel} against a current ${BANDS[CUR] ?? ''} posture; closing ${view.economics.controlsToCloseCount} control families releases the remaining ${view.plan.gated.length} higher-value plays.`,
-      ],
+      eyebrow: 'THE ONE-SLIDE STORY',
+      heading: 'Governed on our own terms, funded on the numbers',
       stats: [
-        { value: `${view.plan.funded.length} / ${view.economics.totalOpportunities}`, label: 'Plays funded' },
-        { value: view.economics.buildCostText, label: 'Build cost' },
-        { value: view.economics.annualValueText, label: 'Annual value' },
-        { value: view.economics.roiText, label: '3-yr ROI' },
-        { value: view.economics.paybackText, label: 'Payback' },
+        { value: `${DOMAINS.length - below.length} / ${DOMAINS.length}`, label: 'domains at or above the targets this board set' },
+        { value: gapsT, label: 'obligations still to close · owners assigned, the priority set drafted' },
+        { value: plan.funded.length, label: `plays funded · ${fmt(plan.spent)} committed` },
+        { value: `${plan.roi.toFixed(1)}×`, label: `expected 3-year return · ${meets ? 'clears' : 'below'} our ${L.roiTgt.toFixed(1)}× bar` },
+      ],
+      body: ['Risk and opportunity run on one data model. The next five slides are the risk story, the four after are the investment story.'],
+    },
+    // RISK · 1 OF 4 — source 2404-2406 (gauge row reduces to its scores, OQ-B).
+    {
+      id: 'board-deck-risk-1',
+      kind: 'generic',
+      eyebrow: 'RISK · 1 OF 4',
+      heading: 'Posture by domain · judged against our own bar',
+      body: [
+        DOMAINS.map((d) => `${d.name.split(' · ')[0] ?? d.name} ${curOf(d).toFixed(1)} of ${d.target}`).join(' · '),
+        'Targets come from our risk appetite and the use cases we chose. A 3.7 against a chosen 4 is a governed position, never a failing grade.',
       ],
     },
+    // RISK · 2 OF 4 — source 2407-2410.
     {
-      id: 'board-report-first-moves',
+      id: 'board-deck-risk-2',
       kind: 'generic',
-      heading: 'Recommended first moves',
-      body: topThree.map(
-        (o) =>
-          `${o.n}: ${fmt(o.val * view.L.eff)}/yr at ${fmt(o.cost)} build, ${Math.round((o.cost / (o.val * view.L.eff)) * 12)}-mo payback.`,
-      ),
+      eyebrow: 'RISK · 2 OF 4',
+      heading: 'Where the gaps sit · all routed, none orphaned',
+      body: [
+        openDomains.map((d) => `${d.name.split(' · ')[0] ?? d.name}: ${oblToClose(d)} to close`).join(' · ') || 'Nothing open',
+        'One high-priority item: the Incident Response Plan escalation path for member-facing automation. Redline drafted, owner assigned, closure targeted before quarter end.',
+      ],
     },
+    // RISK · 3 OF 4 — source 2411-2414.
     {
-      id: 'board-report-governance',
+      id: 'board-deck-risk-3',
       kind: 'generic',
-      heading: `Governance to close (${view.plan.toClose.length})`,
-      body: view.plan.toClose.map((k) => `${k}: ${CTRL[k] ?? 0}% today, ${GREEN - (CTRL[k] ?? 0)} points to green. ${GOV[k] ?? ''}`),
+      eyebrow: 'RISK · 3 OF 4',
+      heading: 'The regulatory environment moved. We saw it the day it did.',
+      body: [
+        'Open · work in progress: 2 · Tracking: 4 · Closed · evidenced: 1',
+        'Fed & FDIC joint NPRM · Regulation O · proposed Jul 31 · comment window open, our position in drafting',
+        'Interagency 2026-13 · Model Risk · policy updated · validation clauses rolling through 9 legacy contracts, target Q1 2027',
+        'New Mexico AI Act · vendor disclosure clause pre-drafted, monitoring the House vote',
+      ],
+    },
+    // RISK · 4 OF 4 — source 2415-2417 (the governance loop, rendered textually).
+    {
+      id: 'board-deck-risk-4',
+      kind: 'generic',
+      eyebrow: 'RISK · 4 OF 4',
+      heading: 'How every change is governed',
+      body: [
+        `Monitor (${SRC_ROWS.length} sources · 3 layers · ${docsTotal} documents) → Detect (same-day, with pin-cite & hash) → Propose (language drafted, routed to the owner) → Approve (a named human, every time) → Report (this pack, from the same record)`,
+        'Nothing becomes authoritative without a qualified person approving it. The exam answer writes itself as the work happens.',
+      ],
+    },
+    // OPPORTUNITY · 1 OF 4 — source 2418-2424.
+    {
+      id: 'board-deck-opp-1',
+      kind: 'generic',
+      eyebrow: 'OPPORTUNITY · 1 OF 4',
+      heading: 'The funded portfolio · where the value comes from',
+      body: [
+        topFunded.map((o) => `${o.n}: ${fmt(o.val * L.eff)}/yr`).join(' · ') +
+          (plan.funded.length > 5 ? ` · ${plan.funded.length - 5} more plays` : ''),
+        `Budget committed: ${fmt(plan.spent)} of ${fmt(L.budget)}`,
+        `${plan.funded.length} plays funded at a ${toleranceWord(L.tol)} risk appetite · ${plan.gated.length} higher-value plays wait on the controls above.`,
+      ],
+    },
+    // OPPORTUNITY · 2 OF 4 — source 2425-2427.
+    {
+      id: 'board-deck-opp-2',
+      kind: 'economics',
+      eyebrow: 'OPPORTUNITY · 2 OF 4',
+      heading: 'The economics',
+      stats: [
+        { value: `${plan.roi.toFixed(1)}×`, label: 'expected 3-year return on build' },
+        { value: `${plan.payM} mo`, label: 'blended payback across the portfolio' },
+        { value: fmt(plan.annual), label: `annual value at our ${Math.round(L.eff * 100)}% adoption setting` },
+        { value: fmt(plan.spent), label: 'one-time build, inside the approved envelope' },
+      ],
+      body: [
+        `${meets ? 'The plan clears the ' : 'The plan is below the '}${L.roiTgt.toFixed(1)}× hurdle this board set. Every figure recomputes if we change the levers.`,
+      ],
+    },
+    // OPPORTUNITY · 3 OF 4 — source 2428-2433.
+    {
+      id: 'board-deck-opp-3',
+      kind: 'generic',
+      eyebrow: 'OPPORTUNITY · 3 OF 4',
+      heading: 'Year 1 · what lands each quarter',
+      body: [...quarterLines, 'Foundational work leads, quick paybacks follow. The full sequencing lives in Studio and moves with the levers.'],
+    },
+    // OPPORTUNITY · 4 OF 4 — source 2434-2437.
+    {
+      id: 'board-deck-opp-4',
+      kind: 'economics',
+      eyebrow: 'OPPORTUNITY · 4 OF 4',
+      heading: 'Years 2 and 3 · what this year unlocks',
+      stats: [
+        { value: plan.bench.length + spine.length, label: 'plays queued for Year 2 · led by the data foundation' },
+        { value: plan.gated.filter((o) => !spine.includes(o)).length, label: 'plays gated on controls · release as domains reach target' },
+        { value: fmt(waiting), label: 'annual value waiting behind the gates' },
+        { value: `${((plan.annual + waiting) / Math.max(1, plan.annual)).toFixed(1)}×`, label: `the portfolio if we close the ${plan.toClose.length} open control families` },
+      ],
+      body: ['The gates are ours to open. Closing the control gaps on slide 4 is what releases the second wave.'],
+    },
+    // THE MONEY PICTURE — source 2438-2442.
+    {
+      id: 'board-deck-money',
+      kind: 'economics',
+      eyebrow: 'THE MONEY PICTURE',
+      heading: 'It pays for itself before the portfolio counts',
+      stats: [
+        { value: fmt(4500000), unit: '/yr', label: 'Compliance spend today' },
+        { value: fmt(180000), unit: '/yr', label: 'Platform subscription' },
+        { value: fmt(moneyNet), unit: '/yr', label: 'Net annual impact' },
+      ],
+      body: ['A conservative 12% of compliance capacity freed covers the platform on its own. The portfolio return is upside on top, net of the subscription.'],
+    },
+    // THE ASK — source 2443-2446.
+    {
+      id: 'board-deck-ask',
+      kind: 'generic',
+      eyebrow: 'THE ASK',
+      heading: 'Three approvals tonight',
+      body: [
+        'Ratify the domain targets as the institution’s stated risk appetite, as presented on slide 3.',
+        `Approve the ${fmt(L.budget)} annual envelope funding the ${plan.funded.length}-play portfolio on slide 7.`,
+        'Note the Incident Response Plan escalation as the one high-priority item, with closure before quarter end.',
+        'Everything in this pack is drill-downable live, and the same record answers the examiner.',
+      ],
     },
   ];
+}
 
-  if (view.plan.gated.length > 0) {
-    slides.push({
-      id: 'board-report-gated',
-      kind: 'generic',
-      heading: `Gated until controls close (${view.plan.gated.length})`,
-      body: view.plan.gated
-        .slice(0, 6)
-        .map((o) => `${o.n}: waits on ${o.weakGate} (${CTRL[o.weakGate] ?? 0}%).`),
-    });
-  }
+function BoardReport() {
+  const view = liveReportView();
+  const topThree = [...view.plan.funded].sort((a, b) => b.val * view.L.eff - a.val * view.L.eff).slice(0, 3);
+  const slides = boardDeckSlides(view);
 
   return (
-    <div style={{ height: '32rem' }}>
-      <DeckView slides={slides} />
+    <div style={sectionStyle}>
+      {/* Base source 1521: 'The board presentation · N slides · risk then opportunity'. */}
+      <TableSection heading={`The board presentation · ${slides.length} slides · risk then opportunity`}>
+        <div style={{ height: '32rem' }}>
+          <DeckView slides={slides} />
+        </div>
+      </TableSection>
+      {/* Base source 1523-1531: the appendix — all sections simultaneously
+        * visible below the deck, never behind slide navigation (RPT-09). */}
+      <Label text="The appendix · the one-page read behind the deck" variant="eyebrow" />
+      <p style={bodyTextStyle}>
+        {`At a ${toleranceWord(view.L.tol)} risk tolerance and a ${view.levers.budgetLabel} annual budget, the plan funds ${view.plan.funded.length} of ${view.economics.totalOpportunities} plays for a one-time build of ${view.economics.buildCostText}, returning an expected ${view.economics.roiText} over three years (${view.economics.annualValueText}/yr at ${view.levers.adoptionLabel} adoption, ~${view.economics.paybackText} payback). Ambition is set to ${view.levers.ambitionLabel} against a current ${BANDS[CUR] ?? ''} posture; closing ${view.economics.controlsToCloseCount} control families releases the remaining ${view.plan.gated.length} higher-value plays.`}
+      </p>
+      <div style={statRowStyle}>
+        {/* Base tile subs, source 1524 (RPT-11b). */}
+        <CaptionedStat label="Plays funded" value={`${view.plan.funded.length} / ${view.economics.totalOpportunities}`} caption="of the library" />
+        <CaptionedStat label="Build cost" value={view.economics.buildCostText} caption="one-time" />
+        <CaptionedStat label="Annual value" value={view.economics.annualValueText} caption="at adoption" />
+        <CaptionedStat label="3-yr ROI" value={view.economics.roiText} caption="on build" />
+        <CaptionedStat label="Payback" value={view.economics.paybackText} caption="blended" />
+      </div>
+      <TableSection heading="Recommended first moves">
+        <ul style={listStyle}>
+          {topThree.map((o) => (
+            <li key={o.n} style={listItemStyle}>
+              <strong>{o.n}</strong>: {fmt(o.val * view.L.eff)}/yr at {fmt(o.cost)} build,{' '}
+              {Math.round((o.cost / (o.val * view.L.eff)) * 12)}-mo payback.
+            </li>
+          ))}
+        </ul>
+      </TableSection>
+      <TableSection heading={`Governance to close (${view.plan.toClose.length})`}>
+        <ul style={listStyle}>
+          {view.plan.toClose.map((k) => (
+            <li key={k} style={listItemStyle}>
+              <strong>{k}</strong>: {CTRL[k] ?? 0}% today, {GREEN - (CTRL[k] ?? 0)} points to green. {GOV[k] ?? ''}
+            </li>
+          ))}
+        </ul>
+      </TableSection>
+      {view.plan.gated.length > 0 ? (
+        <TableSection heading={`Gated until controls close (${view.plan.gated.length})`}>
+          <ul style={listStyle}>
+            {view.plan.gated.slice(0, 6).map((o) => (
+              <li key={o.n} style={listItemStyle}>
+                <strong>{o.n}</strong>: waits on {o.weakGate} ({CTRL[o.weakGate] ?? 0}%).
+              </li>
+            ))}
+          </ul>
+        </TableSection>
+      ) : null}
     </div>
   );
 }
 
 function ComplianceReport() {
-  const view = REPORT_VIEW;
+  const view = liveReportView();
   const allKeys = Object.keys(CTRL);
   const orderedKeys = [...view.plan.toClose, ...allKeys.filter((k) => !view.plan.toClose.includes(k))];
 
@@ -589,7 +858,7 @@ function ComplianceReport() {
 }
 
 function PlanReport() {
-  const view = REPORT_VIEW;
+  const view = liveReportView();
   return (
     <div style={sectionStyle}>
       <div style={statRowStyle}>
@@ -599,11 +868,11 @@ function PlanReport() {
         <StatCard label="Payback" value={view.economics.paybackText} />
       </div>
       <TableSection heading={`Funded now (${view.plan.funded.length})`}>
-        <DataTable caption="Funded plays" columns={FUNDED_COLUMNS} rows={view.plan.funded} getRowId={(o) => o.n} />
+        <DataTable caption="Funded plays" columns={fundedColumns(view.L.eff)} rows={view.plan.funded} getRowId={(o) => o.n} />
       </TableSection>
       <TableSection heading={`Ready, not yet funded (${view.plan.bench.length})`}>
         {view.plan.bench.length ? (
-          <DataTable caption="Ready, not yet funded plays" columns={BENCH_COLUMNS} rows={view.plan.bench} getRowId={(o) => o.n} />
+          <DataTable caption="Ready, not yet funded plays" columns={benchColumns(view.L.eff)} rows={view.plan.bench} getRowId={(o) => o.n} />
         ) : (
           <p style={bodyTextStyle}>Everything ready is funded.</p>
         )}
@@ -620,7 +889,7 @@ function PlanReport() {
 }
 
 function RoadmapReport() {
-  const view = REPORT_VIEW;
+  const view = liveReportView();
   const afterSpine = view.plan.gated.filter((o) => (DETAIL[o.n]?.deps ?? []).includes('Unified data foundation'));
   const afterCtrl = view.plan.gated.filter((o) => !(DETAIL[o.n]?.deps ?? []).includes('Unified data foundation'));
 
@@ -672,6 +941,16 @@ const STANDING_STATUS_META: Record<BoardStandingStatus, { label: string; variant
   closed: { label: 'Closed', variant: 'status-positive' },
 };
 
+/** RPT-08: the base rows literal hand-writes row 1's status text —
+ * `<span class="tag warn">2 workstreams open</span>` (source 3596) — which
+ * the status→label map above flattened to a generic 'Open'.
+ * `data/boardLog.ts` is outside the reporting fix batch's allowlist, so the
+ * per-row base literal is restored here as a display override keyed on the
+ * row id (same tag variant; label byte-identical to source). */
+const STANDING_STATUS_LABEL_OVERRIDES: Record<string, string> = {
+  '2026-13': '2 workstreams open',
+};
+
 function RegchangeReport({ onLogUpdate }: { onLogUpdate?: (id: string) => void }) {
   const openCount = BOARD_STANDING_ROWS.filter((r) => r.status === 'open').length;
   const trackingCount = BOARD_STANDING_ROWS.filter((r) => r.status === 'tracking').length;
@@ -711,15 +990,27 @@ function RegchangeReport({ onLogUpdate }: { onLogUpdate?: (id: string) => void }
         );
       },
     },
-    { id: 'status', header: 'Status', render: (r) => <Tag text={STANDING_STATUS_META[r.status].label} variant={STANDING_STATUS_META[r.status].variant} /> },
+    {
+      id: 'status',
+      header: 'Status',
+      render: (r) => (
+        <Tag
+          text={STANDING_STATUS_LABEL_OVERRIDES[r.id] ?? STANDING_STATUS_META[r.status].label}
+          variant={STANDING_STATUS_META[r.status].variant}
+        />
+      ),
+    },
   ];
 
   return (
     <div style={sectionStyle}>
+      {/* Base boardStandingHTML intro csub verbatim incl. the closing 'No deck
+        * assembled…' sentence (source 3604-3605) — dropped pre-fix (RPT-08). */}
       <p style={bodyTextStyle}>
         Boards carry the obligation to govern a regulatory environment that changes faster than any quarterly pack
         can track. This is the standing, sourced view: what changed, which changes apply to this institution given
         its charter, size, and business lines, what the institution is doing about each one, and what remains open.
+        No deck assembled the week before the meeting.
       </p>
       <div style={statRowStyle}>
         <StatCard label="Open" value={openCount} />
@@ -733,6 +1024,34 @@ function RegchangeReport({ onLogUpdate }: { onLogUpdate?: (id: string) => void }
         <strong>Tracking</strong> = watching an item that has not become relevant yet · <strong>Open</strong> = it
         applies, work is in progress with a target compliance date · <strong>Closed</strong> = done and evidenced.
       </p>
+      {/* Base source 3608: the examiner pill + '⎙ Export board pack' button —
+        * content cards outside the OQ-B chart exemption, dropped pre-fix
+        * (RPT-08). Export = the base's own window.print() call. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <span
+          style={{
+            display: 'inline-block',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            color: 'var(--ink)',
+            background: 'var(--panel)',
+            border: '1px solid var(--border)',
+            borderRadius: '999px',
+            padding: '0.25rem 0.75rem',
+          }}
+        >
+          The same record answers the examiner asking how the board stayed informed
+        </span>
+        <Button variant="ghost" label="⎙ Export board pack" onPress={() => window.print()} />
+      </div>
+      {/* Base source 3609: the 'Determination provenance' card (RPT-08). */}
+      <TableSection heading="Determination provenance">
+        <p style={bodyTextStyle}>
+          Each &ldquo;applies / does not apply&rdquo; call above records the charter, footprint, or business-line
+          fact that drove it, at determination time. Directors get the reasoning along with the conclusion it led
+          to.
+        </p>
+      </TableSection>
     </div>
   );
 }
@@ -761,10 +1080,11 @@ function PostureReport() {
   return (
     <div style={sectionStyle}>
       <div style={statRowStyle}>
-        <StatCard label="At / above target" value={`${DOMAINS.length - belowTarget.length} / ${DOMAINS.length}`} />
-        <StatCard label="Gaps to targets" value={gapsTotal} />
-        <StatCard label="Largest gap" value={worstLabel} />
-        <StatCard label="High priority" value={1} />
+        {/* Base tile subs, source 1583 (RPT-11b). */}
+        <CaptionedStat label="At / above target" value={`${DOMAINS.length - belowTarget.length} / ${DOMAINS.length}`} caption="judged against your own bar" />
+        <CaptionedStat label="Gaps to targets" value={gapsTotal} caption="obligations to close" />
+        <CaptionedStat label="Largest gap" value={worstLabel} {...(worst ? { caption: `${oblToClose(worst)} obligations` } : {})} />
+        <CaptionedStat label="High priority" value={1} caption="IRP escalation" />
       </div>
       <TableSection heading="Posture by domain">
         <DataTable
@@ -808,28 +1128,33 @@ function MrmReport() {
   return (
     <div style={sectionStyle}>
       <div style={statRowStyle}>
-        <StatCard label="Score" value={`${curOf(domain).toFixed(1)} / ${domain.target}`} />
-        <StatCard label="Obligations met" value={`${domain.met} / ${domain.appl}`} />
-        <StatCard label="To close" value={oblToClose(domain)} />
-        <StatCard label="Models in inventory" value={23} />
-        <StatCard label="Internal / vendor split" value="14 / 9" />
+        {/* Base tile subs, source 1608 (RPT-11b): the base renders 4 tiles —
+          * the pre-fix fifth 'Internal / vendor split' card carried the
+          * fourth tile's own sub-caption '14 internal · 9 vendor'. */}
+        <CaptionedStat label="Score" value={`${curOf(domain).toFixed(1)} / ${domain.target}`} caption={`${BANDS[domain.target - 1] ?? ''} target`} />
+        <CaptionedStat label="Obligations met" value={`${domain.met} / ${domain.appl}`} caption="met at required maturity" />
+        <CaptionedStat label="To close" value={oblToClose(domain)} caption="for the target" />
+        <CaptionedStat label="Models in inventory" value={23} caption="14 internal · 9 vendor" />
       </div>
       <TableSection heading={`Open register items (${openItems.length})`}>
         <DataTable caption="Model risk register — open items" columns={OBLIGATION_COLUMNS} rows={openItems} getRowId={(o) => o.id} />
       </TableSection>
       <TableSection heading="Validation calendar">
+        {/* RPT-11c: the base writes its own link text here (docLink's second
+          * argument, source 1611-1613) — the pre-fix DOCLIB-title substitution
+          * produced '…Pre-staged Language pre-staged pending…' on screen. */}
         <ul style={listStyle}>
           <li style={listItemStyle}>
-            <strong>Fraud model refresh</strong>: independent validation slot booked Q4 with{' '}
-            {DOCLIB['mrm-validation-fraud']?.t ?? 'the current validation report'} as baseline.
+            <strong>Fraud model refresh</strong>: independent validation slot booked Q4 with the current validation
+            report as baseline.
           </li>
           <li style={listItemStyle}>
             <strong>AI-assisted transaction monitoring</strong>: independent validation scheduled · evidence lands
             against MRM-08.
           </li>
           <li style={listItemStyle}>
-            <strong>Generative &amp; agentic models</strong>: {DOCLIB['gen-ai-draft']?.t ?? 'interim governance language'}{' '}
-            pre-staged pending RFI 2026-04 final scope.
+            <strong>Generative &amp; agentic models</strong>: interim governance language pre-staged pending RFI
+            2026-04 final scope.
           </li>
         </ul>
       </TableSection>
@@ -845,27 +1170,28 @@ function TprmReport() {
   return (
     <div style={sectionStyle}>
       <div style={statRowStyle}>
-        <StatCard label="Score" value={`${curOf(domain).toFixed(1)} / ${domain.target}`} />
-        <StatCard label="Obligations met" value={`${domain.met} / ${domain.appl}`} />
-        <StatCard label="Critical vendors" value={12} />
-        <StatCard label="SOC 2 on file" value="11 / 12" />
+        {/* Base tile subs, source 1637 (RPT-11b). */}
+        <CaptionedStat label="Score" value={`${curOf(domain).toFixed(1)} / ${domain.target}`} caption={`${BANDS[domain.target - 1] ?? ''} target`} />
+        <CaptionedStat label="Obligations met" value={`${domain.met} / ${domain.appl}`} caption="met at required maturity" />
+        <CaptionedStat label="Critical vendors" value={12} caption="of 87 in inventory" />
+        <CaptionedStat label="SOC 2 on file" value="11 / 12" caption="core processor reviewed" />
       </div>
       <TableSection heading={`Open register items (${openItems.length})`}>
         <DataTable caption="Third-party risk register — open items" columns={OBLIGATION_COLUMNS} rows={openItems} getRowId={(o) => o.id} />
       </TableSection>
       <TableSection heading="Program notes">
+        {/* RPT-11c: base hand-written docLink text (source 1631-1633), not
+          * DOCLIB-title substitution. */}
         <ul style={listStyle}>
           <li style={listItemStyle}>
-            <strong>Exit planning</strong>: {DOCLIB['exit-draft']?.t ?? 'draft exit-plan standard'} in HITL review ·
-            closes TPRM-08 for the four critical vendors without one.
+            <strong>Exit planning</strong>: draft exit-plan standard in HITL review · closes TPRM-08 for the four
+            critical vendors without one.
           </li>
           <li style={listItemStyle}>
-            <strong>Contract riders</strong>: {DOCLIB['contract-rider']?.t ?? 'model-risk clauses'} rolling into 9
-            legacy contracts · 4 executed.
+            <strong>Contract riders</strong>: model-risk clauses rolling into 9 legacy contracts · 4 executed.
           </li>
           <li style={listItemStyle}>
-            <strong>Core processor</strong>: {DOCLIB['soc2-core']?.t ?? 'SOC 2 Type II'} reviewed · two CUECs mapped
-            to internal controls.
+            <strong>Core processor</strong>: SOC 2 Type II reviewed · two CUECs mapped to internal controls.
           </li>
         </ul>
       </TableSection>
@@ -889,10 +1215,11 @@ function InfosecReport() {
   return (
     <div style={sectionStyle}>
       <div style={statRowStyle}>
-        <StatCard label="Score" value={`${curOf(domain).toFixed(1)} / ${domain.target}`} />
-        <StatCard label="Obligations met" value={`${domain.met} / ${domain.appl}`} />
-        <StatCard label="High priority" value={1} />
-        <StatCard label="Connector health" value="4 live" />
+        {/* Base tile subs, source 1650 (RPT-11b). */}
+        <CaptionedStat label="Score" value={`${curOf(domain).toFixed(1)} / ${domain.target}`} caption="above the bar" />
+        <CaptionedStat label="Obligations met" value={`${domain.met} / ${domain.appl}`} caption="met · 9 excluded with rationale" />
+        <CaptionedStat label="High priority" value={1} caption="IRP escalation gap" />
+        <CaptionedStat label="Connector health" value="4 live" caption="eCFR · FinCEN · Fed Register · WH EO" />
       </div>
       <p style={warnTextStyle}>
         Incident Response Plan: escalation path for member-facing automation is not yet defined. Redline drafted,
@@ -902,18 +1229,20 @@ function InfosecReport() {
         <DataTable caption="InfoSec open items" columns={itemColumns} rows={openItems} getRowId={(r) => r.id} />
       </TableSection>
       <TableSection heading="Program status">
+        {/* RPT-11c: base hand-written docLink text (source 1653-1656), not
+          * DOCLIB-title substitution. */}
         <ul style={listStyle}>
           <li style={listItemStyle}>
-            <strong>GLBA Safeguards</strong>: {DOCLIB['glba-program']?.t ?? 'program document'} current · access
-            reviews and MFA evidence on file for the quarter.
+            <strong>GLBA Safeguards</strong>: program document current · access reviews and MFA evidence on file for
+            the quarter.
           </li>
           <li style={listItemStyle}>
             <strong>FFIEC CAT sunset</strong>: mapping to successor frameworks in progress · tracked in the
             regulatory feed lifecycle.
           </li>
           <li style={listItemStyle}>
-            <strong>Vendor security</strong>: core processor {DOCLIB['soc2-core']?.t ?? 'SOC 2'} reviewed · no open
-            complementary-control exceptions.
+            <strong>Vendor security</strong>: core processor SOC 2 reviewed · no open complementary-control
+            exceptions.
           </li>
           <li style={listItemStyle}>
             <strong>Platform feeds</strong>: all live connectors healthy, same-day change detection verified.
@@ -925,7 +1254,7 @@ function InfosecReport() {
 }
 
 function RoiReport() {
-  const view = REPORT_VIEW;
+  const view = liveReportView();
   const opex = 45000000;
   const compPct = 0.1;
   const comp = opex * compPct;
@@ -942,11 +1271,13 @@ function RoiReport() {
         re-interpretation, and document upkeep the platform industrializes.
       </p>
       <div style={statRowStyle}>
-        <StatCard label="Compliance spend" value={fmt(comp)} unit="/yr" />
-        <StatCard label="Platform subscription" value={fmt(platformCost)} unit="/yr" />
-        <StatCard label="Compliance capacity freed" value={fmt(save)} unit="/yr" />
-        <StatCard label="Portfolio value" value={view.economics.annualValueText} unit="/yr" />
-        <StatCard label="Net annual impact" value={fmt(net)} unit="/yr" />
+        {/* Base tile subs, source 1672 (RPT-11b): the qualifiers that scope
+          * each number — dropped pre-fix. */}
+        <CaptionedStat label="Compliance spend" value={fmt(comp)} unit="/yr" caption="est. 10% of NIE" />
+        <CaptionedStat label="Platform subscription" value={fmt(platformCost)} unit="/yr" caption="planning figure" />
+        <CaptionedStat label="Compliance capacity freed" value={fmt(save)} unit="/yr" caption="conservative 12%" />
+        <CaptionedStat label="Portfolio value" value={view.economics.annualValueText} unit="/yr" caption="at adoption" />
+        <CaptionedStat label="Net annual impact" value={fmt(net)} unit="/yr" caption="year one run rate" />
       </div>
       <TableSection heading="Where the savings come from">
         <ul style={listStyle}>
@@ -969,7 +1300,7 @@ function RoiReport() {
         </ul>
       </TableSection>
       <TableSection heading="The funded portfolio behind the number">
-        <DataTable caption="Funded portfolio" columns={FUNDED_COLUMNS} rows={view.plan.funded} getRowId={(o) => o.n} />
+        <DataTable caption="Funded portfolio" columns={fundedColumns(view.L.eff)} rows={view.plan.funded} getRowId={(o) => o.n} />
       </TableSection>
       <p style={bodyTextStyle}>
         The platform pays for itself on compliance capacity alone. The funded portfolio return ({view.economics.roiText}{' '}
@@ -1032,11 +1363,18 @@ export interface ReportViewProps {
 }
 
 export function ReportView({ kind, onOpenCases, onLogUpdate }: ReportViewProps) {
-  const meta = REPORT_META[kind];
+  // RPT-04: re-render the open report on every demo-store write (lever moves,
+  // case advances, Discovery accepts) — the React equivalent of the base's
+  // recompute-on-open (`var P=computePlan()`, source 1477).
+  useDemoStore();
   return (
     <div data-lf-view="report" data-kind={kind} style={sectionStyle}>
+      {/* Base head() chrome (source 1479-1481): the category line + the
+        * per-report repmeta subtitle (RPT-11a — owner attributions and
+        * meeting framing restored; the generic audience line is gone). */}
+      <Label text="LEAPFI · Reporting · generated from the live record" variant="eyebrow" />
       <Label
-        text={`LEAPFI · Reporting · ${meta.audience} · NorthWinds Credit Union · illustrative model on sample data`}
+        text={`${reportSub(kind)} · NorthWinds Credit Union · illustrative model on sample data`}
         variant="body-secondary"
       />
       {renderReportBody(kind, onOpenCases, onLogUpdate)}

@@ -6,6 +6,15 @@
  * (spec a11y baseline) — that full name is required whenever
  * `interactive` is true, distinct from the (possibly abbreviated)
  * `initials` used as the visual fallback.
+ *
+ * DISCLOSURE PASSTHROUGH (`ariaHaspopup`/`ariaExpanded`, interactive
+ * only): an interactive Avatar can serve as a disclosure trigger (C4
+ * ProfileMenu's "Avatar+dropdown of Buttons"). The C4 a11y baseline
+ * requires `aria-expanded` on that trigger, and this primitive owns the
+ * underlying `<button>`, so the two ARIA attributes are exposed as
+ * optional passthrough props rendered verbatim onto the button. Omitting
+ * them reproduces the prior markup exactly — a plain interactive Avatar
+ * gains no stray disclosure semantics.
  */
 import type { CSSProperties, KeyboardEvent } from 'react';
 
@@ -21,6 +30,8 @@ interface AvatarStaticProps extends AvatarBaseProps {
   interactive?: false;
   name?: string;
   onPress?: never;
+  ariaHaspopup?: never;
+  ariaExpanded?: never;
 }
 
 interface AvatarInteractiveProps extends AvatarBaseProps {
@@ -28,6 +39,10 @@ interface AvatarInteractiveProps extends AvatarBaseProps {
   /** Full persona name — required, becomes the accessible name (spec P9 a11y baseline). */
   name: string;
   onPress: () => void;
+  /** See file header "DISCLOSURE PASSTHROUGH" — rendered as `aria-haspopup` on the button. */
+  ariaHaspopup?: 'menu' | 'listbox' | 'dialog' | 'true' | undefined;
+  /** See file header "DISCLOSURE PASSTHROUGH" — rendered as `aria-expanded` on the button. */
+  ariaExpanded?: boolean | undefined;
 }
 
 export type AvatarProps = AvatarStaticProps | AvatarInteractiveProps;
@@ -75,11 +90,13 @@ export function Avatar(props: AvatarProps) {
   const { size = 'medium', initials, image } = props;
 
   if (props.interactive) {
-    const { name, onPress } = props;
+    const { name, onPress, ariaHaspopup, ariaExpanded } = props;
     return (
       <button
         type="button"
         aria-label={name}
+        aria-haspopup={ariaHaspopup}
+        aria-expanded={ariaExpanded}
         data-lf-primitive="avatar"
         onClick={onPress}
         onKeyDown={(event: KeyboardEvent<HTMLButtonElement>) => {

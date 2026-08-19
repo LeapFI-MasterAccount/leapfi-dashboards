@@ -17,10 +17,13 @@
  *    an empty bell.
  *
  * The role-filter and row rendering are pinned at component level with
- * synthetic NOTIFS entries because the base's `notify()` call sites (case
- * stage transitions) are not ported in this worktree — NOTIFS stays empty
- * end-to-end (see stop_items in the evidence return; also documented in
- * NotificationBellPanel.tsx "DATA REALITY").
+ * synthetic NOTIFS entries. (Updated by the backbone fix-wave dispatch:
+ * `state/demoStore.ts` now ports the base `notify()` pipeline and the six
+ * case-action write sites, and the shell subscribes so writes re-render
+ * the bell — see shell/live-demo-state.test.tsx for the live pipeline.
+ * NOTIFS is still empty at BOOT, so the boot-state suite below is
+ * unchanged; the Cases screen's performAction call-site wiring is the
+ * cases batch's swap.)
  */
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'

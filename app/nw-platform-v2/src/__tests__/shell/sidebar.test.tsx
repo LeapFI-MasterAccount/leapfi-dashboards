@@ -91,3 +91,55 @@ describe('OnSide nested expand/collapse (base L762–821 os-sub; addendum §0 or
     expect(within(newNav).getByRole('button', { name: 'Regulatory feed' })).toHaveAttribute('aria-current', 'page')
   })
 })
+
+describe('group toggle while a child is active (SH-11; base toggleOnsideNav @3834 / toggleStudioNav @1778: `classList.toggle(\'open\')` with no active-row guard)', () => {
+  it('pressing the group header visibly collapses the group even while it owns the active screen, and re-expands on the next press', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const nav = () => screen.getByRole('navigation', { name: 'Primary' })
+
+    await user.click(within(nav()).getByRole('button', { name: 'OnSide' }))
+    await user.click(within(nav()).getByRole('button', { name: 'Regulatory feed' }))
+    const onSide = within(nav()).getByRole('button', { name: 'OnSide' })
+    expect(onSide).toHaveAttribute('aria-expanded', 'true')
+
+    // Base-faithful: the toggle works while the group owns the active
+    // screen — aria-expanded flips and the children leave the DOM (no
+    // inert-yet-enabled toggle).
+    await user.click(onSide)
+    expect(onSide).toHaveAttribute('aria-expanded', 'false')
+    expect(within(nav()).queryByRole('button', { name: 'Regulatory feed' })).not.toBeInTheDocument()
+
+    // And the next press re-expands, with the active row still current.
+    await user.click(onSide)
+    expect(onSide).toHaveAttribute('aria-expanded', 'true')
+    expect(within(nav()).getByRole('button', { name: 'Regulatory feed' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('navigating into a group clears a stale collapse override (base go() force-open @3813–3816) — no deferred surprise-collapse and the aria-current row is revealed on arrival', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const nav = () => screen.getByRole('navigation', { name: 'Primary' })
+
+    // Expand OnSide, land on Regulatory feed, then collapse the group
+    // while it is active (allowed, per the test above).
+    await user.click(within(nav()).getByRole('button', { name: 'OnSide' }))
+    await user.click(within(nav()).getByRole('button', { name: 'Regulatory feed' }))
+    await user.click(within(nav()).getByRole('button', { name: 'OnSide' }))
+    expect(within(nav()).getByRole('button', { name: 'OnSide' })).toHaveAttribute('aria-expanded', 'false')
+
+    // Leave for Home: the group was already visibly collapsed by the
+    // user's own press — nothing collapses "later by surprise".
+    await user.click(within(nav()).getByRole('button', { name: 'Home' }))
+    expect(within(nav()).getByRole('button', { name: 'OnSide' })).toHaveAttribute('aria-expanded', 'false')
+
+    // Navigate back INTO the group from outside the sidebar — Home's D18
+    // primary CTA deep-links to OnSide · Regulatory feed. Base go()
+    // force-opens the destination group; the port clears the collapse
+    // override so the current row is visible on arrival.
+    await user.click(screen.getByRole('button', { name: "Open today's regulatory feed" }))
+    const onSide = within(nav()).getByRole('button', { name: 'OnSide' })
+    expect(onSide).toHaveAttribute('aria-expanded', 'true')
+    expect(within(nav()).getByRole('button', { name: 'Regulatory feed' })).toHaveAttribute('aria-current', 'page')
+  })
+})

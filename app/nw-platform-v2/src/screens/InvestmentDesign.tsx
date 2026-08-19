@@ -68,24 +68,28 @@
  * approach PlanTable itself already took for the funded list — not a new
  * named composite, just this screen's own markup.
  *
- * AMBIGUITY RESOLVED — play-drawer "controls-to-close" content:
- * `PlanTableRow` (engine/plan.ts) does not carry the play's raw control
- * list (`g`) — only pre-derived summary fields. This screen looks the
- * play back up by name in `data/studio.ts`'s `OPPS`/`DETAIL` (the same
- * play-name foreign-key relationship `engine/plan.ts` itself relies on
- * everywhere, per survey_map.md §d-1) to get `g` (the play's gating
- * control families) and `DETAIL[name].sum` (play summary). "Controls to
- * close" is filtered to `g` entries still below the `GREEN` maturity
- * threshold (`data/studio.ts`) — the exact same criterion `computePlan`'s
- * own `toClose` list already uses, just scoped to one play's control set
- * instead of every control in the catalog. Reuses an existing engine
- * concept; invents no new business logic (D14 framing).
+ * Play drawer content (fix-wave STU-13): `buildPlayDrawerContent` renders
+ * the FULL base openPlay drawer (leapfi-platform.html:1391-1432) —
+ * summary, economics with the 3-yr return, the ready/sequence-gated
+ * verdict, scope of work, technical dependencies, per-gate governance
+ * detail (GOV + REGMAP with live scores), the Financial block (run-cost
+ * estimate + build-number explanation), controls-to-close, and the
+ * Depends-on / Unlocks connections — looked up by play name in
+ * `data/studio.ts`'s `OPPS`/`DETAIL` (the survey_map.md §d-1 foreign-key
+ * relationship), with the base's own default-DETAIL fallback (1394) for
+ * plays without an entry.
+ *
+ * Shared lever state (fix-wave SH-6/RPT-04/STU-07 backbone contract):
+ * every slider change is published to `state/demoStore.ts` via
+ * `setDemoSliders`, and App seeds this screen with `getDemoSliders()` on
+ * mount — so Home panels, reports, and Studio Ask value lines all track
+ * the position this screen last set, the base's recompute() fan-out.
  *
  * AMBIGUITY RESOLVED — Drawer instance ownership: Drawer (C7) is
  * documented as a "single shared instance app-wide... never a second
  * drawer" (survey_map.md §d-5). No shared Drawer context/provider exists
- * yet in this worktree — App.tsx is still the D13 theme-token placeholder
- * scaffold, outside this dispatch's allowlist — so this screen mounts its
+ * in this worktree (App.tsx, outside this dispatch's allowlist, mounts
+ * screens but hoists no drawer), so this screen mounts its
  * own local `<Drawer>`. Because the app's nav model shows exactly one
  * screen at a time, this is functionally identical to a single shared
  * instance today (never two Drawers mounted simultaneously); it is an
@@ -117,20 +121,12 @@
  * / 200ms transition constants and `Home.tsx`'s identical note — not
  * sourced from any doctrine file.
  *
- * STOP-item — no executable test run: this worktree's `package.json`
- * (out of this dispatch's ALLOWLIST) has no test runner or
- * component-testing library installed (`npm run` scripts are `dev` /
- * `build` / `preview` only) — matching every sibling screen already
- * landed here (`Home.tsx`, `BoardDeck.tsx`, `OnSideFeed.tsx` each carry
- * the identical STOP-item). TDD-with-executed-output (SOP Directive
- * 2/Principle 3) is therefore not achievable within this dispatch's file
- * boundary. Verified instead via `npx tsc --noEmit` against the whole
- * `src/` tree (strict mode, `exactOptionalPropertyTypes`) to confirm this
- * file type-checks against the real `Topbar`/`Sidebar`/`SliderControlRow`/
- * `PlanTable`/`Drawer`/`DrawerContent` prop shapes, not a guessed one.
- * Recommending the same test-tooling follow-up dispatch (vitest +
- * @testing-library/react, via its own `package.json` ALLOWLIST) the
- * sibling screens already recommend.
+ * Tests: src/__tests__/studio/investment-design.test.tsx executes this
+ * screen against the base anchors above (vitest + @testing-library) —
+ * stance/recompute liveness, the shared-store lever publish, and the full
+ * openPlay drawer content (STU-13). (The former "no test runner
+ * installed" STOP-item is stale and removed — the T6.5 regression-suite
+ * dispatch installed vitest + @testing-library for the whole worktree.)
  */
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -144,10 +140,11 @@ import { Drawer } from '../components/Drawer';
 import { DrawerContent } from '../components/DrawerContent';
 import type { DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
 import { Tag } from '../components/primitives/Tag';
-import { deriveRecomputeView } from '../engine/plan';
-import type { SliderState, PlanOpportunity, PlanTableRow, GatedRow, BenchRow } from '../engine/plan';
-import { OPPS, DETAIL, CTRL, GREEN } from '../data/studio';
-import type { StudioOpportunity } from '../data/studio';
+import { deriveRecomputeView, fmt } from '../engine/plan';
+import type { SliderState, PlanOpportunity, PlanTableRow, GatedRow, BenchRow, Levers } from '../engine/plan';
+import { OPPS, DETAIL, CTRL, GREEN, GOV, REGMAP } from '../data/studio';
+import type { StudioPlayDetail } from '../data/studio';
+import { setDemoSliders, useDemoStore } from '../state/demoStore';
 
 /**
  * Corrected initial lever state — survey_map.md §a line 59: "defaults
@@ -212,34 +209,111 @@ export interface InvestmentDesignProps {
 }
 
 /**
- * Builds this play's DrawerContent field rows + tags. See file header
- * "AMBIGUITY RESOLVED — play-drawer 'controls-to-close' content."
+ * Base openPlay's default DETAIL fallback (leapfi-platform.html:1394),
+ * verbatim, for plays with no DETAIL entry.
  */
-function buildPlayDrawerContent(row: PlanTableRow): { fields: DrawerContentField[]; tags: DrawerContentTag[] } {
-  const opportunity: StudioOpportunity | undefined = OPPS.find((o) => o.n === row.name);
-  const detail = DETAIL[row.name];
-  const controlsToClose = opportunity ? opportunity.g.filter((control) => (CTRL[control] ?? 0) < GREEN) : [];
+function defaultPlayDetail(opportunity: PlanOpportunity): StudioPlayDetail {
+  return {
+    sum: `${opportunity.c} play from the Studio catalog. The envelope below prices from comparable implementations; full scope drafts during the deep-dive.`,
+    work: [
+      'Confirm the current-state workflow with the owning team',
+      'Data access + integration assessment',
+      'Pilot build with human-in-the-loop review',
+      'Controls evidence + OnSide mapping',
+      'Production hardening + adoption plan',
+    ],
+    tech: ['Source-system access to be confirmed', 'Historical volume data for evaluation'],
+    deps: [],
+    unlocks: [],
+  };
+}
 
-  const fields: DrawerContentField[] = [
-    { label: 'Category', value: row.category },
-    { label: 'Build cost', value: row.buildCostText },
-    { label: 'Annual value at adoption', value: row.annualValueText },
-    { label: 'Payback', value: `${row.paybackMonths} mo` },
-  ];
-  if (detail) {
-    fields.push({ label: 'Summary', value: detail.sum });
-  }
-  if (controlsToClose.length === 0) {
-    fields.push({ label: 'Controls to close', value: `None — every control gating this play is already at or above the ${GREEN}% green band.` });
-  } else {
-    controlsToClose.forEach((control) => {
-      fields.push({ label: `Controls to close · ${control}`, value: `${CTRL[control] ?? 0}% maturity today — needs ${GREEN}%+` });
-    });
-  }
-
+/**
+ * Builds this play's DrawerContent field rows + tags — the full base
+ * openPlay drawer content (leapfi-platform.html:1391-1432; fix-wave
+ * STU-13): summary, economics (incl. the 3-yr return tile), the
+ * ready/sequence-gated verdict (`seqNote`), scope of work, technical
+ * dependencies, per-gate governance detail (GOV + REGMAP with live
+ * scores), the Financial block (run-cost estimate + build-number
+ * explanation), controls-to-close, and the Depends-on / Unlocks
+ * connections — rendered as DrawerContent (C8) field rows, plain text.
+ */
+function buildPlayDrawerContent(row: PlanTableRow, L: Levers): { fields: DrawerContentField[]; tags: DrawerContentTag[] } {
+  const opportunity: PlanOpportunity | undefined = OPPS.find((o) => o.n === row.name);
+  const fields: DrawerContentField[] = [{ label: 'Category', value: row.category }];
   const tags: DrawerContentTag[] = [{ text: row.riskLabel, variant: row.riskVariant }];
   if (row.isFoundational) tags.push({ text: 'Foundational', variant: 'count' });
   if (row.isFromDiscovery) tags.push({ text: 'From Discovery', variant: 'count' });
+  if (!opportunity) return { fields, tags };
+
+  const detail = DETAIL[row.name] ?? defaultPlayDetail(opportunity);
+  const ready = opportunity.minGate >= L.threshold; // base 1399
+  const annual = opportunity.val * L.eff;
+  const roiC = (annual * 3) / opportunity.cost; // base 1398
+  const ongoing = Math.round((opportunity.cost * 0.15) / 1000) * 1000; // base 1401
+  const controlsToClose = opportunity.g.filter((control) => (CTRL[control] ?? 0) < GREEN); // base openG, 1400
+
+  fields.push(
+    { label: 'Summary', value: detail.sum },
+    { label: 'Build cost', value: `${row.buildCostText} one-time` },
+    { label: 'Annual value', value: `${row.annualValueText} at ${Math.round(L.eff * 100)}% adoption` },
+    { label: 'Payback', value: `${row.paybackMonths} mo` },
+    { label: '3-yr return', value: `${roiC.toFixed(1)}× on build cost` },
+    {
+      // Base seqNote (1405-1407): the ready / sequence-gated verdict line.
+      label: 'Status',
+      value: ready
+        ? '✓ Ready now at your current risk tolerance; cleared to enter the funded portfolio.'
+        : `Sequence-gated: blocked until ${opportunity.weakGate} reaches ${GREEN}% (now ${CTRL[opportunity.weakGate] ?? 0}%). Close it first, then this unlocks.`,
+    },
+    { label: 'Scope of work', value: detail.work.join(' · ') },
+    { label: 'Technical dependencies', value: detail.tech.join(' · ') },
+  );
+
+  // Per-gate governance detail (base gov rows, 1402): live score/status +
+  // GOV description + REGMAP citation.
+  opportunity.g.forEach((gate) => {
+    const score = CTRL[gate] ?? 0;
+    const ok = score >= GREEN;
+    fields.push({
+      label: `Governance · ${gate}`,
+      value: `${score}%${ok ? ' ✓' : ' · open'} — ${GOV[gate] ?? ''} · ${REGMAP[gate] ?? ''}`,
+    });
+  });
+
+  // Base Financial block (1424): run cost, sequencing note, and the
+  // build-number explanation.
+  fields.push({
+    label: 'Financial',
+    value:
+      `Build ${fmt(opportunity.cost)} one-time${ready ? ', in the ready set at your tolerance' : `; sequence-gated (+${fmt(opportunity.cost)} once unlocked)`} · ` +
+      `Run cost ≈ ${fmt(ongoing)}/yr (est. · model consumption + hosting at scoped volume) · ` +
+      `Payback ≈ ${row.paybackMonths} mo · 3-yr return ${roiC.toFixed(1)}×. ` +
+      'The build number includes control build-out for the gating families, OnSide evidence mapping, and first-year model consumption. Not licence-only.',
+  });
+
+  if (controlsToClose.length === 0) {
+    fields.push({ label: 'Controls to close first', value: 'All gating controls are green.' });
+  } else {
+    controlsToClose.forEach((control) => {
+      fields.push({
+        label: `Controls to close first · ${control}`,
+        value: `${CTRL[control] ?? 0}% · open — ${GOV[control] ?? ''}`,
+      });
+    });
+  }
+
+  // Base "How it connects" (1426-1428): Depends-on / Unlocks chips.
+  fields.push(
+    {
+      label: 'Depends on',
+      value: detail.deps.length ? detail.deps.join(' · ') : 'No prerequisites; can start immediately.',
+    },
+    {
+      label: 'Unlocks / shares data with',
+      value: detail.unlocks.length ? detail.unlocks.join(' · ') : 'Standalone; nothing downstream depends on it.',
+    },
+  );
 
   return { fields, tags };
 }
@@ -329,7 +403,23 @@ export function InvestmentDesign({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activePlay, setActivePlay] = useState<PlanTableRow | null>(null);
 
+  // Subscribes to the shared demo store so the live opportunity pool
+  // (Discovery-accepted plays pushed by demoStore.acceptOpportunity) is
+  // reflected on every store write.
+  useDemoStore();
+
   const view = deriveRecomputeView(sliders, opportunities);
+
+  /** Every lever change is published to the shared demo store
+   * (`setDemoSliders`) so Home panels, reports, and the Studio Ask value
+   * lines recompute from the SAME live position — the base's
+   * recompute()-on-input fan-out (source 1256-1303; fix-wave SH-6/RPT-04/
+   * STU-07 backbone contract). App seeds this screen from
+   * `getDemoSliders()` on mount, closing the loop. */
+  const handleSlidersChange = (next: SliderState) => {
+    setSliders(next);
+    setDemoSliders(next);
+  };
 
   const handleOpenPlay = (row: PlanTableRow) => {
     setActivePlay(row);
@@ -340,7 +430,7 @@ export function InvestmentDesign({
     setDrawerOpen(false);
   };
 
-  const drawerContent = activePlay ? buildPlayDrawerContent(activePlay) : null;
+  const drawerContent = activePlay ? buildPlayDrawerContent(activePlay, view.L) : null;
 
   // Built conditionally (rather than `versionLabel={sidebarVersionLabel}`
   // directly) — this project's `exactOptionalPropertyTypes` setting treats
@@ -369,7 +459,7 @@ export function InvestmentDesign({
             </p>
           </div>
 
-          <SliderControlRow sliders={sliders} onSlidersChange={setSliders} {...(opportunities !== undefined ? { opportunities } : {})} />
+          <SliderControlRow sliders={sliders} onSlidersChange={handleSlidersChange} {...(opportunities !== undefined ? { opportunities } : {})} />
 
           <div style={sectionStyle}>
             <h2 style={sectionHeadingStyle}>Your funded portfolio</h2>

@@ -68,7 +68,9 @@ export interface BoardLogEntry {
 /** Session-appended update log, keyed by standing-row id (`BOARD_LOG[id]`,
  * newest first — `boardSave` unshifts). Empty by default, exactly like the
  * base engine's `var BOARD_LOG={}` (source line 3576). Mutated only by the
- * screen that owns the commit (gate dispatch), never by `BoardLogForm`. */
+ * screen that owns the commit (gate dispatch), never by `BoardLogForm` —
+ * and cleared in place by `src/state/demoStore.ts`'s `resetDemo()` on
+ * presenter Restart, so rehearsal entries never leak into the next run. */
 export let BOARD_LOG: Record<string, BoardLogEntry[]> = {};
 
 export type BoardStandingStatus = 'open' | 'tracking' | 'closed';

@@ -63,7 +63,14 @@ const baseSegmentStyle: CSSProperties = {
   lineHeight: 1.2,
   padding: '0.4rem 0.65rem',
   borderRadius: 'var(--radius-pill, 999px)',
-  border: '1px solid var(--border)',
+  // Longhands only (never the `border` shorthand): the variant styles
+  // below override `borderColor`/`borderWidth` individually, and mixing
+  // the shorthand with longhand overrides triggers React's conflicting
+  // style-property warning when a segment's variant changes between
+  // renders (e.g. the current/target bands move on an Ambition commit).
+  borderWidth: 1,
+  borderStyle: 'solid',
+  borderColor: 'var(--border)',
   whiteSpace: 'nowrap',
 };
 

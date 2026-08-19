@@ -4,6 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LeapFI Platform · NorthWinds Credit Union (V2)</title>
+    <!-- SH-10: pre-paint theme stamp. The static data-theme="dark" above is
+         only the no-preference default; a stored preference must be stamped
+         BEFORE first paint (App.tsx's post-mount effect is too late — a
+         stored "light" would flash dark on every load). Key mirrors
+         App.tsx's THEME_STORAGE_KEY; storage failures keep the shipped
+         dark default. -->
+    <script>
+      ;(function () {
+        try {
+          var stored = window.localStorage.getItem('nw-platform-v2-theme')
+          if (stored === 'light' || stored === 'dark') {
+            document.documentElement.setAttribute('data-theme', stored)
+          }
+        } catch (error) {
+          /* storage unavailable — keep the shipped dark default */
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -11,17 +11,19 @@
  * proposed" (`NEW_RULES`) and "Pending & tracked" (`TRACKED_RULES`),
  * matching the base engine's own two-card split (3479-3482).
  *
- * SCOPE NOTE — the base engine's `lcBar()` "Area" scope filter
- * (3453-3459, an unlabelled 9-option single-select strip that narrows both
- * tables to one officer's domain) is intentionally NOT ported here.
- * parity_ia_addendum.md's own row for this view (§1.1 `feed-lifecycle`)
- * lists exactly one component — "DataTable (C6)" — with no FilterBar/scope
- * control named, unlike e.g. the `domains` row which explicitly calls out
- * a Slider. Adding an unrequested filter control would be exactly the
- * "unrequested deliverable ... a FAILED dispatch even if good" the
- * persona's role directive 1 warns against. STOP-item for whoever owns the
- * addendum: confirm the scope bar's omission is intentional (this file's
- * reading), or route it as a follow-up FilterBar (C5) addition.
+ * FIX WAVE (ONSIDE-05) — the base engine's `lcBar()` "Area" scope filter
+ * IS ported (base 3452-3477: `LC_SCOPE`/`setLcScope`/`lcMatch`, a 9-option
+ * single-select strip that narrows BOTH tables to one officer's domain,
+ * with the note 'Filtered to what each officer oversees'). The prior
+ * shipped omission (recorded here as a SCOPE NOTE STOP-item pending
+ * addendum ratification) was confirmed as a D16 functional-parity hole in
+ * the fix-wave review — the addendum's own cited anchor range for this
+ * view (3450-3483) contains lcBar, and the retained base empty-state copy
+ * ('No new proposals in this area.' / 'Nothing tracked in this area.')
+ * only makes sense downstream of it. `lcMatch` ports the base's substring
+ * match over each row's domains text verbatim. Rendered as single-select
+ * Chips (P5 `filter`), the same pre-authorized pattern
+ * `RegulatoryFeedSources`' digest-frequency picker already uses.
  *
  * AMBIGUITY RESOLVED — the "New" status tag on every `NEW_RULES` row is
  * unconditional in source, not data-driven: `osLifecycle()`'s own render
@@ -45,13 +47,12 @@
  * plain text and renders as plain text — never a fabricated Tag for rows
  * that don't carry one in source.
  *
- * Instrument deep-linking (`openInstr`, e.g. `TRACKED_RULES` rows whose
- * second tuple element is an instrument key) is NOT wired here — there is
- * no instrument detail screen/Drawer content in this dispatch's ALLOWLIST
- * or anywhere yet built in this worktree to link to. Rows render as plain
- * text; the instrument key is carried on each row's derived data model for
- * a future dispatch to wire, matching `OnSideFeed.tsx`'s own precedent for
- * an out-of-scope raw action token (never rendered, kept on the model).
+ * FIX WAVE (ONSIDE-08) — instrument deep-linking (`openInstr`, the
+ * `TRACKED_RULES` rows whose second tuple element is an instrument key) is
+ * now wired: rows carrying a key that resolves in `INSTR` render their
+ * Item as a link-styled button firing `onOpenInstrument` (base 3477
+ * `r[1]?instrLink(r[1],r[2]):r[2]`); `OnSideFeed` renders the instrument
+ * detail in its shared Drawer (its `openInstr` port).
  *
  * Entity decoding: `&amp;` and `&ndash;` are the only entities present in
  * `NEW_RULES`/`TRACKED_RULES` (verified via `grep` against `data/onside.ts`)
@@ -62,16 +63,17 @@
  * (C6); every status Tag pairs color with a text status word (Tag's own
  * baseline, unmodified here).
  *
- * STOP-item — no executable test run: this worktree's `package.json` (out
- * of ALLOWLIST) has no test runner installed, matching every sibling
- * screen/view already landed here. Verified via `npx tsc --noEmit`
- * against the whole `src/` tree instead.
+ * Tests: this worktree now carries Vitest + Testing Library — regression
+ * coverage lives in `src/__tests__/onside/` (the earlier "no test runner
+ * installed" STOP-item recorded here is resolved and removed).
  */
+import { useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { DataTable } from '../components/DataTable';
 import type { DataTableColumn } from '../components/DataTable';
+import { Chip } from '../components/primitives/Chip';
 import { Tag } from '../components/primitives/Tag';
-import { NEW_RULES, TRACKED_RULES } from '../data/onside';
+import { INSTR, NEW_RULES, TRACKED_RULES } from '../data/onside';
 import type { NewRuleRow, TrackedRuleRow } from '../data/onside';
 
 const ENTITY_MAP: Record<string, string> = { '&amp;': '&', '&ndash;': '–' };
@@ -165,24 +167,100 @@ const newRuleColumns: DataTableColumn<NewRuleTableRow>[] = [
   { id: 'domains', header: 'Would touch', render: (row) => <span style={{ color: 'var(--ink2)' }}>{row.domains}</span> },
 ];
 
-const trackedRuleColumns: DataTableColumn<TrackedRuleTableRow>[] = [
-  { id: 'source', header: 'Source', render: (row) => <Tag text={row.source} variant="count" /> },
-  { id: 'item', header: 'Item', render: (row) => <strong style={{ color: 'var(--ink)' }}>{row.title}</strong> },
-  {
-    id: 'status',
-    header: 'Status',
-    render: (row): ReactNode =>
-      row.statusEmphasized ? <Tag text={row.statusText} variant="status-positive" /> : <span style={{ color: 'var(--ink2)' }}>{row.statusText}</span>,
-  },
-  { id: 'domains', header: 'Domains touched', render: (row) => <span style={{ color: 'var(--ink2)' }}>{row.domains}</span> },
+/** Link-styled real `<button>` for an in-cell instrument link — the base
+ * `.doclink` affordance (source 3477) rendered accessibly. */
+const INSTRUMENT_LINK_STYLE: CSSProperties = {
+  background: 'transparent',
+  border: 'none',
+  padding: 0,
+  margin: 0,
+  font: 'inherit',
+  fontWeight: 700,
+  color: 'var(--accent)',
+  textDecoration: 'underline',
+  cursor: 'pointer',
+  textAlign: 'left',
+};
+
+/** Columns as a function of the instrument seam — the Item cell needs
+ * `onOpenInstrument` (base 3477 instrLink; see file header ONSIDE-08 note). */
+function trackedRuleColumns(onOpenInstrument: (instrumentKey: string) => void): DataTableColumn<TrackedRuleTableRow>[] {
+  return [
+    { id: 'source', header: 'Source', render: (row) => <Tag text={row.source} variant="count" /> },
+    {
+      id: 'item',
+      header: 'Item',
+      render: (row): ReactNode =>
+        row.instrumentKey !== null && INSTR[row.instrumentKey] ? (
+          <button type="button" style={INSTRUMENT_LINK_STYLE} onClick={() => onOpenInstrument(row.instrumentKey as string)}>
+            {row.title}
+          </button>
+        ) : (
+          <strong style={{ color: 'var(--ink)' }}>{row.title}</strong>
+        ),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      render: (row): ReactNode =>
+        row.statusEmphasized ? <Tag text={row.statusText} variant="status-positive" /> : <span style={{ color: 'var(--ink2)' }}>{row.statusText}</span>,
+    },
+    { id: 'domains', header: 'Domains touched', render: (row) => <span style={{ color: 'var(--ink2)' }}>{row.domains}</span> },
+  ];
+}
+
+/** Base lcBar area list, verbatim (source 3455). Keys are substring-matched
+ * against each row's domains text (base lcMatch, source 3460). */
+const LC_AREAS: [string, string][] = [
+  ['all', 'All areas'],
+  ['Model Risk', 'Model Risk'],
+  ['Third-Party', 'Third-Party Risk'],
+  ['BSA', 'BSA / AML'],
+  ['Fair Lending', 'Fair Lending'],
+  ['Consumer', 'Consumer / UDAAP'],
+  ['InfoSec', 'InfoSec'],
+  ['AI Governance', 'AI Governance'],
+  ['Capital', 'Capital'],
 ];
 
-export function RegulatoryFeedLifecycle() {
+const SCOPE_BAR_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: '0.5rem',
+};
+const SCOPE_LABEL_STYLE: CSSProperties = { fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink)' };
+const SCOPE_NOTE_STYLE: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
+
+export interface RegulatoryFeedLifecycleProps {
+  /** Fired when a tracked row carrying an instrument key is pressed (base
+   * instrLink → openInstr; see file header ONSIDE-08 note). The owning
+   * screen renders the instrument detail in the shared Drawer. */
+  onOpenInstrument: (instrumentKey: string) => void;
+}
+
+export function RegulatoryFeedLifecycle({ onOpenInstrument }: RegulatoryFeedLifecycleProps) {
+  // Base LC_SCOPE (source 3452) — single-select officer scoping of BOTH
+  // tables; see file header ONSIDE-05 note.
+  const [scope, setScope] = useState('all');
+  const lcMatch = (domains: string) => scope === 'all' || domains.includes(scope);
+
+  const scopedNewRules = NEW_RULE_ROWS.filter((row) => lcMatch(row.domains));
+  const scopedTrackedRules = TRACKED_RULE_ROWS.filter((row) => lcMatch(row.domains));
+
   return (
     <section aria-labelledby="regulatory-feed-lifecycle-heading" style={SECTION_STYLE}>
       <h2 id="regulatory-feed-lifecycle-heading" style={SUBHEADING_STYLE}>
         Rulemaking lifecycle
       </h2>
+
+      <div style={SCOPE_BAR_STYLE} role="group" aria-label="Area">
+        <span style={SCOPE_LABEL_STYLE}>Area</span>
+        {LC_AREAS.map(([key, label]) => (
+          <Chip key={key} text={label} variant="filter" selected={scope === key} onPress={() => setScope(key)} />
+        ))}
+        <span style={SCOPE_NOTE_STYLE}>Filtered to what each officer oversees</span>
+      </div>
 
       <div style={CARD_BLOCK_STYLE}>
         <h3 style={CARD_HEADING_STYLE}>Newly proposed · the strategy signal</h3>
@@ -195,7 +273,7 @@ export function RegulatoryFeedLifecycle() {
           <DataTable
             caption="Newly proposed rulemakings"
             columns={newRuleColumns}
-            rows={NEW_RULE_ROWS}
+            rows={scopedNewRules}
             getRowId={(row) => row.id}
             emptyMessage="No new proposals in this area."
           />
@@ -211,8 +289,8 @@ export function RegulatoryFeedLifecycle() {
         <div style={SCROLL_WRAP_STYLE}>
           <DataTable
             caption="Pending and tracked rulemakings"
-            columns={trackedRuleColumns}
-            rows={TRACKED_RULE_ROWS}
+            columns={trackedRuleColumns(onOpenInstrument)}
+            rows={scopedTrackedRules}
             getRowId={(row) => row.id}
             emptyMessage="Nothing tracked in this area."
           />

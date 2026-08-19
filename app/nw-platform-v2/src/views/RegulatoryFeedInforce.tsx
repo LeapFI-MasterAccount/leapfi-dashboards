@@ -11,14 +11,12 @@
  * matching the base engine's own single-card, single-table layout
  * (3495-3496).
  *
- * Instrument deep-linking (`openInstr`, every row's second tuple element
- * is an instrument key) is NOT wired here — same disposition as
- * `RegulatoryFeedLifecycle.tsx`'s identical note: no instrument detail
- * screen/Drawer content exists in this dispatch's ALLOWLIST or anywhere
- * yet built in this worktree. Rows render as plain text; the instrument
- * key is carried on each row's derived data model for a future dispatch to
- * wire, matching `OnSideFeed.tsx`'s own precedent for an out-of-scope raw
- * action token (never rendered, kept on the model).
+ * FIX WAVE (ONSIDE-08) — instrument deep-linking (`openInstr`, every
+ * row's second tuple element is an instrument key) is now wired: rows
+ * whose key resolves in `INSTR` render the instrument title as a
+ * link-styled button firing `onOpenInstrument` (base 3494
+ * `instrLink(r[1],r[2])`); `OnSideFeed` renders the instrument detail in
+ * its shared Drawer (its `openInstr` port).
  *
  * Entity decoding: `&amp;` is the only entity present in `INFORCE_RULES`
  * (verified via `grep` against `data/onside.ts`) — `decodeEntities` is
@@ -29,16 +27,15 @@
  * jurisdiction is rendered as a real Tag (never color-only — Tag's own
  * baseline, unmodified here).
  *
- * STOP-item — no executable test run: this worktree's `package.json` (out
- * of ALLOWLIST) has no test runner installed, matching every sibling
- * screen/view already landed here. Verified via `npx tsc --noEmit`
- * against the whole `src/` tree instead.
+ * Tests: this worktree now carries Vitest + Testing Library — regression
+ * coverage lives in `src/__tests__/onside/` (the earlier "no test runner
+ * installed" STOP-item recorded here is resolved and removed).
  */
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { DataTable } from '../components/DataTable';
 import type { DataTableColumn } from '../components/DataTable';
 import { Tag } from '../components/primitives/Tag';
-import { INFORCE_RULES } from '../data/onside';
+import { INFORCE_RULES, INSTR } from '../data/onside';
 import type { InforceRuleRow } from '../data/onside';
 
 const ENTITY_MAP: Record<string, string> = { '&amp;': '&' };
@@ -74,14 +71,51 @@ const INFORCE_ROWS: InforceTableRow[] = INFORCE_RULES.map((row: InforceRuleRow, 
   };
 });
 
-const columns: DataTableColumn<InforceTableRow>[] = [
-  { id: 'jurisdiction', header: 'Jur.', render: (row) => <Tag text={row.jurisdiction} variant="count" /> },
-  { id: 'instrument', header: 'Instrument', render: (row) => <strong style={{ color: 'var(--ink)' }}>{row.title}</strong> },
-  { id: 'effective', header: 'Effective', render: (row) => <span style={{ color: 'var(--ink2)' }}>{row.effective}</span> },
-  { id: 'domain', header: 'Domains', render: (row) => <span style={{ color: 'var(--ink2)' }}>{row.domain}</span> },
-];
+/** Link-styled real `<button>` for an in-cell instrument link — the base
+ * `.doclink` affordance (source 3494) rendered accessibly. */
+const INSTRUMENT_LINK_STYLE: CSSProperties = {
+  background: 'transparent',
+  border: 'none',
+  padding: 0,
+  margin: 0,
+  font: 'inherit',
+  fontWeight: 700,
+  color: 'var(--accent)',
+  textDecoration: 'underline',
+  cursor: 'pointer',
+  textAlign: 'left',
+};
 
-export function RegulatoryFeedInforce() {
+/** Columns as a function of the instrument seam (base 3494 instrLink; see
+ * file header ONSIDE-08 note). */
+function inforceColumns(onOpenInstrument: (instrumentKey: string) => void): DataTableColumn<InforceTableRow>[] {
+  return [
+    { id: 'jurisdiction', header: 'Jur.', render: (row) => <Tag text={row.jurisdiction} variant="count" /> },
+    {
+      id: 'instrument',
+      header: 'Instrument',
+      render: (row): ReactNode =>
+        INSTR[row.instrumentKey] ? (
+          <button type="button" style={INSTRUMENT_LINK_STYLE} onClick={() => onOpenInstrument(row.instrumentKey)}>
+            {row.title}
+          </button>
+        ) : (
+          <strong style={{ color: 'var(--ink)' }}>{row.title}</strong>
+        ),
+    },
+    { id: 'effective', header: 'Effective', render: (row) => <span style={{ color: 'var(--ink2)' }}>{row.effective}</span> },
+    { id: 'domain', header: 'Domains', render: (row) => <span style={{ color: 'var(--ink2)' }}>{row.domain}</span> },
+  ];
+}
+
+export interface RegulatoryFeedInforceProps {
+  /** Fired when a row's instrument title is pressed (base instrLink →
+   * openInstr; see file header ONSIDE-08 note). The owning screen renders
+   * the instrument detail in the shared Drawer. */
+  onOpenInstrument: (instrumentKey: string) => void;
+}
+
+export function RegulatoryFeedInforce({ onOpenInstrument }: RegulatoryFeedInforceProps) {
   return (
     <section aria-labelledby="regulatory-feed-inforce-heading" style={SECTION_STYLE}>
       <h2 id="regulatory-feed-inforce-heading" style={SUBHEADING_STYLE}>
@@ -93,7 +127,7 @@ export function RegulatoryFeedInforce() {
       <div style={SCROLL_WRAP_STYLE}>
         <DataTable
           caption="Enacted and in-force instruments"
-          columns={columns}
+          columns={inforceColumns(onOpenInstrument)}
           rows={INFORCE_ROWS}
           getRowId={(row) => row.id}
           emptyMessage="Nothing currently in force."

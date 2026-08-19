@@ -27,7 +27,13 @@
  *
  * `id`/`title` values are copied character-for-character from §3's own
  * literal example array (not re-derived) — the spec already names these
- * exactly for `SCRIPT_CEO`.
+ * exactly for `SCRIPT_CEO`. ONE authored correction (RAIL-07): step 5's
+ * title carries the ™ — §3's example array itself omits it, but §1's step
+ * table (line 37), §2's heading (line 163), and brand_doctrine.md line 59
+ * ("Pilot Purgatory™", mandatory brand vocabulary) all carry it, and
+ * InvestmentDesign.tsx already uses the ™ form; the doctrine doc is
+ * internally inconsistent and the brand-vocabulary sources govern.
+ * "Out of Pilot Purgatory™" is 23 chars, inside the ≤32 title cap.
  *
  * AMBIGUITY RESOLVED — `let ACTIVE_SCRIPT` (§3's plain-JS mutable global) in
  * a React shell: the source model's `let ACTIVE_SCRIPT = SCRIPTS.ceo` is a
@@ -43,18 +49,23 @@
  * registry entry; `ScriptKey` widens automatically, and no code path here or
  * in PresenterRail.tsx branches on which script is active.
  *
- * AMBIGUITY RESOLVED — `resolveTarget`'s screen-id space: the token grammar
- * (below, ported verbatim from §3's field contract) is broader than the
- * 7 screens this program has actually built (e.g. `studio:register`,
- * `go:reporting`, and the `onside:src:<id>`/`onside:case:<id>` deep-link
- * forms have no dedicated screen file in this worktree). `resolveTarget`
- * parses the full grammar as specified, but only returns a real screen id
- * for tokens this build can actually navigate to — every other
- * grammatically-valid token resolves to `null` (a safe no-op for whichever
- * caller asked), rather than a fabricated destination. This keeps the
- * parser faithful to the full spec'd grammar (so a second script using a
- * token this file already understands needs zero changes here) without
- * inventing navigation this program never built.
+ * AMBIGUITY RESOLVED — `resolveTarget`'s screen-id space (updated by the
+ * T6.7 fix wave; an earlier revision of this header claimed the
+ * `onside:src:<id>`/`onside:case:<id>` deep-link forms "have no dedicated
+ * screen file in this worktree" — stale since the parity-assembly wave
+ * built both destinations): the token grammar (below, ported verbatim from
+ * §3's field contract) is still broader than what this build can navigate
+ * to (e.g. `studio:register` has no built screen; `go:<mod>` hub tokens
+ * other than `go:home` resolve to `null` — some hub landing pages exist now
+ * (e.g. Reporting) but no dispatch has ratified hub-token mappings, so the
+ * safe no-op stands, flagged). `resolveTarget` parses the full grammar as
+ * specified and returns a real screen id exactly where a built destination
+ * exists — RAIL-10: `onside:src:<id>` routes to the feed (base onsideShow
+ * routes src: to the source page under Sources & connectors, hosted by
+ * 'onside.feed' in this build) and `onside:case:<id>` routes to 'cases'
+ * (base routes case: to the Cases view) — every other grammatically-valid
+ * token resolves to `null` (a safe no-op), never a fabricated or wrong
+ * destination.
  *
  * `persona` field (§3 swap rule 3: "a CPO script may add an optional
  * `persona` field (applied on script load, ignored when absent) —
@@ -64,11 +75,10 @@
  * (`SCRIPT_CEO` never sets it) — out of scope until a persona-flow script
  * actually exists.
  *
- * STOP-item — no executable test run: this worktree's `package.json` (out
- * of this dispatch's ALLOWLIST) has no test runner installed, matching
- * every sibling data/screen file already landed here. Verified via
- * `npx tsc --noEmit` against the whole `src/` tree instead (strict mode,
- * `exactOptionalPropertyTypes`).
+ * TESTS (stale claim corrected by the T6.7 fix wave — an earlier header
+ * revision said no test runner was installed): Vitest is installed; this
+ * module is pinned by `src/__tests__/shell/presenter-rail.test.tsx`, plus
+ * `npx tsc --noEmit` (strict, `exactOptionalPropertyTypes`).
  */
 
 /** Presenter-HUD step contract (demo_script_draft.md §3 field contract). */
@@ -128,7 +138,9 @@ export const SCRIPT_CEO: ScriptStep[] = [
   },
   {
     id: 'ceo-05-design',
-    title: 'Out of Pilot Purgatory',
+    // RAIL-07: ™ restored per demo_script_draft.md §1 (line 37) / §2 (line
+    // 163) and brand_doctrine.md line 59 — see file header `id`/`title` note.
+    title: 'Out of Pilot Purgatory™',
     say: 'Here is the revenue side: raise ambition and the funded portfolio recomputes live against the $450k envelope and 2.5x hurdle.',
     do: 'Studio → Investment Design; drag #amb, nudge #tol; open one play drawer.',
     target: 'studio:design',
@@ -169,6 +181,7 @@ export type ScriptTargetId =
   | 'studio.ask'
   | 'studio.investment-design'
   | 'studio.roadmap'
+  | 'cases' // RAIL-10: onside:case:<id> deep links land on the built Cases screen
   | 'board-deck';
 
 /**
@@ -195,13 +208,22 @@ export function resolveTarget(target: string): ScriptTargetId | null {
 
   if (target === 'onside:feed') return 'onside.feed';
   if (target === 'onside:docs') return 'onside.documents';
-  if (target.startsWith('onside:src:') || target.startsWith('onside:case:') || target.startsWith('onside:dom-')) {
-    // Deep links land on Documents — the screen that owns the in-page
-    // "Domain impact" section (design_system_spec.md §5.3's own resolution
-    // for the same "no dedicated domain-view screen" gap OnSideDocuments.tsx
-    // already documents).
-    return 'onside.documents';
-  }
+  // Deep links (RAIL-10): route to the screens the base onsideShow routes
+  // them to — src: → the feed's sources surface (base 3021–3046 routes src:
+  // to osSourcePage under Sources & connectors; 'onside.feed' hosts
+  // RegulatoryFeedSources in this build) and case: → the Cases view
+  // ('cases', a first-class screen since the parity-assembly wave). The
+  // <id> segment is dropped at this seam: the shell's nav is screen-level
+  // (`navigateToScreen(id)`), so the token lands on the correct SCREEN but
+  // not the specific source/case page — carrying the id through is flagged
+  // follow-up shell wiring; landing on the wrong screen entirely (the old
+  // blanket 'onside.documents' mapping) was the RAIL-10 defect. Only dom-
+  // keeps the Documents landing — design_system_spec.md §5.3's own
+  // resolution for the genuinely missing domain-view screen (Documents owns
+  // the in-page "Domain impact" section).
+  if (target.startsWith('onside:src:')) return 'onside.feed';
+  if (target.startsWith('onside:case:')) return 'cases';
+  if (target.startsWith('onside:dom-')) return 'onside.documents';
   if (target.startsWith('onside:')) return null;
 
   if (target === 'deck:board') return 'board-deck';

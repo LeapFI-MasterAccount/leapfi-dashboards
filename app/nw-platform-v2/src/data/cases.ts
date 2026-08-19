@@ -131,6 +131,11 @@ export interface Notif {
   [key: string]: unknown;
 }
 
+/** Session notification queue. Writers live in `src/state/demoStore.ts`
+ * (the base `notify()` port, source 2626–2629, plus the six case-action
+ * write helpers, source 2691–2758); `seedCases()`/`resetDemo()` reset it
+ * to `[]`. Concrete entry shape: `{to,title,cid,kind,when,read}` (see
+ * `views/NotificationBellPanel.tsx`'s `BellNotification`). */
 export let NOTIFS: Notif[] = [];
 
 export const CASE_TRIGGER: Record<string, string> = {

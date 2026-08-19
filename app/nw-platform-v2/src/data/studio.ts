@@ -13,6 +13,11 @@
  * Play-name strings (OPPS[].n / DETAIL keys) are foreign keys per
  * survey_map.md §d-1 ("Play-name string coupling") — they are preserved
  * character-for-character and must never be edited independently here.
+ *
+ * Fix-wave addition (STU-02): `DOMMAP`/`domainsFor` (source lines
+ * 4299-4300, outside the 1150-1215 range above) are also ported here
+ * verbatim, so the display-name domain map has one canonical home instead
+ * of per-screen duplicates.
  */
 
 /* ============ USERS (Active Directory mock) — source lines 1160-1167 ============ */
@@ -88,6 +93,40 @@ export const CTRLDOM: Record<string, string> = {
   'TPRM': 'tprm',
   'Govern': 'aigov',
 };
+
+/**
+ * Control family -> DISPLAY domain name. Source line 4299 (`var DOMMAP=`),
+ * ported verbatim (fix-wave STU-02: `CTRLDOM` above maps to internal
+ * routing slugs — 'fairlend', 'mrm' — and must never be rendered as
+ * user-facing domain names; this map carries the display names the base
+ * envelope/accept copy shows).
+ */
+export const DOMMAP: Record<string, string> = {
+  'Fair Lending': 'Fair Lending',
+  'Adverse Action': 'Fair Lending',
+  'UDAAP': 'Consumer / UDAAP',
+  'BSA/AML': 'BSA / AML',
+  'Model Risk': 'Model Risk',
+  'Privacy': 'InfoSec / GLBA',
+  'InfoSec': 'InfoSec / GLBA',
+  'TPRM': 'Third-Party Risk',
+  'Govern': 'AI Governance',
+};
+
+/** Base `domainsFor()` (source line 4300), verbatim semantics: unique
+ * display-domain names for a gate list, first-seen order preserved. */
+export function domainsFor(gates: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const gate of gates) {
+    const domain = DOMMAP[gate];
+    if (domain !== undefined && !seen.has(domain)) {
+      seen.add(domain);
+      out.push(domain);
+    }
+  }
+  return out;
+}
 
 /**
  * Control name -> instrument citation short-label. Source line 1176.

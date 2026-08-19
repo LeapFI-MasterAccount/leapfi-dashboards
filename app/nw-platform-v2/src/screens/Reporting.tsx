@@ -19,11 +19,14 @@
  * carries all 11; nothing from the original 9 is cut or reordered away from
  * `osReports()`'s own sequence.
  *
- * See `views/ReportView.tsx`'s file header for the STOP-items this screen
- * inherits by composition: Drawer's missing "wide" variant, the `gapboard`
- * → Cases forward reference (`onNavigate('cases')`, not yet a valid `ScreenId`
- * in `App.tsx` pending Batch 4), dropped decorative charts (OQ-B), and the
- * `regchange` standing-table data-ownership note.
+ * See `views/ReportView.tsx`'s file header for the notes this screen
+ * inherits by composition: dropped decorative charts (OQ-B) and the
+ * `regchange` standing-table data-ownership note. Two formerly-inherited
+ * STOP-items are closed: Drawer now ships the addendum-required `wide`
+ * variant (RPT-03 fix wave — this screen passes `size="wide"` in report
+ * mode; the base's `boardUpdate` form drawer is NOT wide, `showDrawer(html,
+ * false)` source 3577-3587, so form mode stays default width), and the
+ * `gapboard` → Cases route is live (`'cases'` is a wired `ScreenId`).
  *
  * AMBIGUITY RESOLVED — SetupCard `icon` omitted on every card: identical
  * resolution to `Roadmap.tsx`'s own "What's next" row — `osReports()`'s `rc()`
@@ -59,24 +62,24 @@
  * `currentUser` below), and the post-save sequencing: reveal the "Saved to
  * the standing view" pill, then after the base's own 900ms delay swap the
  * Drawer content back to the `regchange` report (base line 3592's
- * setTimeout). Quirk replicated on purpose: as in the base, a presenter who
- * closes the drawer during the 900ms window still gets the regchange report
- * reopened by the pending timer (`closeDrawer();openReport('regchange')`
- * runs unconditionally in source). One knowing divergence, flagged not
- * hidden: our `BoardLogForm` receives the live `BOARD_LOG[id]` array, so the
- * just-saved entry appears in the form's "Update history" during the 900ms
- * pill window, where the base's string-built drawer stayed stale until
- * reopened — React-idiomatic freshness, same data, no copy invented. The
- * drawer's "Print / Save as PDF" ghost footer is omitted in form mode (the
- * base `boardUpdate` drawer has no such control).
+ * setTimeout). KNOWN DIVERGENCE, deliberate (RPT-06 fix wave): the base's
+ * pending timer runs unconditionally — close the drawer or open a different
+ * report inside the 900ms window and the timer still forces the regchange
+ * report open, hijacking whatever the presenter did (base line 3592's
+ * `closeDrawer();openReport('regchange')`). Not demo-safe, so this screen
+ * CANCELS the pending timer on every intervening user action (closeReport /
+ * openReport / openBoardLog); the base-parity path — presenter leaves the
+ * drawer alone for 900ms — is unchanged. One further knowing divergence,
+ * flagged not hidden: our `BoardLogForm` receives the live `BOARD_LOG[id]`
+ * array, so the just-saved entry appears in the form's "Update history"
+ * during the 900ms pill window, where the base's string-built drawer stayed
+ * stale until reopened — React-idiomatic freshness, same data, no copy
+ * invented. The drawer's "Print / Save as PDF" ghost footer is omitted in
+ * form mode (the base `boardUpdate` drawer has no such control; the print
+ * affordance is backed by Drawer.tsx's ported base print stylesheet, RPT-01).
  *
- * STOP-item — no executable test run: identical to every sibling screen
- * already landed in this worktree — no test runner is installed
- * (`package.json`, out of this dispatch's ALLOWLIST, has `dev`/`build`/
- * `preview` scripts only). Verified via `npx tsc --noEmit` against the whole
- * `src/` tree (strict mode, `noUncheckedIndexedAccess`,
- * `exactOptionalPropertyTypes`) instead; recommending the same test-tooling
- * follow-up dispatch every sibling screen already recommends.
+ * Tests: `src/__tests__/reporting_cases/` (vitest is installed; this
+ * header's original "no test runner" STOP-item is obsolete and removed).
  */
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -148,10 +151,18 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser
   const [boardLogDate, setBoardLogDate] = useState('');
   const [boardLogText, setBoardLogText] = useState('');
   const [boardLogSaved, setBoardLogSaved] = useState(false);
-  // Pending base-line-3592 `setTimeout(...,900)` — cleared only on unmount
-  // (base clears it never; see header on the replicated close-during-window
-  // quirk).
+  // Pending base-line-3592 `setTimeout(...,900)`. RPT-06 (fix wave): unlike
+  // the base — whose timer runs unconditionally and hijacks whatever the
+  // presenter did in the window — this timer is cancelled on unmount AND on
+  // every intervening user action (closeReport/openReport/openBoardLog). See
+  // the file header's KNOWN DIVERGENCE note.
   const savedTimerRef = useRef<number | null>(null);
+  const cancelSavedTimer = () => {
+    if (savedTimerRef.current !== null) {
+      window.clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = null;
+    }
+  };
   useEffect(
     () => () => {
       if (savedTimerRef.current !== null) window.clearTimeout(savedTimerRef.current);
@@ -161,17 +172,27 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser
 
   const openReport = (kind: ReportKind) => {
     // Content is replaced wholesale, exactly like base `showDrawer` — a
-    // stale board-log form never survives into a report opened from a card.
+    // stale board-log form never survives into a report opened from a card,
+    // and a pending post-save swap never overwrites the fresh report (RPT-06).
+    cancelSavedTimer();
     setBoardLogId(null);
     setSelectedKind(kind);
     setDrawerOpen(true);
   };
-  const closeReport = () => setDrawerOpen(false);
+  const closeReport = () => {
+    // RPT-06: Escape/scrim/Close inside the 900ms window means the presenter
+    // dismissed the flow — the drawer must not force itself back open.
+    cancelSavedTimer();
+    setDrawerOpen(false);
+  };
   const handleOpenCases = () => onNavigate('cases');
 
   /** Base `boardUpdate(id)` (source 3577): swap the drawer to a fresh form
    * for this row — fields empty on every open, like the base's rebuilt DOM. */
   const openBoardLog = (id: string) => {
+    // RPT-06: a fresh form opened inside the window must not be destroyed
+    // mid-typing by the previous save's pending swap.
+    cancelSavedTimer();
     setBoardLogId(id);
     setBoardLogDate('');
     setBoardLogText('');
@@ -196,7 +217,7 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser
       date: boardLogDate.trim(),
     });
     setBoardLogSaved(true);
-    if (savedTimerRef.current !== null) window.clearTimeout(savedTimerRef.current);
+    cancelSavedTimer();
     savedTimerRef.current = window.setTimeout(() => {
       savedTimerRef.current = null;
       setBoardLogId(null);
@@ -256,6 +277,11 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser
         open={drawerOpen}
         title={drawerTitle}
         onClose={closeReport}
+        // RPT-03: reports render in the base's wide drawer (`dr.classList
+        // .add('wide')`, source 1679; addendum §1.3/§6 "wide variant"). The
+        // board-log form does NOT — base `boardUpdate` calls
+        // `showDrawer(html, false)` (source 3577-3587), i.e. default width.
+        size={boardLogId !== null ? 'default' : 'wide'}
         footer={
           // No print footer in form mode — the base `boardUpdate` drawer has
           // no such control (see file header "BOARD-LOG SUB-FLOW").

@@ -44,16 +44,19 @@
  * dispatch introduces a shared scope-filter mechanism across OnSide's
  * screens.
  *
- * AMBIGUITY RESOLVED — "Scope changes this session" (`SCOPE_EVENTS`):
- * source's array starts empty on every fresh load and is only ever
- * populated by runtime handlers this dispatch's allowlist does not reach
- * (accepting a Discovery-surfaced play, the chat intake wizard — Batch 8).
- * This screen models the same session-scoped, empty-by-default state
- * locally (`useState<ScopeChangeEvent[]>([])`) and renders nothing when it
- * is empty, matching source's own `SCOPE_EVENTS.length?...:''` guard
- * exactly (Core Principle 3: never fabricate a state with no real
- * producer behind it) — not silently dropped, just honestly empty until a
- * future dispatch wires a real producer into this state setter.
+ * FIX WAVE (ONSIDE-02 consumer / STU-01 receiving side) — "Scope changes
+ * this session" now reads the real producer: `state/demoStore.ts`'s
+ * `getScopeEvents()` (fed by the store's `acceptOpportunity`, the base
+ * acceptProposed port), with `useDemoStore()` subscribing this whole
+ * screen to every store write. The earlier local
+ * `useState<ScopeChangeEvent[]>([])` stand-in (recorded here as awaiting
+ * a real producer) is gone. The same subscription is what makes the KPI
+ * strip, posture cards, and Domains accordion move when the Step-3 Adopt
+ * cascade flips obligations: every figure is computed per render from the
+ * live `DOMAINS`/`OBL` singletons the store's `applyGapClosure` mutates
+ * (base refreshAll semantics, source 2510-2516) — the previous
+ * module-scope KPI constants could never see an adoption and contradicted
+ * OnSideDocuments two clicks away.
  *
  * AMBIGUITY RESOLVED — StatCard (C1) has no press affordance and no
  * subtitle/caption slot (`StatCardProps` is `label`/`value`/`unit?`/
@@ -98,24 +101,33 @@
  * a real DataTable (C6, inside `DomainsAccordion.tsx`); each domain's
  * accordion header is a real `<button aria-expanded>`; the KPI strip's
  * live values are wrapped by StatCard's own `aria-live="polite"` region
- * (unmodified, inherited); posture-grid cards are real `<button>`s with
- * their full text content (name, scope, status, band) as their accessible
- * name — no icon-only or color-only affordance anywhere in this file.
+ * (unmodified, inherited). FIX WAVE (ONSIDE-14): each posture-grid card
+ * is a `<div>` whose title is a real `<button>` (accessible name = the
+ * domain name) stretched over the card via an absolutely-positioned inner
+ * span — the earlier whole-card `<button>` wrapped `<ul>`/`<div>` flow
+ * content inside a phrasing-content element (invalid HTML) and flattened
+ * the entire card, PosturePillBar list semantics included, into one
+ * run-on accessible name.
  *
  * Irreversibility gate (persona directive 6): this screen performs no
  * irreversible action — every control here is either read-only display or
  * plain navigation (`onNavigate`, in-page expand/scroll). N/A, not
  * omitted.
  *
- * STOP-item — no executable test run: matches the STOP-item already
- * recorded on every sibling screen in this worktree (`OnSideDocuments.tsx`,
- * `Home.tsx`, `StudioAsk.tsx`) — no test runner is installed
- * (`package.json` out of this dispatch's allowlist). Verified instead via
- * `npx tsc --noEmit` against the whole `src/` tree (strict,
- * `exactOptionalPropertyTypes`) to confirm this file and its sibling
- * `views/DomainsAccordion.tsx` type-check against the real `StatCard`/
- * `DataTable`/`PosturePillBar`/`SetupCard`/`Chip`/`Tag`/`Button`/`Topbar`/
- * `Sidebar` prop shapes.
+ * Tests: this worktree now carries Vitest + Testing Library — this
+ * screen's regression suite lives in `src/__tests__/onside/` (the earlier
+ * "no test runner installed" STOP-item recorded here is resolved and
+ * removed).
+ *
+ * FIX WAVE copy corrections: the Domains-section instruction line no
+ * longer promises "work its lever" (ONSIDE-03 — the target lever/Slider
+ * is deliberately unported pending a real role/permission system, per
+ * `DomainsAccordion.tsx`'s own header; shipped copy must not advertise a
+ * capability the page cannot perform), and the Objectives strip says
+ * "open the register in Studio" rather than "open it" (ONSIDE-15 — every
+ * chip navigates to Studio · Ask's register with no per-play payload, the
+ * cross-link the addendum's own row sanctions; the old copy promised the
+ * base's per-play `openPlay` drawer, which this navigation cannot keep).
  *
  * Layout constants (240px sidebar column, 2rem content padding): copied
  * verbatim from `Home.tsx`/`OnSideDocuments.tsx`'s own documented
@@ -140,6 +152,7 @@ import { DomainsAccordion, DOMAIN_STATUS_LABEL, DOMAIN_STATUS_VARIANT, curOf, do
 import { DOMAINS, SRC_ITEMS } from '../data/onside';
 import type { OnsideDomain } from '../data/onside';
 import { OPPS } from '../data/studio';
+import { getScopeEvents, useDemoStore } from '../state/demoStore';
 
 /** Source line 1855: `function feedEventCount(days){...}` — counts every
  * SRC_ITEMS entry whose `daysAgo` (tuple index 0) falls within `days`. */
@@ -153,19 +166,6 @@ function feedEventCount(days: number): number {
   return count;
 }
 
-/** Source's `SCOPE_EVENTS` shape (3075) — no producer wired in this
- * dispatch; see file header "Scope changes this session" note. */
-interface ScopeChangeEvent {
-  uc: string;
-  doms: string[];
-  obl: number;
-}
-
-const DOCS_TOTAL = DOMAINS.reduce((sum, d) => sum + d.docs, 0);
-const OBLIGATIONS_IN_SCOPE = DOMAINS.reduce((sum, d) => sum + d.appl, 0);
-const OBLIGATIONS_MET = DOMAINS.reduce((sum, d) => sum + d.met, 0);
-const GAPS_TO_TARGET = DOMAINS.reduce((sum, d) => sum + oblToClose(d), 0);
-const DOMAINS_AT_OR_ABOVE = DOMAINS.filter((d) => statusOf(d) !== 'below').length;
 const OBJECTIVES_PREVIEW_COUNT = 8;
 
 const SCREEN_STYLE: CSSProperties = {
@@ -209,22 +209,43 @@ const CHIP_STRIP_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap
 
 /** Local, unexported render helper — see file header "domain-posture-grid
  * card is a bespoke composite." Not a new shared component; composes only
- * already-built Label/Tag/PosturePillBar. */
+ * already-built Label/Tag/PosturePillBar.
+ *
+ * ONSIDE-14 — stretched-button structure: the card is a `<div>`; the
+ * domain-name title is the real `<button>` (phrasing content only, so the
+ * markup is valid HTML and the accessible name is the domain name, not a
+ * run-on dump of the whole card), and an absolutely-positioned inner span
+ * extends its hit area over the full card so the whole surface stays
+ * clickable exactly as before. */
 function DomainPostureCard({ domain, onOpen }: { domain: OnsideDomain; onOpen: (key: string) => void }) {
   const current = curOf(domain);
   const toClose = oblToClose(domain);
   const status = statusOf(domain);
 
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(domain.key)}
-      style={{ ...CARD_STYLE, textAlign: 'left', cursor: 'pointer', width: '100%', outline: 'none' }}
-      data-lf-composite="domain-posture-card"
-    >
+    <div style={{ ...CARD_STYLE, position: 'relative' }} data-lf-composite="domain-posture-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--ink)' }}>{domain.name}</div>
+          <button
+            type="button"
+            onClick={() => onOpen(domain.key)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: 0,
+              margin: 0,
+              font: 'inherit',
+              fontSize: '0.9375rem',
+              fontWeight: 700,
+              color: 'var(--ink)',
+              textAlign: 'left',
+              cursor: 'pointer',
+            }}
+          >
+            {domain.name}
+            {/* Stretched hit area — part of the button, covers the card. */}
+            <span aria-hidden="true" style={{ position: 'absolute', inset: 0, cursor: 'pointer' }} />
+          </button>
           <Label
             text={`${domain.bodies} · ${domain.appl}${domain.tot > domain.appl ? ` of ${domain.tot}` : ''} obligations in scope`}
             variant="body-secondary"
@@ -243,7 +264,7 @@ function DomainPostureCard({ domain, onOpen }: { domain: OnsideDomain; onOpen: (
           Open →
         </span>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -258,11 +279,23 @@ export interface OnSideOverviewProps {
 }
 
 export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLinkDomainKey }: OnSideOverviewProps) {
+  // Re-renders this screen on every demo-store write (Adopt cascade,
+  // Discovery accepts, resetDemo) — see the ONSIDE-02 file-header note.
+  useDemoStore();
   const [expandedDomainKeys, setExpandedDomainKeys] = useState<ReadonlySet<string>>(new Set());
   const [pendingScrollKey, setPendingScrollKey] = useState<string | null>(null);
-  // See file header "Scope changes this session" note — no producer wired
-  // in this dispatch; starts and stays empty until one exists.
-  const [scopeEvents] = useState<ScopeChangeEvent[]>([]);
+  // The store's live session scope events (base SCOPE_EVENTS) — see the
+  // ONSIDE-02 / STU-01 file-header note.
+  const scopeEvents = getScopeEvents();
+
+  // Computed per render from the live DOMAINS singleton (never module
+  // scope — the Adopt cascade mutates d.met/OBL in place; base osKpis
+  // recomputes on every refreshAll, source 3055-3068, 2510-2516).
+  const docsTotal = DOMAINS.reduce((sum, d) => sum + d.docs, 0);
+  const obligationsInScope = DOMAINS.reduce((sum, d) => sum + d.appl, 0);
+  const obligationsMet = DOMAINS.reduce((sum, d) => sum + d.met, 0);
+  const gapsToTarget = DOMAINS.reduce((sum, d) => sum + oblToClose(d), 0);
+  const domainsAtOrAbove = DOMAINS.filter((d) => statusOf(d) !== 'below').length;
 
   const lastDeepLinkRef = useRef<string | undefined>(undefined);
 
@@ -313,11 +346,11 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
               Key figures
             </h2>
             <div style={KPI_GRID_STYLE}>
-              <StatCard label="Documents monitored" value={DOCS_TOTAL} unit="documents" />
-              <StatCard label="Obligations in scope" value={OBLIGATIONS_IN_SCOPE} unit="obligations" />
-              <StatCard label="Obligations met" value={OBLIGATIONS_MET} unit="obligations" />
-              <StatCard label="Gaps to your targets" value={GAPS_TO_TARGET} unit="gaps" />
-              <StatCard label="Domains at / above target" value={`${DOMAINS_AT_OR_ABOVE} / ${DOMAINS.length}`} />
+              <StatCard label="Documents monitored" value={docsTotal} unit="documents" />
+              <StatCard label="Obligations in scope" value={obligationsInScope} unit="obligations" />
+              <StatCard label="Obligations met" value={obligationsMet} unit="obligations" />
+              <StatCard label="Gaps to your targets" value={gapsToTarget} unit="gaps" />
+              <StatCard label="Domains at / above target" value={`${domainsAtOrAbove} / ${DOMAINS.length}`} />
               <StatCard label="Change events · 14 days" value={feedEventCount(14)} unit="events" />
             </div>
           </section>
@@ -357,7 +390,7 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
             </h2>
             <p style={SUB_TEXT_STYLE}>
               Applicability is derived from the use cases the institution has declared, with determination provenance on every inclusion
-              and exclusion. Click one to open it in Studio.
+              and exclusion. Click one to open the register in Studio.
             </p>
             <div style={CHIP_STRIP_STYLE}>
               {objectivesPreview.map((opportunity) => (
@@ -401,8 +434,8 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
               Domains · gaps &amp; levers on one page
             </h2>
             <p style={SUB_TEXT_STYLE}>
-              Every domain the institution monitors, judged against the target it set. Open any category to work its lever and see the
-              gaps behind the score.
+              Every domain the institution monitors, judged against the target it set. Open any category to see its target and the gaps
+              behind the score.
             </p>
             <DomainsAccordion
               domains={DOMAINS}

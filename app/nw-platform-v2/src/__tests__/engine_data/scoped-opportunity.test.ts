@@ -118,16 +118,14 @@ describe('computeScopedOpportunity vs base finishIntake (base 4369–4386)', () 
   })
 
   /**
-   * DEVIATION (STOP-item in this dispatch's evidence return): the base
-   * builds the scoped play with `disc:true` (4385 — the "from Discovery"
-   * provenance flag recompute() renders as a pill at 1287, modeled in the
-   * port as `PlanOpportunity.disc` / `PlanTableRow.isFromDiscovery`).
-   * `computeScopedOpportunity` returns a `StudioOpportunity` WITHOUT
-   * `disc`, so a scoped play accepted onto the register would lose its
-   * "from Discovery" badge. Test kept correct-to-base and marked
-   * `test.fails` rather than bending the assertion to the code (D17).
+   * Fix-wave "studio" batch: `computeScopedOpportunity` now returns the
+   * base's `disc:true` (4385 — the "from Discovery" provenance flag
+   * recompute() renders as a pill at 1287, modeled in the port as
+   * `PlanOpportunity.disc` / `PlanTableRow.isFromDiscovery`). The earlier
+   * `test.fails` deviation pin is flipped to a normal passing assertion
+   * per the base anchor (D17).
    */
-  test.fails('scoped play carries disc:true — the "from Discovery" provenance flag (base 4385, rendered 1287)', () => {
+  test('scoped play carries disc:true — the "from Discovery" provenance flag (base 4385, rendered 1287)', () => {
     const o: PlanOpportunity = computeScopedOpportunity('Any new idea', [
       '2 people · ~15 hrs/wk',
       'Under 500 items / mo',

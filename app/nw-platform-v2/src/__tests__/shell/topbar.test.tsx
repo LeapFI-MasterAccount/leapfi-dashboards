@@ -85,3 +85,72 @@ describe('one-level back chip (base NAVBACK 1688–1741; §(b) "Deliberate ONE-L
     expect(within(banner).getByRole('button', { name: 'Back to Home' })).toBeInTheDocument()
   })
 })
+
+describe('ProfileMenu disclosure (C4 a11y baseline, design_system_spec.md §2.2; SH-7)', () => {
+  it('trigger carries aria-haspopup="menu" and live aria-expanded reflecting open state', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const trigger = within(screen.getByRole('banner')).getByRole('button', { name: 'Rachel Fischer' })
+
+    expect(trigger).toHaveAttribute('aria-haspopup', 'menu')
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+
+    await user.click(trigger)
+    expect(trigger).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('menu', { name: 'Rachel Fischer account menu' })).toBeInTheDocument()
+  })
+
+  it('opening focuses the first menuitem; ArrowDown/ArrowUp move through items with wrap; Home/End jump to first/last', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Rachel Fischer' }))
+
+    const menu = screen.getByRole('menu', { name: 'Rachel Fischer account menu' })
+    const items = within(menu).getAllByRole('menuitem')
+    expect(items.length).toBeGreaterThan(2)
+    expect(items[0]).toHaveFocus()
+
+    await user.keyboard('{ArrowDown}')
+    expect(items[1]).toHaveFocus()
+    await user.keyboard('{ArrowUp}')
+    expect(items[0]).toHaveFocus()
+    // Wrap: ArrowUp from the first item lands on the last.
+    await user.keyboard('{ArrowUp}')
+    expect(items[items.length - 1]).toHaveFocus()
+    // Wrap: ArrowDown from the last item lands back on the first.
+    await user.keyboard('{ArrowDown}')
+    expect(items[0]).toHaveFocus()
+
+    await user.keyboard('{End}')
+    expect(items[items.length - 1]).toHaveFocus()
+    await user.keyboard('{Home}')
+    expect(items[0]).toHaveFocus()
+  })
+
+  it('Tab out closes the menu instead of leaving a stale-open popover (WAI-ARIA menu pattern)', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const trigger = within(screen.getByRole('banner')).getByRole('button', { name: 'Rachel Fischer' })
+    await user.click(trigger)
+    expect(screen.getByRole('menu', { name: 'Rachel Fischer account menu' })).toBeInTheDocument()
+
+    await user.tab()
+
+    expect(screen.queryByRole('menu', { name: 'Rachel Fischer account menu' })).not.toBeInTheDocument()
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('Escape closes the menu and restores focus to the trigger', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const trigger = within(screen.getByRole('banner')).getByRole('button', { name: 'Rachel Fischer' })
+    await user.click(trigger)
+    expect(screen.getByRole('menu', { name: 'Rachel Fischer account menu' })).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+
+    expect(screen.queryByRole('menu', { name: 'Rachel Fischer account menu' })).not.toBeInTheDocument()
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    expect(trigger).toHaveFocus()
+  })
+})

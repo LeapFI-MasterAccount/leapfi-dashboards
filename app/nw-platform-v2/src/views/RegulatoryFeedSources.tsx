@@ -83,20 +83,39 @@
  * baseline; every Tag pairs color with a text status word (Tag's own
  * baseline, unmodified here).
  *
- * STOP-item — no executable test run: this worktree's `package.json` (out
- * of ALLOWLIST) has no test runner installed, matching every sibling
- * screen/view already landed here. Verified via `npx tsc --noEmit`
- * against the whole `src/` tree instead.
+ * FIX WAVE (ONSIDE-09) — toast confirmations ported: the base fires a
+ * toast on every digest-frequency change ('Digest set to {freq} · {next
+ * send}', source 3363), every delivery toggle ('Digest preferences
+ * updated', 3363), and every per-source alert toggle ('Alerts on for
+ * {name}. You will be notified the moment a sweep finds a change.' /
+ * 'Alerts off for {name}. It still appears in your digest.', 3366–3371).
+ * This view owns digest + alert truth, so it owns the toasts too — the
+ * drawer-fired alert toggle (bound `onToggleAlert` closure) routes
+ * through the same `toggleAlert` and confirms identically. Rendered via
+ * the Toast composite (C17), auto-dismissing, fixed top-right (same
+ * placement OnSideDocuments already uses).
+ *
+ * FIX WAVE (ONSIDE-08) — the `SrcRow.i` instrument key is now rendered:
+ * source names whose row carries `i` render as a link-styled button
+ * firing `onOpenInstrument` (base osSources 3391 `r.i?instrLink(r.i,
+ * r.n):r.n`), guarded on `INSTR[key]` exactly as base instrLink is
+ * (source 2306). The instrument detail itself renders in `OnSideFeed`'s
+ * shared Drawer (that screen's `openInstr` port).
+ *
+ * Tests: this worktree now carries Vitest + Testing Library — regression
+ * coverage lives in `src/__tests__/onside/` (the earlier "no test runner
+ * installed" STOP-item recorded here is resolved and removed).
  */
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { DataTable } from '../components/DataTable';
 import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
+import { Toast } from '../components/Toast';
 import { Chip } from '../components/primitives/Chip';
 import { Switch } from '../components/primitives/Switch';
 import { Tag } from '../components/primitives/Tag';
 import type { TagVariant } from '../components/primitives/Tag';
-import { DIGEST, FREQ, SRC_ITEMS, SRC_LAYERS, SRC_ROWS } from '../data/onside';
+import { DIGEST, FREQ, INSTR, SRC_ITEMS, SRC_LAYERS, SRC_ROWS } from '../data/onside';
 import type { SrcRow } from '../data/onside';
 
 const ENTITY_MAP: Record<string, string> = { '&amp;': '&', '&ndash;': '–' };
@@ -122,6 +141,10 @@ export interface RegulatoryFeedSourcesProps {
   /** Fired when a source row's "Open" action is pressed. See file header
    * ALLOWLIST BOUNDARY note — this component never opens a Drawer itself. */
   onOpenSource: (row: SourceDetailRow) => void;
+  /** Fired when a source name carrying an `SrcRow.i` instrument key is
+   * pressed (base instrLink → openInstr; see file header ONSIDE-08 note).
+   * The owning screen renders the instrument detail in the shared Drawer. */
+  onOpenInstrument: (instrumentKey: string) => void;
 }
 
 const LAYER_LABEL_BY_KEY = new Map<string, string>(SRC_LAYERS.map(([key, label]) => [key, decodeEntities(label)]));
@@ -201,6 +224,9 @@ interface SourceListRow {
   phaseLabel: string;
   activity30d: number;
   layerKey: string;
+  /** `SrcRow.i` — instrument key behind the source name, when one exists
+   * (base osSources 3391; see file header ONSIDE-08 note). */
+  instrumentKey: string | null;
 }
 
 const ALL_SOURCE_ROWS: SourceListRow[] = SRC_ROWS.map((row: SrcRow) => {
@@ -214,15 +240,41 @@ const ALL_SOURCE_ROWS: SourceListRow[] = SRC_ROWS.map((row: SrcRow) => {
     phaseLabel: row.phl,
     activity30d: activity30dFor(row.n),
     layerKey: row.l,
+    instrumentKey: row.i,
   };
 });
 
-export function RegulatoryFeedSources({ onOpenSource }: RegulatoryFeedSourcesProps) {
+/** Link-styled real `<button>` for an in-cell instrument link — the base
+ * `.doclink` affordance (source 3391) rendered accessibly. */
+const INSTRUMENT_LINK_STYLE: CSSProperties = {
+  background: 'transparent',
+  border: 'none',
+  padding: 0,
+  margin: 0,
+  font: 'inherit',
+  fontWeight: 700,
+  color: 'var(--accent)',
+  textDecoration: 'underline',
+  cursor: 'pointer',
+  textAlign: 'left',
+};
+
+export function RegulatoryFeedSources({ onOpenSource, onOpenInstrument }: RegulatoryFeedSourcesProps) {
   const [frequency, setFrequency] = useState<string>(DIGEST.freq);
   const [deliveryEmail, setDeliveryEmail] = useState(DIGEST.email);
   const [deliveryApp, setDeliveryApp] = useState(DIGEST.app);
   const [deliveryBindingOnly, setDeliveryBindingOnly] = useState(DIGEST.bindingOnly);
   const [sourceAlerts, setSourceAlerts] = useState<Record<string, boolean>>({});
+  // ONSIDE-09 — toast confirmations (base setDigest/toggleSrcAlert, source
+  // 3360–3371). Keyed by a monotonically-increasing id so a fresh toast
+  // remounts (and restarts its auto-dismiss) even with identical text.
+  const [toast, setToast] = useState<{ id: number; message: string } | null>(null);
+  const toastSeqRef = useRef(0);
+  // Always-current mirror of `sourceAlerts` so the drawer-bound
+  // `onToggleAlert` closure (captured at row-open time) still computes the
+  // right next value and toast copy on later presses.
+  const sourceAlertsRef = useRef(sourceAlerts);
+  sourceAlertsRef.current = sourceAlerts;
 
   const alertCount = useMemo(() => Object.values(sourceAlerts).filter(Boolean).length, [sourceAlerts]);
   const digestCount = useMemo(
@@ -230,8 +282,32 @@ export function RegulatoryFeedSources({ onOpenSource }: RegulatoryFeedSourcesPro
     [frequency, deliveryBindingOnly],
   );
 
+  const showToast = (message: string) => {
+    toastSeqRef.current += 1;
+    setToast({ id: toastSeqRef.current, message });
+  };
+
   const toggleAlert = (sourceName: string) => {
-    setSourceAlerts((current) => ({ ...current, [sourceName]: !current[sourceName] }));
+    const next = !sourceAlertsRef.current[sourceName];
+    setSourceAlerts((current) => ({ ...current, [sourceName]: next }));
+    // Verbatim base toggleSrcAlert toast copy (source 3370).
+    showToast(
+      next
+        ? `Alerts on for ${sourceName}. You will be notified the moment a sweep finds a change.`
+        : `Alerts off for ${sourceName}. It still appears in your digest.`,
+    );
+  };
+
+  // Base setDigest toast copy (source 3363).
+  const handleFrequencyPress = (label: string) => {
+    if (label === frequency) return;
+    setFrequency(label);
+    showToast(`Digest set to ${label} · ${freqWhenFor(label)}`);
+  };
+
+  const handleDeliveryChange = (apply: (value: boolean) => void) => (value: boolean) => {
+    apply(value);
+    showToast('Digest preferences updated');
   };
 
   const columns: DataTableColumn<SourceListRow>[] = [
@@ -240,7 +316,18 @@ export function RegulatoryFeedSources({ onOpenSource }: RegulatoryFeedSourcesPro
       header: 'Source',
       render: (row) => (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-          <strong style={{ color: 'var(--ink)' }}>{row.name}</strong>
+          {row.instrumentKey !== null && INSTR[row.instrumentKey] ? (
+            // ONSIDE-08 — base `r.i?instrLink(r.i,r.n):r.n` (source 3391).
+            <button
+              type="button"
+              style={INSTRUMENT_LINK_STYLE}
+              onClick={() => onOpenInstrument(row.instrumentKey as string)}
+            >
+              {row.name}
+            </button>
+          ) : (
+            <strong style={{ color: 'var(--ink)' }}>{row.name}</strong>
+          )}
           {sourceAlerts[row.name] ? <Tag text="Alerts on" variant="hitl" /> : null}
         </span>
       ),
@@ -299,7 +386,7 @@ export function RegulatoryFeedSources({ onOpenSource }: RegulatoryFeedSourcesPro
             <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink)' }}>Digest frequency</span>
             <div style={CHIP_ROW_STYLE} role="group" aria-label="Digest frequency">
               {FREQ.map(([label]) => (
-                <Chip key={label} text={label} variant="filter" selected={frequency === label} onPress={() => setFrequency(label)} />
+                <Chip key={label} text={label} variant="filter" selected={frequency === label} onPress={() => handleFrequencyPress(label)} />
               ))}
             </div>
             <p style={DIGEST_HINT_STYLE}>Next send: {freqWhenFor(frequency)}</p>
@@ -308,9 +395,9 @@ export function RegulatoryFeedSources({ onOpenSource }: RegulatoryFeedSourcesPro
           <div style={DIGEST_FIELD_STYLE}>
             <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink)' }}>Delivery</span>
             <div style={SWITCH_COLUMN_STYLE}>
-              <Switch checked={deliveryEmail} label="Email" onChange={setDeliveryEmail} />
-              <Switch checked={deliveryApp} label="In-app" onChange={setDeliveryApp} />
-              <Switch checked={deliveryBindingOnly} label="Binding rules only" onChange={setDeliveryBindingOnly} />
+              <Switch checked={deliveryEmail} label="Email" onChange={handleDeliveryChange(setDeliveryEmail)} />
+              <Switch checked={deliveryApp} label="In-app" onChange={handleDeliveryChange(setDeliveryApp)} />
+              <Switch checked={deliveryBindingOnly} label="Binding rules only" onChange={handleDeliveryChange(setDeliveryBindingOnly)} />
             </div>
             <p style={DIGEST_HINT_STYLE}>
               {alertCount} source{alertCount === 1 ? '' : 's'} set to alert immediately
@@ -348,6 +435,14 @@ export function RegulatoryFeedSources({ onOpenSource }: RegulatoryFeedSourcesPro
           </div>
         );
       })}
+
+      {toast ? (
+        // ONSIDE-09 — base toast() confirmations; auto-dismisses like the
+        // base's transient toast, close control always present (C17).
+        <div style={{ position: 'fixed', top: '1.25rem', right: '1.25rem', zIndex: 60 }}>
+          <Toast key={toast.id} variant="info" message={toast.message} onDismiss={() => setToast(null)} autoDismissMs={4000} />
+        </div>
+      ) : null}
     </section>
   );
 }

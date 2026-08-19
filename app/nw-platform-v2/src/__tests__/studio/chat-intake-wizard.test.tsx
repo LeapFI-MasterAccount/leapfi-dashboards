@@ -15,13 +15,22 @@
  *    "The wizard carries a visible Cancel at every step... Chips
  *    debounce, so a double-click cannot answer two questions.")
  *  - finishIntake envelope arithmetic: base 4369-4400 (ported as the
- *    exported computeScopedOpportunity)
+ *    exported computeScopedOpportunity, INCLUDING disc:true — base 4385)
+ *  - review panel rows: lever-scaled Value (4390), Regulations incl. the
+ *    conditional SOX-404/ICFR + GLBA clauses (4392), display-name domains
+ *    via domainsFor/DOMMAP (4299-4300, never CTRLDOM slugs), Placement
+ *    (4394) — fix-wave STU-02/07/09
  *  - acceptProposed / discardProposed as intents: base 4401-4413
+ *
+ * Lever state comes from state/demoStore.ts (DEFAULT_SLIDERS: eff 70 →
+ * L.eff 0.70, tol 52 → threshold 65); resetDemo() in beforeEach restores
+ * the store between tests.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { ChatIntakeWizard, computeScopedOpportunity } from '../../views/ChatIntakeWizard';
 import { INTAKE } from '../../data/misc';
+import { resetDemo } from '../../state/demoStore';
 
 function renderWizard(overrides?: Partial<Parameters<typeof ChatIntakeWizard>[0]>) {
   const onComplete = vi.fn();
@@ -40,6 +49,7 @@ function renderWizard(overrides?: Partial<Parameters<typeof ChatIntakeWizard>[0]
 }
 
 beforeEach(() => {
+  resetDemo(); // restore the shared demo store (levers at DEFAULT_SLIDERS)
   vi.useFakeTimers();
 });
 
@@ -71,8 +81,9 @@ describe('wizard full flow — 4 questions in base INTAKE order (base 4357-4368,
   it('opens with the startIntake line for the use-case name (base 4365), then asks the questions strictly in order', () => {
     renderWizard();
 
-    // Opening line visible immediately (base botSay 4365).
-    expect(screen.getByText(/I don't have a comparable for "Collections outreach drafting" in the library yet/)).toBeInTheDocument();
+    // Opening line visible immediately, VERBATIM including the leading
+    // "Good one. " sentence (base botSay 4365; fix-wave STU-15).
+    expect(screen.getByText(/^Good one\. I don't have a comparable for "Collections outreach drafting" in the library yet/)).toBeInTheDocument();
     // No answer chips during the opening transition — answering only
     // becomes possible once the first question step is reached.
     expect(screen.queryByRole('button', { name: '2 people · ~15 hrs/wk' })).not.toBeInTheDocument();
@@ -113,23 +124,35 @@ describe('wizard full flow — 4 questions in base INTAKE order (base 4357-4368,
   });
 
   /**
-   * D17 FINDING / STOP-item (kept correct-to-base, marked `.fails`):
-   * base 4363-4368 sequences the opening line's own botSay delays
-   * (600ms + 650ms + 500ms) BEFORE the first question ever renders —
-   * the question text is never on screen during the opening transition.
-   * CURRENT CODE deviates: `buildMessages` (ChatIntakeWizard.tsx)
-   * includes `INTAKE[0].q` from the very first render (`if (index >
-   * answers.length) return;` — index 0 is not > 0 with zero answers),
-   * so the first question bubble is visible at mount, alongside the
-   * "Thinking…" transition, contradicting both the base sequencing and
-   * the component's own header note ("after OPENING_DELAY_MS the first
-   * question appears"). The same off-by-one shows each NEXT question
-   * during the 'advancing' Thinking transition. The assertion below is
-   * what the base pins; it fails against current code.
+   * Base 4363-4368 sequences the opening line's own botSay delays BEFORE
+   * the first question ever renders — the question text is never on
+   * screen during a "Thinking…" transition. Fix-wave STU-04 restored
+   * this: `buildMessages` reveals the next unanswered question only while
+   * `phase === 'asking'` (the former off-by-one `.fails` pin, now a
+   * normal passing assertion — dispatch TEST MAINTENANCE rule).
    */
-  it.fails('does not show the first question text during the opening transition (base 4363-4368 sequencing) — KNOWN DEVIATION, see STOP-item', () => {
+  it('does not show the first question text during the opening transition (base 4363-4368 sequencing; STU-04)', () => {
     renderWizard();
     expect(screen.queryByText(INTAKE[0]!.q)).not.toBeInTheDocument();
+  });
+
+  it('does not show the NEXT question during the advancing "Thinking…" transition (base per-step botSay 4442; STU-04)', () => {
+    renderWizard();
+    act(() => {
+      vi.advanceTimersByTime(700);
+    });
+    fireEvent.click(screen.getByRole('button', { name: '2 people · ~15 hrs/wk' }));
+    // Mid-advance (ADVANCE_DELAY_MS = 550): the spinner is up and Q2 is
+    // NOT yet in the DOM.
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(screen.getByText('Thinking…')).toBeInTheDocument();
+    expect(screen.queryByText(INTAKE[1]!.q)).not.toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+    expect(screen.getByText(INTAKE[1]!.q)).toBeInTheDocument();
   });
 
   it('review panel Add fires onComplete exactly once with the finishIntake envelope; Discard fires onDiscard (base 4401-4413)', () => {
@@ -145,10 +168,12 @@ describe('wizard full flow — 4 questions in base INTAKE order (base 4357-4368,
     }
 
     // Envelope figures rendered from the base arithmetic (4369-4400):
-    // cost 165000 → $165k, val 280000 → $280k, high risk, Lending.
+    // cost 165000 → $165k, high risk, Lending; Value is LEVER-SCALED
+    // (base 4390: fmt(val*L.eff) at Math.round(L.eff*100)% — 280000×0.70
+    // = $196k at the DEFAULT_SLIDERS 70% adoption; fix-wave STU-07).
     const review = screen.getByLabelText('Scoping result');
     expect(review).toHaveTextContent('≈ $165k one-time · High risk profile (Lending)');
-    expect(review).toHaveTextContent('≈ $280k/yr');
+    expect(review).toHaveTextContent('≈ $196k/yr at your 70% adoption setting');
 
     const addButton = screen.getByRole('button', { name: 'Add to the opportunity register' });
     fireEvent.click(addButton);
@@ -164,12 +189,59 @@ describe('wizard full flow — 4 questions in base INTAKE order (base 4357-4368,
         g: ['Fair Lending', 'Adverse Action', 'Model Risk', 'Privacy'],
         minGate: 55,
         weakGate: 'Adverse Action',
+        disc: true, // base 4385 — the "from Discovery" provenance flag
       }),
     );
     // Double-press guard: the intent must not fire twice.
     fireEvent.click(addButton);
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(onDiscard).not.toHaveBeenCalled();
+  });
+
+  it('review panel: Placement row (base 4394), display-name domains (base DOMMAP/domainsFor 4299-4300, never CTRLDOM slugs) — STU-02/STU-07', () => {
+    renderWizard();
+    act(() => {
+      vi.advanceTimersByTime(700);
+    });
+    for (const answer of ['A whole department', '5,000+ / mo', 'Touches lending decisions', 'Sensitive financial + PII']) {
+      fireEvent.click(screen.getByRole('button', { name: answer }));
+      act(() => {
+        vi.advanceTimersByTime(700);
+      });
+    }
+    const review = screen.getByLabelText('Scoping result');
+    // Placement (base 4394): minGate 55 < threshold 65 (tol 52) →
+    // sequence-gated, unlocking after the weakest gate.
+    expect(review).toHaveTextContent('Would start sequence-gated. Unlocks after Adverse Action closes (55% → 80%).');
+    // Domains: DISPLAY names (FL & AA → Fair Lending; Privacy → InfoSec /
+    // GLBA), never 'fairlend · mrm' routing slugs (STU-02).
+    expect(review).toHaveTextContent('Fair Lending · Model Risk · InfoSec / GLBA');
+    expect(review.textContent).not.toContain('fairlend');
+    expect(review.textContent).not.toContain('mrm');
+    // One-primary rule (spec §5.4/§6; STU-10): the Add button is not a
+    // second primary on the Studio · Ask screen.
+    expect(screen.getByRole('button', { name: 'Add to the opportunity register' })).toHaveAttribute('data-variant', 'secondary');
+  });
+
+  it('review panel Regulations row carries the conditional SOX 404/ICFR and GLBA-safeguards clauses (base 4392; STU-09)', () => {
+    renderWizard();
+    act(() => {
+      vi.advanceTimersByTime(700);
+    });
+    for (const answer of [
+      'A team · 30+ hrs/wk',
+      '500–5,000 / mo',
+      'Internal · feeds financial reporting (GL / SOX)', // finrep branch (4375, 4380)
+      'Sensitive financial · no PII', // sensfin && !pii (4376-4377)
+    ]) {
+      fireEvent.click(screen.getByRole('button', { name: answer }));
+      act(() => {
+        vi.advanceTimersByTime(700);
+      });
+    }
+    const review = screen.getByLabelText('Scoping result');
+    expect(review).toHaveTextContent('SOX 404 / ICFR: controls over financial reporting must be evidenced through the tool');
+    expect(review).toHaveTextContent('sensitive financial, no PII: GLBA safeguards without privacy-notice triggers');
   });
 });
 
@@ -259,6 +331,7 @@ describe('computeScopedOpportunity — finishIntake envelope arithmetic (base 43
       g: ['Fair Lending', 'Adverse Action', 'Model Risk', 'Privacy'],
       minGate: 55,
       weakGate: 'Adverse Action',
+      disc: true, // base 4385 — the "from Discovery" provenance flag
     });
   });
 
@@ -276,6 +349,7 @@ describe('computeScopedOpportunity — finishIntake envelope arithmetic (base 43
       g: ['UDAAP', 'Model Risk', 'Privacy'],
       minGate: 62,
       weakGate: 'UDAAP',
+      disc: true, // base 4385
     });
   });
 
@@ -293,6 +367,7 @@ describe('computeScopedOpportunity — finishIntake envelope arithmetic (base 43
       g: ['Privacy'],
       minGate: 80,
       weakGate: 'Privacy',
+      disc: true, // base 4385
     });
   });
 });

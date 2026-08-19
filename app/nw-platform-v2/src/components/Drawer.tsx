@@ -51,19 +51,52 @@
  * design-authority confirmation since it is a real deviation from a literal
  * reading of the "built from" list.
  *
- * AMBIGUITY RESOLVED — no "wide" variant: the read-only base engine's
- * `#drawer` has a `.wide` CSS modifier (showDrawer(html, wide)), but
- * design_system_spec.md §2.2 C7 lists no size variant for this composite
- * ("Variants: —"). Per the persona directive to build exactly to the
- * spec's stated props/variants and not infer beyond it, no `wide` prop is
- * added here. STOP-item if a future screen composite needs the wider
- * layout — that is new spec surface, not a restyle.
+ * SIZE VARIANT (RPT-03 fix wave — supersedes this file's original
+ * "AMBIGUITY RESOLVED — no 'wide' variant" note): the base engine's
+ * `#drawer` carries a `.wide` CSS modifier (`showDrawer(html, wide)`;
+ * `dr.classList.add('wide')` on every `openReport`, source line 1679;
+ * `.drawer.wide{width:min(920px,97vw)}`, source line 326), and
+ * parity_ia_addendum.md §1.3/§6 binds Reporting content to "the existing
+ * shared Drawer, wide variant — matches the base engine's own". The
+ * original resolution read design_system_spec.md §2.2 C7's "Variants: —"
+ * as banning the variant; the addendum's twice-stated requirement governs
+ * (D16 full parity). Implemented as an optional, backward-compatible
+ * `size` prop — omitted everywhere today except Reporting's report mode,
+ * so every other screen's default usage renders byte-identically.
+ *
+ * PRINT STYLESHEET (RPT-01 fix wave): the base backs its "opens formatted,
+ * ready to print or save as PDF" claim with a drawer-only `@media print`
+ * block (source line 758: hide body, promote `.drawer` to absolute
+ * full-width, white background/black ink, hide scrim/close/repbar). That
+ * block was never ported, so `window.print()` produced a clipped dark
+ * viewport page. Ported below as a `<style>` rendered with the drawer
+ * (this component owns every selector the block targets; `main.tsx`/the
+ * css entry files are outside the fix dispatch's allowlist — same inline
+ * `<style>` precedent as DrawerContent's skeleton keyframes). The token
+ * override re-points --bg/--panel/--ink/etc. so the tree's inline
+ * `var(...)` styles print white-paper/black-ink, the equivalent of the
+ * base block's hardcoded `#fff`/`#111` overrides.
+ *
+ * FOCUS HANDOFF ON CONTENT SWAP (RPT-05 fix wave): a consumer may swap the
+ * OPEN drawer's `title`+`children` wholesale (Reporting's board-log
+ * sub-flow — base `boardUpdate`/`boardSave` rebuild the same drawer's DOM,
+ * source 3577-3593). When the focused element unmounts in such a swap,
+ * focus fell to `document.body` — outside the dialog subtree — so Tab
+ * walked the inert page behind an open aria-modal dialog, violating this
+ * file's own documented trap boundary. Fixed: whenever `title` changes
+ * while the drawer is open, initial focus is re-placed on the (new)
+ * heading — which also makes screen readers announce the swapped content,
+ * the same announcement the open-time heading focus already provides.
  */
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 import { Button } from './primitives/Button';
 
 export type DrawerPhase = 'closed' | 'opening' | 'open' | 'closing';
+
+/** Base `.drawer` / `.drawer.wide` widths (source lines 324/326; the default
+ * width predates this fix wave and is kept as shipped). */
+export type DrawerSize = 'default' | 'wide';
 
 export interface DrawerProps {
   /** Controlled open state — this Drawer instance renders nothing (`null`) once its close transition finishes. */
@@ -76,6 +109,12 @@ export interface DrawerProps {
   children: ReactNode;
   /** Footer action slot, 1–2 Buttons (spec: "footer action slot (Button ×1–2)"). Omit for drawers with no footer actions (e.g. read-only detail views). */
   footer?: ReactNode;
+  /** Width variant — `'wide'` is the base engine's `.wide` modifier
+   * (`min(920px, 97vw)`, source line 326), required by
+   * parity_ia_addendum.md §1.3/§6 for Reporting's report drawer. Omit for
+   * the default width every existing call site already renders (RPT-03:
+   * backward-compatible; other screens' usage is untouched). */
+  size?: DrawerSize;
 }
 
 /** Enter/exit transition duration. Not a value tokens.css defines (it carries
@@ -96,7 +135,56 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(isVisible);
 }
 
-export function Drawer({ open, title, onClose, children, footer }: DrawerProps) {
+/** Port of the base drawer-only print stylesheet (source line 758):
+ * `@media print{body *{visibility:hidden}.drawer,.drawer *{visibility:visible}
+ * .drawer{position:absolute;top:0;left:0;width:100%!important;height:auto;...}
+ * .scrim{display:none!important}.dclose,.repbar{display:none!important}}`.
+ * Selector mapping: `.drawer` → [data-lf-composite='drawer'], `.scrim` →
+ * [data-lf-composite='drawer-scrim'], `.dclose` → [data-lf-drawer-close],
+ * `.repbar` (the print-button bar; here the footer slot that hosts
+ * "Print / Save as PDF") → [data-lf-drawer-footer]. The base's hardcoded
+ * white-paper/black-ink overrides (`background:#fff!important;
+ * color:#111!important`) are expressed as a print-scoped token override so
+ * every descendant's inline `var(--ink)`/`var(--panel)` style resolves to
+ * print colors. Overflow is forced visible on the drawer's scroll body and
+ * the report tables' own `overflow-x:auto` wrappers so content paginates
+ * instead of clipping at the viewport fold (base `.drawer{overflow:visible}`). */
+const PRINT_STYLE = `
+@media print {
+  :root {
+    --bg: #ffffff !important;
+    --bg2: #ffffff !important;
+    --panel: #ffffff !important;
+    --border: #cccccc !important;
+    --ink: #111111 !important;
+    --ink2: #333333 !important;
+    --ink3: #555555 !important;
+  }
+  body * { visibility: hidden; }
+  [data-lf-composite='drawer'], [data-lf-composite='drawer'] * { visibility: visible; }
+  [data-lf-composite='drawer'] {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    overflow: visible !important;
+    transform: none !important;
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+  [data-lf-drawer-body] { overflow: visible !important; height: auto !important; }
+  [data-lf-drawer-body] div { overflow: visible !important; }
+  [data-lf-composite='drawer-scrim'] { display: none !important; }
+  [data-lf-drawer-close], [data-lf-drawer-footer] { display: none !important; }
+}
+`;
+
+export function Drawer({ open, title, onClose, children, footer, size = 'default' }: DrawerProps) {
   const headingId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -127,6 +215,21 @@ export function Drawer({ open, title, onClose, children, footer }: DrawerProps) 
     });
     return () => window.cancelAnimationFrame(raf);
   }, [phase]);
+
+  // RPT-05 (fix wave): in-drawer content swap — the consumer replaced
+  // `title`+`children` while the drawer stayed open (Reporting's board-log
+  // sub-flow, base boardUpdate/boardSave 3577-3593). The previously focused
+  // element unmounts in that swap, dropping focus to document.body and out
+  // of the trap; re-place initial focus on the new heading, which also makes
+  // AT announce the swapped content by its new accessible name.
+  const prevTitleRef = useRef(title);
+  useEffect(() => {
+    if (prevTitleRef.current === title) return;
+    prevTitleRef.current = title;
+    if (phase === 'open' || phase === 'opening') {
+      headingRef.current?.focus();
+    }
+  }, [title, phase]);
 
   // closing -> closed once the exit transition finishes, then restore focus
   // to the exact control that opened the drawer (ports captureRet/restoreRet,
@@ -182,6 +285,7 @@ export function Drawer({ open, title, onClose, children, footer }: DrawerProps) 
 
   return (
     <>
+      <style>{PRINT_STYLE}</style>
       <div
         aria-hidden="true"
         onClick={onClose}
@@ -203,12 +307,14 @@ export function Drawer({ open, title, onClose, children, footer }: DrawerProps) 
         onKeyDown={handleKeyDown}
         data-lf-composite="drawer"
         data-phase={phase}
+        data-size={size}
         style={{
           position: 'fixed',
           top: 0,
           right: 0,
           bottom: 0,
-          width: 'min(480px, 100vw)',
+          // Base `.drawer.wide{width:min(920px,97vw)}` (source 326) — RPT-03.
+          width: size === 'wide' ? 'min(920px, 97vw)' : 'min(480px, 100vw)',
           background: 'var(--panel)',
           borderLeft: '1px solid var(--border)',
           boxShadow: '-8px 0 24px color-mix(in srgb, var(--bg) 55%, transparent)',
@@ -244,11 +350,15 @@ export function Drawer({ open, title, onClose, children, footer }: DrawerProps) 
           >
             {title}
           </h2>
-          <Button variant="ghost" icon="close" label="Close" onPress={onClose} />
+          {/* data-lf-drawer-close: print-hidden, the base `.dclose` (RPT-01). */}
+          <span data-lf-drawer-close>
+            <Button variant="ghost" icon="close" label="Close" onPress={onClose} />
+          </span>
         </div>
-        <div style={{ flex: '1 1 auto', overflowY: 'auto', padding: '1.25rem' }}>{children}</div>
+        <div data-lf-drawer-body style={{ flex: '1 1 auto', overflowY: 'auto', padding: '1.25rem' }}>{children}</div>
         {footer ? (
           <div
+            data-lf-drawer-footer
             style={{
               display: 'flex',
               justifyContent: 'flex-end',

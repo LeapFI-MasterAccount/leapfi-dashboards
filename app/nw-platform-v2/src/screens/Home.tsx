@@ -29,12 +29,13 @@
  * piece of state, two consumers — bar toggles and panel render set can
  * never drift). Placement is the addendum §1.7's own instruction ("**below**
  * the existing, unchanged StatCard row + 'Start the demo' primary CTA, see
- * §4 primacy audit") — NOT §5.1's "utility corner": everything above and
- * including the CTA row is byte-identical to the pre-W2 file (same DOM,
- * same order, same handlers — script-safety rule 4), the customize trigger
+ * §4 primacy audit" — quoted as written pre-D18; the CTA slot itself now
+ * carries the D18 label/action, see "D18 — PRIMARY CTA" below) — NOT
+ * §5.1's "utility corner": the StatCard row and CTA slot position/weight
+ * are unchanged from the pre-W2 file, the customize trigger
  * is a ghost Button, and every panel surface is secondary (DataTable/
- * StatCard/SetupCard), so "Start the demo" remains the single obvious
- * primary action (R3).
+ * StatCard/SetupCard), so the primary CTA — now "Open today's regulatory
+ * feed" (D18, see below) — remains the single obvious primary action (R3).
  *
  * AMBIGUITY RESOLVED / STOP-item — persona props: the WIRING RECIPE needs
  * the active persona's `roleKey`/`first`, which this screen has never
@@ -70,23 +71,25 @@
  * the deck's differently-measured $4.5M/yr figure and read as a
  * contradiction to a numerate board member.
  *
- * OQ-1 (§5.1, §10): the spec flags a design tension between the "Start the
- * demo" Button and Step 1's own "no clicks" `do` line, and states "this
- * spec proceeds on the latter reading" (Home is the sanctioned single entry
- * point precisely because it's the arc's cold open). This file builds
- * exactly that reading — the primary CTA is present, wired, and does not
- * perform Step 1's own demoed action (there isn't one). No code change
- * follows from OQ-1 remaining open; it is a ratification-track item, not an
- * implementation blocker.
+ * D18 — PRIMARY CTA (presenter_entry_redesign.md §1; supersedes the
+ * design_system_spec.md §5.1/§6 "Start the demo" reading and closes §10
+ * OQ-1's CTA-destination half): "Start the demo" is STRUCK as Home's
+ * primary. The one primary CTA is now product-native — "Open today's
+ * regulatory feed" — navigating to `onside.feed` via the `onNavigate` prop
+ * this screen already receives. That destination is script step 2's own
+ * `do` action ("OnSide → Regulatory feed"), keeping R3's
+ * one-obvious-primary-CTA rule anchored to a script step's action with no
+ * demo-shaped control on the screen; the label mirrors the destination
+ * screen's own name for accurate wayfinding. Presenter entry now lives
+ * entirely in PresenterRail.tsx (`Ctrl+Alt+Shift+P` chord + `?present=1`
+ * boot pre-stage).
  *
- * AMBIGUITY RESOLVED — "Start the demo" action ownership: §5.1 says the
- * Button "transitions PresenterRail `Hidden` → `Visible[step=1]`" (§4), but
- * PresenterRail (C21) is outside this dispatch's ALLOWLIST (`Home.tsx`/
- * `OnSideFeed.tsx` only). This screen therefore exposes a required
- * `onStartDemo: () => void` prop and fires it verbatim on press — it does
- * not own or fake the rail's state machine itself (Core Principle 1: never
- * render a claim about a system this component cannot see). The
- * integrating dispatch wires this callback to the real rail transition.
+ * D18 residue RESOLVED (fix-wave gate dispatch, closing the STOP-item an
+ * earlier revision of this header carried): `App.tsx` no longer defines
+ * `handleStartDemo` nor passes `onStartDemo`, and the formerly-deprecated
+ * optional `onStartDemo` prop is deleted from `HomeProps` per
+ * presenter_entry_redesign.md §4 — this screen now contains no
+ * demo/presenter reference at all, the §3.1 end-state the spec describes.
  *
  * Layout constants (240px sidebar column, 2rem content padding, 1.5rem
  * title size): design_system_spec.md §1.4 states this document carries no
@@ -95,16 +98,11 @@
  * 480px width / 200ms transition constants — chosen for a readable,
  * conventional dashboard layout, not sourced from any doctrine file.
  *
- * STOP-item — no executable test run: this worktree's `package.json` (out
- * of this dispatch's ALLOWLIST) has no test runner or component-testing
- * library installed, matching every sibling composite already landed here
- * (see `BoardDeck.tsx`'s identical STOP-item). TDD-with-executed-output is
- * therefore not achievable within this dispatch's file boundary; verified
- * instead via `npx tsc --noEmit` against the whole `src/` tree (strict
- * mode, `exactOptionalPropertyTypes`) to confirm this file type-checks
- * against the real `Topbar`/`Sidebar`/`StatCard`/`Button` prop shapes.
- * Recommending the same test-tooling follow-up dispatch `BoardDeck.tsx`
- * already recommends.
+ * TESTS (stale claim corrected by the T6.7 fix wave — an earlier header
+ * revision said no test runner was installed): Vitest is installed; this
+ * screen is covered by `src/__tests__/shell/home.test.tsx` and
+ * `presenter-entry-d18.test.tsx`, plus `npx tsc --noEmit` (strict,
+ * `exactOptionalPropertyTypes`).
  */
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -174,13 +172,6 @@ export interface HomeProps {
   onNavigate: SidebarProps['onNavigate'];
   sidebarVersionLabel?: string;
   /**
-   * Primary CTA (§5.1): "Start the demo." Fires the PresenterRail
-   * `Hidden` → `Visible[step=1]` transition (§4) — this screen only
-   * requests it; PresenterRail (C21) is outside this dispatch's allowlist
-   * and owns the actual state machine.
-   */
-  onStartDemo: () => void;
-  /**
    * Active persona's role key / first name for the customization surfaces
    * (§1.7). Optional with `CURRENT` defaults — see file header "AMBIGUITY
    * RESOLVED / STOP-item — persona props" for why these are not required
@@ -190,7 +181,7 @@ export interface HomeProps {
   roleFirstName?: string;
 }
 
-export function Home({ topbar, onNavigate, sidebarVersionLabel, onStartDemo, roleKey = CURRENT.roleKey, roleFirstName = CURRENT.first }: HomeProps) {
+export function Home({ topbar, onNavigate, sidebarVersionLabel, roleKey = CURRENT.roleKey, roleFirstName = CURRENT.first }: HomeProps) {
   // Lifted customization state (HomeCustomizeBar.tsx "WIRING RECIPE"): the
   // bar's toggles and HomePanels' render set share this one array. Re-derived
   // when `roleKey` changes via React's adjust-state-during-render pattern so
@@ -233,7 +224,10 @@ export function Home({ topbar, onNavigate, sidebarVersionLabel, onStartDemo, rol
             <StatCard label="Capacity freed" value="3.5" unit="FTE" />
           </div>
           <div style={CTA_ROW_STYLE}>
-            <Button variant="primary" label="Start the demo" onPress={onStartDemo} />
+            {/* D18 (presenter_entry_redesign.md §1): product-native primary
+                CTA — same Button primitive, same slot, same weight; the
+                destination is script step 2's own `do` action. */}
+            <Button variant="primary" label="Open today's regulatory feed" onPress={() => onNavigate('onside.feed')} />
           </div>
           {/* W2 (addendum §1.7 / Batch 7): customization surfaces, strictly
               below the unchanged StatCard row + primary CTA — see file

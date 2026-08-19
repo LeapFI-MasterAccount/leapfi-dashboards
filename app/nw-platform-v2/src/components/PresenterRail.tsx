@@ -10,17 +10,17 @@
  * drawer would conflict with steps 2/3/5's own drawer usage... the rail is
  * its own overlay layer" (§4). This file mounts no `<Drawer>`.
  *
- * STATE-MACHINE OWNERSHIP (AMBIGUITY RESOLVED): `Home.tsx`'s own header
- * comment states plainly: "PresenterRail (C21) is outside this dispatch's
- * ALLOWLIST... this screen exposes a required `onStartDemo: () => void`
- * prop and fires it verbatim on press — it does not own or fake the rail's
- * state machine itself... The integrating dispatch wires this callback to
- * the real rail transition." This composite therefore owns `visible` /
- * `stepIndex` internally (uncontrolled), and exposes exactly one imperative
- * entry point via `ref` — `start()` — for the one external trigger
- * (`Home`'s "Start the demo" CTA, §5.1) that must reach into a running
- * state machine it does not itself own. Every other trigger (`Alt+Shift+P`,
- * `Alt+Shift+←/→`, the Prev/Next/Restart buttons) is internal to this file.
+ * STATE-MACHINE OWNERSHIP (AMBIGUITY RESOLVED; updated for D18 —
+ * presenter_entry_redesign.md): this composite owns `visible` / `stepIndex`
+ * internally (uncontrolled) and exposes exactly one imperative entry point
+ * via `ref` — `start()` — for an external trigger that must reach into a
+ * running state machine it does not itself own. Under D18, Home's "Start
+ * the demo" CTA is STRUCK; the external trigger is now the `?present=1`
+ * boot-time pre-stage (§2.3 — read in this file's own mount effect, see
+ * "PRESENT QUERYSTRING PRE-STAGE" below), with the `ref` retained for any
+ * shell caller. Every other trigger (`Ctrl+Alt+Shift+P`,
+ * `Ctrl+Alt+Shift+←/→`, the Prev/Next/Restart buttons) is internal to this
+ * file.
  *
  * NAVIGATION DISPATCH (AMBIGUITY RESOLVED): §4 states Next/Prev resolution
  * is "mapped onto the shell's existing nav functions only" — those nav
@@ -45,12 +45,28 @@
  * irreversible operation, so an artificial delay here would just be
  * decorative latency with no truth behind it).
  *
- * STANDING RULES BANNER content: ported from demo_script_draft.md's
- * "Presenter standing rules (bind every step)" (3 rules — pre-stage reset,
- * fabricated-citations caution, the `#eff`/G7 defect hazard). Tag (P4) has
- * no multi-line prose slot, so each rule is condensed to Tag-length text;
- * the shared Label caption underneath carries the "bind every step" framing
- * the source itself states.
+ * STANDING RULES BANNER content: from demo_script_draft.md's "Presenter
+ * standing rules (bind every step)", amended by the T6.7 fix wave:
+ *  - Pre-stage rule reworded (SH-2/RAIL-02 class): the twin wires no
+ *    Alt+Shift+R chord anywhere, and the rail's Restart button now performs
+ *    the full resetDemo (state/demoStore.ts, backbone fix), so the tag
+ *    names the mechanism that actually exists instead of a dead chord the
+ *    old tag advertised.
+ *  - Fabricated-citations caution unchanged.
+ *  - The `#eff`/G7 tag is REMOVED (RAIL-08): the doctrine rule was
+ *    conditional — "Never touch the adoption slider #eff **until the twin
+ *    fixes its value/label defect (G7)**" (demo_script_draft.md line 27) —
+ *    and InvestmentDesign.tsx applied that fix (seeds `eff: 70` with the
+ *    label derived from value, its header lines 26–39), so the prohibition
+ *    no longer binds; keeping the tag had the rail asserting a defect this
+ *    build fixed.
+ *  - NEW third rule (presenter_entry_redesign.md §5.3, folded in here as
+ *    that spec flags for T6.7): `?present=1` is address-bar-visible —
+ *    present fullscreen/kiosk or trim the address bar before the room
+ *    fills.
+ * Tag (P4) has no multi-line prose slot, so each rule is condensed to
+ * Tag-length text; the shared Label caption underneath carries the "bind
+ * every step" framing the source itself states.
  *
  * NO Alt+Shift+R WIRING: `Alt+Shift+R` (pre-stage reset) is a presenter
  * standing-rule discipline note in demo_script_draft.md ("Pre-stage with
@@ -60,12 +76,39 @@
  * cited scope; the Restart button (§4) is the in-rail equivalent once the
  * rail is visible.
  *
- * KEYBOARD-CHORD HAZARD (flagged, not silently assumed safe): `Alt+Shift`
- * is a default OS input-language-switch shortcut on Windows in many
- * locales. This file `preventDefault()`s the chord at the browser level,
- * but cannot correct for an OS intercepting it before the page ever sees
- * the keydown — same HAZARD category as demo_script_draft.md's own
- * G2/G3 entries (presenter discipline, no code fix available).
+ * KEYBOARD CHORDS (D18 rebind, presenter_entry_redesign.md §2.2 — fixes
+ * RAIL-03/SH-3): every rail chord is `Ctrl+Alt+Shift+…` (three modifiers —
+ * outside Windows' documented two-modifier input-language-switch defaults,
+ * the hazard family the old `Alt+Shift+…` binding sat inside) and is
+ * matched on `event.code` (`KeyP` / `ArrowRight` / `ArrowLeft`), never
+ * `event.key`: on macOS, Option participates in character composition
+ * (Option+Shift+P yields `event.key === '∏'`), so a `key`-based match
+ * silently never fires on a Mac — this file's earlier "no code fix
+ * available" framing covered only the Windows OS-interception case and was
+ * wrong for the macOS composition case, which `event.code` (layout- and
+ * composition-independent) fixes outright. The `?present=1` pre-stage
+ * (below) is now the load-bearing mechanism for the first, highest-stakes
+ * reveal; the chord's remaining job is the ongoing hide/show toggle
+ * mid-session (spec §3.4). Residual risk (unverified third-party global
+ * hotkeys) disclosed, not eliminated — same category as
+ * demo_script_draft.md's G2/G3.
+ *
+ * EDITABLE-ELEMENT GUARD (RAIL-05): every chord ignores keydowns whose
+ * target is an input/textarea/select/contenteditable surface. Step 4's own
+ * `do` line scripts typing into StudioAsk's chat input; without the guard,
+ * a text-editing chord bubbling to this window listener would navigate
+ * steps, unmount the active screen, and destroy the presenter's typed
+ * state mid-demo.
+ *
+ * PRESENT QUERYSTRING PRE-STAGE (D18 §2.3): a mount-only check for
+ * `?present=1` calls the same `start()` path Home's struck CTA used, so
+ * the rail is staged before the room fills and the first reveal never
+ * happens live. presenter_entry_redesign.md §4 places this check in
+ * App.tsx; it lives here instead because App.tsx is outside this fix-wave
+ * dispatch's ALLOWLIST — behavior is identical (one-time, boot-only, same
+ * imperative entry point), flagged for the App-owning dispatch if it
+ * prefers to host it. A mid-session reload keeping `?present=1` re-arms
+ * the rail — the spec calls this intentional recovery behavior, not a bug.
  *
  * ICON CHOICES: Prev/Next reuse the existing closed `IconName` vocabulary
  * (`chevron-left` / `arrow-right` — the latter already used identically for
@@ -75,18 +118,27 @@
  * kind of gap); inventing one here would repeat the mistake that file's
  * author already flagged rather than committed.
  *
- * Z-INDEX (implementer judgment call, same category as `Drawer.tsx`'s
- * documented 480px/200ms constants): set above `Drawer`'s dialog (z-index
- * 50) so Prev/Next/Restart stay reachable while a step's Drawer is open —
- * script steps 2, 3, and 5 each open a Drawer as part of their demoed
- * action, so the rail cannot afford to be buried under one. Consequence
- * flagged, not silently absorbed: because `Drawer.tsx` is outside this
- * dispatch's allowlist, this file cannot inset the Drawer's own bottom edge
- * to make room, so an open Drawer's lower portion can sit visually behind
- * the rail bar when both are on screen at once. Both stay independently
- * operable (the rail is not modal and only occupies its own bar's
- * footprint) — a known visual interaction to flag for design-authority
- * review, not a functional defect.
+ * OCCLUSION COMPENSATION (RAIL-01/RAIL-09 — supersedes this header's
+ * earlier "not a functional defect" claim, which was wrong: the opaque
+ * fixed bar DID bury and click-block the Drawer's viewport-bottom footer —
+ * step 3's Adopt/Reject buttons, the script's climax action — and the
+ * final rail-height band of every scroll surface): while visible, the rail
+ * publishes its measured height as `--lf-presenter-rail-h` on <html>
+ * (ResizeObserver-tracked, so Collapse/Expand and viewport changes stay
+ * correct) and renders a scoped stylesheet that (a) shortens every screen
+ * root (`[data-lf-screen]`, inline `height: 100vh`) to
+ * `calc(100vh - var(--lf-presenter-rail-h))` so fully-scrolled content
+ * bottoms sit above the rail, and (b) raises the shared Drawer's bottom
+ * edge (`[data-lf-composite="drawer"]`, inline `bottom: 0`) by the same
+ * amount so its footer renders wholly above the rail. `!important` is
+ * required to beat those inline declarations — Drawer.tsx/App.tsx are
+ * outside this fix-wave dispatch's ALLOWLIST, so the compensation is
+ * rail-side by construction, and it is self-cleaning: hiding the rail
+ * unmounts the stylesheet and removes the variable. With the inset in
+ * place the rail (z 70) and the Drawer (z 50) no longer overlap
+ * geometrically, so the z-order keeps its original §4 job — Prev/Next/
+ * Restart stay reachable above the Drawer's scrim (z 40) while a step's
+ * drawer is open — without click-blocking anything.
  *
  * A11y baseline (§2.2 C21): "Entire rail is `aria-hidden` and removed from
  * tab order while hidden — not merely visually hidden." Implemented by
@@ -97,15 +149,13 @@
  * unconditionally) so its `Alt+Shift+P` listener keeps working even while
  * its own render output is `null`.
  *
- * STOP-item — no executable test run: this worktree's `package.json` (out
- * of this dispatch's ALLOWLIST) has no test runner installed, matching
- * every sibling composite already landed here. Verified via
- * `npx tsc --noEmit` against the whole `src/` tree instead (strict mode,
- * `exactOptionalPropertyTypes`) to confirm this file type-checks against
- * the real `Button`/`Label`/`Tag` primitive prop shapes and `data/script.ts`'s
- * real `ScriptDef`/`ScriptStep` shapes.
+ * TESTS (stale claim corrected by the T6.7 fix wave — an earlier header
+ * revision said no test runner was installed): Vitest is installed; this
+ * composite is covered by `src/__tests__/shell/presenter-rail.test.tsx`
+ * and `presenter-entry-d18.test.tsx`, plus `npx tsc --noEmit` (strict,
+ * `exactOptionalPropertyTypes`).
  */
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Button } from './primitives/Button';
 import { Label } from './primitives/Label';
@@ -114,7 +164,7 @@ import type { TagVariant } from './primitives/Tag';
 import type { ScriptDef } from '../data/script';
 
 export interface PresenterRailHandle {
-  /** Home's "Start the demo" CTA (§5.1): Hidden -> Visible[step=1], always jumping to step 1 even mid-demo. */
+  /** Hidden -> Visible[step=1], always jumping to step 1 even mid-demo. D18: fired by the `?present=1` boot pre-stage (and any shell caller holding the ref) — Home's struck "Start the demo" CTA was the previous caller. */
   start: () => void;
 }
 
@@ -132,11 +182,11 @@ interface StandingRule {
   tagVariant: TagVariant;
 }
 
-/** demo_script_draft.md "Presenter standing rules (bind every step)" — see file header "STANDING RULES BANNER content." */
+/** demo_script_draft.md "Presenter standing rules (bind every step)", T6.7-amended — see file header "STANDING RULES BANNER content." */
 const STANDING_RULES: StandingRule[] = [
-  { tagText: 'Pre-staged (Alt+Shift+R)', tagVariant: 'count' },
+  { tagText: 'Pre-stage: Restart resets the demo', tagVariant: 'count' },
   { tagText: 'Citations are fabricated — characterize only', tagVariant: 'status-alert' },
-  { tagText: 'Never touch #eff (G7 defect)', tagVariant: 'status-caution' },
+  { tagText: 'Present fullscreen — ?present=1 shows in the address bar', tagVariant: 'status-caution' },
 ];
 
 const RAIL_STYLE: CSSProperties = {
@@ -144,7 +194,7 @@ const RAIL_STYLE: CSSProperties = {
   left: 0,
   right: 0,
   bottom: 0,
-  zIndex: 70, // see file header "Z-INDEX"
+  zIndex: 70, // see file header "OCCLUSION COMPENSATION"
   background: 'var(--panel)',
   borderTop: '1px solid var(--border)',
   boxShadow: '0 -8px 24px color-mix(in srgb, var(--bg) 55%, transparent)',
@@ -230,6 +280,30 @@ const CONTROLS_ROW_STYLE: CSSProperties = {
   paddingTop: '0.75rem',
 };
 
+/**
+ * See file header "OCCLUSION COMPENSATION" (RAIL-01/RAIL-09). Rendered only
+ * while the rail is visible; `!important` is needed to beat the inline
+ * `height: 100vh` on every screen root and `bottom: 0` on the shared
+ * Drawer — both files are outside this fix-wave dispatch's ALLOWLIST.
+ */
+const RAIL_INSET_CSS = `
+[data-lf-screen] {
+  height: calc(100vh - var(--lf-presenter-rail-h, 0px)) !important;
+}
+[data-lf-composite="drawer"] {
+  bottom: var(--lf-presenter-rail-h, 0px) !important;
+}
+`;
+
+/** RAIL-05: rail chords must never fire from inside a text-editing surface. */
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  const tag = target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+  if (target instanceof HTMLElement && target.isContentEditable) return true;
+  return target.closest('[contenteditable="true"], [contenteditable=""]') !== null;
+}
+
 const SR_ONLY_STYLE: CSSProperties = {
   position: 'absolute',
   width: 1,
@@ -283,36 +357,45 @@ export const PresenterRail = forwardRef<PresenterRailHandle, PresenterRailProps>
     // `visible` is left untouched: Restarting transitions to Visible[step=1], never Hidden (§4).
   }, [onRestart, script]);
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      start: () => {
-        setStepIndex(0);
-        setVisible(true);
-        const first = script.steps[0];
-        if (first) {
-          onNavigate(first.target);
-          setAnnouncement(`Step 1 of ${script.steps.length}: ${first.title}`);
-        }
-      },
-    }),
-    [script, onNavigate],
-  );
+  const start = useCallback(() => {
+    setStepIndex(0);
+    setVisible(true);
+    const first = script.steps[0];
+    if (first) {
+      onNavigate(first.target);
+      setAnnouncement(`Step 1 of ${script.steps.length}: ${first.title}`);
+    }
+  }, [script, onNavigate]);
+
+  useImperativeHandle(ref, () => ({ start }), [start]);
+
+  // See file header "PRESENT QUERYSTRING PRE-STAGE" (D18 §2.3). The ref
+  // guard keeps this boot-only across effect re-runs (e.g. StrictMode).
+  const preStagedRef = useRef(false);
+  useEffect(() => {
+    if (preStagedRef.current) return;
+    if (typeof window === 'undefined') return;
+    if (new URLSearchParams(window.location.search).get('present') !== '1') return;
+    preStagedRef.current = true;
+    start();
+  }, [start]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!event.altKey || !event.shiftKey) return;
-      const key = event.key.toLowerCase();
-      if (key === 'p') {
+      // D18 rebind (RAIL-03/SH-3): three-modifier chords matched on
+      // `event.code` — see file header "KEYBOARD CHORDS."
+      if (!event.ctrlKey || !event.altKey || !event.shiftKey) return;
+      if (isEditableTarget(event.target)) return; // RAIL-05 — see file header "EDITABLE-ELEMENT GUARD"
+      if (event.code === 'KeyP') {
         event.preventDefault();
-        setVisible((current) => !current); // toggle retains step position (§4 Hidden exit note)
+        setVisible((current) => !current); // toggle retains step position (§4 Hidden exit note); hiding unmounts the rail entirely (null render)
         return;
       }
       if (!visible) return; // Next/Prev shortcuts only act from an adjacent Visible[step] state (§4)
-      if (key === 'arrowright') {
+      if (event.code === 'ArrowRight') {
         event.preventDefault();
         handleNext();
-      } else if (key === 'arrowleft') {
+      } else if (event.code === 'ArrowLeft') {
         event.preventDefault();
         handlePrev();
       }
@@ -321,13 +404,39 @@ export const PresenterRail = forwardRef<PresenterRailHandle, PresenterRailProps>
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [visible, handleNext, handlePrev]);
 
+  // See file header "OCCLUSION COMPENSATION" (RAIL-01/RAIL-09): publish the
+  // rail's live height so the injected stylesheet can inset screens and the
+  // shared Drawer. `expanded` is a dep for the no-ResizeObserver fallback
+  // (e.g. jsdom) so Collapse/Expand still re-measures.
+  const railElRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!visible) return undefined;
+    const el = railElRef.current;
+    const root = document.documentElement;
+    const measure = () => {
+      root.style.setProperty('--lf-presenter-rail-h', `${el?.offsetHeight ?? 0}px`);
+    };
+    measure();
+    let observer: ResizeObserver | undefined;
+    if (el && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(measure);
+      observer.observe(el);
+    }
+    return () => {
+      observer?.disconnect();
+      root.style.removeProperty('--lf-presenter-rail-h');
+    };
+  }, [visible, expanded]);
+
   if (!visible) return null; // see file header a11y baseline note
 
   const isFirstStep = stepIndex <= 0;
   const isLastStep = stepIndex >= script.steps.length - 1;
 
   return (
-    <div role="region" aria-label="Presenter rail" data-lf-composite="presenter-rail" style={RAIL_STYLE}>
+    <div ref={railElRef} role="region" aria-label="Presenter rail" data-lf-composite="presenter-rail" style={RAIL_STYLE}>
+      {/* RAIL-01/RAIL-09 occlusion compensation — see file header. Unmounts with the rail. */}
+      <style>{RAIL_INSET_CSS}</style>
       <span role="status" aria-live="polite" style={SR_ONLY_STYLE}>
         {announcement}
       </span>

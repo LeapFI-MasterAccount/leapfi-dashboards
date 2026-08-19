@@ -29,29 +29,30 @@
  * only one screen's Drawer is ever mounted at a time, or hoist Drawer to a
  * shared shell.
  *
- * AMBIGUITY RESOLVED — Adopt→cascade mapping is authored here, not ported:
- * `data/onside.ts`'s own file header states plainly that "adoptTarget,
- * oblToClose... render/derive functions... are not ported [as data];
- * those... belong to whichever component consumes this data." This screen
- * is that consumer. `cascadeTargetsForDoc` below builds the mapping from
- * two verbatim relations already present in the ported data:
- *   (a) `GAPS` board entries reference a redline doc via `doc` (direct) or
- *       `rl` (redline-document pointer — used when the open item's
- *       evidence doc differs from the doc actually carrying the redline,
- *       e.g. TPRM-08's gap item has `doc:'exit-draft'` but
- *       `rl:'tprm-program'`, the doc this screen's Adopt button acts on).
- *       A matched entry's own `obl` tuple names the domain + obligation id
- *       to flip.
- *   (b) `DocEntry.obl` ("Obligation ids this document evidences," per
- *       doclib.ts) for any id not already `'met'` — reaches obligations a
- *       redline closes even with no curated GAPS board entry (e.g.
- *       `gen-ai-draft` → MRM-11), while never re-flipping an obligation the
- *       document merely evidences as already-satisfied (`tprm-program`'s
- *       own `obl` list is all-`'met'` baseline evidence, unrelated to the
- *       TPRM-08 gap its redline actually closes — source (a) already
- *       covers that one correctly, so (b) is a no-op for it).
- * Flagging this mapping for design-authority confirmation since it is a
- * genuine judgment call, not a literal spec table.
+ * FIX WAVE (ONSIDE-02 / ONSIDE-11) — Adopt cascade routed through the
+ * shared demo store, base semantics VERBATIM: the earlier screen-local
+ * cascade (`cascadeTargetsForDoc` + `obligationOverrides`/
+ * `resolvedGapKeys` useState) trapped the Step-3 adoption inside this
+ * screen — OnSide Overview and the Domains accordion still showed the
+ * pre-adopt truth ("every view moves together" is the base's own
+ * guarantee, applyGapClosure comment at source 3204), and navigating away
+ * discarded the adoption entirely. Now:
+ *   - `handleAdopt` calls `state/demoStore.ts`'s `applyGapClosure(docId)`
+ *     (base 3205–3211 verbatim: keyed STRICTLY on `(g.rl||g.doc)===docId`
+ *     over GAPS, flips the OBL row + `d.met++` on the live singletons and
+ *     emits to every subscribed screen). The screen's former extra
+ *     `doc.obl`-driven branch (b) — which closed MRM-11 on gen-ai-draft
+ *     adoption, EXCEEDING the base anchor — is REMOVED per ONSIDE-11: in
+ *     base, adopting gen-ai-draft flips nothing.
+ *   - Document-level adopted state is no longer session-local `useState`:
+ *     the base rlAction('adopted') cosmetics (source 2474–2483 — version
+ *     minor bump, `status='good'`, an `rlState` marker) are applied to
+ *     the live `DOCLIB` entry, so the adoption survives navigation, every
+ *     DOCLIB reader agrees, and `resetDemo()` restores it (the store
+ *     reseeds DOCLIB from its DEMO_SEED snapshot). Gap-board closure is
+ *     derived from that same `rlState` (base gapState, source 3195–3202).
+ *   - This screen subscribes via `useDemoStore()`; obligation registers
+ *     render the live `OBL` rows directly (no overrides layer).
  *
  * AMBIGUITY RESOLVED — no dedicated "domain view" screen: §5.3 describes a
  * post-Adopt `dom-` deep link landing on "a separate domain view (below),
@@ -95,17 +96,22 @@
  * a monotonically-incrementing `requestSeqRef` counter is captured at press
  * time and re-checked when the simulated commit resolves, so only the
  * *latest* Adopt press for a screen ever applies its cascade (a stale,
- * superseded commit is a silent no-op), and `adoptedDocIds`/`adoptingDocId`
- * both serialize Adopt globally (only one commit in flight at a time, and a
- * doc already adopted can never be re-adopted). The cascade write itself is
- * also idempotent by construction (flipping an obligation already `'met'`
- * to `'met'` is a no-op), so even a slipped-through double-press cannot
- * double-apply a state change. No component test can execute this path in
- * this worktree today (see STOP-item below) — a verifier dispatch should
- * exercise: rapid double-click on Adopt, and closing the drawer mid-commit
- * (the commit still resolves and the Toast still surfaces truth once ready,
- * per Core Principle 1: "queued/pending... displayed as pending, not hidden
- * behind a spinner that implies progress it cannot see").
+ * superseded commit is a silent no-op), and the live `rlState` adopted
+ * marker plus `adoptingDocId` both serialize Adopt globally (only one
+ * commit in flight at a time, and a doc already adopted can never be
+ * re-adopted). The cascade write itself is also idempotent by construction
+ * (the store's `applyGapClosure` skips GAPS entries already `applied` and
+ * obligations already `'met'`), so even a slipped-through double-press
+ * cannot double-apply a state change.
+ *
+ * FIX WAVE (ONSIDE-13) — focus fallback after a filtered-away Adopt: with
+ * the "Pending" redline filter active, adopting removes the triggering
+ * row from the table, so Drawer's own restore-to-trigger guard
+ * (`document.body.contains(target)`) correctly skips and focus would land
+ * on `document.body`. The adopt commit therefore schedules a fallback
+ * (after the Drawer's 200ms close transition): if focus is on body, it
+ * moves to this screen's page heading (`tabIndex={-1}`) — never fighting
+ * the Drawer's own restore when the row is still mounted.
  *
  * Accessibility gate (persona directive 7): main document table and both
  * obligation registers are real `<table>` semantics via `DataTable` (C6);
@@ -119,17 +125,13 @@
  * baseline reservation) triggered by the discoverable Toast link, not
  * silently on Adopt.
  *
- * STOP-item — no executable test run: this worktree's `package.json` (out
- * of this dispatch's ALLOWLIST) has no test runner or component-testing
- * library installed, matching every sibling screen/composite already
- * landed here (`Home.tsx`, `BoardDeck.tsx`). TDD-with-executed-output is
- * therefore not achievable within this dispatch's file boundary; verified
- * instead via `npx tsc --noEmit` against the whole `src/` tree (strict
- * mode, `exactOptionalPropertyTypes`) to confirm this file type-checks
- * against the real `DataTable`/`Drawer`/`DrawerContent`/`RedlineDiffView`/
- * `FilterBar`/`Toast`/`Topbar`/`Sidebar` prop shapes. Recommending the same
- * test-tooling follow-up dispatch `Home.tsx`/`BoardDeck.tsx` already
- * recommend.
+ * Tests: this worktree now carries Vitest + Testing Library — this
+ * screen's regression suite lives in `src/__tests__/onside/` (the earlier
+ * "no test runner installed" STOP-item recorded here is resolved and
+ * removed). FIX WAVE (ONSIDE-12): Status filter chip counts are computed
+ * per render from the same live doc status the filter matches against —
+ * the previous module-scope `DOC_STATUS_COUNTS` snapshot advertised
+ * pre-adoption counts while the filter yielded post-adoption rows.
  *
  * Layout constants (240px sidebar column, 2rem content padding): not in
  * design_system_spec.md §1.4's token-only scope by design; copied verbatim
@@ -158,8 +160,24 @@ import { DOCLIB } from '../data/doclib';
 import type { DocEntry, DocStatus } from '../data/doclib';
 import { DOMAINS, GAPS, OBL } from '../data/onside';
 import type { GapItem, ObligationRow } from '../data/onside';
+import { CURRENT } from '../data/studio';
+import { applyGapClosure, useDemoStore } from '../state/demoStore';
 
-type DocRow = DocEntry & { id: string };
+/** Base rlAction's document-level adopted marker (source 2478) — runtime
+ * bookkeeping attached to the live DOCLIB entry, not part of doclib.ts's
+ * seeded shape (same intersection pattern the store uses for GAPS'
+ * `applied` flag). */
+interface DocRlState {
+  act: 'adopted';
+  who: string;
+  when: string;
+}
+
+type LiveDoc = DocEntry & { rlState?: DocRlState };
+
+const LIVE_DOCLIB = DOCLIB as Record<string, LiveDoc>;
+
+type DocRow = LiveDoc & { id: string };
 
 interface CascadeTarget {
   domain: string;
@@ -213,22 +231,37 @@ const OBL_STATUS_VARIANT: Record<ObligationRow['st'], TagVariant> = {
   gap: 'status-alert',
 };
 
-const ALL_DOCS: DocRow[] = Object.entries(DOCLIB).map(([id, doc]) => ({ id, ...doc }));
-
+// Domain membership and redline presence are structural (never mutated at
+// runtime; resetDemo reseeds identical structure), so these two stay
+// module-scope. Status counts are NOT here — they are live (ONSIDE-12).
 const DOC_DOMAIN_COUNTS: Record<string, number> = {};
-for (const doc of ALL_DOCS) DOC_DOMAIN_COUNTS[doc.dom] = (DOC_DOMAIN_COUNTS[doc.dom] ?? 0) + 1;
+for (const doc of Object.values(DOCLIB)) DOC_DOMAIN_COUNTS[doc.dom] = (DOC_DOMAIN_COUNTS[doc.dom] ?? 0) + 1;
 
-const DOC_STATUS_COUNTS: Record<DocStatus, number> = { good: 0, warn: 0, crit: 0 };
-for (const doc of ALL_DOCS) DOC_STATUS_COUNTS[doc.status]++;
+const REDLINE_DOC_COUNT = Object.values(DOCLIB).filter((doc) => doc.redline).length;
 
-const REDLINE_DOC_COUNT = ALL_DOCS.filter((doc) => doc.redline).length;
+function isDocAdopted(docId: string): boolean {
+  return LIVE_DOCLIB[docId]?.rlState?.act === 'adopted';
+}
 
-/** See file header "no dedicated 'domain view' screen." */
-function findObligationDomain(oblId: string): string | null {
-  for (const domainKey of Object.keys(OBL)) {
-    if (OBL[domainKey]?.some((row) => row.id === oblId)) return domainKey;
+/** Base gapState (source 3195–3202): a gap board entry is closed when the
+ * doc behind it (`g.rl||g.doc`) carries an adopted rlState. */
+function isGapClosed(gap: GapItem): boolean {
+  const key = gap.rl ?? gap.doc;
+  return key !== null && key !== undefined && isDocAdopted(key);
+}
+
+/** Which obligations THIS adoption will flip — the store's applyGapClosure
+ * semantics (base 3205–3211: GAPS keyed on `(g.rl||g.doc)===docId`, target
+ * obligation not yet met). No `doc.obl` branch — ONSIDE-11. */
+function cascadeTargetsForDoc(docId: string): CascadeTarget[] {
+  const targets: CascadeTarget[] = [];
+  for (const gap of GAPS) {
+    if ((gap.rl ?? gap.doc) !== docId || !gap.obl) continue;
+    const [domainKey, oblId] = gap.obl;
+    const row = OBL[domainKey]?.find((o) => o.id === oblId);
+    if (row && row.st !== 'met') targets.push({ domain: domainKey, oblId });
   }
-  return null;
+  return targets;
 }
 
 function gapKey(gap: GapItem): string {
@@ -241,6 +274,10 @@ function gapKey(gap: GapItem): string {
  * 1 ("the UI said done before anything was" is this persona's formative
  * failure) rather than an instant, indistinguishable-from-fake flip. */
 const ADOPT_COMMIT_DELAY_MS = 650;
+
+/** Drawer.tsx's close transition is 200ms; the ONSIDE-13 focus fallback
+ * runs just after it so it never races the Drawer's own restore. */
+const FOCUS_FALLBACK_DELAY_MS = 260;
 
 const SCREEN_STYLE: CSSProperties = {
   display: 'flex',
@@ -310,14 +347,14 @@ export interface OnSideDocumentsProps {
 }
 
 export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnSideDocumentsProps) {
+  // Re-renders this screen on every demo-store write (its own adopt
+  // cascade included) — see the ONSIDE-02 file-header note.
+  useDemoStore();
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedRedlineFilter, setSelectedRedlineFilter] = useState<string[]>([]);
   const [openDocId, setOpenDocId] = useState<string | null>(null);
   const [adoptingDocId, setAdoptingDocId] = useState<string | null>(null);
-  const [adoptedDocIds, setAdoptedDocIds] = useState<ReadonlySet<string>>(new Set());
-  const [obligationOverrides, setObligationOverrides] = useState<Record<string, Record<string, ObligationRow['st']>>>({});
-  const [resolvedGapKeys, setResolvedGapKeys] = useState<ReadonlySet<string>>(new Set());
   const [toast, setToast] = useState<ToastState | null>(null);
   const [updatingObligationIds, setUpdatingObligationIds] = useState<ReadonlySet<string>>(new Set());
   const [cascadeAnnouncement, setCascadeAnnouncement] = useState('');
@@ -326,8 +363,18 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
   const domainSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const updatingTimeoutRef = useRef<number | undefined>(undefined);
   const lastOpenDocRef = useRef<DocRow | null>(null);
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
 
-  const openDoc = openDocId ? (ALL_DOCS.find((d) => d.id === openDocId) ?? null) : null;
+  // Rebuilt per render from the LIVE DOCLIB singleton — adoption mutates
+  // doc status/version in place (ONSIDE-02/ONSIDE-12).
+  const allDocs: DocRow[] = Object.entries(LIVE_DOCLIB).map(([id, doc]) => ({ id, ...doc }));
+
+  // ONSIDE-12 — live counts from the same status the filter matches.
+  const docStatusCounts: Record<DocStatus, number> = { good: 0, warn: 0, crit: 0 };
+  for (const doc of allDocs) docStatusCounts[doc.status]++;
+  const adoptedCount = allDocs.filter((doc) => doc.rlState?.act === 'adopted').length;
+
+  const openDoc = openDocId ? (allDocs.find((d) => d.id === openDocId) ?? null) : null;
   if (openDoc) lastOpenDocRef.current = openDoc;
   // Keeps Drawer's title/body populated with the last real doc through its
   // ~200ms closing animation instead of blanking the instant openDocId is
@@ -336,34 +383,8 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
   // Drawer.tsx returns null in that phase regardless of what we pass it.
   const displayDoc = openDoc ?? lastOpenDocRef.current;
 
-  function statusOf(domain: string, oblId: string): ObligationRow['st'] {
-    const override = obligationOverrides[domain]?.[oblId];
-    if (override) return override;
-    return OBL[domain]?.find((row) => row.id === oblId)?.st ?? 'met';
-  }
-
-  function cascadeTargetsForDoc(doc: DocRow): CascadeTarget[] {
-    const targets = new Map<string, string>(); // oblId -> domain
-
-    for (const gap of GAPS) {
-      if ((gap.doc === doc.id || gap.rl === doc.id) && gap.obl) {
-        targets.set(gap.obl[1], gap.obl[0]);
-      }
-    }
-    for (const oblId of doc.obl) {
-      const domain = findObligationDomain(oblId);
-      if (domain && statusOf(domain, oblId) !== 'met') targets.set(oblId, domain);
-    }
-
-    return Array.from(targets, ([oblId, domain]) => ({ domain, oblId }));
-  }
-
-  function effectiveDocStatus(doc: DocRow): DocStatus {
-    return adoptedDocIds.has(doc.id) && doc.status !== 'good' ? 'good' : doc.status;
-  }
-
   const handleAdopt = (doc: DocRow) => {
-    if (adoptedDocIds.has(doc.id) || adoptingDocId !== null) return;
+    if (isDocAdopted(doc.id) || adoptingDocId !== null) return;
     const requestKey = ++requestSeqRef.current;
     setAdoptingDocId(doc.id);
     window.setTimeout(() => {
@@ -372,26 +393,39 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
       // gate note.
       if (requestSeqRef.current !== requestKey) return;
 
-      const cascade = cascadeTargetsForDoc(doc);
-      if (cascade.length > 0) {
-        setObligationOverrides((prev) => {
-          const next: Record<string, Record<string, ObligationRow['st']>> = { ...prev };
-          for (const { domain, oblId } of cascade) {
-            next[domain] = { ...(next[domain] ?? {}), [oblId]: 'met' };
-          }
-          return next;
-        });
+      // Computed BEFORE the store write so the toast/impact view knows
+      // exactly which rows this adoption flipped.
+      const cascade = cascadeTargetsForDoc(doc.id);
+
+      // Base rlAction('adopted') document cosmetics (source 2474–2483):
+      // version minor bump, status flip, adopted marker — on the live
+      // DOCLIB entry so every reader agrees and resetDemo restores it.
+      const live = LIVE_DOCLIB[doc.id];
+      if (live) {
+        const versionMatch = /^v(\d+)\.(\d+)/.exec(live.v || '');
+        if (versionMatch) live.v = `v${versionMatch[1]}.${Number(versionMatch[2]) + 1}`;
+        live.status = 'good';
+        live.rlState = {
+          act: 'adopted',
+          who: `${CURRENT.first} ${CURRENT.role ? `(${CURRENT.role})` : ''}`.trim(),
+          when: 'Aug 15, 2026',
+        };
       }
 
-      const resolvedTitles = GAPS.filter((g) => g.doc === doc.id || g.rl === doc.id).map(gapKey);
-      if (resolvedTitles.length > 0) {
-        setResolvedGapKeys((prev) => new Set([...prev, ...resolvedTitles]));
-      }
+      // The store's base-verbatim cascade (applyGapClosure 3205–3211);
+      // its emit() re-renders this screen and every other subscriber.
+      applyGapClosure(doc.id);
 
-      setAdoptedDocIds((prev) => new Set(prev).add(doc.id));
       setAdoptingDocId(null);
       setOpenDocId(null);
       setToast({ variant: 'success', message: `${decodeDocText(doc.t)} adopted.`, cascade });
+
+      // ONSIDE-13 — if the Drawer's restore-to-trigger found the row
+      // unmounted (e.g. "Pending" filter active), catch focus from body.
+      window.setTimeout(() => {
+        const active = document.activeElement;
+        if (active === null || active === document.body) titleRef.current?.focus();
+      }, FOCUS_FALLBACK_DELAY_MS);
     }, ADOPT_COMMIT_DELAY_MS);
   };
 
@@ -411,7 +445,7 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
       .map((domain) => {
         const rows = OBL[domain] ?? [];
         const closedNow = toast.cascade.filter((c) => c.domain === domain).length;
-        const stillOpen = rows.filter((row) => statusOf(domain, row.id) !== 'met').length;
+        const stillOpen = rows.filter((row) => row.st !== 'met').length;
         const label = DOMAIN_LABEL[domain] ?? domain;
         return `${label}: ${closedNow} obligation${closedNow === 1 ? '' : 's'} closed — ${stillOpen} of ${rows.length} still open`;
       })
@@ -424,11 +458,11 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
     target?.focus();
   };
 
-  const filteredDocs = ALL_DOCS.filter((doc) => {
+  const filteredDocs = allDocs.filter((doc) => {
     if (selectedDomains.length > 0 && !selectedDomains.includes(doc.dom)) return false;
-    if (selectedStatuses.length > 0 && !selectedStatuses.includes(effectiveDocStatus(doc))) return false;
+    if (selectedStatuses.length > 0 && !selectedStatuses.includes(doc.status)) return false;
     if (selectedRedlineFilter.length > 0) {
-      const isAdopted = adoptedDocIds.has(doc.id);
+      const isAdopted = doc.rlState?.act === 'adopted';
       const isPending = Boolean(doc.redline) && !isAdopted;
       const matches = (selectedRedlineFilter.includes('pending') && isPending) || (selectedRedlineFilter.includes('adopted') && isAdopted);
       if (!matches) return false;
@@ -450,17 +484,14 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
     {
       id: 'status',
       header: 'Status',
-      render: (row) => {
-        const status = effectiveDocStatus(row);
-        return <Tag text={STATUS_LABEL[status]} variant={STATUS_TAG_VARIANT[status]} />;
-      },
+      render: (row) => <Tag text={STATUS_LABEL[row.status]} variant={STATUS_TAG_VARIANT[row.status]} />,
     },
     {
       id: 'redline',
       header: 'Redline',
       render: (row) => {
         if (!row.redline) return <span style={{ color: 'var(--ink3)' }}>—</span>;
-        return adoptedDocIds.has(row.id) ? <Tag text="Adopted" variant="status-positive" /> : <Tag text="Redline pending" variant="hitl" />;
+        return row.rlState?.act === 'adopted' ? <Tag text="Adopted" variant="status-positive" /> : <Tag text="Redline pending" variant="hitl" />;
       },
     },
   ];
@@ -481,7 +512,8 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
   const statusFilterGroup: FilterGroup = {
     id: 'status',
     label: 'Status',
-    options: (['good', 'warn', 'crit'] as DocStatus[]).map((s) => ({ id: s, label: STATUS_LABEL[s], count: DOC_STATUS_COUNTS[s] })),
+    // Live counts (ONSIDE-12) — same source the filter predicate reads.
+    options: (['good', 'warn', 'crit'] as DocStatus[]).map((s) => ({ id: s, label: STATUS_LABEL[s], count: docStatusCounts[s] })),
     selectedIds: selectedStatuses,
     onToggle: (id) => setSelectedStatuses((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])),
   };
@@ -490,14 +522,16 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
     id: 'redline',
     label: 'Redlines',
     options: [
-      { id: 'pending', label: 'Pending', count: REDLINE_DOC_COUNT - adoptedDocIds.size },
-      { id: 'adopted', label: 'Adopted', count: adoptedDocIds.size },
+      { id: 'pending', label: 'Pending', count: REDLINE_DOC_COUNT - adoptedCount },
+      { id: 'adopted', label: 'Adopted', count: adoptedCount },
     ],
     selectedIds: selectedRedlineFilter,
     onToggle: (id) => setSelectedRedlineFilter((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])),
   };
 
-  const isDisplayDocAdopted = displayDoc ? adoptedDocIds.has(displayDoc.id) : false;
+  // Live read by id (never the displayDoc snapshot, which is pre-adoption
+  // during the Drawer's closing animation).
+  const isDisplayDocAdopted = displayDoc ? isDocAdopted(displayDoc.id) : false;
   const isAdoptingDisplayDoc = displayDoc ? adoptingDocId === displayDoc.id : false;
 
   const drawerFields: DrawerContentField[] = displayDoc
@@ -512,8 +546,9 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
       ]
     : [];
 
+  const displayDocStatus: DocStatus = displayDoc ? (LIVE_DOCLIB[displayDoc.id]?.status ?? displayDoc.status) : 'good';
   const drawerTags: DrawerContentTag[] = displayDoc
-    ? [{ text: STATUS_LABEL[effectiveDocStatus(displayDoc)], variant: STATUS_TAG_VARIANT[effectiveDocStatus(displayDoc)] }]
+    ? [{ text: STATUS_LABEL[displayDocStatus], variant: STATUS_TAG_VARIANT[displayDocStatus] }]
     : [];
 
   const drawerFooter: ReactNode = displayDoc && displayDoc.redline && !isDisplayDocAdopted && (
@@ -529,7 +564,9 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
     </>
   );
 
-  const openGaps = GAPS.filter((g) => !resolvedGapKeys.has(gapKey(g)));
+  // Base gapState-derived closure (see isGapClosed) — survives navigation,
+  // resets with resetDemo.
+  const openGaps = GAPS.filter((g) => !isGapClosed(g));
 
   const gapColumns: DataTableColumn<GapItem>[] = [
     {
@@ -543,7 +580,7 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
     { id: 'action', header: 'Action', render: (g) => <span style={{ color: 'var(--ink2)' }}>{decodeDocText(g.act)}</span> },
   ];
 
-  function obligationColumns(domainKey: string): DataTableColumn<ObligationRow>[] {
+  function obligationColumns(): DataTableColumn<ObligationRow>[] {
     return [
       { id: 'id', header: 'Obligation', render: (row) => <strong>{row.id}</strong> },
       { id: 'requirement', header: 'Requirement', render: (row) => <span>{decodeDocText(row.s)}</span> },
@@ -551,10 +588,9 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
       {
         id: 'status',
         header: 'Status',
-        render: (row) => {
-          const st = obligationOverrides[domainKey]?.[row.id] ?? row.st;
-          return <Tag text={OBL_STATUS_LABEL[st]} variant={OBL_STATUS_VARIANT[st]} />;
-        },
+        // Live OBL rows — the store's applyGapClosure mutates row.st/rev
+        // in place (no overrides layer; ONSIDE-02).
+        render: (row) => <Tag text={OBL_STATUS_LABEL[row.st]} variant={OBL_STATUS_VARIANT[row.st]} />,
       },
     ];
   }
@@ -573,7 +609,7 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
           <Sidebar {...sidebarProps} />
         </div>
         <main id="onside-documents-main" style={MAIN_STYLE} aria-labelledby="onside-documents-title">
-          <h1 id="onside-documents-title" style={TITLE_STYLE}>
+          <h1 id="onside-documents-title" ref={titleRef} tabIndex={-1} style={TITLE_STYLE}>
             OnSide · Documents
           </h1>
 
@@ -626,7 +662,7 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
                   <div style={SCROLL_WRAP_STYLE}>
                     <DataTable
                       caption={`${DOMAIN_LABEL[domainKey] ?? domainKey} obligation register`}
-                      columns={obligationColumns(domainKey)}
+                      columns={obligationColumns()}
                       rows={rows}
                       getRowId={(row) => row.id}
                       updatingRowIds={updatingObligationIds}

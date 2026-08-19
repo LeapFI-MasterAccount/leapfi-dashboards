@@ -20,25 +20,15 @@
  * reachable via in-screen links only" (no 5th OnSide child added; this
  * screen already exists at the reserved `onside.ownership` leaf).
  *
- * STOP-ITEM — App.tsx routing case not wired (ALLOWLIST conflict): the
- * dispatch brief's TASK line asks to "swap" `onside.ownership`'s
- * `OutOfScopeScreen` fallback in `App.tsx` for this screen, but the same
- * brief's HARD RULES ("never touch ... App.tsx ...") and its own ALLOWLIST
- * (this file only) both forbid it, and App.tsx's own file header
- * (`OUT-OF-SCOPE SIDEBAR DESTINATIONS`) explicitly documents `onside.
- * ownership` as intentionally routed to `OutOfScopeScreen` via the
- * `default` switch branch pending exactly this kind of follow-up. Per this
- * persona's ALLOWLIST discipline ("Needs outside the ALLOWLIST are
- * reported, not implemented") and STOP-and-report directive, App.tsx is
- * NOT modified here. The integration this screen needs, for whoever owns
- * App.tsx next:
- *   1. `import { OnSideOwnership } from './screens/OnSideOwnership'`
- *   2. In `renderActiveScreen()`'s switch, add before `default`:
- *      `case 'onside.ownership':
- *         return <OnSideOwnership topbar={topbarProps} onNavigate={navigateToScreen} />`
- * This screen's own props already match every sibling screen's passthrough
- * contract (`topbar`, `onNavigate`, optional `sidebarVersionLabel`), so the
- * wiring is a pure two-line addition, no shape mismatch to resolve.
+ * STOP-ITEM RESOLVED — App.tsx routing (stale claim corrected by the
+ * fix-wave gate dispatch, RPT-10 class; an earlier revision of this
+ * header still reported the case as "not wired" pending an App-owning
+ * follow-up): `App.tsx` routes `case 'onside.ownership'` to this screen
+ * (parity-assembly wave), exactly per the two-line recipe this header
+ * originally specified. The `OutOfScopeScreen` fallback this paragraph
+ * once referenced no longer exists at all — every ScreenId now routes to
+ * a real screen (see App.tsx's "EVERY SIDEBAR DESTINATION ROUTES TO A
+ * REAL SCREEN" header section, SH-4/RAIL-06).
  *
  * STOP-ITEM / DEVIATION — onboarding data ported locally, not into a shared
  * data module: parity_ia_addendum.md §2 item 1 recommends porting the
@@ -121,14 +111,13 @@
  * still shown via `RedlineDiffView` for informational completeness (the
  * base engine's `docLink` click opens the identical doc detail from this
  * view as from Documents), just with no `adoptSlot`/`rejectSlot` wired —
- * this screen owns no adoption state, and duplicating `OnSideDocuments.
- * tsx`'s own local (unshared, session-only) `adoptedDocIds` state here
- * would create two independent, silently-diverging copies of "is this
- * document adopted" with no source of truth between them, which Core
- * Principle 3 (render server/data truth, never a fabricated or duplicated
- * one) argues directly against. Flagging as a cross-screen-state STOP-item
- * for whoever eventually lifts adoption state to a shared store, not
- * solved here.
+ * this screen owns no adoption state. FIX WAVE: adoption truth now lives
+ * in the shared data layer (`OnSideDocuments.tsx` mutates the `DOCLIB`
+ * doc's status/version/rlState on adopt and routes the cascade through
+ * `state/demoStore.ts`'s `applyGapClosure`), so this screen simply reads
+ * the live `DOCLIB` singleton per render and subscribes via
+ * `useDemoStore()` — the earlier cross-screen-state STOP-item recorded
+ * here is resolved by that store, not by duplicating state locally.
  *
  * HTML entity/inline-tag decoding: `decodeText` below is a straight,
  * intentional duplicate of `OnSideDocuments.tsx`'s own `decodeDocText` —
@@ -150,16 +139,17 @@
  * does (this screen writes no state that changes RACI/document data), so
  * there is no async status change to announce.
  *
- * STOP-ITEM — no executable test run: same as every other screen already
- * landed in this worktree (`Home.tsx`, `BoardDeck.tsx`, `OnSideDocuments.
- * tsx`) — `package.json` (outside every dispatch's allowlist) has no test
- * runner installed. Verified via `npx tsc --noEmit` instead (strict mode,
- * `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`) against this
- * file plus the whole `src/` tree, confirming it type-checks against the
- * real `DataTable`/`Drawer`/`DrawerContent`/`RedlineDiffView`/`SetupCard`/
- * `StatCard`/`Label`/`Topbar`/`Sidebar` prop shapes and the real `ROLES`/
- * `M`/`DOCLIB` data shapes. Recommending the same test-tooling follow-up
- * dispatch every sibling screen already recommends.
+ * Tests: this worktree now carries Vitest + Testing Library — this
+ * screen's regression suite lives in `src/__tests__/onside/` (the earlier
+ * "no test runner installed" STOP-item recorded here is resolved and
+ * removed).
+ *
+ * FIX WAVE (ONSIDE-10) — RACI tables render in the base's AUTHORED `M`
+ * order (policy first, evidence, drafts last — base osRaci 3552-3562
+ * renders `g[2]` with no sorting), not alphabetically: the previous
+ * `defaultSortColumnId="doc"` re-ordered every domain group by title on
+ * mount, drifting from the base's deliberate ordering. The document
+ * column stays user-sortable; only the default is the authored order.
  *
  * Layout constants (240px sidebar column, 2rem content padding): copied
  * verbatim from `Home.tsx`/`OnSideDocuments.tsx`'s own documented
@@ -186,6 +176,7 @@ import { ROLES, M } from '../data/onside';
 import type { DocRaci } from '../data/onside';
 import { DOCLIB } from '../data/doclib';
 import type { DocEntry, DocStatus } from '../data/doclib';
+import { useDemoStore } from '../state/demoStore';
 
 type DisplayDoc = DocEntry & { id: string };
 
@@ -390,6 +381,10 @@ export interface OnSideOwnershipProps {
 }
 
 export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel }: OnSideOwnershipProps) {
+  // Re-renders on demo-store writes so live DOCLIB reads (doc status /
+  // version after an adopt on OnSideDocuments) stay current — see the
+  // file-header adoption-state note.
+  useDemoStore();
   const [openDocId, setOpenDocId] = useState<string | null>(null);
   const lastOpenDocRef = useRef<DisplayDoc | null>(null);
 
@@ -468,7 +463,6 @@ export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel }: OnS
                       getRowId={(row) => row[0]}
                       rowAction={raciRowAction}
                       emptyMessage="No governance documents mapped for this domain."
-                      defaultSortColumnId="doc"
                     />
                   </div>
                 </div>

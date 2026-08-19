@@ -39,15 +39,23 @@
  * Connect's stated exception, since the spec only carves the exception
  * out for Connect and gives no basis to extend it to Settings.
  *
- * DESIGN NOTE — auto-expand-on-active: a top-level group whose nested
- * child is the current screen (`activeId`) always renders expanded,
- * regardless of the user's manual collapse/expand history for that
- * group. This is a structural a11y choice, not decoration: hiding the
- * `aria-current="page"` row inside a collapsed group would let a
- * (mis-)collapsed Sidebar bury the one item that answers "where am I,"
- * which the spec's own §3.2 rationale ("the audience-facing screen
- * itself is the anchor for where are we") treats as a hard requirement
- * for on-screen state, not just the presenter rail.
+ * DESIGN NOTE — group toggle while a child is active (base-faithful per
+ * leapfi-platform.html @1c230fe): the base's group toggles collapse an
+ * open group even while it owns the active screen — toggleOnsideNav
+ * (source 3834) and toggleStudioNav (source 1778) both run
+ * `g.classList.toggle('open')` with no active-row guard — and the base's
+ * `go()` (source 3801, force-open at 3813–3816) re-opens the destination
+ * module's group on every navigation into it. This file ports both
+ * halves: (1) a manual override always wins over child-active
+ * auto-expand, so the header click visibly collapses/expands and
+ * `aria-expanded` always changes — never an inert-yet-enabled toggle;
+ * (2) navigating into a group clears any stale collapse override, so
+ * the `aria-current="page"` row is always revealed on arrival. An
+ * earlier revision instead forced expansion while childActive, which
+ * silently swallowed the click into a deferred override that collapsed
+ * the group later, after navigating elsewhere (SH-11); this is the
+ * base-faithful replacement. Absent any override or child activity, a
+ * group falls back to `defaultExpanded`.
  *
  * DESIGN NOTE — footer version string (§3.1 "Footer: version string
  * only"): rendered as a plain token-styled span, not through the `Label`
@@ -164,10 +172,24 @@ const FOOTER_STYLE: CSSProperties = {
 
 export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071' }: SidebarProps) {
   // Manual collapse/expand overrides, keyed by top-level item id. Absent
-  // entries fall back to `defaultExpanded`. See file header DESIGN NOTE:
-  // an override is ignored (forced expanded) while this group owns the
-  // active nested item.
+  // entries fall back to child-active auto-expand, then `defaultExpanded`.
+  // See file header DESIGN NOTE: an override always wins — the base's
+  // toggles collapse a group even while it owns the active screen.
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
+
+  // Base `go()` (source 3813–3816) force-opens the destination's group on
+  // every navigation into it. Port: when `activeId` moves into a group
+  // that carries a collapse override, clear it so the arrival is visible.
+  // (Render-phase derived-state adjustment, not an effect, so the cleared
+  // override is applied in the same commit as the navigation itself.)
+  const [lastActiveId, setLastActiveId] = useState(activeId);
+  if (lastActiveId !== activeId) {
+    setLastActiveId(activeId);
+    const owningGroup = NAV.find((item) => item.children?.some((child) => child.id === activeId));
+    if (owningGroup && overrides[owningGroup.id] === false) {
+      setOverrides((prev) => ({ ...prev, [owningGroup.id]: true }));
+    }
+  }
 
   const handleToggle = (itemId: string, currentlyExpanded: boolean) => {
     setOverrides((prev) => ({ ...prev, [itemId]: !currentlyExpanded }));
@@ -181,7 +203,7 @@ export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071' }: Side
           const childActive = hasChildren && item.children!.some((child) => child.id === activeId);
           const isCurrentTop = !hasChildren && item.id === activeId;
           const expanded = hasChildren
-            ? childActive || (overrides[item.id] ?? item.defaultExpanded ?? false)
+            ? (overrides[item.id] ?? (childActive || item.defaultExpanded || false))
             : false;
 
           return (

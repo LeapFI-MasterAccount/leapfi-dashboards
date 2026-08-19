@@ -12,10 +12,16 @@
  *
  * Expanded-row body content branches exactly as source's `domBody()`
  * does: `d.deep && OBL[key]` (mrm, tprm only) renders the obligation
- * register (DataTable, `row kind: obligation-row`); every other domain
- * renders its `DOM_OPEN` top-open-items list in a second, simpler
- * DataTable (`row kind: generic`) instead of a full register — the same
- * branch, not a new one. `aigov`'s extra CRI-function coverage table
+ * register FILTERED to open items — base 3684 `OBL[key].filter(o=>
+ * o.st!=='met')`, headed 'Gaps &amp; partials · N of M shown obligations'
+ * with the met set summarized in a separate soft pill ('{met} met
+ * obligations and the full register with provenance: all {appl}
+ * enumerated', base 3687) — the ONSIDE-06 fix wave restored this curated
+ * gaps-first presentation (the shipped full-table + '{rows} of {appl}
+ * shown' heading mixed units and matched neither the base nor the screen).
+ * Every other domain renders its `DOM_OPEN` top-open-items list in a
+ * second, simpler DataTable (`row kind: generic`) instead of a full
+ * register — the same branch, not a new one. `aigov`'s extra CRI-function coverage table
  * (source 3119-3123, `[['GOVERN',68,81],...]`) is NOT ported: those
  * numbers are a local literal inside `domBody()`, never exported from
  * `data/onside.ts`, and this dispatch's Data modules line names only
@@ -43,7 +49,10 @@
  * baseline ("segment meaning is labelled in text, never color alone")
  * carries over unmodified. Row-updating live-region announcements do not
  * apply here (no cascade originates in this view — Adopt/cascade writes
- * live in `OnSideDocuments.tsx`, outside this dispatch's allowlist).
+ * live in `state/demoStore.ts`'s `applyGapClosure`, driven from
+ * `OnSideDocuments.tsx`; this view reads the live `OBL`/`DOMAINS`
+ * singletons those writes mutate, and re-renders through its owning
+ * screen's `useDemoStore()` subscription).
  */
 import { useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
@@ -218,6 +227,17 @@ const targetLineStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2
 const sectionHeadingStyle: CSSProperties = { margin: '0 0 0.5rem', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--ink)' };
 const footStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
 const scrollWrapStyle: CSSProperties = { overflowX: 'auto' };
+/** Base `.pill-soft` (met-obligations summary, source 3687). */
+const pillSoftStyle: CSSProperties = {
+  display: 'inline-block',
+  fontSize: '0.75rem',
+  fontWeight: 600,
+  color: 'var(--ink2)',
+  background: 'var(--panel)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-pill, 999px)',
+  padding: '0.2rem 0.65rem',
+};
 
 export interface DomainsAccordionProps {
   domains: OnsideDomain[];
@@ -317,18 +337,26 @@ export function DomainsAccordion({ domains, expandedKeys, onToggle, pendingScrol
                 </div>
 
                 {obligations ? (
+                  // Base domBody 3684-3687: open items only, met set
+                  // summarized in the soft pill — see ONSIDE-06 header note.
                   <div>
                     <h4 style={sectionHeadingStyle}>
-                      Obligation register · {obligations.length} of {domain.appl} shown
+                      Gaps &amp; partials · {obligations.filter((o) => o.st !== 'met').length} of {obligations.length} shown obligations
                     </h4>
                     <div style={scrollWrapStyle}>
                       <DataTable
-                        caption={`${domain.name} obligation register`}
+                        caption={`${domain.name} gaps and partials`}
                         columns={obligationColumns()}
-                        rows={obligations}
+                        rows={obligations.filter((o) => o.st !== 'met')}
                         getRowId={(row) => row.id}
-                        emptyMessage="No obligations on file for this domain."
+                        emptyMessage="No open gaps or partials in this domain."
                       />
+                    </div>
+                    <div style={{ marginTop: '0.625rem' }}>
+                      <span style={pillSoftStyle}>
+                        {obligations.filter((o) => o.st === 'met').length} met obligations and the full register with provenance: all{' '}
+                        {domain.appl} enumerated
+                      </span>
                     </div>
                   </div>
                 ) : (

@@ -2,10 +2,8 @@
  * HomePanels — view (parity_ia_addendum.md §1.7 "Home customization",
  * Batch 7): the 5 gated panels — Risk posture, Strategic signal,
  * Investment and return, Your queue, Quick actions — composed below
- * `Home.tsx`'s existing, untouched StatCard row + "Start the demo" primary
- * CTA by a future wiring dispatch. See `HomeCustomizeBar.tsx`'s own file
- * header "WIRING RECIPE" for the exact integration snippet; `Home.tsx` is
- * outside this dispatch's ALLOWLIST.
+ * `Home.tsx`'s StatCard row (wired: `Home.tsx` renders this component per
+ * `HomeCustomizeBar.tsx`'s "WIRING RECIPE").
  *
  * Ports the non-`kpis` sections of `renderHome()` (leapfi-platform.html
  * 4197-4285) as five independently-gated `<section>`s, rendered in
@@ -32,23 +30,18 @@
  * duplicating `OnSideOverview.tsx`'s own visual, per that same row's
  * "reuses, does not duplicate" instruction.
  *
- * AMBIGUITY RESOLVED — Strategic signal panel scope: `sigImpact()`/
- * `sigTouch()` (source 4053-4088) compute a *live* cross-check against
- * `OBL`/`DOCLIB`/domain state ("N in force would need updating," clickable
- * per-touch links into obligation/doc/domain views). Neither `OBL` nor
- * `DOCLIB` is named in this dispatch's Data modules line (`data/misc.ts`
- * SIGNAL, `data/onside.ts` DOMAINS, `engine/plan.ts` only) — that live
- * impact calculation is controller/render logic layered on top of the
- * `SIGNAL` data itself, the same category of exclusion `data/misc.ts`'s own
- * header already applies to `startIntake`/`acceptProposed`/etc. This panel
- * instead renders each `SIGNAL` entry's own literal fields (scope,
- * instrument, status, age, the `read` paragraph, and the touch list as
- * plain text) in the shared Drawer — matching exactly what
- * `OnSideFeed.tsx`'s own signal Drawer already does for its comparable
- * `SRC_ITEMS` rows (field rows, no live cross-domain computation, no
- * fabricated clickable sub-links to screens that don't exist). Direct
- * reuse of that same Drawer/DrawerContent (`kind: 'signal'`) pattern, per
- * the dispatch brief.
+ * STRATEGIC SIGNAL DRAWER SCOPE: `sigImpact()` (source 4059-4088) computes
+ * a *live* cross-check against `OBL`/gap state ("N in force would need
+ * updating") — that impact calculation stays unported here, matching
+ * `OnSideFeed.tsx`'s own signal Drawer (field rows, no live cross-domain
+ * computation, no clickable sub-links). The "Would touch" field, however,
+ * resolves DISPLAY NAMES exactly as base `sigTouch()` (source 4047-4058)
+ * does — obl tuples render the obligation id (the base chip's visible
+ * text), doc tuples resolve `DOCLIB[id].t`, dom tuples resolve
+ * `DOM_SHORT[key] || domain.name` + " register" (fix-wave SH-5: an earlier
+ * revision printed raw internal slugs like "capital-narr, gov-charter"
+ * here; the base never shows a slug). Only the base's clickable per-touch
+ * navigation is trimmed to plain text.
  *
  * DRAWER OWNERSHIP: this view mounts its own local `<Drawer>` instance for
  * the Strategic signal panel — matching `OnSideFeed.tsx`'s own documented
@@ -61,45 +54,41 @@
  * within this dispatch either.
  *
  * "YOUR QUEUE" DATA SCOPE: role-bucket content (source 4243-4270) branches
- * on `CURRENT.roleKey` across analyst/cro/ceo/ai/default. Every subtitle
- * below is derived only from data this dispatch's Data modules line
- * actually names (`DOMAINS` + `DomainsAccordion.tsx`'s exported
- * `oblToClose`/`statusOf`, already imported for the posture panel;
- * `engine/plan.ts`'s `deriveRecomputeView`, already computed for the
- * Investment panel; `data/cases.ts` `CASES`) — never `GAPS`/`gapState`,
+ * on `CURRENT.roleKey` across analyst/cro/ceo/ai/default. Subtitles are
+ * derived only from data in scope (`DOMAINS` + `DomainsAccordion.tsx`'s
+ * exported `oblToClose`/`statusOf`; the live lever/plan view; `data/
+ * cases.ts` `CASES`; `data/misc.ts` `SIGNAL`) — never `GAPS`/`gapState`,
  * `DIGEST`/`digestCount()`, or `hitlCount()` (source's own data for the
- * "Open gaps," "Regulatory digest," and "Human review queue" rows
- * respectively), none of which is named in this dispatch's scope and each
- * of which lives in files/functions outside it. Per Core Principle 3
- * (never fabricate a number the data doesn't back), rows that would have
- * needed one of those are given honest, qualitative copy instead of an
- * invented count — flagged here rather than silently approximated.
+ * "Open gaps," "Regulatory digest," and "Incident Response Plan" rows),
+ * which live outside this batch. Rows that would have needed one of those
+ * carry honest, qualitative copy instead of an invented count. The CRO
+ * "Rulemaking to watch · RFI 2026-04 comments due Sep 30" row (source
+ * 4257) is ported verbatim — its literals need nothing outside SIGNAL
+ * (fix-wave SH-9: an earlier revision replaced it with a generic
+ * "N instruments tracked this cycle" line the base never shows).
+ *
+ * LIVE LEVERS (fix-wave SH-6, consumer side): the Investment-and-return
+ * panel and the queue's gated-play count recompute from the SHARED live
+ * lever state (`state/demoStore.ts` `getDemoSliders()`; this component
+ * subscribes via `useDemoStore()`), matching base `renderHome()`'s
+ * `computePlan()` over the live lever DOM values (source 4197+). An
+ * earlier revision froze these panels at a local DEFAULT_SLIDERS copy, so
+ * Home contradicted Step 5's just-demoed lever changes. The `sliders`/
+ * `opportunities` props remain as test/override hooks only.
  *
  * CASES SEEDING: identical guarded self-seed to `screens/Cases.tsx`'s own
- * (`if (CASES.length === 0) seedCases(DOCLIB)`), for the same reason that
- * file states — no real app-boot sequence exists yet in this worktree
- * (App.tsx, out of every batch's allowlist) to own this call once, so
- * every consumer that needs `CASES` populated guards its own idempotent
- * seed. Recommending (per `Cases.tsx`'s own note) this be relocated to a
- * real boot sequence once one exists.
+ * (`if (CASES.length === 0) seedCases(DOCLIB)`) — `App.tsx` still owns no
+ * boot-time seed call, so every consumer that needs `CASES` populated
+ * guards its own idempotent seed. Recommending (per `Cases.tsx`'s own
+ * note) this be relocated to a real boot sequence once one exists;
+ * `state/demoStore.ts`'s `resetDemo()` re-runs `seedCases` on Restart.
  *
- * NAVIGATION TARGETS (STOP-item, flagged rather than silently worked
- * around): row/card actions below call `onNavigate('cases')` and
- * `onNavigate('onside.overview')` — the two screens this dispatch's own
- * data depends on (Batch 4 `Cases.tsx`, Batch 1 `OnSideOverview.tsx`), both
- * of which now exist as files but are **not yet in `App.tsx`'s
- * `SCREEN_IDS` union** (confirmed by reading `App.tsx` at dispatch time).
- * Every other sibling screen/view already documents this identical class of
- * gap under its own "wiring note"/STOP-item (e.g. Batch 1's own wiring
- * note: "App.tsx gains the onside.overview ScreenId case"). Until that
- * follow-up `App.tsx` dispatch lands, clicking these two targets is an
- * honest no-op (`App.tsx`'s `isScreenId` guard silently declines an
- * unrecognized id) — not a broken handler in this file, and it will start
- * working the moment those ids are added, with no change needed here.
+ * NAVIGATION TARGETS (previously a STOP-item, now resolved): every
+ * `onNavigate` id used below — `'cases'`, `'onside.overview'`,
  * `'reporting'`, `'onside.feed'`, `'onside.documents'`, `'studio.ask'`,
- * `'studio.investment-design'`, and `'studio.roadmap'` are all already real,
- * wired `ScreenId`s today, so those specific row actions work end to end
- * right now.
+ * `'studio.investment-design'`, `'studio.roadmap'` — is a real, wired
+ * member of `App.tsx`'s `SCREEN_IDS` union (App.tsx:212-230), so all row
+ * and card actions work end to end.
  *
  * Accessibility gate (persona directive 7): every panel is a labelled
  * `<section>`; posture/signal/queue panels are real `DataTable` (C6)
@@ -114,11 +103,11 @@
  * file is read-only navigation or a Drawer open/close; no irreversible
  * operation is triggered from here.
  *
- * STOP-item — no executable test run: matches every sibling file in this
- * worktree — no test runner installed (`package.json`, outside this
- * dispatch's ALLOWLIST). Verified via `npx tsc --noEmit` (strict,
- * `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`) against the
- * whole `src/` tree instead.
+ * TESTS: covered by `src/__tests__/shell/home.test.tsx` (customization /
+ * visibleKeys flow) and `src/__tests__/shell/home-panels.test.tsx`
+ * (SH-5 name resolution, SH-9 CRO row, SH-6 live-lever recompute), run
+ * under Vitest; plus `npx tsc --noEmit` (strict,
+ * `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`).
  */
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -137,23 +126,44 @@ import { HOME_PANEL_DEFS } from './HomeCustomizeBar';
 import { DOMAINS } from '../data/onside';
 import type { OnsideDomain } from '../data/onside';
 import { SIGNAL } from '../data/misc';
-import type { SignalEntry } from '../data/misc';
+import type { SignalEntry, SignalTouch } from '../data/misc';
 import { CASES, seedCases } from '../data/cases';
 import { DOCLIB } from '../data/doclib';
 import { OPPS } from '../data/studio';
 import { deriveRecomputeView, fmt } from '../engine/plan';
 import type { SliderState, PlanOpportunity } from '../engine/plan';
+import { getDemoSliders, useDemoStore } from '../state/demoStore';
 
 // See file header "CASES SEEDING."
 if (CASES.length === 0) {
   seedCases(DOCLIB);
 }
 
-/** Same corrected default lever state `InvestmentDesign.tsx` seeds itself
- * with (survey_map.md §a line 59 fix) — duplicated here rather than
- * imported since `InvestmentDesign.tsx`'s `INITIAL_SLIDERS` is a private,
- * unexported module constant. */
-const DEFAULT_SLIDERS: SliderState = { amb: 3, tol: 52, speed: 50, budget: 450000, roi: 2.5, eff: 70 };
+/** Base `DOM_SHORT` (leapfi-platform.html 3011) — short display names for
+ * domain keys, used by `sigTouch()` (source 4056) among others. Ported
+ * verbatim for the "Would touch" resolution below (SH-5). */
+const DOM_SHORT: Record<string, string> = {
+  bsa: 'BSA / AML',
+  mrm: 'Model Risk',
+  tprm: 'Third-Party',
+  consumer: 'Consumer',
+  fairlend: 'Fair Lending',
+  infosec: 'InfoSec',
+  aigov: 'AI Governance',
+  capital: 'Capital',
+};
+
+/** Base `sigTouch()`'s display-name resolution (leapfi-platform.html
+ * 4047-4058), as plain text — see file header "STRATEGIC SIGNAL DRAWER
+ * SCOPE" (SH-5): obl -> the obligation id (the base chip's visible text),
+ * doc -> `(d&&d.t)||t[1]`, dom -> `(DOM_SHORT[t[1]]||dm.name)||t[1]` +
+ * " register". Never a raw internal slug for doc/dom tuples. */
+function touchLabel(t: SignalTouch): string {
+  if (t[0] === 'obl') return t[2] ?? t[1];
+  if (t[0] === 'doc') return DOCLIB[t[1]]?.t ?? t[1];
+  const dm = DOMAINS.find((d) => d.key === t[1]);
+  return `${dm ? (DOM_SHORT[t[1]] ?? dm.name) : t[1]} register`;
+}
 
 /** Ported verbatim, `caseWaitingOn` (leapfi-platform.html 2617-2622) — same
  * small pure derivation `screens/Cases.tsx`'s own local `waitingOnRoleKey`
@@ -235,9 +245,12 @@ function buildQueueBucket(roleKey: string, gapsTotal: number, below: OnsideDomai
         onOpen: () => onNavigate('onside.overview'),
       },
       {
+        // Base 4257, ported verbatim (SH-9) — the literals live in
+        // SIGNAL[0] (data/misc.ts: instr 'RFI 2026-04', st '... position
+        // due Sep 30'); base renderHome hardcodes this exact row copy.
         id: 'q-signal',
-        title: 'Strategic signal to watch',
-        subtitle: `${SIGNAL.length} instrument${SIGNAL.length === 1 ? '' : 's'} tracked this cycle`,
+        title: 'Rulemaking to watch',
+        subtitle: 'RFI 2026-04 comments due Sep 30',
         actionLabel: 'Track',
         onOpen: () => onNavigate('onside.feed'),
       },
@@ -300,9 +313,9 @@ export interface HomePanelsProps {
   onNavigate: (id: string) => void;
   /** Unused by any row this dispatch's own scope reaches (see file header) — accepted for prop-shape symmetry with `NotificationBellPanel`'s identical dependency; present so this component's shape doesn't need to change once a queue row deep-links to a specific case. */
   onOpenCase?: (caseId: string) => void;
-  /** Testing/override hook, mirrors `InvestmentDesign.tsx`'s own optional `initialSliders`. Defaults to the same corrected lever defaults. */
+  /** Testing/override hook only. When absent (the app's real path), the LIVE shared lever state (`state/demoStore.ts` `getDemoSliders()`) is read on every render — see file header "LIVE LEVERS" (SH-6). */
   sliders?: SliderState;
-  /** Testing/override hook, mirrors `InvestmentDesign.tsx`'s own optional `opportunities`. Defaults to the full 15-play catalog. */
+  /** Testing/override hook only. Defaults to the LIVE `OPPS` pool (which grows when Discovery accepts a play). */
   opportunities?: PlanOpportunity[];
 }
 
@@ -374,7 +387,7 @@ function StrategicSignalPanel() {
         { label: 'Status', value: selected.st },
         { label: 'Proposed', value: selected.age },
         { label: 'What it would mean here', value: selected.read },
-        { label: 'Would touch', value: selected.touch.map((t) => t[2] ?? t[1]).join(', ') },
+        { label: 'Would touch', value: selected.touch.map(touchLabel).join(', ') },
       ]
     : [];
 
@@ -454,7 +467,13 @@ function QuickActionsPanel({ onNavigate }: { onNavigate: (id: string) => void })
   );
 }
 
-export function HomePanels({ visibleKeys, currentRoleKey, onNavigate, sliders = DEFAULT_SLIDERS, opportunities = OPPS }: HomePanelsProps) {
+export function HomePanels({ visibleKeys, currentRoleKey, onNavigate, sliders, opportunities }: HomePanelsProps) {
+  // Subscribe to every demo-store write (lever moves, accepted plays,
+  // resetDemo) so these panels recompute live — base renderHome's
+  // computePlan()-over-live-levers behavior (source 4197+); SH-6.
+  useDemoStore();
+  const liveSliders = sliders ?? getDemoSliders();
+  const liveOpportunities = opportunities ?? OPPS;
   const labelByKey = new Map(HOME_PANEL_DEFS.map((p) => [p.key, p.label]));
 
   function renderPanel(key: HomePanelKey) {
@@ -464,9 +483,9 @@ export function HomePanels({ visibleKeys, currentRoleKey, onNavigate, sliders = 
       case 'legis':
         return <StrategicSignalPanel />;
       case 'invest':
-        return <InvestmentReturnPanel sliders={sliders} opportunities={opportunities} />;
+        return <InvestmentReturnPanel sliders={liveSliders} opportunities={liveOpportunities} />;
       case 'queue':
-        return <YourQueuePanel roleKey={currentRoleKey} onNavigate={onNavigate} sliders={sliders} opportunities={opportunities} />;
+        return <YourQueuePanel roleKey={currentRoleKey} onNavigate={onNavigate} sliders={liveSliders} opportunities={liveOpportunities} />;
       case 'qa':
         return <QuickActionsPanel onNavigate={onNavigate} />;
       default:

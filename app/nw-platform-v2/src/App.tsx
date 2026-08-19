@@ -45,19 +45,39 @@
  * "OUT-OF-SCOPE SIDEBAR DESTINATIONS" and "NOTIFICATION BELL" below for
  * what changed and the STOP-item on what deliberately did not.
  *
- * OUT-OF-SCOPE SIDEBAR DESTINATIONS (AMBIGUITY RESOLVED, updated by the
- * parity-assembly dispatch): `Sidebar.tsx` ships leaf nav items; six of the
- * seven non-script destinations now route to real screens (see the switch
- * below) — only `Connect · AllRailz` and `Connect · Vantage` still fall
- * through to `OutOfScopeScreen`, matching design_system_spec.md §5.6's own
- * disposition that those two are reached only via `Roadmap`'s Step-6 flow,
- * never via a direct Sidebar click, and parity_ia_addendum.md assigns no
- * new content to either. Silently redirecting a Sidebar click on one of
- * these to some other screen would misrepresent what happened (Core
- * Principle 3 — never fabricate a state); this file still renders
- * `OutOfScopeScreen` for them, a plain, honestly-labelled placeholder
- * (still inside Topbar+Sidebar shell chrome for wayfinding) rather than a
- * fabricated full screen or a silent no-op.
+ * EVERY SIDEBAR DESTINATION ROUTES TO A REAL SCREEN (rewritten by the
+ * fix-wave gate dispatch — SH-4/RAIL-06; supersedes this header's earlier
+ * "OUT-OF-SCOPE SIDEBAR DESTINATIONS" section, which attributed to
+ * design_system_spec.md §5.6 a "reached only via Roadmap's Step-6 flow,
+ * never via a direct Sidebar click" disposition §5.6 does not contain —
+ * SH-4 CONFIRMED): `connect`, `connect.allrailz`, and `connect.vantage`
+ * now route to `screens/ConnectSoon.tsx`, the §5.6 Soon-splash surface
+ * (SoonSplash C16 over `data/misc.ts`'s verbatim-ported SOON records),
+ * matching the base page, whose sidebar `go('connect'/'allrailz'/
+ * 'vantage')` clicks (source 803, 814–815) land on the in-fiction module
+ * splash — never a placeholder. The former `OutOfScopeScreen` (whose
+ * build-program meta copy — "the seven screens this build implements",
+ * "the Step 1 full-sidebar gesture" — broke the product fiction on the
+ * projector at demo_script_draft.md Step 6's own directed click) is
+ * deleted; the `ScreenId` switch below is exhaustive, so no audience-
+ * reachable click can land outside a real screen. `'connect'` itself is a
+ * routed ScreenId for the Connect module splash — today it is reached via
+ * Roadmap's "What's next" Connect SetupCard (§5.6's resolved primary
+ * CTA); the Sidebar's Connect group header still toggles expansion per
+ * C3's contract (Sidebar.tsx is outside the gate dispatch's allowlist —
+ * flagged for the component-owning dispatch if design authority wants the
+ * group header to also navigate, matching the script's literal "click
+ * Connect in the sidebar" wording).
+ *
+ * D18 RESIDUE RESOLVED (gate dispatch, closing the rail_d18 batch's
+ * STOP-item): `handleStartDemo` and the `<Home onStartDemo>` pass-through
+ * are deleted per presenter_entry_redesign.md §4, and `Home.tsx` no
+ * longer declares the prop — the §3.1 end-state (Home contains no demo
+ * reference) is reached. §4's App-hosted `?present=1` mount check is
+ * instead hosted by `PresenterRail`'s own mount effect (that batch's
+ * documented, behavior-identical placement — same `start()` path, pinned
+ * by `presenter-entry-d18.test.tsx`), so this shell keeps no rail ref;
+ * one implementation, not two.
  *
  * STOP-ITEM RESOLVED (parity-wiring wave): the six previously-unwired view
  * files are now composed into their owning script screens by that wave's
@@ -75,22 +95,27 @@
  * changed — the views' own screens import them; this shell still imports
  * only `screens/` files plus `views/NotificationBellPanel.tsx`.
  *
- * NOTIFICATION BELL (updated by the parity-assembly dispatch):
- * `Topbar`'s new `notificationSlot` extension point (this dispatch's own
- * `Topbar.tsx` addition) is filled with `views/NotificationBellPanel.tsx`,
- * wired to `data/cases.ts`'s real `NOTIFS` array, role-filtered to the
- * active persona. `NOTIFS` starts empty until `seedCases()` runs; this file
+ * NOTIFICATION BELL (updated by the backbone fix-wave dispatch —
+ * SH-1/CS-01/SH-8): `Topbar`'s `notificationSlot` extension point is
+ * filled with `views/NotificationBellPanel.tsx`, wired to
+ * `data/cases.ts`'s real `NOTIFS` array, role-filtered to the active
+ * persona. `NOTIFS` starts empty until `seedCases()` runs; this file
  * imports `./screens/Cases` unconditionally for routing, and that module's
  * own top-level guard (`if (CASES.length === 0) seedCases(DOCLIB)`) runs as
- * an import-time side effect the moment this file loads — so real case/
- * notification data is seeded before first paint, not deferred until a user
- * happens to open the Cases screen. Opening a bell row calls
- * `handleOpenCaseFromBell`, which navigates to `cases` and remounts that
- * screen (via a `key` keyed on the target case id) so its `initialCaseId`
- * prop is honored even when the bell is opened while already on the Cases
- * screen — `Cases.tsx` itself is unmodified; this is a pure parent-side
- * `key` composition technique, not a change to that screen's own state
- * model.
+ * an import-time side effect the moment this file loads — so case data is
+ * seeded before first paint. Writers now exist: `state/demoStore.ts` owns
+ * the base `notify()` pipeline (source 2626–2629 + the six case-action
+ * write sites 2691–2758), and this shell subscribes via `useDemoStore()`,
+ * so every NOTIFS write re-renders the bell (the base's renderBell()
+ * fan-out). Opening a bell row calls `handleOpenCaseFromBell`, which (1)
+ * marks the notification read via `openNotificationForCase` — the base
+ * `openNotif` read-flip, source 2644–2647, so the unread badge clears —
+ * and (2) navigates to `cases`, remounting that screen via a `key` built
+ * from the target case id PLUS a per-press nonce so `initialCaseId` is
+ * honored even when the bell targets the case already in `pendingCaseId`
+ * (SH-8: a bare case-id key made the same-case re-press a dead click —
+ * Object.is-equal setState, unchanged key, no remount). `Cases.tsx` itself
+ * is unmodified; this is a pure parent-side `key` composition technique.
  *
  * PERSONA / USER-SWITCHER WIRING (TASK line): `profileMenuItems` is built
  * from `data/studio.ts`'s `USERS` (unmodified, six seeded personas);
@@ -122,25 +147,24 @@
  * 3: never fabricate a stronger claim than what actually happened). No
  * network call, no form submission, no data leaves the browser.
  *
- * RESTART / resetDemo SCOPE (AMBIGUITY RESOLVED, §4 "Restarting" state):
- * every one of the 7 screens owns its own mutable demo-state locally
- * (`OnSideDocuments`' adopted redlines, `StudioAsk`'s discovered
- * opportunity, `InvestmentDesign`'s sliders) — each sibling dispatch
- * explicitly deferred *cross-navigation* persistence of that state to
- * "whichever dispatch does true app-shell/routing integration." Because
- * this shell mounts exactly one screen at a time (see above), navigating
- * away from any screen already unmounts it and discards its local state by
- * construction — every revisit to a screen starts fresh, with or without
- * an explicit Restart. `handleRestart` therefore only needs to (1) reset
- * the persona (the one piece of cross-screen state this file itself owns)
- * and (2) navigate to Home, which — via the same unmount mechanism —
- * already clears whatever screen was showing. STOP-item, flagged rather
- * than silently treated as equivalent to the base engine: this differs
- * from the base engine's own persistent-until-`resetDemo()` global state
- * (a presenter navigating away from an adopted redline and back would see
- * it reset here, where the base page would not) — a known port-fidelity
- * gap for a future dispatch that wants cross-navigation persistence, not
- * something this shell's own Restart wiring needs to solve.
+ * RESTART / resetDemo SCOPE (rewritten by the backbone fix-wave dispatch —
+ * SH-2/RAIL-02/CS-04/RPT-02; supersedes the earlier claim that navigation
+ * unmount alone was sufficient, which was only true for React component
+ * state, not the module singletons): the demo's durable state lives in
+ * module singletons mutated in place across the session — CASES stage/
+ * history (Cases.tsx performAction), NOTIFS, BOARD_LOG (Reporting's
+ * board-log commits), HOME_ORDER/HOME_HIDE (HomeCustomizeBar), CLOCK.i,
+ * DOCLIB redline flips on adoption, the live lever state, OPPS Discovery
+ * additions, SCOPE_EVENTS, and the OBL/DOMAINS/GAPS adopt cascade.
+ * `handleRestart` now calls `state/demoStore.ts`'s `resetDemo()` — the
+ * port of the base engine's resetDemo (leapfi-platform.html 3938–3961,
+ * DEMO_SEED snapshot mechanism 3928–3937) — BEFORE resetting the persona
+ * (base 3957 `switchUser('rachel')`) and navigating Home (base 3958
+ * `go('home')`), and then shows the base's own reset toast (base 3960).
+ * design_system_spec.md §4 "Restarting" ("after resetDemo() completes")
+ * is now satisfied: a rehearsal run no longer leaks adopted cases, board
+ * log entries, cleared Home panels, advanced clock ticks, or moved levers
+ * into the live run.
  *
  * DEMO_DATE_LABEL: a fixed demo constant ("Friday, August 15, 2026"),
  * matching demo_script_draft.md Step 1's own "See" line and the board
@@ -149,18 +173,18 @@
  * date here would be the actual violation of Core Principle 3 (a claim the
  * data doesn't back), not the other way around.
  *
- * STOP-item — no executable test run: this worktree's `package.json` (out
- * of this dispatch's ALLOWLIST) has no test runner installed, matching
- * every sibling file already landed here. Verified via `npx tsc --noEmit`
- * against the whole `src/` tree (strict mode, `exactOptionalPropertyTypes`)
- * and `npm run build` (full production build) to confirm this file
- * type-checks and bundles against the real prop shapes of every screen and
- * shell composite it wires together.
+ * TESTS (stale claim corrected by the backbone fix-wave dispatch — an
+ * earlier header revision said no test runner was installed): Vitest is
+ * installed and this shell is covered by `src/__tests__/shell/` (bell
+ * panel, presenter rail, topbar, sidebar, home, theme toggle, live demo
+ * state) and type-checked via `npx tsc --noEmit` (strict,
+ * `exactOptionalPropertyTypes`).
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import './App.css'
 import { Home } from './screens/Home'
+import { ConnectSoon } from './screens/ConnectSoon'
 import { OnSideFeed } from './screens/OnSideFeed'
 import { OnSideDocuments } from './screens/OnSideDocuments'
 import { OnSideOverview } from './screens/OnSideOverview'
@@ -173,18 +197,15 @@ import { Cases } from './screens/Cases'
 import { Reporting } from './screens/Reporting'
 import { SettingsToggles } from './screens/SettingsToggles'
 import { SettingsAbout } from './screens/SettingsAbout'
-import { Sidebar } from './components/Sidebar'
-import type { SidebarProps } from './components/Sidebar'
-import { Topbar } from './components/Topbar'
 import type { TopbarBackTarget, TopbarProfileMenuItem, TopbarProps } from './components/Topbar'
 import { PresenterRail } from './components/PresenterRail'
-import type { PresenterRailHandle } from './components/PresenterRail'
 import { Toast } from './components/Toast'
 import { Switch } from './components/primitives/Switch'
 import { NotificationBellPanel } from './views/NotificationBellPanel'
 import { CURRENT, USERS } from './data/studio'
 import { NOTIFS } from './data/cases'
 import { DEFAULT_SCRIPT_KEY, resolveTarget, SCRIPTS } from './data/script'
+import { getDemoSliders, openNotificationForCase, resetDemo, useDemoStore } from './state/demoStore'
 
 type Theme = 'dark' | 'light'
 
@@ -204,7 +225,7 @@ const DEMO_DATE_LABEL = 'Friday, August 15, 2026'
 /** See data/script.ts's own "let ACTIVE_SCRIPT" note — this shell's active-script selection. Swapping to a second script (D4) costs exactly this line plus one SCRIPTS registry entry. */
 const ACTIVE_SCRIPT = SCRIPTS[DEFAULT_SCRIPT_KEY]
 
-/** Every screen id this shell can switch to — the 7 script-navigable ids (data/script.ts `ScriptTargetId`) plus the Sidebar leaf items no script targets. Single source of truth for the `ScreenId` type below. */
+/** Every screen id this shell can switch to — the 7 script-navigable ids (data/script.ts `ScriptTargetId`), the Sidebar leaf items no script targets, and `'connect'` (the Connect module splash, reached via Roadmap's "What's next" Connect SetupCard — see file header "EVERY SIDEBAR DESTINATION ROUTES TO A REAL SCREEN"). Single source of truth for the `ScreenId` type below. */
 const SCREEN_IDS = [
   'home',
   'onside.overview',
@@ -214,6 +235,7 @@ const SCREEN_IDS = [
   'studio.ask',
   'studio.investment-design',
   'studio.roadmap',
+  'connect',
   'connect.allrailz',
   'connect.vantage',
   'reporting',
@@ -238,6 +260,7 @@ const SCREEN_LABEL: Record<ScreenId, string> = {
   'studio.ask': 'Studio · Ask',
   'studio.investment-design': 'Studio · Investment Design',
   'studio.roadmap': 'Studio · Roadmap',
+  connect: 'Connect',
   'connect.allrailz': 'Connect · AllRailz',
   'connect.vantage': 'Connect · Vantage',
   reporting: 'Reporting',
@@ -247,52 +270,7 @@ const SCREEN_LABEL: Record<ScreenId, string> = {
   'board-deck': 'Board deck',
 }
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-}
-const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 }
-const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' }
-const MAIN_STYLE: CSSProperties = {
-  flex: '1 1 auto',
-  minWidth: 0,
-  overflowY: 'auto',
-  boxSizing: 'border-box',
-  padding: '2rem',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '1.75rem',
-}
-const TITLE_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' }
-const OUT_OF_SCOPE_NOTE_STYLE: CSSProperties = { margin: 0, maxWidth: '38rem', fontSize: '0.9375rem', color: 'var(--ink2)', lineHeight: 1.5 }
 const TOAST_WRAP_STYLE: CSSProperties = { position: 'fixed', top: '1.25rem', right: '1.25rem', zIndex: 60 }
-
-/** See file header "OUT-OF-SCOPE SIDEBAR DESTINATIONS." */
-function OutOfScopeScreen({ topbar, sidebarProps, title }: { topbar: TopbarProps; sidebarProps: SidebarProps; title: string }) {
-  return (
-    <div data-lf-screen="out-of-scope" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="out-of-scope-main" style={MAIN_STYLE} aria-labelledby="out-of-scope-title">
-          <h1 id="out-of-scope-title" style={TITLE_STYLE}>
-            {title}
-          </h1>
-          <p style={OUT_OF_SCOPE_NOTE_STYLE}>
-            This module isn&rsquo;t one of the seven screens this build implements yet. It appears in the sidebar because it&rsquo;s part
-            of the platform&rsquo;s real navigation shape — the Step 1 full-sidebar gesture shows it exists — but nothing is wired here.
-          </p>
-        </main>
-      </div>
-    </div>
-  )
-}
 
 function App() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
@@ -304,7 +282,17 @@ function App() {
   // open; also doubles as the Cases screen's remount key so a bell press
   // while already on `cases` still lands on the right case detail.
   const [pendingCaseId, setPendingCaseId] = useState<string | null>(null)
-  const presenterRailRef = useRef<PresenterRailHandle>(null)
+  // SH-8: per-press nonce folded into the Cases `key` so re-opening the
+  // SAME case from the bell still forces the remount (a bare case-id key
+  // is Object.is-equal on the re-press and never remounts).
+  const [bellPressNonce, setBellPressNonce] = useState(0)
+  const [restartToast, setRestartToast] = useState(false)
+
+  // Subscribe this shell to every demo-state write (state/demoStore.ts) —
+  // the React stand-in for the base's renderBell()/renderHome() fan-out.
+  // NOTIFS pushes, resetDemo, lever changes, and scope events all
+  // re-render from here (the bell badge is the direct consumer).
+  useDemoStore()
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -324,19 +312,19 @@ function App() {
     setScreenId(id)
   }
 
-  function handleStartDemo(): void {
-    presenterRailRef.current?.start()
-  }
-
   function handlePresenterNavigate(target: string): void {
     const resolved = resolveTarget(target)
     if (resolved) navigateToScreen(resolved)
   }
 
   function handleRestart(): void {
-    setCurrentUserId(CURRENT.id)
+    // Full demo reset FIRST (base resetDemo, leapfi-platform.html
+    // 3938–3961) — see file header "RESTART / resetDemo SCOPE."
+    resetDemo()
+    setCurrentUserId(CURRENT.id) // base 3957 switchUser('rachel')
     setPendingCaseId(null)
-    navigateToScreen('home')
+    navigateToScreen('home') // base 3958 go('home')
+    setRestartToast(true) // base 3960 toast
   }
 
   function handleDesignPartnerRequest(): void {
@@ -349,9 +337,14 @@ function App() {
    * already on the target screen, neither of which this handler wants:
    * opening a bell row must always honor the specific case id, including
    * when the bell is opened while Cases is already the active screen (the
-   * `key` on the `case 'cases'` render below then forces the remount that
-   * makes `initialCaseId` take effect again). */
+   * `key` on the `case 'cases'` render below — case id + press nonce —
+   * then forces the remount that makes `initialCaseId` take effect
+   * again, even for the case already in `pendingCaseId`; SH-8). */
   function handleOpenCaseFromBell(caseId: string): void {
+    // Base openNotif (source 2644–2647): opening marks the notification
+    // read, clearing it from the unread badge count.
+    openNotificationForCase(caseId, currentUser.roleKey)
+    setBellPressNonce((nonce) => nonce + 1)
     setPendingCaseId(caseId)
     if (screenId !== 'cases') {
       setPreviousScreenId(screenId)
@@ -404,7 +397,6 @@ function App() {
           <Home
             topbar={topbarProps}
             onNavigate={navigateToScreen}
-            onStartDemo={handleStartDemo}
             roleKey={currentUser.roleKey}
             roleFirstName={currentUser.first}
           />
@@ -420,9 +412,28 @@ function App() {
       case 'studio.ask':
         return <StudioAsk topbar={topbarProps} onNavigate={navigateToScreen} />
       case 'studio.investment-design':
-        return <InvestmentDesign topbar={topbarProps} onNavigate={navigateToScreen} />
+        // `initialSliders`: App-level live-lever provisioning (SH-6/RPT-04
+        // backbone) — every mount starts from the store's live lever
+        // state instead of the hardcoded defaults, so lever positions
+        // survive navigation once the screen publishes changes back via
+        // `setDemoSliders` (state/demoStore.ts header documents the
+        // publish contract; the screen-side publish call is the studio
+        // batch's wiring).
+        return <InvestmentDesign topbar={topbarProps} onNavigate={navigateToScreen} initialSliders={getDemoSliders()} />
       case 'studio.roadmap':
         return <Roadmap topbar={topbarProps} onNavigate={navigateToScreen} />
+      case 'connect':
+      case 'connect.allrailz':
+      case 'connect.vantage':
+        // §5.6 Soon-splash surface (SH-4/RAIL-06 fix) — see file header
+        // "EVERY SIDEBAR DESTINATION ROUTES TO A REAL SCREEN."
+        return (
+          <ConnectSoon
+            topbar={topbarProps}
+            onNavigate={navigateToScreen}
+            moduleKey={screenId === 'connect' ? 'connect' : screenId === 'connect.allrailz' ? 'allrailz' : 'vantage'}
+          />
+        )
       case 'reporting':
         // `currentUser`: stamps `who` on committed board-log updates (the
         // regchange report's "Log an update →" sub-flow — base boardSave
@@ -439,7 +450,7 @@ function App() {
         // unmodified; this is a pure parent-side composition technique).
         return (
           <Cases
-            key={pendingCaseId ?? 'cases-list'}
+            key={pendingCaseId !== null ? `${pendingCaseId}·${bellPressNonce}` : 'cases-list'}
             topbar={topbarProps}
             onNavigate={navigateToScreen}
             currentUser={currentUser}
@@ -448,27 +459,29 @@ function App() {
         )
       case 'board-deck':
         return <BoardDeck topbar={topbarProps} onDesignPartnerRequest={handleDesignPartnerRequest} />
-      default:
-        return (
-          <OutOfScopeScreen
-            topbar={topbarProps}
-            sidebarProps={{ activeId: screenId, onNavigate: navigateToScreen }}
-            title={SCREEN_LABEL[screenId]}
-          />
-        )
     }
   }
 
   return (
     <>
       {renderActiveScreen()}
-      <PresenterRail ref={presenterRailRef} script={ACTIVE_SCRIPT} onNavigate={handlePresenterNavigate} onRestart={handleRestart} />
+      <PresenterRail script={ACTIVE_SCRIPT} onNavigate={handlePresenterNavigate} onRestart={handleRestart} />
       {designPartnerToast ? (
         <div style={TOAST_WRAP_STYLE}>
           <Toast
             variant="success"
             message="Design partner interest noted for this session."
             onDismiss={() => setDesignPartnerToast(false)}
+            autoDismissMs={5000}
+          />
+        </div>
+      ) : null}
+      {restartToast ? (
+        <div style={TOAST_WRAP_STYLE}>
+          <Toast
+            variant="success"
+            message="Demo reset. Every gap, redline, lever, filter, and conversation is back to the opening state."
+            onDismiss={() => setRestartToast(false)}
             autoDismissMs={5000}
           />
         </div>

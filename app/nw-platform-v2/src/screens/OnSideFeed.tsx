@@ -66,10 +66,45 @@
  * (not normalized at the data layer, since that would no longer be a
  * verbatim port). This file ports that exact reconciliation behavior at
  * the render layer instead (`normalizeAmp`, applied to every displayed
- * source name, title, and note), matching the documented source engine
- * behavior rather than inventing new behavior — React does not decode HTML
+ * source name, title, note, AND layer label — the last added by the
+ * ONSIDE-01 fix wave: `SRC_LAYERS`' Regional label carries a verbatim
+ * `&amp;` too, and the base injects it via innerHTML where the entity
+ * decodes, source 3335), matching the documented source engine behavior
+ * rather than inventing new behavior — React does not decode HTML
  * entities embedded in JS string literals, so without this an un-reconciled
  * `&amp;` would otherwise leak into the rendered UI as literal text.
+ *
+ * FIX WAVE (ONSIDE-07) — Date-column sort semantics: `sortValue` is the
+ * NEGATED `daysAgo` and the default direction is `descending`, so the
+ * announced `aria-sort` matches the calendar order actually on screen
+ * (default view: newest first = descending calendar date). The previous
+ * shipped pairing (raw `daysAgo` + `ascending`) announced the exact
+ * inverse of the visible order to assistive tech.
+ *
+ * FIX WAVE (ONSIDE-04) — the source-detail alert toggle is a screen-owned
+ * Button rendered in the Drawer body after `DrawerContent`, NOT a
+ * `DrawerContent` `actions` entry: `DrawerContent.tsx` keys action
+ * Buttons by `action.label`, and this toggle's label flips on every press
+ * ('Turn alerts on' ⇄ 'Turn alerts off'), so as an `actions` entry each
+ * press remounted the button under the user's focus — dropping focus to
+ * `document.body` and breaking the Drawer's focus trap and
+ * Escape-to-close (both live on the dialog's own onKeyDown). A
+ * screen-owned Button at a stable JSX position keeps the same DOM node
+ * across label flips, so focus stays put. (`DrawerContent.tsx` itself is
+ * the reporting batch's file — flagged there as the keying root cause.)
+ *
+ * FIX WAVE (ONSIDE-08) — instrument deep-links ported: the base makes
+ * source names (`osSources` 3391 `instrLink`), tracked-rule items
+ * (3477), and every in-force row (3494) clickable into the instrument
+ * detail (`openInstr`, 2932–2949, rendered into the shared drawer). The
+ * three parity views now fire an `onOpenInstrument(key)` seam and this
+ * screen renders the `INSTR` entry (kind, issuer, effective, source,
+ * review line, summary, domains driven — the fields base `openInstr`
+ * shows) as a third branch of the shared Drawer's selection union. The
+ * base's domain chips ("Domains this instrument drives" → `dom-` deep
+ * links) render as a plain text field here: no navigation-with-payload
+ * mechanism exists from this screen (same gap OnSideOverview's
+ * `deepLinkDomainKey` header note documents).
  *
  * AMBIGUITY RESOLVED — the raw `action` tuple element (`SrcItem[4]`, e.g.
  * `"goOnside('dom-mrm')"`) is intentionally excluded from every rendered
@@ -97,11 +132,10 @@
  * Layout constants: same implementer-judgment category as `Home.tsx`'s
  * header note (§1.4 carries no px/spacing values by design).
  *
- * STOP-item — no executable test run: identical to `Home.tsx`/
- * `BoardDeck.tsx` — no test runner is installed in this worktree
- * (`package.json` out of allowlist). Verified via `npx tsc --noEmit`
- * against the whole `src/` tree instead; recommending the same test-tooling
- * follow-up dispatch.
+ * Tests: this worktree now carries Vitest + Testing Library — this
+ * screen's regression suite lives in `src/__tests__/onside/` (the earlier
+ * "no test runner installed" STOP-item recorded here is resolved and
+ * removed).
  *
  * ──────────────────────────────────────────────────────────────────────────
  * W1 AMENDMENT — Batch 2 composition (parity_ia_addendum.md line 335,
@@ -125,20 +159,20 @@
  * `drawerFields`/`drawerTags` on shape. The source detail renders the six
  * fields that view's `SourceDetailRow` carries (name, layer, method,
  * 30-day activity, connector phase, alert state) plus the alert toggle as
- * a DrawerContent action; alert-state truth stays owned by
+ * a screen-owned Button in the Drawer body (NOT a DrawerContent `actions`
+ * entry — see the ONSIDE-04 note above); alert-state truth stays owned by
  * `RegulatoryFeedSources` (its bound `onToggleAlert` closure) — this
  * screen only refreshes its own display copy of `alertOn` on press so the
  * open Drawer never shows a stale toggle label.
  *
- * W1 AMBIGUITY RESOLVED — `DrawerContentKind` has no `'source'` literal
- * (`'signal' | 'play' | 'doc'` only) and `DrawerContent.tsx` is outside
- * this dispatch's ALLOWLIST. The addendum's `src:` row says "`kind` stays
- * a non-structural semantic hint ... no new component is needed", and
- * DrawerContent's own header confirms `kind` is a `data-kind` attribute
- * hint with zero structural branching — so the source detail passes
- * `kind="signal"` (the nearest in-domain literal) rather than editing an
- * out-of-allowlist file. STOP-item: a one-word follow-up edit should add
- * `'source'` to `DrawerContentKind` and flip the literal here.
+ * W1 RESOLVED (fix-wave gate dispatch, closing the STOP-item an earlier
+ * revision of this header carried): `DrawerContentKind` now includes
+ * `'source'` (added by the reporting batch in `DrawerContent.tsx`), so
+ * the source-connector detail passes `kind="source"`; signal and
+ * instrument details keep `kind="signal"` (the instrument shape still has
+ * no dedicated literal — `kind` remains a non-structural `data-kind`
+ * hint per DrawerContent's own header, so the nearest in-domain literal
+ * stands for it, unchanged from the original W1 resolution).
  */
 import { useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
@@ -152,13 +186,15 @@ import { DataTable } from '../components/DataTable';
 import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
 import { Drawer } from '../components/Drawer';
 import { DrawerContent } from '../components/DrawerContent';
-import type { DrawerContentAction, DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
+import type { DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
+import { Button } from '../components/primitives/Button';
 import { Tag } from '../components/primitives/Tag';
 import { RegulatoryFeedSources } from '../views/RegulatoryFeedSources';
 import type { SourceDetailRow } from '../views/RegulatoryFeedSources';
 import { RegulatoryFeedLifecycle } from '../views/RegulatoryFeedLifecycle';
 import { RegulatoryFeedInforce } from '../views/RegulatoryFeedInforce';
-import { SRC_ITEMS, SRC_ROWS, SRC_LAYERS } from '../data/onside';
+import { DOMAINS, INSTR, SRC_ITEMS, SRC_ROWS, SRC_LAYERS } from '../data/onside';
+import type { OnsideInstrument } from '../data/onside';
 
 /** Ports the source engine's `srcRow()`/`srcItems()` `.replace(/&amp;/g,'&')`
  * reconciliation (see file header) at the render layer. */
@@ -193,12 +229,18 @@ interface SignalRow {
 
 /** W1 — discriminated selection for the single shared Drawer (see W1
  * AMENDMENT in the file header): the pre-existing signal shape, extended
- * to also accept a source-shaped row per addendum §1.1 `src:`. */
+ * to also accept a source-shaped row per addendum §1.1 `src:`, and (fix
+ * wave, ONSIDE-08) an instrument shape for the base `openInstr` port. */
 type DrawerSelection =
   | { kind: 'signal'; row: SignalRow }
-  | { kind: 'source'; row: SourceDetailRow };
+  | { kind: 'source'; row: SourceDetailRow }
+  | { kind: 'instrument'; instrumentKey: string; instrument: OnsideInstrument };
 
-const LAYER_LABEL_BY_KEY = new Map<string, string>(SRC_LAYERS.map(([key, label]) => [key, label]));
+// normalizeAmp on the label — ONSIDE-01: the Regional layer label is the
+// verbatim-ported 'Regional · national, state &amp; local' (base 3335,
+// where innerHTML decodes it); without reconciliation the raw entity
+// rendered in the signal drawer's "Regulatory layer" field.
+const LAYER_LABEL_BY_KEY = new Map<string, string>(SRC_LAYERS.map(([key, label]) => [key, normalizeAmp(label)]));
 
 const SOURCE_ROW_BY_NORMALIZED_NAME = new Map(SRC_ROWS.map((row) => [normalizeAmp(row.n), row]));
 
@@ -307,7 +349,10 @@ const COLUMNS: DataTableColumn<SignalRow>[] = [
     header: 'Date',
     render: (row) => row.date,
     sortable: true,
-    sortValue: (row) => row.daysAgo,
+    // Negated so the sort value runs in calendar order (larger = more
+    // recent) and the announced aria-sort direction matches the visible
+    // order — see the ONSIDE-07 note in the file header.
+    sortValue: (row) => -row.daysAgo,
   },
   {
     id: 'signal',
@@ -374,16 +419,30 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel }: OnSideFe
     setDrawerOpen(true);
   };
 
+  // Fix wave (ONSIDE-08) — base openInstr port (source 2932–2949): the
+  // three parity views fire this with an INSTR key; the entry renders as
+  // the shared Drawer's third selection branch. Guarded on INSTR[key]
+  // exactly as base instrLink/openInstr are (source 2306, 2933).
+  const handleOpenInstrument = (instrumentKey: string) => {
+    const instrument = INSTR[instrumentKey];
+    if (!instrument) return;
+    setSelection({ kind: 'instrument', instrumentKey, instrument });
+    setDrawerOpen(true);
+  };
+
   const handleDrawerClose = () => setDrawerOpen(false);
 
   // Signal branch below is behavior-identical to pre-W1 (same title format,
-  // same five fields, same badge Tag); the source branch is additive.
+  // same five fields, same badge Tag); the source/instrument branches are
+  // additive.
   const drawerTitle =
     selection === null
       ? 'Signal'
       : selection.kind === 'signal'
         ? `Signal — ${selection.row.source}`
-        : `Source — ${selection.row.name}`;
+        : selection.kind === 'source'
+          ? `Source — ${selection.row.name}`
+          : normalizeAmp(selection.instrument.n);
 
   const drawerFields: DrawerContentField[] =
     selection === null
@@ -396,14 +455,35 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel }: OnSideFe
             { label: 'Signal', value: selection.row.title },
             { label: 'Note', value: selection.row.note },
           ]
-        : [
-            { label: 'Source', value: selection.row.name },
-            { label: 'Regulatory layer', value: selection.row.layerLabel },
-            { label: 'Method', value: selection.row.method },
-            { label: '30-day activity', value: String(selection.row.activity30d) },
-            { label: 'Connector phase', value: selection.row.phaseLabel },
-            { label: 'Immediate alerts', value: selection.row.alertOn ? 'On' : 'Off' },
-          ];
+        : selection.kind === 'source'
+          ? [
+              { label: 'Source', value: selection.row.name },
+              { label: 'Regulatory layer', value: selection.row.layerLabel },
+              { label: 'Method', value: selection.row.method },
+              { label: '30-day activity', value: String(selection.row.activity30d) },
+              { label: 'Connector phase', value: selection.row.phaseLabel },
+              { label: 'Immediate alerts', value: selection.row.alertOn ? 'On' : 'Off' },
+            ]
+          : [
+              // Base openInstr detail fields, source 2937–2947.
+              { label: 'Kind', value: normalizeAmp(selection.instrument.kind) },
+              { label: 'Issuer', value: normalizeAmp(selection.instrument.issuer) },
+              { label: 'Effective', value: normalizeAmp(selection.instrument.eff) },
+              { label: 'Source', value: normalizeAmp(selection.instrument.src) },
+              // Verbatim base review line (source 2944).
+              { label: 'Review', value: 'Nothing read from this instrument becomes authoritative before a qualified human approves it' },
+              { label: 'Summary', value: normalizeAmp(selection.instrument.sum) },
+              ...(selection.instrument.doms.length > 0
+                ? [
+                    {
+                      label: 'Domains this instrument drives',
+                      value: selection.instrument.doms
+                        .map((domKey) => DOMAINS.find((d) => d.key === domKey)?.name ?? domKey)
+                        .join(' · '),
+                    },
+                  ]
+                : []),
+            ];
 
   const drawerTags: DrawerContentTag[] =
     selection === null
@@ -412,26 +492,24 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel }: OnSideFe
         ? selection.row.badge
           ? [{ text: selection.row.badge, variant: 'count' }]
           : []
-        : selection.row.alertOn
-          ? [{ text: 'Alerts on', variant: 'hitl' }]
-          : [];
+        : selection.kind === 'source'
+          ? selection.row.alertOn
+            ? [{ text: 'Alerts on', variant: 'hitl' }]
+            : []
+          : [{ text: 'Regulatory instrument', variant: 'count' }];
 
-  // W1 — alert toggle as a DrawerContent action; truth lives in
-  // `RegulatoryFeedSources` (bound `onToggleAlert` closure), this screen only
-  // refreshes its display copy so the open Drawer never shows a stale label.
-  const drawerActions: DrawerContentAction[] =
-    selection !== null && selection.kind === 'source'
-      ? [
-          {
-            label: selection.row.alertOn ? 'Turn alerts off' : 'Turn alerts on',
-            variant: 'secondary',
-            onPress: () => {
-              selection.row.onToggleAlert();
-              setSelection({ kind: 'source', row: { ...selection.row, alertOn: !selection.row.alertOn } });
-            },
-          },
-        ]
-      : [];
+  // W1 + fix wave (ONSIDE-04) — the alert toggle is a screen-owned Button at
+  // a stable JSX position in the Drawer body (see the file-header note): its
+  // label flips on every press, and DrawerContent keys `actions` Buttons by
+  // label, which remounted the pressed button and dropped focus to body.
+  // Truth still lives in `RegulatoryFeedSources` (bound `onToggleAlert`
+  // closure); this screen only refreshes its display copy so the open Drawer
+  // never shows a stale label.
+  const handleAlertTogglePress = () => {
+    if (selection === null || selection.kind !== 'source') return;
+    selection.row.onToggleAlert();
+    setSelection({ kind: 'source', row: { ...selection.row, alertOn: !selection.row.alertOn } });
+  };
 
   // Built conditionally (rather than `versionLabel={sidebarVersionLabel}`
   // directly) — see `Home.tsx`'s identical note on `exactOptionalPropertyTypes`.
@@ -460,21 +538,35 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel }: OnSideFe
             getRowId={(row) => row.id}
             rowAction={rowAction}
             defaultSortColumnId="date"
-            defaultSortDirection="ascending"
+            defaultSortDirection="descending"
             emptyMessage="No signals match the selected filters."
           />
           {/* W1 — Batch 2 below-the-fold parity sections, order 1→2→3 per each
-              view's own file header. Nothing above this line changed. */}
-          <RegulatoryFeedSources onOpenSource={handleOpenSource} />
-          <RegulatoryFeedLifecycle />
-          <RegulatoryFeedInforce />
+              view's own file header. */}
+          <RegulatoryFeedSources onOpenSource={handleOpenSource} onOpenInstrument={handleOpenInstrument} />
+          <RegulatoryFeedLifecycle onOpenInstrument={handleOpenInstrument} />
+          <RegulatoryFeedInforce onOpenInstrument={handleOpenInstrument} />
         </main>
       </div>
       <Drawer open={drawerOpen} title={drawerTitle} onClose={handleDrawerClose}>
-        {/* kind="signal" for both shapes — see W1 AMBIGUITY RESOLVED in the
-            file header ('source' literal is an out-of-allowlist one-word edit
-            to DrawerContentKind; kind is a non-structural data-attribute hint). */}
-        <DrawerContent kind="signal" fields={drawerFields} tags={drawerTags} actions={drawerActions} />
+        {/* kind="source" for the source-connector detail (gate dispatch —
+            see W1 RESOLVED in the file header); signal + instrument shapes
+            keep "signal" (non-structural data-attribute hint). */}
+        <DrawerContent
+          kind={selection !== null && selection.kind === 'source' ? 'source' : 'signal'}
+          fields={drawerFields}
+          tags={drawerTags}
+        />
+        {selection !== null && selection.kind === 'source' ? (
+          // ONSIDE-04 — stable-node alert toggle; see the file-header note.
+          <div style={{ marginTop: '1.25rem' }}>
+            <Button
+              variant="secondary"
+              label={selection.row.alertOn ? 'Turn alerts off' : 'Turn alerts on'}
+              onPress={handleAlertTogglePress}
+            />
+          </div>
+        ) : null}
       </Drawer>
     </div>
   );

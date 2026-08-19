@@ -23,10 +23,11 @@
  *  - budget greedy fill (base 1249-1251) at defaults funds 7 plays;
  *    at the $100k floor it funds 2.
  */
-import { describe, expect, it } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { InvestmentDesign } from '../../screens/InvestmentDesign';
 import type { TopbarProps } from '../../components/Topbar';
+import { getDemoSliders, resetDemo } from '../../state/demoStore';
 
 const topbar: TopbarProps = {
   breadcrumb: 'Studio · Investment Design',
@@ -39,6 +40,12 @@ const topbar: TopbarProps = {
 function renderScreen() {
   return render(<InvestmentDesign topbar={topbar} onNavigate={() => {}} />);
 }
+
+beforeEach(() => {
+  // This screen publishes lever changes to the shared demo store (fix-wave
+  // SH-6/RPT-04/STU-07) — restore DEFAULT_SLIDERS between tests.
+  resetDemo();
+});
 
 describe('stance banner at the shipped lever defaults (survey_map.md §a L59; stanceText base 1220-1228)', () => {
   it('reads "Balanced: a far reach with balanced gating." with 9 of 15 clear / 6 gated (base 1226-1227 else-branch; computePlan 1245-1255)', () => {
@@ -92,5 +99,53 @@ describe('lever changes recompute the stance banner live (recompute base 1256-13
     // Stance banner unchanged by budget alone — pins that ready/gated is
     // control-and-risk gated, never budget gated (base 1245-1248).
     expect(screen.getByText('9 of 15 plays clear today. 6 wait on controls.')).toBeInTheDocument();
+  });
+
+  it('publishes every lever change to the shared demo store (setDemoSliders — backbone contract SH-6/RPT-04/STU-07)', () => {
+    renderScreen();
+    expect(getDemoSliders().budget).toBe(450000);
+
+    fireEvent.change(screen.getByRole('slider', { name: 'Annual budget' }), { target: { value: '100000' } });
+
+    // Home panels / reports / Studio Ask value lines all read this store —
+    // the base recompute() fan-out (source 1256-1303).
+    expect(getDemoSliders().budget).toBe(100000);
+  });
+});
+
+describe('play drawer — full base openPlay content (base 1391-1432; fix-wave STU-13)', () => {
+  it('opens a funded play with summary, economics, verdict, scope of work, tech deps, governance detail, financial block, and connections', () => {
+    renderScreen();
+    const row = screen.getByRole('row', { name: /Loan-document summarization/ });
+    fireEvent.click(within(row).getByRole('button', { name: 'Open' }));
+
+    const drawer = screen.getByRole('dialog');
+    expect(drawer).toHaveTextContent('Loan-document summarization');
+    // Summary (DETAIL.sum, base 1396).
+    expect(drawer).toHaveTextContent('Summarizes loan files and flags missing or inconsistent documents to speed processing.');
+    // Economics: 35000 build; annual 150000×0.70 = $105k; 3-yr return
+    // 105000×3/35000 = 9.0× (base 1398); payback round(35/105×12) = 4 mo.
+    expect(drawer).toHaveTextContent('$35k one-time');
+    expect(drawer).toHaveTextContent('$105k');
+    expect(drawer).toHaveTextContent('9.0× on build cost');
+    // Ready/sequence-gated verdict (base seqNote 1405-1407): minGate 80 ≥
+    // threshold 65 at defaults.
+    expect(drawer).toHaveTextContent('✓ Ready now at your current risk tolerance; cleared to enter the funded portfolio.');
+    // Scope of work + technical dependencies (base d.work/d.tech, 1408-1423).
+    expect(drawer).toHaveTextContent('Document ingestion + OCR for scanned files · Summarization + key-term extraction · Missing-doc / inconsistency flags · Reviewer UI in the loan-ops workflow');
+    expect(drawer).toHaveTextContent('Access to the loan-document repository · OCR for scanned documents · Loan-origination system integration');
+    // Per-gate governance detail with GOV description + REGMAP citation
+    // and the live score (base gov rows, 1402).
+    expect(drawer).toHaveTextContent('Governance · Privacy');
+    expect(drawer).toHaveTextContent('80% ✓ — GLBA / data-privacy review + PII-handling sign-off · GLBA §501(b)');
+    // Financial block (base 1424): run-cost estimate round(35000×0.15) = $5k/yr.
+    expect(drawer).toHaveTextContent('Run cost ≈ $5k/yr');
+    expect(drawer).toHaveTextContent('Not licence-only.');
+    // Controls to close: Privacy is green (80 ≥ GREEN 80).
+    expect(drawer).toHaveTextContent('All gating controls are green.');
+    // Depends-on / Unlocks connections (base 1426-1428): DETAIL.deps/unlocks
+    // are both empty for this play.
+    expect(drawer).toHaveTextContent('No prerequisites; can start immediately.');
+    expect(drawer).toHaveTextContent('Standalone; nothing downstream depends on it.');
   });
 });

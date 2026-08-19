@@ -54,6 +54,47 @@
  * of the base engine's own `T.committee ? condPick-primary :
  * (approve-primary + condPick-ghost)` branch (2837-2839), which already
  * enforces the same one-primary rule the task calls out explicitly.
+ * While the language editor is open (`editing`), the stage action row is
+ * NOT rendered at all — "Save the language" is the only primary on screen
+ * (CS-06: the base renders both concurrently, but the twin's own
+ * one-primary doctrine binds regardless; this also removes the mid-edit
+ * "Accept" hazard where the case would route with the pre-edit text while
+ * the typed draft was silently discarded).
+ *
+ * FIX-WAVE NOTES (cases batch — each anchored to leapfi-platform.html at
+ * pin 1c230fe):
+ *  - CS-02: the stage-progress strip uses the base's explicit `IDX` stage
+ *    index map (source 2821) instead of `stageSet.findIndex` — 'legal',
+ *    'final' and 'rejected' are not keys of CASE_STAGES/CASE_STAGES_B, so
+ *    findIndex returned -1 and every step went neutral grey.
+ *  - CS-05: the non-actor wait notes are the base's five stage-specific
+ *    notes (source 2835/2849/2855/2861/2868), not one generic sentence —
+ *    only the `cro` stage's note claims "notified in the app and by
+ *    email" (that is the only stage the base notifies by email).
+ *  - CS-08: restored dropped affordances whose twin targets exist —
+ *    Document meta row + closed-state "Open the document →" (base
+ *    openDocView; twin target `onside.documents` via `onNavigate`),
+ *    "matrix →" (base `go('settings')`; twin `settings.toggles`),
+ *    committee-stage "Open the board report" (base
+ *    `openReport('gapboard')`; twin `reporting` — the report deep-link
+ *    itself lives in Reporting, outside this batch), and the in-context
+ *    "Sign in as X …" switch-user links (base switchUser; twin via
+ *    `onSwitchUser`, rendered only when the composing screen supplies the
+ *    callback). `onNavigate`/`onSwitchUser` are optional so the view
+ *    degrades honestly when a composer has no routing to offer.
+ *  - CS-01 (email beat): "View the email you were sent" (base 2846) +
+ *    the email-preview drawer (base openEmail, 2650-2664) restored in the
+ *    cro action row, rendered via the shared `Drawer` (C7).
+ *  - CS-10: the closed-state diff carries the base's captions ("prior
+ *    text, archived on adoption" / "adopted and in force", base 2872-2875)
+ *    plus a visible "Adopted" Tag; the previously-dead
+ *    `hitlText='Adopted'` branch (unreachable because `hitl` was false
+ *    exactly when it applied) is removed.
+ *  - CS-13: pressing a condition keeps the picker mounted so the pressed
+ *    option's own Button shows `loading` for the commit window
+ *    (`committingCondition`); the picker closes when the stage actually
+ *    flips — restoring the pessimistic-render guarantee this header
+ *    claims for every action.
  *
  * Free-text edit control — AMBIGUITY RESOLVED / STOP-item: the base engine
  * edits the proposed language in a `<textarea class="case-ta">` (multi-line
@@ -99,6 +140,7 @@
  */
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { Drawer } from '../components/Drawer';
 import { RedlineDiffView } from '../components/RedlineDiffView';
 import { Button } from '../components/primitives/Button';
 import type { ButtonVariant } from '../components/primitives/Button';
@@ -141,6 +183,14 @@ export interface CaseDetailProps {
   onAction: (kind: CaseActionKind, payload?: string) => void;
   /** The one case action currently mid-commit for this case, or null. */
   pendingAction: CaseActionKind | null;
+  /** Cross-screen deep links (base doclinks: openDocView / go('settings') /
+   * openReport('gapboard') — see file header CS-08). Omit and the link
+   * affordances simply do not render. */
+  onNavigate?: (screenId: string) => void;
+  /** In-context persona switch (base `switchUser(...)` doclinks, source
+   * 2835/2849/2855). Omit (e.g. no persona rows available) and the
+   * "Sign in as X …" links do not render. */
+  onSwitchUser?: (userId: string) => void;
 }
 
 const DOMAIN_LABEL: Record<string, string> = Object.fromEntries(DOMAINS.map((d) => [d.key, d.name]));
@@ -244,10 +294,14 @@ const CONDITION_LIST_STYLE: CSSProperties = { display: 'flex', flexDirection: 'c
 const HISTORY_LIST_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const HISTORY_ROW_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.15rem', borderLeft: '2px solid var(--border)', paddingLeft: '0.75rem' };
 
-export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendingAction }: CaseDetailProps) {
+export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendingAction, onNavigate, onSwitchUser }: CaseDetailProps) {
   const [editing, setEditing] = useState(false);
   const [draftLang, setDraftLang] = useState(caseItem.lang);
   const [pickingCondition, setPickingCondition] = useState(false);
+  /** The condition option currently mid-commit (CS-13) — keeps the picker
+   * mounted so exactly that option's Button shows `loading`. */
+  const [committingCondition, setCommittingCondition] = useState<string | null>(null);
+  const [emailOpen, setEmailOpen] = useState(false);
 
   // A different case swapped in — every transient UI toggle belongs to the
   // case that opened it, never carried forward onto the next one.
@@ -255,14 +309,31 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
     setEditing(false);
     setDraftLang(caseItem.lang);
     setPickingCondition(false);
+    setCommittingCondition(null);
+    setEmailOpen(false);
   }, [caseItem.id]);
+
+  // The stage flipped (a commit resolved): the condition picker belongs to
+  // the stage that opened it (CS-13 — the picker stays mounted while the
+  // conditional commit is in flight, then closes here).
+  useEffect(() => {
+    setPickingCondition(false);
+    setCommittingCondition(null);
+  }, [caseItem.stage]);
 
   const tier = tierOf(caseItem.tier);
   const canAct = waitingOnRoleKey(caseItem.stage) === currentUser.roleKey;
   const pill = stagePill(caseItem);
   const isPending = pendingAction !== null;
   const stageSet = tier.committee ? CASE_STAGES_B : CASE_STAGES;
-  const stageIndex = stageSet.findIndex(([key]) => key === caseItem.stage);
+  // Base `IDX` stage index map, ported verbatim (leapfi-platform.html 2821;
+  // CS-02): 'legal'/'final'/'rejected' are stages, not steps, so they map
+  // onto the step they sit at — `findIndex` over the step set returned -1
+  // for them and blanked the whole strip.
+  const STAGE_INDEX: Record<string, number> = tier.committee
+    ? { analyst: 1, legal: 2, cro: 2, committee: 3, final: 4, closed: 4, rejected: 1 }
+    : { analyst: 1, legal: 2, cro: 2, final: 2, closed: 3, rejected: 1 };
+  const stageIndex = STAGE_INDEX[caseItem.stage] ?? 1;
 
   function isBusy(kind: CaseActionKind): boolean {
     return pendingAction === kind;
@@ -278,17 +349,62 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
     setEditing(false);
   }
 
+  /** Base per-stage non-actor wait notes (leapfi-platform.html 2835 /
+   * 2849 / 2855 / 2861 / 2868 — CS-05): only the `cro` stage's base note
+   * asserts "notified in the app and by email"; the switch-user doclinks
+   * (CS-08) render only when the composer supplies `onSwitchUser`. */
+  function renderWaitNote() {
+    if (caseItem.stage === 'analyst') {
+      return (
+        <div style={ACTIONS_ROW_STYLE}>
+          <p style={WAIT_NOTE_STYLE}>This case is with <strong style={SCREEN_TEXT}>P. Raman, Risk Analyst</strong>.</p>
+          {onSwitchUser ? <Button variant="ghost" label="Sign in as Priya to action it →" onPress={() => onSwitchUser('priya')} /> : null}
+        </div>
+      );
+    }
+    if (caseItem.stage === 'cro') {
+      return (
+        <div style={ACTIONS_ROW_STYLE}>
+          <p style={WAIT_NOTE_STYLE}>This case is with <strong style={SCREEN_TEXT}>R. Fischer, Chief Risk Officer</strong>, notified in the app and by email.</p>
+          {onSwitchUser ? <Button variant="ghost" label="Sign in as Rachel to action it →" onPress={() => onSwitchUser('rachel')} /> : null}
+        </div>
+      );
+    }
+    if (caseItem.stage === 'legal') {
+      return (
+        <div style={ACTIONS_ROW_STYLE}>
+          <p style={WAIT_NOTE_STYLE}>Out with <strong style={SCREEN_TEXT}>D. Reyes, General Counsel</strong> for validation.</p>
+          {onSwitchUser ? <Button variant="ghost" label="Sign in as Dana to record the opinion →" onPress={() => onSwitchUser('reyes')} /> : null}
+        </div>
+      );
+    }
+    if (caseItem.stage === 'committee') {
+      return (
+        <div style={ACTIONS_ROW_STYLE}>
+          <p style={WAIT_NOTE_STYLE}>Waiting on <strong style={SCREEN_TEXT}>{APPROVAL.committee}</strong>. It sits in the Gap Closure Board Approval Report.</p>
+          {onNavigate ? <Button variant="ghost" label="Open the board report →" onPress={() => onNavigate('reporting')} /> : null}
+        </div>
+      );
+    }
+    if (caseItem.stage === 'final') {
+      return <p style={WAIT_NOTE_STYLE}>Conditionally approved, waiting on <strong style={SCREEN_TEXT}>{caseItem.cond}</strong> and the CRO&rsquo;s final approval.</p>;
+    }
+    return null;
+  }
+
   function renderActions() {
     if (!canAct) {
       if (caseItem.stage === 'closed' || caseItem.stage === 'rejected') return null;
-      return <p style={WAIT_NOTE_STYLE}>This case is with <strong style={SCREEN_TEXT}>{stageOwnerLabel(caseItem)}</strong>, notified in the app and by email.</p>;
+      return renderWaitNote();
     }
 
     if (caseItem.stage === 'analyst') {
       return (
         <div style={ACTIONS_ROW_STYLE}>
           <Button variant="primary" label="Accept & route for approval" loading={isBusy('accept')} disabled={isBlocked('accept')} onPress={() => onAction('accept')} />
-          <Button variant="ghost" label="Edit the language" disabled={isPending || editing} onPress={() => setEditing(true)} />
+          {/* Re-sync the draft buffer on every open (CS-07): `caseItem.lang`
+              may have changed since the last edit session (save, revert). */}
+          <Button variant="ghost" label="Edit the language" disabled={isPending || editing} onPress={() => { setDraftLang(caseItem.lang); setEditing(true); }} />
           {caseItem.edited ? (
             <Button variant="ghost" label="Revert to the OnSide draft" loading={isBusy('revert-language')} disabled={isBlocked('revert-language')} onPress={() => onAction('revert-language')} />
           ) : null}
@@ -312,6 +428,9 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
               </>
             )}
             <Button variant="ghost" label="Route to legal counsel" loading={isBusy('route-legal')} disabled={isBlocked('route-legal')} onPress={() => onAction('route-legal')} />
+            {/* Base 2846 + openEmail 2650-2664 (CS-01 email beat) — read-only
+                preview, so it stays pressable mid-commit like the base. */}
+            <Button variant="ghost" label="View the email you were sent" onPress={() => setEmailOpen(true)} />
             <Button variant="secondary" label="Reject" loading={isBusy('reject')} disabled={isBlocked('reject')} onPress={() => onAction('reject')} />
           </div>
           {tier.committee ? (
@@ -328,11 +447,14 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
                     key={cond}
                     variant="secondary"
                     label={cond}
-                    loading={isBusy('conditional')}
-                    disabled={isBlocked('conditional')}
+                    loading={isBusy('conditional') && committingCondition === cond}
+                    disabled={isPending && !(isBusy('conditional') && committingCondition === cond)}
                     onPress={() => {
+                      // CS-13: the picker stays mounted so this Button shows
+                      // `loading` for the commit window; the stage-change
+                      // effect above closes it when the commit resolves.
+                      setCommittingCondition(cond);
                       onAction('conditional', cond);
-                      setPickingCondition(false);
                     }}
                   />
                 ))}
@@ -357,13 +479,18 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
     }
 
     if (caseItem.stage === 'committee') {
+      // Base copy verbatim (2858-2860 — CS-03: the "(Reporting — see file
+      // header entry-points note)" parenthetical was build-coordination
+      // prose, never user copy) + the base's "Open the board report" ghost
+      // (CS-08; twin target is the Reporting screen via `onNavigate`).
       return (
         <div style={SECTION_GAP}>
           <p style={WAIT_NOTE_STYLE}>
-            Conditional approval given, subject to <strong style={SCREEN_TEXT}>{APPROVAL.committee}</strong> approval. This change belongs in the Gap Closure Board Approval Report for the next meeting (Reporting — see file header entry-points note). Attach the minutes once it carries.
+            Conditional approval given, subject to <strong style={SCREEN_TEXT}>{APPROVAL.committee}</strong> approval. This change is in the Gap Closure Board Approval Report for the next meeting. Attach the minutes once it carries.
           </p>
           <div style={ACTIONS_ROW_STYLE}>
             <Button variant="primary" label="Attach committee minutes" loading={isBusy('attach-minutes')} disabled={isBlocked('attach-minutes')} onPress={() => onAction('attach-minutes')} />
+            {onNavigate ? <Button variant="ghost" label="Open the board report" onPress={() => onNavigate('reporting')} /> : null}
           </div>
         </div>
       );
@@ -450,6 +577,12 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
           <div style={META_LABEL_WRAP}>
             <Label text="Approval tier" variant="eyebrow" />
             <span style={META_VALUE_STYLE}>{tier.n} · {tier.committee ? `${APPROVAL.committee} votes before adoption` : 'CRO adopts'}</span>
+            {/* Base "matrix →" doclink, `go('settings')` (2891 — CS-08). */}
+            {onNavigate ? (
+              <span>
+                <Button variant="ghost" label="matrix →" onPress={() => onNavigate('settings.toggles')} />
+              </span>
+            ) : null}
           </div>
           {caseItem.cond ? (
             <div style={META_LABEL_WRAP}>
@@ -461,6 +594,18 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
             <div style={META_LABEL_WRAP}>
               <Label text="Counsel" variant="eyebrow" />
               <span style={META_VALUE_STYLE}>D. Reyes · {caseItem.opinion}</span>
+            </div>
+          ) : null}
+          {/* Base Document meta row + openDocView doclink (2892-area meta —
+              CS-08). Twin target: the OnSide · Documents screen; the
+              per-document deep link lives in that screen, outside this
+              batch. */}
+          {doc && onNavigate ? (
+            <div style={META_LABEL_WRAP}>
+              <Label text="Document" variant="eyebrow" />
+              <span>
+                <Button variant="ghost" label={`${decodeText(caseItem.title)} →`} onPress={() => onNavigate('onside.documents')} />
+              </span>
             </div>
           ) : null}
         </div>
@@ -476,12 +621,26 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
 
         {!editing ? (
           doc?.redline ? (
-            <RedlineDiffView
-              before={decodeText(doc.redline.old)}
-              after={decodeText(caseItem.lang)}
-              hitl={caseItem.stage !== 'closed'}
-              hitlText={caseItem.stage === 'closed' ? 'Adopted' : 'HITL review'}
-            />
+            <>
+              {/* CS-10: the old `hitlText='Adopted'` branch was dead code —
+                  RedlineDiffView renders its Tag only when `hitl` is true,
+                  which was exactly when the text said 'HITL review'. The
+                  adopted diff now carries its own visible marker plus the
+                  base's closed-state captions (2872-2875). */}
+              {caseItem.stage === 'closed' ? (
+                <div>
+                  <Tag text="Adopted" variant="status-positive" />
+                </div>
+              ) : null}
+              <RedlineDiffView
+                before={decodeText(doc.redline.old)}
+                after={decodeText(caseItem.lang)}
+                beforeLabel={caseItem.stage === 'closed' ? 'Before · prior text, archived on adoption' : 'Before · in force until this is adopted'}
+                afterLabel={caseItem.stage === 'closed' ? 'After · adopted and in force' : 'After · proposed, not yet in force'}
+                hitl={caseItem.stage !== 'closed'}
+                hitlText="HITL review"
+              />
+            </>
           ) : null
         ) : (
           <div>
@@ -511,9 +670,13 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
         ) : null}
 
         {caseItem.stage === 'closed' ? (
-          <p style={INFO_NOTE_STYLE}>
-            Adopted{doc ? ` as ${doc.v}` : ''}. The prior text is archived, the fingerprint re-sealed, connected systems notified, and the obligation behind it marked met.
-          </p>
+          <div style={ACTIONS_ROW_STYLE}>
+            <p style={INFO_NOTE_STYLE}>
+              Adopted{doc ? ` as ${doc.v}` : ''}. The prior text is archived, the fingerprint re-sealed, connected systems notified, and the obligation behind it marked met.
+            </p>
+            {/* Base closed-state "Open the document →" doclink (2870 — CS-08). */}
+            {doc && onNavigate ? <Button variant="ghost" label="Open the document →" onPress={() => onNavigate('onside.documents')} /> : null}
+          </div>
         ) : null}
         {caseItem.stage === 'rejected' ? (
           <div style={SECTION_GAP}>
@@ -524,8 +687,44 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
           </div>
         ) : null}
 
-        {renderActions()}
+        {/* CS-06: while the editor is open, "Save the language" is the only
+            primary on screen — the stage action row (whose analyst branch
+            carries its own primary) is not rendered, which also removes the
+            mid-edit "Accept" hazard. See file header. */}
+        {!editing ? renderActions() : null}
       </section>
+
+      {/* Base openEmail drawer (leapfi-platform.html 2650-2664 — the
+          v1.059 "an email you can open and read" beat, CS-01): the email
+          the routing notification actually sent, rendered read-only in the
+          shared Drawer (C7). The "Open the case in OnSide" block is the
+          email's own (non-interactive) button graphic, as in the base. */}
+      <Drawer open={emailOpen} title={`${caseItem.id} is waiting on you`} onClose={() => setEmailOpen(false)}>
+        <div style={SECTION_GAP}>
+          <Label text="Notification · email preview" variant="eyebrow" />
+          <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm, 6px)', overflow: 'hidden' }}>
+            <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--bg2)', fontSize: '0.8125rem', color: 'var(--ink2)', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+              <div><strong style={SCREEN_TEXT}>From</strong> OnSide &lt;onside@leapfi.ai&gt;</div>
+              <div><strong style={SCREEN_TEXT}>To</strong> {caseItem.stage === 'cro' ? 'Rachel Fischer <rachel.fischer@northwindscu.org>' : 'Priya Raman <priya.raman@northwindscu.org>'}</div>
+              <div><strong style={SCREEN_TEXT}>Subject</strong> [{caseItem.id}] Approval needed · {decodeText(caseItem.title)}</div>
+            </div>
+            <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem', ...SCREEN_TEXT }}>
+              <p style={{ margin: 0 }}>A policy change is waiting on your approval.</p>
+              <p style={{ margin: 0 }}>
+                <strong>{decodeText(caseItem.title)}</strong>
+                <br />
+                Detected {caseItem.detected} · {caseItem.dom.toUpperCase()} · owner {decodeText(caseItem.owner)}
+              </p>
+              <p style={{ margin: 0 }}>{decodeText(caseItem.trigger)}</p>
+              <p style={{ margin: 0 }}>{caseItem.edited ? 'The risk analyst edited the proposed language before routing it.' : 'The risk analyst accepted the proposed language as drafted.'}</p>
+              <div aria-hidden="true" style={{ alignSelf: 'flex-start', padding: '0.5rem 0.875rem', borderRadius: 'var(--radius-sm, 6px)', background: 'var(--accent)', color: 'var(--bg)', fontWeight: 600, fontSize: '0.8125rem' }}>
+                Open the case in OnSide
+              </div>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--ink2)' }}>Sent because you are the approver for this policy tier. Manage your digest and alert settings in OnSide.</p>
+            </div>
+          </div>
+        </div>
+      </Drawer>
 
       <section aria-labelledby="case-history-heading" style={CARD_STYLE}>
         <h3 id="case-history-heading" style={SUBHEADING_STYLE}>Case history</h3>

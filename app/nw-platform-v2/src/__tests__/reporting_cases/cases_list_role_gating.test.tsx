@@ -91,19 +91,28 @@ describe('case-detail role gating (base caseWaitingOn/canAct 2617-2624, osCasePa
     seedCases(DOCLIB);
   });
 
-  it("CRO viewing an analyst-owned case sees 'This case is with' and ZERO action buttons (base 2835)", () => {
+  it("CRO viewing an analyst-owned case sees 'This case is with' and ZERO case-action buttons (base 2835)", () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={CRO} />);
 
     const detail = openCaseDetail('CASE-2026-001');
 
-    // Waiting note names the stage owner (base cwait, 2835).
-    expect(detail.textContent).toContain('This case is with P. Raman · Risk Analyst');
+    // Waiting note names the stage owner with the base's exact copy (base
+    // cwait, 2835: "This case is with <b>P. Raman, Risk Analyst</b>." —
+    // comma, and no notification claim at the analyst stage; CS-05).
+    expect(detail.textContent).toContain('This case is with P. Raman, Risk Analyst');
+    expect(detail.textContent).not.toContain('notified in the app and by email');
 
-    // ZERO action buttons: the only button in the detail view is the
-    // back affordance (base src-back "← All cases", source 2881).
-    const buttons = within(detail).getAllByRole('button');
-    expect(buttons).toHaveLength(1);
-    expect(buttons[0]).toHaveAccessibleName('← All cases');
+    // ZERO case-ACTION buttons (base 2835 renders no action row for a
+    // non-actor). The base page does render doclinks in this state —
+    // the Document meta link and "matrix →" (base 2891-2892, restored per
+    // CS-08) — so the assertion pins the absence of the action set, not a
+    // total button count. No switch-user link renders here because the
+    // fixture supplies no persona rows (`profileMenuItems: []`).
+    expect(within(detail).getByRole('button', { name: '← All cases' })).toBeInTheDocument();
+    expect(within(detail).queryByRole('button', { name: 'Accept & route for approval' })).not.toBeInTheDocument();
+    expect(within(detail).queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
+    expect(within(detail).queryByRole('button', { name: 'Edit the language' })).not.toBeInTheDocument();
+    expect(within(detail).queryByRole('button', { name: /Sign in as/ })).not.toBeInTheDocument();
   });
 
   it('the owning role (analyst) sees the accept/reject action pair (base 2830-2834)', () => {

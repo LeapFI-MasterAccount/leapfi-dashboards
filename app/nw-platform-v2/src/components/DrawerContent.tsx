@@ -32,7 +32,14 @@ import { Tag } from './primitives/Tag';
 import type { TagVariant } from './primitives/Tag';
 import { Label } from './primitives/Label';
 
-export type DrawerContentKind = 'signal' | 'play' | 'doc';
+/** `'source'` added by the T6.3 follow-up (OnSideFeed.tsx's own W1
+ * "AMBIGUITY RESOLVED" STOP-item: the source-connector detail rendered
+ * `kind="signal"` only because this literal was missing and this file was
+ * out of that dispatch's allowlist). `kind` remains a non-structural
+ * `data-kind` hint — no branching. NOTE for the gate dispatch: OnSideFeed.tsx
+ * still passes `kind="signal"` for its source detail; flip that literal to
+ * `"source"` there (out of the reporting batch's allowlist). */
+export type DrawerContentKind = 'signal' | 'play' | 'doc' | 'source';
 
 /** One Label+value pair (spec: "field rows (Label+value pairs)"). */
 export interface DrawerContentField {

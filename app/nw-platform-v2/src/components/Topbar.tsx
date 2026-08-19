@@ -11,9 +11,15 @@
  * -> LivePill -> BoardDeckButton -> NotificationBell -> DateDisplay ->
  * ProfileMenu.
  *
- * `banner` landmark; ProfileMenu is a proper disclosure (trigger
- * `aria-expanded`, `role="menu"` trapped only while open, Esc closes and
- * restores focus to the trigger) per the C4 a11y baseline.
+ * `banner` landmark; ProfileMenu is a proper disclosure per the C4 a11y
+ * baseline: the Avatar trigger carries `aria-haspopup="menu"` and live
+ * `aria-expanded` (via Avatar's disclosure-passthrough props); opening
+ * moves focus to the first `role="menuitem"`; ArrowDown/ArrowUp move
+ * through the items with wrap (Home/End jump to first/last); Esc closes
+ * and restores focus to the trigger; Tab closes the menu and returns
+ * focus to the trigger so the browser's default Tab continues past it
+ * (WAI-ARIA menu pattern — a menu is dismissed on Tab-out, never
+ * focus-trapped like a dialog).
  *
  * AMBIGUITY RESOLVED — BackChip at-root rendering (§3.2 BackChip state
  * machine: "at-root (no back target, chip hidden/disabled)"): the spec
@@ -68,7 +74,7 @@
  * exact pre-existing behavior.
  */
 import { useEffect, useRef, useState } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 import { Avatar } from './primitives/Avatar';
 import { Button } from './primitives/Button';
 import { Icon } from './primitives/Icon';
@@ -139,6 +145,13 @@ function ProfileMenu({ profile, items }: { profile: TopbarProfile; items: Topbar
   const triggerRef = useRef<HTMLSpanElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
+  // The trigger ref points at the wrapping span; the focusable element is
+  // Avatar's internal <button>. Focusing the span itself is a no-op (it
+  // has no tabindex), so every focus-restore path resolves the button.
+  const focusTrigger = () => {
+    triggerRef.current?.querySelector<HTMLElement>('button')?.focus();
+  };
+
   useEffect(() => {
     if (!open) return;
 
@@ -150,7 +163,7 @@ function ProfileMenu({ profile, items }: { profile: TopbarProfile; items: Topbar
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setOpen(false);
-        triggerRef.current?.focus();
+        triggerRef.current?.querySelector<HTMLElement>('button')?.focus();
       }
     };
 
@@ -169,6 +182,39 @@ function ProfileMenu({ profile, items }: { profile: TopbarProfile; items: Topbar
     }
   }, [open]);
 
+  // WAI-ARIA menu keyboard model (see file header): arrows move focus
+  // with wrap, Home/End jump, Tab dismisses. Esc is handled by the
+  // document-level listener above (it must also fire when focus has
+  // strayed outside the menu, e.g. right after opening via pointer).
+  const handleMenuKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Tab') {
+      // Close and hand focus back to the trigger WITHOUT preventDefault:
+      // the browser's default Tab then advances from the trigger, so
+      // Tab lands after it and Shift+Tab lands before it.
+      setOpen(false);
+      focusTrigger();
+      return;
+    }
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'Home' && event.key !== 'End') {
+      return;
+    }
+    event.preventDefault();
+    const menuItems = Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+    if (menuItems.length === 0) return;
+    const currentIndex = menuItems.indexOf(document.activeElement as HTMLElement);
+    let nextIndex: number;
+    if (event.key === 'ArrowDown') {
+      nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % menuItems.length;
+    } else if (event.key === 'ArrowUp') {
+      nextIndex = currentIndex < 0 ? menuItems.length - 1 : (currentIndex - 1 + menuItems.length) % menuItems.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else {
+      nextIndex = menuItems.length - 1;
+    }
+    menuItems[nextIndex]?.focus();
+  };
+
   return (
     <div style={{ position: 'relative', display: 'inline-flex' }} data-lf-composite="profile-menu">
       <span ref={triggerRef} style={{ display: 'inline-flex' }}>
@@ -178,6 +224,8 @@ function ProfileMenu({ profile, items }: { profile: TopbarProfile; items: Topbar
           initials={profile.initials}
           image={profile.image}
           name={profile.name}
+          ariaHaspopup="menu"
+          ariaExpanded={open}
           onPress={() => setOpen((current) => !current)}
         />
       </span>
@@ -187,6 +235,7 @@ function ProfileMenu({ profile, items }: { profile: TopbarProfile; items: Topbar
           role="menu"
           aria-label={`${profile.name} account menu`}
           data-lf-composite="profile-menu-list"
+          onKeyDown={handleMenuKeyDown}
           style={{
             position: 'absolute',
             top: 'calc(100% + 0.375rem)',
