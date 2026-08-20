@@ -92,7 +92,10 @@ const tdStyle: CSSProperties = {
 };
 
 const nameStyle: CSSProperties = { fontWeight: 700 };
-const categoryStyle: CSSProperties = { fontSize: '0.71875rem', color: 'var(--ink2)', marginTop: '0.125rem' };
+// FIX WAVE (Class C, C1): rendered inside a <td style={tdStyle}>, whose
+// background is literally var(--panel) — --ink2 fails AA there in light
+// theme; --chart-axis is the prescribed panel-seated substitute.
+const categoryStyle: CSSProperties = { fontSize: '0.71875rem', color: 'var(--chart-axis)', marginTop: '0.125rem' };
 
 const skeletonRowCells = Array.from({ length: COLUMN_COUNT });
 
@@ -147,7 +150,11 @@ export function PlanTable({ rows, onOpenPlay, loading = false }: PlanTableProps)
             : rows.length === 0
               ? (
                 <tr>
-                  <td colSpan={COLUMN_COUNT} style={{ ...tdStyle, color: 'var(--ink2)', textAlign: 'center' }}>
+                  {/* FIX WAVE (Class C, C1): background co-located in this
+                      same style object is var(--panel) (via tdStyle) —
+                      --ink2 fails AA on it in light theme; --chart-axis is
+                      the prescribed panel-seated substitute. */}
+                  <td colSpan={COLUMN_COUNT} style={{ ...tdStyle, color: 'var(--chart-axis)', textAlign: 'center' }}>
                     No plays fit at this budget and tolerance. Raise the budget or loosen tolerance.
                   </td>
                 </tr>

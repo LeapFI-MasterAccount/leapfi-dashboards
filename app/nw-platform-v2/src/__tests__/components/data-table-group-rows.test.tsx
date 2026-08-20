@@ -26,6 +26,7 @@ import { describe, expect, it } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { DataTable } from '../../components/DataTable';
 import type { DataTableColumn, DataTableProps } from '../../components/DataTable';
+import { rowgroupHeaderTextsFor } from '../a11y/tableRowgroupAccessibleName';
 
 interface Row {
   id: string;
@@ -37,6 +38,15 @@ const ROWS: Row[] = [
   { id: 'a', group: 'Alpha', label: 'First' },
   { id: 'b', group: 'Alpha', label: 'Second' },
   { id: 'c', group: 'Beta', label: 'Third' },
+];
+
+const THREE_GROUP_ROWS: Row[] = [
+  { id: 'a1', group: 'Alpha', label: 'Alpha one' },
+  { id: 'a2', group: 'Alpha', label: 'Alpha two' },
+  { id: 'b1', group: 'Beta', label: 'Beta one' },
+  { id: 'b2', group: 'Beta', label: 'Beta two' },
+  { id: 'g1', group: 'Gamma', label: 'Gamma one' },
+  { id: 'g2', group: 'Gamma', label: 'Gamma two' },
 ];
 
 const COLUMNS: DataTableColumn<Row>[] = [{ id: 'label', header: 'Label', render: (row) => row.label }];
@@ -75,6 +85,75 @@ describe('DataTable group rows — §2.4 G4 (header cell, not data cell)', () =>
     const table = screen.getByRole('table', { name: 'Grouped table' });
     const rowheaders = within(table).getAllByRole('rowheader');
     expect(rowheaders.map((el) => el.textContent)).toEqual(['Alpha', 'Beta']);
+  });
+});
+
+describe('DataTable group rows — §2.4 G8 / amendment A10 (tbody-per-group, scope="rowgroup" does not bleed)', () => {
+  it('renders one <tbody> per group — never one <tbody> shared by the whole table', () => {
+    const { container } = render(
+      <DataTable
+        caption="Three-group table"
+        columns={COLUMNS}
+        rows={THREE_GROUP_ROWS}
+        getRowId={(row) => row.id}
+        grouping={{ key: (row) => row.group, renderHeader: (groupKey) => groupKey }}
+      />,
+    );
+    const tbodies = container.querySelectorAll('table > tbody');
+    // 3 groups -> 3 <tbody> elements, never 1 shared across the whole table.
+    expect(tbodies).toHaveLength(3);
+    tbodies.forEach((tbody) => {
+      expect(tbody.querySelectorAll('th[scope="rowgroup"]')).toHaveLength(1);
+    });
+  });
+
+  it("a cell in the LAST group's accessible name derives ONLY from its own group's header — not from every prior group's header stacking in (the S1 bleed)", () => {
+    render(
+      <DataTable
+        caption="Three-group table"
+        columns={COLUMNS}
+        rows={THREE_GROUP_ROWS}
+        getRowId={(row) => row.id}
+        grouping={{ key: (row) => row.group, renderHeader: (groupKey) => groupKey }}
+      />,
+    );
+    const table = screen.getByRole('table', { name: 'Three-group table' });
+    const lastGroupCell = within(table).getByText('Gamma two').closest('td');
+    expect(lastGroupCell).not.toBeNull();
+
+    // §2.4 G8 / A10: per the HTML header-and-scope algorithm, a
+    // scope="rowgroup" header applies only within its own containing table
+    // section. Bounded to Gamma's own <tbody> (post-fix), the cell's
+    // applicable header set is exactly ["Gamma"] — never
+    // ["Alpha", "Beta", "Gamma"], which is what one shared <tbody> across
+    // all three groups would produce (each earlier group's header
+    // qualifies as "in the same section, before this cell").
+    const headers = rowgroupHeaderTextsFor(lastGroupCell as Element);
+    expect(headers).toEqual(['Gamma']);
+    expect(headers).not.toContain('Alpha');
+    expect(headers).not.toContain('Beta');
+  });
+
+  it("a cell in the FIRST group's accessible name is unaffected (no headers precede it in its own section)", () => {
+    render(
+      <DataTable
+        caption="Three-group table"
+        columns={COLUMNS}
+        rows={THREE_GROUP_ROWS}
+        getRowId={(row) => row.id}
+        grouping={{ key: (row) => row.group, renderHeader: (groupKey) => groupKey }}
+      />,
+    );
+    const table = screen.getByRole('table', { name: 'Three-group table' });
+    const firstGroupCell = within(table).getByText('Alpha two').closest('td');
+    expect(rowgroupHeaderTextsFor(firstGroupCell as Element)).toEqual(['Alpha']);
+  });
+
+  it('the ungrouped case is unaffected — a single <tbody>, exactly as before this fix', () => {
+    const { container } = render(
+      <DataTable caption="Ungrouped table" columns={COLUMNS} rows={ROWS} getRowId={(row) => row.id} />,
+    );
+    expect(container.querySelectorAll('table > tbody')).toHaveLength(1);
   });
 });
 

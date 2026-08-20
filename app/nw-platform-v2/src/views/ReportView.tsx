@@ -404,10 +404,15 @@ export function reportSub(kind: ReportKind): string {
 const sectionStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.85rem' };
 const statRowStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.75rem' };
 const tableScrollStyle: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
-const bodyTextStyle: CSSProperties = { font: 'inherit', fontSize: '0.9375rem', lineHeight: 1.6, color: 'var(--ink2)', margin: 0 };
+// FIX WAVE (Class C, C1): ReportView is rendered only as a child of the
+// shared reporting Drawer (screens/Reporting.tsx), whose root background
+// is var(--panel), always — a single, unambiguous render context — so
+// --ink2 fails AA here in light theme; --chart-axis is the prescribed
+// panel-seated substitute.
+const bodyTextStyle: CSSProperties = { font: 'inherit', fontSize: '0.9375rem', lineHeight: 1.6, color: 'var(--chart-axis)', margin: 0 };
 const warnTextStyle: CSSProperties = { ...bodyTextStyle, color: 'var(--sem-alert)' };
 const listStyle: CSSProperties = { margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' };
-const listItemStyle: CSSProperties = { font: 'inherit', fontSize: '0.875rem', lineHeight: 1.6, color: 'var(--ink2)' };
+const listItemStyle: CSSProperties = { font: 'inherit', fontSize: '0.875rem', lineHeight: 1.6, color: 'var(--chart-axis)' };
 const cellColumnStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.15rem' };
 const cellPrimaryStyle: CSSProperties = { color: 'var(--ink)', fontWeight: 600, fontSize: '0.875rem' };
 const cellSecondaryStyle: CSSProperties = { color: 'var(--ink3)', fontSize: '0.75rem' };

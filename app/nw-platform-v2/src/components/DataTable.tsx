@@ -404,7 +404,20 @@ function applySort<T>(subset: readonly T[], sort: ActiveSort | null, columns: re
   });
 }
 
-type DataTableDisplayItem<T> = { kind: 'group'; groupKey: string; header: ReactNode } | { kind: 'row'; row: T };
+/** One rendered `<tbody>` section: either the single ungrouped section (no
+ * `header`) or one per group (§2.4 G8, amendment A10 — see the file header
+ * "GROUP-ROW CAPABILITY" note and the render below). Splitting sections is
+ * what gives each group its OWN `<tbody>` — the fix for the Sprint 1
+ * hostile-review S1 finding: a `<th scope="rowgroup">` header cell's
+ * accessible-name association is bounded to its containing table SECTION
+ * (`<tbody>`/`<thead>`/`<tfoot>`), never to the table as a whole, so one
+ * shared `<tbody>` for every group let every earlier group's header stack
+ * into every later group's accessible name (worst on the table's last
+ * group). One `<tbody>` per section is the structural fix; `header: null`
+ * marks the ungrouped section, which carries no `scope="rowgroup"` cell at
+ * all and is therefore unaffected either way (§2.4 G8's own "ungrouped
+ * case is unaffected" clause). */
+type DataTableSection<T> = { key: string; header: ReactNode | null; rows: readonly T[] };
 
 export function DataTable<T>({
   caption,
@@ -435,10 +448,13 @@ export function DataTable<T>({
   // Grouped case: partition `rows` into groups by first-seen `groupKey`
   // order (a `Map`, so the input need not already sit contiguously by
   // group), sort EACH group's own rows independently (never the whole
-  // table at once — see file header "GROUP-ROW CAPABILITY"), and flatten
-  // to a single ordered list of group-header/row display items.
-  const displayItems = useMemo<readonly DataTableDisplayItem<T>[]>(() => {
-    if (!grouping) return sortedRows.map((row) => ({ kind: 'row', row }) as const);
+  // table at once — see file header "GROUP-ROW CAPABILITY"), and produce
+  // one SECTION per group — each becomes its own `<tbody>` at render time
+  // (§2.4 G8, amendment A10; see `DataTableSection`'s own doc comment).
+  // Ungrouped case (no `grouping`): exactly one section, `header: null`,
+  // identical to this component's single-`<tbody>` behavior before A10.
+  const sections = useMemo<readonly DataTableSection<T>[]>(() => {
+    if (!grouping) return [{ key: '__ungrouped__', header: null, rows: sortedRows }];
     const { key: groupKey, renderHeader } = grouping;
     const order: string[] = [];
     const buckets = new Map<string, T[]>();
@@ -452,13 +468,10 @@ export function DataTable<T>({
       }
       bucket.push(row);
     }
-    const items: DataTableDisplayItem<T>[] = [];
-    for (const key of order) {
+    return order.map((key) => {
       const groupRows = buckets.get(key) ?? [];
-      items.push({ kind: 'group', groupKey: key, header: renderHeader(key, groupRows) });
-      for (const row of applySort(groupRows, sort, columns)) items.push({ kind: 'row', row });
-    }
-    return items;
+      return { key, header: renderHeader(key, groupRows), rows: applySort(groupRows, sort, columns) };
+    });
   }, [rows, sort, columns, grouping, sortedRows]);
 
   const handleSortClick = (column: DataTableColumn<T>) => {
@@ -522,8 +535,11 @@ export function DataTable<T>({
           ) : null}
         </tr>
       </thead>
-      <tbody>
-        {showMessageRow ? (
+      {showMessageRow ? (
+        // G7: group rows never participate in `empty`/`loading` — the
+        // message row renders alone, in the table's own single `<tbody>`,
+        // regardless of whether `grouping` is configured.
+        <tbody>
           <tr>
             <td colSpan={columnCount} style={messageCellStyle}>
               <span role="status">
@@ -531,63 +547,68 @@ export function DataTable<T>({
               </span>
             </td>
           </tr>
-        ) : (
-          displayItems.map((item, index) => {
-            if (item.kind === 'group') {
+        </tbody>
+      ) : (
+        // §2.4 G8 (amendment A10) — one `<tbody>` PER SECTION, never one
+        // shared across the whole table. This is the structural fix for
+        // the Sprint 1 hostile-review S1 finding: bounding each group's
+        // `<th scope="rowgroup">` to its own table section is what stops
+        // its accessible-name association from bleeding into every later
+        // group's rows. The ungrouped case is exactly one section
+        // (`header: null`, ends this array immediately below), so it
+        // still renders as a single `<tbody>` — unaffected, per §2.4 G8's
+        // own "ungrouped case is unaffected" clause.
+        sections.map((section, sectionIndex) => (
+          // eslint-disable-next-line react/no-array-index-key -- combined with the stable section key below, not the sole key input (a group's own key can repeat, unusually)
+          <tbody key={`section:${section.key}:${sectionIndex}`}>
+            {section.header !== null ? (
+              <tr data-lf-group-row="true" style={groupRowStyle}>
+                <th scope="rowgroup" colSpan={columnCount} style={groupCellStyle}>
+                  {section.header}
+                </th>
+              </tr>
+            ) : null}
+            {section.rows.map((row) => {
+              const rowId = getRowId(row);
+              const isUpdating = updatingRowIds?.has(rowId) ?? false;
+              const isRowActionDisabled = rowAction?.disabled ? rowAction.disabled(row) : false;
+              const isRowClickable = hasAffordanceColumn && (!isRowClickablePredicate || isRowClickablePredicate(row));
+
+              let trailingCell: ReactNode = null;
+              if (rowAction) {
+                trailingCell = (
+                  <td style={tdStyle}>
+                    <Button
+                      variant="row"
+                      label={rowAction.label(row)}
+                      onPress={() => rowAction.onPress(row)}
+                      disabled={isRowActionDisabled}
+                    />
+                  </td>
+                );
+              } else if (hasAffordanceColumn) {
+                trailingCell = (
+                  <td style={tdStyle}>
+                    {isRowClickable ? <Icon name="chevron-right" size={16} tone="interactive" /> : null}
+                  </td>
+                );
+              }
+
               return (
-                // Positional index in the key: a group's own key can repeat
-                // across a table (unusual, but nothing here forbids it),
-                // while `rows`-derived row keys already come from `getRowId`
-                // — this only disambiguates the divider rows themselves.
-                // eslint-disable-next-line react/no-array-index-key -- combined with the stable groupKey below, not the sole key input
-                <tr key={`group:${item.groupKey}:${index}`} data-lf-group-row="true" style={groupRowStyle}>
-                  <th scope="rowgroup" colSpan={columnCount} style={groupCellStyle}>
-                    {item.header}
-                  </th>
-                </tr>
+                <DataTableRow
+                  key={rowId}
+                  row={row}
+                  columns={columns}
+                  isUpdating={isUpdating}
+                  clickable={isRowClickable}
+                  {...(onRowClick ? { onRowClick } : {})}
+                  trailingCell={trailingCell}
+                />
               );
-            }
-
-            const row = item.row;
-            const rowId = getRowId(row);
-            const isUpdating = updatingRowIds?.has(rowId) ?? false;
-            const isRowActionDisabled = rowAction?.disabled ? rowAction.disabled(row) : false;
-            const isRowClickable = hasAffordanceColumn && (!isRowClickablePredicate || isRowClickablePredicate(row));
-
-            let trailingCell: ReactNode = null;
-            if (rowAction) {
-              trailingCell = (
-                <td style={tdStyle}>
-                  <Button
-                    variant="row"
-                    label={rowAction.label(row)}
-                    onPress={() => rowAction.onPress(row)}
-                    disabled={isRowActionDisabled}
-                  />
-                </td>
-              );
-            } else if (hasAffordanceColumn) {
-              trailingCell = (
-                <td style={tdStyle}>
-                  {isRowClickable ? <Icon name="chevron-right" size={16} tone="interactive" /> : null}
-                </td>
-              );
-            }
-
-            return (
-              <DataTableRow
-                key={rowId}
-                row={row}
-                columns={columns}
-                isUpdating={isUpdating}
-                clickable={isRowClickable}
-                {...(onRowClick ? { onRowClick } : {})}
-                trailingCell={trailingCell}
-              />
-            );
-          })
-        )}
-      </tbody>
+            })}
+          </tbody>
+        ))
+      )}
     </table>
   );
 }

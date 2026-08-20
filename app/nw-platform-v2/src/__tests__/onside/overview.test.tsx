@@ -114,7 +114,12 @@ describe("OnSide overview · 'domain' deep-link consumption (B3 dispatch — mig
 
   it('a deepLink of a different kind is ignored — never mistaken for a domain press', () => {
     const onDeepLinkConsumed = vi.fn()
-    const deepLink: DeepLinkTarget = { screen: 'onside.overview', kind: 'obligation', id: 'mrm:MRM-08', nonce: 1 }
+    // 'report' — a kind this screen has no consumer effect for at all
+    // (unlike 'obligation'/'control', which the hostile-review fix wave's
+    // A2 finding wired onto THIS screen; using 'obligation' here after
+    // that fix would prove the wrong thing — it now legitimately expands
+    // Model Risk Management, see the A2 describe block below).
+    const deepLink: DeepLinkTarget = { screen: 'onside.overview', kind: 'report', id: 'roi', nonce: 1 }
     render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} deepLink={deepLink} onDeepLinkConsumed={onDeepLinkConsumed} />)
 
     expect(screen.queryByRole('button', { name: /Model Risk Management/, expanded: true })).not.toBeInTheDocument()
@@ -158,5 +163,64 @@ describe("PI2-D5 — 'control'-kind deep link (App.tsx KIND VOCABULARY: bare con
 
     expect(onDeepLinkConsumed).toHaveBeenCalledWith(2)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+})
+
+describe("Hostile-review fix wave (A2) — 'obligation'-kind deep link (App.tsx KIND VOCABULARY: id = `${domKey}:${oblId}`, e.g. 'mrm:MRM-09'; dispatched live from Reporting.tsx's obligation quick-open and HomePanels.tsx's notification/signal touch chips, previously with NO consumer anywhere — the confirmed A2 dead click)", () => {
+  it('resolves the domain+obligation id pair directly (no OBL scan needed, unlike the bare-id \'control\' kind), force-expands that domain row, and opens the obligation drawer for that exact obligation', async () => {
+    const onDeepLinkConsumed = vi.fn()
+    const deepLink: DeepLinkTarget = { screen: 'onside.overview', kind: 'obligation', id: 'mrm:MRM-09', nonce: 1 }
+    render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} deepLink={deepLink} onDeepLinkConsumed={onDeepLinkConsumed} />)
+
+    const rowButton = screen.getByRole('button', { name: /Model Risk Management/, expanded: true })
+    expect(rowButton).toHaveAttribute('aria-expanded', 'true')
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(1)
+
+    // Same underlying obligation the 'control'-kind test above opens via
+    // its bare-id resolution — this kind carries the domain already, so
+    // the drawer content is identical, only the resolution path differs.
+    const dialog = await screen.findByRole('dialog', { name: 'MRM-09 · Obligation' })
+    const fieldValues = within(dialog)
+      .getAllByRole('definition')
+      .map((dd) => dd.textContent)
+    expect(fieldValues).toEqual([
+      'Model Risk Management',
+      'Gate model changes through a formal approval workflow before deployment.',
+      '2026-13 §V.B',
+      'Required: a formal approval gate before model changes deploy. Current: changes deploy on developer sign-off alone.',
+      'Adopt the Model Change Approval Workflow (draft 0.8, in the HITL queue).',
+      'Model Change Approval Workflow',
+    ])
+  })
+
+  it('an id whose domain segment does not exist in OBL still consumes the nonce and opens nothing (never a fabricated obligation)', () => {
+    const onDeepLinkConsumed = vi.fn()
+    const deepLink: DeepLinkTarget = { screen: 'onside.overview', kind: 'obligation', id: 'no-such-domain:MRM-09', nonce: 2 }
+    render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} deepLink={deepLink} onDeepLinkConsumed={onDeepLinkConsumed} />)
+
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(2)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('an id whose obligation segment does not exist in that domain\'s OBL register still consumes the nonce and opens nothing', () => {
+    const onDeepLinkConsumed = vi.fn()
+    const deepLink: DeepLinkTarget = { screen: 'onside.overview', kind: 'obligation', id: 'mrm:NO-SUCH-OBLIGATION', nonce: 3 }
+    render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} deepLink={deepLink} onDeepLinkConsumed={onDeepLinkConsumed} />)
+
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(3)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it("a deepLink of a different kind is ignored — never mistaken for an obligation open (the 'obligation' id-string is a valid 'mrm:MRM-09' pair, but the kind is 'domain', so no obligation drawer opens)", () => {
+    const onDeepLinkConsumed = vi.fn()
+    const deepLink: DeepLinkTarget = { screen: 'onside.overview', kind: 'domain', id: 'mrm:MRM-09', nonce: 4 }
+    render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} deepLink={deepLink} onDeepLinkConsumed={onDeepLinkConsumed} />)
+
+    // The 'domain' consumer effect runs instead (kind matches it, not
+    // 'obligation') and consumes the nonce, but 'mrm:MRM-09' is not a real
+    // domain key, so no accordion row expands and no obligation dialog
+    // opens — proving the 'obligation' effect itself never ran.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(4)
   })
 })

@@ -182,7 +182,11 @@ function obligationColumns(): DataTableColumn<ObligationRow>[] {
       render: (row) => (
         <span>
           {row.s}
-          <span style={{ display: 'block', marginTop: '0.2rem', fontSize: '0.75rem', color: 'var(--ink2)' }}>{row.cite}</span>
+          {/* FIX WAVE (Class C, C1): this DataTable is rendered only
+              inside bodyWrapStyle/cardStyle (spreads PANEL_STYLE) in this
+              file — --ink2 fails AA on --panel in light theme;
+              --chart-axis is the prescribed panel-seated substitute. */}
+          <span style={{ display: 'block', marginTop: '0.2rem', fontSize: '0.75rem', color: 'var(--chart-axis)' }}>{row.cite}</span>
         </span>
       ),
     },
@@ -210,7 +214,11 @@ function openItemColumns(): DataTableColumn<DomOpenItem & { id: string }>[] {
     {
       id: 'citation',
       header: 'Citation',
-      render: (row) => <span style={{ color: 'var(--ink2)' }}>{row.cite ?? '—'}</span>,
+      // FIX WAVE (Class C, C1): this DataTable is rendered only inside
+      // bodyWrapStyle/cardStyle (spreads PANEL_STYLE) in this file —
+      // --ink2 fails AA on --panel in light theme; --chart-axis is the
+      // prescribed panel-seated substitute.
+      render: (row) => <span style={{ color: 'var(--chart-axis)' }}>{row.cite ?? '—'}</span>,
     },
   ];
 }
@@ -239,7 +247,13 @@ const headerButtonStyle: CSSProperties = {
 };
 
 const nameStyle: CSSProperties = { fontSize: '0.9375rem', fontWeight: 700, color: 'var(--ink)' };
-const scopeStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
+// FIX WAVE (Class C, C1): scopeStyle/scoreSubStyle/targetLineStyle/
+// footStyle below all render inside cardStyle(open) (spreads PANEL_STYLE)
+// — headerButtonStyle's own background is 'transparent', not an opaque
+// override, so the visible surface underneath is still var(--panel).
+// --ink2 fails AA there in light theme; --chart-axis is the prescribed
+// panel-seated substitute.
+const scopeStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--chart-axis)' };
 /** Title + meta wrapper — matches the sibling composite convention
  * (SetupCard.tsx's `BODY_STYLE`: flex column + gap) so the domain name
  * and its "bodies · N obligations in scope" meta line always render on
@@ -256,17 +270,20 @@ const bodyWrapStyle: CSSProperties = {
   gap: '0.875rem',
 };
 const scoreLineStyle: CSSProperties = { fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink)' };
-const scoreSubStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)', marginTop: '0.15rem' };
-const targetLineStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
+const scoreSubStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--chart-axis)', marginTop: '0.15rem' };
+const targetLineStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--chart-axis)' };
 const sectionHeadingStyle: CSSProperties = { margin: '0 0 0.5rem', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--ink)' };
-const footStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
+const footStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--chart-axis)' };
 const scrollWrapStyle: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
-/** Base `.pill-soft` (met-obligations summary, source 3687). */
+/** Base `.pill-soft` (met-obligations summary, source 3687).
+ * FIX WAVE (Class C, C1): background co-located in this same style object
+ * is var(--panel) — --ink2 fails AA on it in light theme; --chart-axis is
+ * the prescribed panel-seated substitute. */
 const pillSoftStyle: CSSProperties = {
   display: 'inline-block',
   fontSize: '0.75rem',
   fontWeight: 600,
-  color: 'var(--ink2)',
+  color: 'var(--chart-axis)',
   background: 'var(--panel)',
   border: '1px solid var(--border)',
   borderRadius: 'var(--radius-pill, 999px)',

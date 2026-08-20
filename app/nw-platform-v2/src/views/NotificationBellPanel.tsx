@@ -190,7 +190,10 @@ const listStyle: CSSProperties = { listStyle: 'none', margin: 0, padding: 0, dis
 const rowStyle: CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', padding: '0.5rem 0.625rem', borderRadius: 'var(--radius-xs, 4px)' };
 const rowTextWrapStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.15rem', minWidth: 0 };
 const rowTitleStyle: CSSProperties = { fontSize: '0.875rem', fontWeight: 600, color: 'var(--ink)' };
-const emptyStyle: CSSProperties = { margin: 0, padding: '0.75rem 0.625rem', fontSize: '0.8125rem', color: 'var(--ink2)' };
+// FIX WAVE (Class C, C1): rendered inside `panelStyle` (spreads
+// PANEL_STYLE) — --ink2 fails AA on --panel in light theme; --chart-axis
+// is the prescribed panel-seated substitute.
+const emptyStyle: CSSProperties = { margin: 0, padding: '0.75rem 0.625rem', fontSize: '0.8125rem', color: 'var(--chart-axis)' };
 // Visually-hidden recipe — `top`/`left` pinned to 0 is load-bearing;
 // see the invariant note on `DataTable.tsx`'s `srOnlyStyle`. Without it
 // an unpositioned absolute box falls back to its in-flow static

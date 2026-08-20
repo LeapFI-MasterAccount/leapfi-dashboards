@@ -352,7 +352,10 @@ export const kpiCardStyle: CSSProperties = {
 // longer hand-declares it (see the `<Label variant="eyebrow">` call
 // sites below).
 const kpiValueStyle: CSSProperties = { fontSize: '1.25rem', fontWeight: 700, color: 'var(--ink)' };
-const kpiSubStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
+// FIX WAVE (Class C, C1): rendered inside kpiCardStyle (spreads
+// PANEL_STYLE) — --ink2 fails AA on --panel in light theme; --chart-axis
+// is the prescribed panel-seated substitute.
+const kpiSubStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--chart-axis)' };
 
 const yearBlockStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
 const yearHeaderStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.625rem' };

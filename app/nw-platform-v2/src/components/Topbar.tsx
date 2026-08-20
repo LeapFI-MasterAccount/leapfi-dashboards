@@ -344,6 +344,39 @@
  *     band while closed, in both themes; only the opened popover's own
  *     surface follows page theme.
  *
+ * THEME LIVE REGION — REMOVED (Sprint 1 hostile-review findings B2/B3, S2):
+ * this component previously rendered `{theme ? <span aria-live="polite">
+ * Theme changed to {theme} mode</span> : null}` last before ProfileMenu.
+ * Two confirmed defects, both root-caused to the same design error —
+ * coupling the announcement to the theme VALUE instead of a change event:
+ *
+ *   - B2: the region mounts already populated with "Theme changed to
+ *     {theme} mode" the instant `theme` is truthy — true on every first
+ *     render, since the integrating shell always has a current theme. A
+ *     screen-reader user booting the app heard a change announcement
+ *     having changed nothing. Because this component is not (yet — see
+ *     amendment A11, outside this dispatch) hoisted to a persistent shell
+ *     mount, the same false announcement replayed on every cross-screen
+ *     navigation that remounted Topbar.
+ *   - B3: toggling the theme fired BOTH this custom region AND the native
+ *     `role="switch"`/`aria-checked` state change Switch (P8) already
+ *     provides (`primitives/Switch.tsx`'s own a11y baseline: "state
+ *     announced on change... via the native aria-checked change"),
+ *     differently worded — a double announcement for one state change.
+ *
+ * Disposition, per the finding's own text: "the native control's own
+ * announcement is generally preferred." The custom region added no
+ * information the native switch does not already carry (P8's baseline is
+ * exactly "announced on change") and could not be made correct without
+ * itself becoming a true change-detector (comparing against a previous
+ * theme, which this component does not own — theme state lives in
+ * `App.tsx`, per the pre-existing `themeToggleSlot` note above) — at which
+ * point it would be redundant with the native mechanism it duplicates
+ * regardless. Removed outright rather than patched. `TopbarProps.theme`
+ * stays declared and accepted (see its own `@deprecated` note) purely for
+ * caller compile compatibility, the same pattern `backTarget` already
+ * established above; it is never read inside this component's render.
+ *
  *   - TESTED VIA CSSOM, NOT COMPUTED STYLE: jsdom (this project's test
  *     environment) does not perform CSS custom-property (`var()`)
  *     substitution when computing `getComputedStyle()` — verified
@@ -429,7 +462,17 @@ export interface TopbarProps {
   profileMenuItems: TopbarProfileMenuItem[];
   /** See file header "DISPATCH-LEVEL ADDITION — theme toggle slot." */
   themeToggleSlot?: ReactNode;
-  /** Current theme ('dark' or 'light') — used to announce theme changes via aria-live region. */
+  /** @deprecated Sprint 1 hostile-review findings B2/B3 (S2): this prop
+   * previously drove a custom `aria-live` region announcing "Theme changed
+   * to {theme} mode" — coupled to the theme VALUE rather than a change
+   * event, so it mounted already populated (announcing a change that never
+   * happened) and duplicated the native `role="switch"`/`aria-checked`
+   * state-change announcement Switch (P8) already provides, differently
+   * worded. See the file header "THEME LIVE REGION — REMOVED (B2/B3)"
+   * section. Kept accepted-but-ignored, never rendered, only so any
+   * existing caller (e.g. `App.tsx`) that still constructs a `theme` value
+   * for this prop keeps type-checking without this dispatch touching that
+   * file (same `backTarget` precedent above). */
   theme?: 'dark' | 'light';
 }
 
@@ -659,7 +702,17 @@ function ProfileMenu({ profile, items }: { profile: TopbarProfile; items: Topbar
           style={profileMenuStyle}
         >
           {items.length === 0 ? (
-            <span style={{ ...LABEL_STYLE, padding: '0.5rem' }}>No account actions available</span>
+            // FIX WAVE (Class C, C1): this popover (`profile-menu-list`)
+            // is the one subtree the D21 scoped-override CSS above
+            // deliberately leaves on PAGE theme rather than forcing dark
+            // (see file header "PROFILEMENU DROPDOWN"), and its own root
+            // (`profileMenuStyle`) spreads PANEL_STYLE — so in light theme
+            // this span sits on a real var(--panel), where LABEL_STYLE's
+            // --ink2 fails AA (4.34:1). `--chart-axis` is the prescribed
+            // panel-seated substitute; overridden here only (not in
+            // LABEL_STYLE itself, whose other two call sites render on the
+            // permanently-dark chrome band, where --ink2 already passes).
+            <span style={{ ...LABEL_STYLE, padding: '0.5rem', color: 'var(--chart-axis)' }}>No account actions available</span>
           ) : (
             items.map((item) => (
               <div key={item.id} role="none">
@@ -790,7 +843,6 @@ export function Topbar({
   profile,
   profileMenuItems,
   themeToggleSlot,
-  theme,
 }: TopbarProps) {
   return (
     // D21: <style> is metadata content, not valid inside <header>'s
@@ -831,12 +883,6 @@ export function Topbar({
 
         {themeToggleSlot ? <span data-lf-slot="theme-toggle">{themeToggleSlot}</span> : null}
 
-        {/* aria-live announcement for theme changes — announced when theme prop updates */}
-        {theme ? (
-          <span aria-live="polite" aria-atomic="true" style={{ position: 'absolute', left: '-10000px', width: '1px', height: '1px', overflow: 'hidden' }}>
-            Theme changed to {theme} mode
-          </span>
-        ) : null}
 
         <ProfileMenu profile={profile} items={profileMenuItems} />
       </header>

@@ -69,6 +69,29 @@
  * is not precedent for any other component until OQ-6 closes. DO NOT
  * change `--accent2` or the "A" pairing here.
  *
+ * `accessibleText` NON-EMPTY GUARD (Sprint 1 hostile-review finding B4):
+ * `accessibleText: string` (required for `raci-mark`) only proves a value
+ * was SUPPLIED — `""` satisfies `string` just as well as "Responsible"
+ * does, so the type alone does not guarantee the content assistive tech
+ * actually needs. An empty (or whitespace-only) `aria-label` announces
+ * NOTHING — worse than the bare-letter fallback this variant exists to
+ * prevent, because at least a bare letter is *something* to (mis)hear.
+ * Both current call sites (`OnSideOwnership.tsx`, via the RACI legend's
+ * `RACI_WORD` map) are correct — this closes a latent contract gap, not an
+ * observed defect. Enforced at RUNTIME (not compile-time): TypeScript has
+ * no built-in non-empty-string type, and branding/narrowing it here would
+ * require making `Tag` generic over a literal type parameter purely to
+ * reject one degenerate value, which is disproportionate to the actual
+ * risk (a caller passing a literal `""` is a copy-paste/placeholder
+ * mistake, not a type-safety gap the compiler needs to close). A thrown
+ * `Error` at render time fails the same way a missing required prop would
+ * in a stricter language — loud, in development and in tests, never a
+ * silently-broken accessible name in production. Applies to `accessibleText`
+ * whenever it is supplied — required (`raci-mark`) or optional (every
+ * other variant) — since an explicit empty override on any variant defeats
+ * P4's a11y baseline ("never rely on color alone... always paired with the
+ * status word in text") the same way.
+ *
  * AMBIGUITY / STOP-ITEM (light-theme outline-ring treatment):
  * lightmode_amendment_proposal.md §6.3, referenced by this spec's P4 row
  * ("on light theme, status variants carry the outline-ring treatment"),
@@ -147,10 +170,19 @@ const baseStyle: CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
+// FIX WAVE (Class C, finding C2): text color on the three flat semantic
+// fills was `var(--bg)` — the PAGE-background role, not a color chosen for
+// legibility against the fill. `--bg` swaps per theme while EXT-3's
+// semantic hexes are theme-invariant, so the pairing was only accidentally
+// legible in dark mode (white text on white --bg would break in light
+// mode). `--sem-ink` (tokens.css) is a fixed #000000, pinned identically
+// in both theme blocks, verified to clear 4.5:1 AA against all three
+// fills in both themes (9.22:1 / 9.78:1 / 5.58:1) — see that token's own
+// comment for the full derivation.
 const VARIANT_STYLE: Record<NonRaciTagVariant, CSSProperties> = {
-  'status-positive': { background: 'var(--sem-positive)', color: 'var(--bg)' },
-  'status-caution': { background: 'var(--sem-caution)', color: 'var(--bg)' },
-  'status-alert': { background: 'var(--sem-alert)', color: 'var(--bg)' },
+  'status-positive': { background: 'var(--sem-positive)', color: 'var(--sem-ink)' },
+  'status-caution': { background: 'var(--sem-caution)', color: 'var(--sem-ink)' },
+  'status-alert': { background: 'var(--sem-alert)', color: 'var(--sem-ink)' },
   // hitl (human-in-the-loop marker): accent is reserved as "THE ONLY
   // primary accent" per tokens.css — used here as an outline+text tint
   // (not a competing solid fill) so it stays a secondary, informational
@@ -188,16 +220,34 @@ const RACI_MARK_STYLE: CSSProperties = {
   lineHeight: 1,
 };
 
+/** B4 guard — see file header "`accessibleText` NON-EMPTY GUARD". Throws
+ * (fail closed, at render time) when `accessibleText` was supplied but
+ * carries no meaningful content, rather than letting an empty/whitespace
+ * string silently become (or silently override) the Tag's accessible
+ * name. Returns the value unchanged when it is meaningful, or `undefined`
+ * when it was never supplied (the optional-prop, non-raci-mark case) so
+ * callers can pass the result straight through to `aria-label`. */
+function assertMeaningfulAccessibleText(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  if (value.trim().length === 0) {
+    throw new Error(
+      'Tag: accessibleText must not be an empty or whitespace-only string — an empty aria-label announces nothing to assistive tech, defeating the accessible-name contract accessibleText exists to guarantee (design_system_spec.md §2.1 P4 / §2.5).',
+    );
+  }
+  return value;
+}
+
 export function Tag(props: TagProps) {
   const { text, variant, icon } = props;
 
   if (variant === 'raci-mark') {
+    const accessibleText = assertMeaningfulAccessibleText(props.accessibleText);
     return (
       <span
         data-lf-primitive="tag"
         data-variant={variant}
         role="img"
-        aria-label={props.accessibleText}
+        aria-label={accessibleText}
         style={{
           ...RACI_MARK_STYLE,
           color: RACI_MARK_TEXT_COLOR[text],
@@ -209,11 +259,12 @@ export function Tag(props: TagProps) {
     );
   }
 
+  const accessibleText = assertMeaningfulAccessibleText(props.accessibleText);
   return (
     <span
       data-lf-primitive="tag"
       data-variant={variant}
-      aria-label={props.accessibleText}
+      aria-label={accessibleText}
       style={{ ...baseStyle, ...VARIANT_STYLE[variant] }}
     >
       {icon ? <Icon name={icon} size={16} style={{ color: 'currentColor', width: 12, height: 12 }} /> : null}

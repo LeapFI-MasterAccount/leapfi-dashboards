@@ -278,15 +278,20 @@ export const CARD_STYLE: CSSProperties = {
 const HEADER_ROW_STYLE: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' };
 const TITLE_STYLE: CSSProperties = { margin: '0.25rem 0 0', font: 'inherit', fontSize: '1.25rem', fontWeight: 700, ...SCREEN_TEXT };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.0625rem', fontWeight: 700, ...SCREEN_TEXT };
-const CITE_STYLE: CSSProperties = { margin: '0.35rem 0 0', fontSize: '0.875rem', color: 'var(--ink2)' };
+// FIX WAVE (Class C, C1): rendered inside `<section style={CARD_STYLE}>`
+// (spreads PANEL_STYLE) — --ink2 fails AA on --panel in light theme;
+// --chart-axis is the prescribed panel-seated substitute. Same rationale
+// for WAIT_NOTE_STYLE/TEXTAREA_LABEL_STYLE below (both render exclusively
+// inside CARD_STYLE sections too).
+const CITE_STYLE: CSSProperties = { margin: '0.35rem 0 0', fontSize: '0.875rem', color: 'var(--chart-axis)' };
 const META_GRID_STYLE: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.875rem' };
 const META_LABEL_WRAP: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.2rem' };
 const META_VALUE_STYLE: CSSProperties = { fontSize: '0.875rem', fontWeight: 600, ...SCREEN_TEXT };
 const STEPS_ROW_STYLE: CSSProperties = { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' };
 const ACTIONS_ROW_STYLE: CSSProperties = { display: 'flex', gap: '0.625rem', flexWrap: 'wrap', alignItems: 'center' };
-const WAIT_NOTE_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', color: 'var(--ink2)' };
+const WAIT_NOTE_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', color: 'var(--chart-axis)' };
 const INFO_NOTE_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', ...SCREEN_TEXT };
-const TEXTAREA_LABEL_STYLE: CSSProperties = { display: 'block', marginBottom: '0.375rem', fontSize: '0.8125rem', color: 'var(--ink2)' };
+const TEXTAREA_LABEL_STYLE: CSSProperties = { display: 'block', marginBottom: '0.375rem', fontSize: '0.8125rem', color: 'var(--chart-axis)' };
 const TEXTAREA_STYLE: CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',
@@ -669,7 +674,10 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
           <p style={INFO_NOTE_STYLE}>
             <strong>Edited by the analyst.</strong> OnSide&rsquo;s original draft is kept below and in the history.
             <br />
-            <span style={{ color: 'var(--ink2)' }}>{decodeText(caseItem.base)}</span>
+            {/* FIX WAVE (Class C, C1): rendered inside CARD_STYLE (panel)
+                — --ink2 fails AA on --panel in light theme; --chart-axis
+                is the prescribed panel-seated substitute. */}
+            <span style={{ color: 'var(--chart-axis)' }}>{decodeText(caseItem.base)}</span>
           </p>
         ) : null}
 
@@ -736,7 +744,13 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
               <div aria-hidden="true" style={{ alignSelf: 'flex-start', padding: '0.5rem 0.875rem', borderRadius: 'var(--radius-sm, 6px)', background: 'var(--accent)', color: 'var(--bg)', fontWeight: 600, fontSize: '0.8125rem' }}>
                 Open the case in OnSide
               </div>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--ink2)' }}>Sent because you are the approver for this policy tier. Manage your digest and alert settings in OnSide.</p>
+              {/* FIX WAVE (Class C, C1): unlike the sender-header block
+                  above (which sets its own opaque var(--bg2)), this
+                  paragraph has no background override of its own and sits
+                  directly inside the shared Drawer's root var(--panel) —
+                  --ink2 fails AA there in light theme; --chart-axis is the
+                  prescribed panel-seated substitute. */}
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--chart-axis)' }}>Sent because you are the approver for this policy tier. Manage your digest and alert settings in OnSide.</p>
             </div>
           </div>
         </div>
