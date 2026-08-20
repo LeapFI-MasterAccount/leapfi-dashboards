@@ -122,6 +122,7 @@ import { Tag } from '../components/primitives/Tag';
 import type { NonRaciTagVariant } from '../components/primitives/Tag';
 import { DIGEST, FREQ, INSTR, SRC_ITEMS, SRC_LAYERS, SRC_ROWS } from '../data/onside';
 import type { SrcRow } from '../data/onside';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 const ENTITY_MAP: Record<string, string> = { '&amp;': '&', '&ndash;': '–' };
 
@@ -197,10 +198,9 @@ const LAYER_HEADING_STYLE: CSSProperties = { margin: '0 0 0.25rem', font: 'inher
 const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 const LAYER_BLOCK_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
 
-const CARD_STYLE: CSSProperties = {
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-sm, 6px)',
-  background: 'var(--panel)',
+export const CARD_STYLE: CSSProperties = {
+  ...PANEL_STYLE,
+  borderRadius: 'var(--radius-sm, 6px)', // differs from the shared default (var(--radius-md, 10px)) — preserved, not flattened
   padding: '1.25rem',
   display: 'flex',
   flexDirection: 'column',

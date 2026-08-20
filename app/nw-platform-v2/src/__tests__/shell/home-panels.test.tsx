@@ -25,13 +25,15 @@
  *    (base `onsideShow('dom-'+d.key)`/`sigTouch`/`openPlay`/`openReport`/
  *    `goOnside('feed-lifecycle')`, sources cited per action below).
  */
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HomePanels } from '../../views/HomePanels'
 import { DEFAULT_SLIDERS, setDemoSliders } from '../../state/demoStore'
 import { deriveRecomputeView } from '../../engine/plan'
 import { OPPS } from '../../data/studio'
+import { CASES, seedCases } from '../../data/cases'
+import { DOCLIB } from '../../data/doclib'
 
 const noNavigate = () => {}
 
@@ -319,5 +321,49 @@ describe('B3 SEAM 1 — onDeepLink threaded from Home.tsx (App.tsx NAV-PAYLOAD c
     expect(onNavigate).toHaveBeenCalledWith('onside.documents')
 
     expect(onDeepLink).not.toHaveBeenCalled()
+  })
+})
+
+describe("PI2-D5 — 'Your queue' q-cases row fires a 'case'-kind deep link (App.tsx KIND VOCABULARY; the pre-existing plain onNavigate('cases') dropped the specific case id despite the row's own subtitle naming it — buildQueueBucket's own `onOpenCase` prop-shape note flagged this exact gap)", () => {
+  beforeEach(() => {
+    CASES.length = 0
+    seedCases(DOCLIB) // every seeded case starts at stage 'analyst' — CASE-2026-001 is myCases[0] for both the analyst and cro branches below
+  })
+
+  afterEach(() => {
+    CASES.length = 0
+  })
+
+  it("the analyst 'Your queue' row fires {screen:'cases', kind:'case', id: myCases[0].id}, never plain nav", async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    const onDeepLink = vi.fn()
+    render(<HomePanels visibleKeys={['queue']} currentRoleKey="analyst" onNavigate={onNavigate} onDeepLink={onDeepLink} />)
+
+    expect(screen.getByText(`Oldest: ${CASES[0]!.title}`)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Open' }))
+
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'cases', kind: 'case', id: CASES[0]!.id })
+    expect(onNavigate).not.toHaveBeenCalled()
+  })
+
+  it("the analyst 'Your queue' row still falls back to plain onNavigate('cases') when onDeepLink is not wired (never a dead click)", async () => {
+    const user = userEvent.setup()
+    const onNavigate = vi.fn()
+    render(<HomePanels visibleKeys={['queue']} currentRoleKey="analyst" onNavigate={onNavigate} />)
+
+    await user.click(screen.getByRole('button', { name: 'Open' }))
+    expect(onNavigate).toHaveBeenCalledWith('cases')
+  })
+
+  it("the CRO 'Your queue' row fires the same 'case'-kind deep link once a case reaches the cro stage", async () => {
+    const user = userEvent.setup()
+    const onDeepLink = vi.fn()
+    const c = CASES.find((x) => x.id === 'CASE-2026-001')!
+    c.stage = 'cro'
+    render(<HomePanels visibleKeys={['queue']} currentRoleKey="cro" onNavigate={vi.fn()} onDeepLink={onDeepLink} />)
+
+    await user.click(screen.getByRole('button', { name: 'Approve' }))
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'cases', kind: 'case', id: 'CASE-2026-001' })
   })
 })

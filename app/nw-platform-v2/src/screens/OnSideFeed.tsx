@@ -409,6 +409,13 @@ const SOURCE_LOOKUP_BY_NAME = new Map<string, FeedSourceLookup>(
   }),
 );
 
+/** PI2-D5 (Sprint 1 DeepLinkKind union extension) — 'signal'-kind deep-link
+ * lookup by the row's own id (`${sourceKey}::${itemIndex}`, ALL_SIGNAL_ROWS'
+ * derivation above). Mirrors SOURCE_LOOKUP_BY_NAME's precedent: a small
+ * pure Map built once from the already-computed rows, not re-derived per
+ * press. */
+const SIGNAL_ROW_BY_ID = new Map<string, SignalRow>(ALL_SIGNAL_ROWS.map((row) => [row.id, row]));
+
 const SCREEN_STYLE: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -568,6 +575,22 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel, deepLink, 
     const lookup = SOURCE_LOOKUP_BY_NAME.get(deepLink.id);
     if (lookup) {
       setSelection({ kind: 'feed-source', lookup });
+      setDrawerOpen(true);
+    }
+    onDeepLinkConsumed?.(deepLink.nonce);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed read fresh from closure, not tracked as a re-trigger dep
+  }, [deepLink?.nonce]);
+
+  // PI2-D5 (Sprint 1 DeepLinkKind union extension) — 'signal'-kind deep-link
+  // consumption: this screen's OWN primary row type, previously never
+  // wired (r09 acceptance criterion, "the feed's own primary row type").
+  // Same nonce-keyed CONSUME pattern as the 'feed-source' effect above; a
+  // stale/unknown id still consumes the nonce but opens nothing.
+  useEffect(() => {
+    if (!deepLink || deepLink.kind !== 'signal') return;
+    const row = SIGNAL_ROW_BY_ID.get(deepLink.id);
+    if (row) {
+      setSelection({ kind: 'signal', row });
       setDrawerOpen(true);
     }
     onDeepLinkConsumed?.(deepLink.nonce);

@@ -171,7 +171,15 @@
  *     'section' → id = a section key on the target screen, e.g.
  *     'lifecycle' on onside.feed (base goOnside('feed-lifecycle'), 869) or
  *     'gaps' (878); 'domain' → onside.overview, id = domain key (base
- *     goOnside('dom-mrm')).
+ *     goOnside('dom-mrm')). PI2-D5 (Sprint 1 union extension): 'signal' →
+ *     onside.feed, id = the SignalRow id `${sourceKey}::${itemIndex}`;
+ *     'case' → cases, id = the Case id (data/cases.ts, e.g.
+ *     'CASE-2026-001'); 'document' → onside.documents, id = the DOCLIB doc
+ *     id (opens the full document Drawer, distinct from the still-unconsumed
+ *     'doc-redline'); 'control' → onside.overview, id = a bare control id
+ *     with no domKey prefix, e.g. 'MRM-09' (the r16 QuickFind "type MRM-09
+ *     anywhere" shape — distinct from 'obligation''s `${domKey}:${oblId}`
+ *     encoding), resolved to its owning domain via `data/onside.ts`'s `OBL`.
  *   - PLUMBED EVERYWHERE NOW: `{...deepLinkProps}` is spread onto every
  *     routed screen below. A screen that has not yet declared the props
  *     simply ignores them (JSX spread performs no excess-property check);
@@ -353,6 +361,11 @@ export type DeepLinkKind =
   | 'report' // base openReport(kind) — id is the report kind, e.g. 'roi' (source 872, 4242)
   | 'section' // base goOnside(section) — id is a section key on the target screen, e.g. 'lifecycle' (source 869, 878)
   | 'domain' // base goOnside('dom-KEY') — id is the domain key; OnSideOverview consumes it via `deepLink` (no legacy bridge, this wave's App-side cleanup)
+  // PI2-D5 (Sprint 1 union extension, implementation/DECISIONS.md — dan_review_directives.md §1 steps 5-7 signal→domain→language→document): the four kinds below.
+  | 'signal' // onside.feed — id is the signal row id (`${sourceKey}::${itemIndex}`, OnSideFeed.tsx's own `SignalRow.id`); OnSideFeed consumes via `deepLink`, opening that row's Drawer directly
+  | 'case' // cases — id is the Case id (data/cases.ts `Case.id`, e.g. 'CASE-2026-001'); Cases.tsx consumes via `deepLink`, opening that case's detail directly
+  | 'document' // onside.documents — id is the DOCLIB doc id; distinct from 'doc-redline' (that kind has no consumer today) — OnSideDocuments.tsx consumes via `deepLink`, opening the full document Drawer (secs + redline) for that id
+  | 'control' // onside.overview — id is a bare control id (e.g. 'MRM-09', no domKey prefix — the r16 QuickFind "type MRM-09 anywhere" shape, unlike 'obligation''s `${domKey}:${oblId}` encoding); OnSideOverview.tsx resolves the owning domain via OBL and opens both the domain row and that control's obligation drawer
 
 /** A screen's deep-link request: navigate to `screen` AND open the `kind`/`id` item there. */
 export interface DeepLinkRequest {

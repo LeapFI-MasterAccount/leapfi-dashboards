@@ -147,6 +147,7 @@ import { fmt } from '../engine/plan';
 import type { PlanOpportunity } from '../engine/plan';
 import { acceptOpportunity, adoptionScaledValue, getLiveLevers, useDemoStore } from '../state/demoStore';
 import type { DeepLinkScreenProps } from '../App';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 interface SeedAnswer {
   text: string;
@@ -318,10 +319,8 @@ const MAIN_STYLE: CSSProperties = {
   gap: '2rem',
 };
 const TITLE_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
-const CHAT_PANEL_STYLE: CSSProperties = {
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-md, 10px)',
-  background: 'var(--panel)',
+export const CHAT_PANEL_STYLE: CSSProperties = {
+  ...PANEL_STYLE,
   padding: '1.5rem',
 };
 const SCOPE_CHIP_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' };

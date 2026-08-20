@@ -118,6 +118,7 @@ import { fmt } from '../engine/plan';
 import type { PlanOpportunity, PlanResult } from '../engine/plan';
 import { computeLivePlan, useDemoStore } from '../state/demoStore';
 import type { DeepLinkScreenProps } from '../App';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 /** One play chip in a year row/quarter — base `chip()` (1321-1326). */
 interface PlayChip {
@@ -339,10 +340,8 @@ const sectionHeadingStyle: CSSProperties = { font: 'inherit', fontSize: '1rem', 
 const setupCardRowStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))', gap: '1rem' };
 
 const kpiRowStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(11rem, 1fr))', gap: '0.75rem' };
-const kpiCardStyle: CSSProperties = {
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-md, 10px)',
-  background: 'var(--panel)',
+export const kpiCardStyle: CSSProperties = {
+  ...PANEL_STYLE,
   padding: '0.875rem 1rem',
   display: 'flex',
   flexDirection: 'column',
@@ -360,10 +359,8 @@ const yearHeaderStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', alig
 const yearNameStyle: CSSProperties = { fontSize: '0.9375rem', fontWeight: 700, color: 'var(--ink)', margin: 0 };
 const yearStatusStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
 const quarterGridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(12rem, 1fr))', gap: '0.75rem' };
-const quarterColStyle: CSSProperties = {
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-md, 10px)',
-  background: 'var(--panel)',
+export const quarterColStyle: CSSProperties = {
+  ...PANEL_STYLE,
   padding: '0.625rem 0.75rem',
   display: 'flex',
   flexDirection: 'column',

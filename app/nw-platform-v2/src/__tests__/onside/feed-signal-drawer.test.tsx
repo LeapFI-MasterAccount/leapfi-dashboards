@@ -18,7 +18,7 @@
  *
  * D18: nothing here touches Home's demo-entry affordance.
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OnSideFeed } from '../../screens/OnSideFeed'
@@ -120,5 +120,65 @@ describe('OnSide feed · signal table (base 3243–3299 data, 3243–3403 region
     await user.click(reviewButtons[0] as HTMLElement)
     await screen.findByRole('dialog', { name: /^Signal — / })
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
+  })
+})
+
+describe("PI2-D5 — 'signal'-kind deep link (App.tsx KIND VOCABULARY; r09 acceptance — dispatch a 'signal'-kind DeepLinkRequest at OnSideFeed.tsx and assert it opens the matching item directly)", () => {
+  // OCC · 12 CFR Ch. I's first SRC_ITEMS tuple (data/onside.ts:414-419):
+  // id encoding is `${sourceKey}::${itemIndex}` (OnSideFeed.tsx's own
+  // `SignalRow.id`, ALL_SIGNAL_ROWS derivation) — never the row's own
+  // exposed table identity, since the table has no id column.
+  const SIGNAL_ID = 'OCC · 12 CFR Ch. I::0'
+
+  it('opens the matching signal row directly, never the wrong row, and consumes the nonce', async () => {
+    render(
+      <OnSideFeed
+        topbar={makeTopbarProps()}
+        onNavigate={() => {}}
+        deepLink={{ screen: 'onside.feed', kind: 'signal', id: SIGNAL_ID, nonce: 1 }}
+        onDeepLinkConsumed={() => {}}
+      />,
+    )
+
+    const dialog = await screen.findByRole('dialog', { name: 'Signal — OCC · 12 CFR Ch. I' })
+    const fieldValues = within(dialog)
+      .getAllByRole('definition')
+      .map((dd) => dd.textContent)
+    expect(fieldValues).toEqual([
+      'OCC · 12 CFR Ch. I',
+      'Financial · banking regulators',
+      'Aug 12, 2026',
+      'Bulletin 2026-24 · risk management of AI-assisted underwriting',
+      'Mapped to Model Risk and Fair Lending registers',
+    ])
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+  })
+
+  it('consumes the nonce it was handed', async () => {
+    const onDeepLinkConsumed = vi.fn()
+    render(
+      <OnSideFeed
+        topbar={makeTopbarProps()}
+        onNavigate={() => {}}
+        deepLink={{ screen: 'onside.feed', kind: 'signal', id: SIGNAL_ID, nonce: 7 }}
+        onDeepLinkConsumed={onDeepLinkConsumed}
+      />,
+    )
+    await screen.findByRole('dialog', { name: 'Signal — OCC · 12 CFR Ch. I' })
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(7)
+  })
+
+  it('an unknown id still consumes the nonce but opens no Drawer (defensive guard, never a fabricated detail)', () => {
+    const onDeepLinkConsumed = vi.fn()
+    render(
+      <OnSideFeed
+        topbar={makeTopbarProps()}
+        onNavigate={() => {}}
+        deepLink={{ screen: 'onside.feed', kind: 'signal', id: 'no-such-signal', nonce: 8 }}
+        onDeepLinkConsumed={onDeepLinkConsumed}
+      />,
+    )
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(8)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

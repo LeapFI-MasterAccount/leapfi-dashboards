@@ -177,6 +177,7 @@ import { PosturePillBar } from '../components/PosturePillBar';
 import { Drawer } from '../components/Drawer';
 import { DrawerContent } from '../components/DrawerContent';
 import type { DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
+import { PANEL_STYLE } from '../theme/panelStyle';
 import { Toast } from '../components/Toast';
 import { Button } from '../components/primitives/Button';
 import { Chip } from '../components/primitives/Chip';
@@ -213,6 +214,20 @@ function feedEventCount(days: number): number {
 }
 
 const OBJECTIVES_PREVIEW_COUNT = 8;
+
+/** PI2-D5 (Sprint 1 DeepLinkKind union extension) — 'control'-kind deep
+ * link resolution: id is a BARE control id (e.g. 'MRM-09', no domKey
+ * prefix — the r16 QuickFind "type MRM-09 anywhere" shape), unlike
+ * 'obligation''s `${domKey}:${oblId}` encoding, which already carries its
+ * domain. Scans `OBL` (every domain's obligation register) for the owning
+ * domain key. Returns `null` for an id no domain's register carries —
+ * never a fabricated domain guess. */
+function resolveControlDomain(controlId: string): string | null {
+  for (const [domainKey, rows] of Object.entries(OBL)) {
+    if (rows.some((row) => row.id === controlId)) return domainKey;
+  }
+  return null;
+}
 
 /** B-dead-interactions-02 obligation drawer — same live-mutation shape
  * `OnSideDocuments.tsx` uses for its own doc-adopt path (base rlAction
@@ -274,10 +289,8 @@ const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column',
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.125rem', fontWeight: 700, color: 'var(--ink)' };
 const KPI_GRID_STYLE: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.875rem' };
 const POSTURE_GRID_STYLE: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '0.875rem' };
-const CARD_STYLE: CSSProperties = {
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-md, 10px)',
-  background: 'var(--panel)',
+export const CARD_STYLE: CSSProperties = {
+  ...PANEL_STYLE,
   padding: '1.25rem',
   boxSizing: 'border-box',
   display: 'flex',
@@ -491,6 +504,26 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
     const domainKey = deepLink.id;
     setExpandedDomainKeys((prev) => (prev.has(domainKey) ? prev : new Set(prev).add(domainKey)));
     setPendingScrollKey(domainKey);
+    onDeepLinkConsumed?.(deepLink.nonce);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed read fresh from closure, not tracked as a re-trigger dep
+  }, [deepLink?.nonce]);
+
+  // PI2-D5 (Sprint 1 DeepLinkKind union extension) — 'control'-kind deep
+  // link: bare control id (r16 QuickFind's "type MRM-09 anywhere" shape),
+  // resolved to its owning domain via `resolveControlDomain` (OBL scan),
+  // then both force-expands that domain row (same effect as 'domain') AND
+  // opens this screen's own obligation drawer for that exact control (r16:
+  // "kind: 'control', id: controlId → ... OnSideOverview domain detail").
+  // An id no domain's register carries still consumes the nonce but opens
+  // nothing (never a fabricated domain guess).
+  useEffect(() => {
+    if (!deepLink || deepLink.kind !== 'control') return;
+    const domainKey = resolveControlDomain(deepLink.id);
+    if (domainKey) {
+      setExpandedDomainKeys((prev) => (prev.has(domainKey) ? prev : new Set(prev).add(domainKey)));
+      setPendingScrollKey(domainKey);
+      setOpenObligationTarget({ domain: domainKey, id: deepLink.id });
+    }
     onDeepLinkConsumed?.(deepLink.nonce);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed read fresh from closure, not tracked as a re-trigger dep
   }, [deepLink?.nonce]);
