@@ -27,6 +27,16 @@
  * the overflow area still hit-test into the button and its onClick
  * still fires — the button chrome can look small while the click target
  * stays >=44px without any component-level theme/structure branching.
+ *
+ * AMENDMENT A15 (design_system_spec.md §2.1 P2, §2.8 — the Drawer C7
+ * size-toggle): new optional `pressed?: boolean` prop. When supplied it
+ * renders `aria-pressed`; when omitted, no `aria-pressed` attribute is
+ * rendered at all — byte-identical markup for every pre-A15 call site.
+ * Brings P2 into parity with P5 Chip's already-sanctioned `aria-pressed`
+ * toggle-button idiom (reuse of an existing pattern, not a new one) —
+ * needed because Button has no persistent visual pressed/toggled state
+ * today, so a toggle consumer (like the Drawer's size control) needs a
+ * state-carrying attribute independent of the (also dynamic) label text.
  */
 import { useState } from 'react';
 import type { CSSProperties, MouseEvent } from 'react';
@@ -44,6 +54,9 @@ export interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   type?: 'button' | 'submit';
+  /** A15 — renders `aria-pressed` when supplied; omitted = no attribute
+   * (byte-identical to every pre-A15 call site). See file header. */
+  pressed?: boolean;
 }
 
 const BASE_STYLE: CSSProperties = {
@@ -111,7 +124,7 @@ function variantStyle(variant: ButtonVariant, hover: boolean, active: boolean): 
   }
 }
 
-export function Button({ label, variant, icon, onPress, disabled = false, loading = false, type = 'button' }: ButtonProps) {
+export function Button({ label, variant, icon, onPress, disabled = false, loading = false, type = 'button', pressed }: ButtonProps) {
   const [hover, setHover] = useState(false);
   const [active, setActive] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -131,6 +144,7 @@ export function Button({ label, variant, icon, onPress, disabled = false, loadin
       onClick={handleClick}
       disabled={isDisabled}
       aria-busy={loading || undefined}
+      aria-pressed={pressed}
       data-lf-primitive="button"
       data-variant={variant}
       onMouseEnter={() => setHover(true)}

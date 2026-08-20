@@ -99,6 +99,47 @@
  * base rebuild-the-drawer behavior): the body's scrollTop resets to 0 on
  * every content swap — and on every (re)open, covering the reopen-while-
  * closing path where the body DOM node never unmounted.
+ *
+ * GEOMETRY & SIZE-TOGGLE (amendment A15, design_system_spec.md §2.8,
+ * PI2-D41/PI2-D14/PI2-D13): `DrawerSize` stays the same two-value union.
+ * `'wide'` is byte-identical (`min(920px, 97vw)`). `'default'` is amended
+ * from the fixed `min(480px, 100vw)` to `min(clamp(480px, 40vw, 720px),
+ * 100vw)` — one continuous formula whose floor (`480px`) reproduces the
+ * legacy value verbatim on every viewport ≤1200px and grows fluidly with
+ * viewport width above that, capped at `720px`. The Drawer now owns a
+ * `sizeState` runtime state (PI2-D14) driving the actually-rendered
+ * geometry; the `size` PROP names only the size a session OPENS at. A
+ * header size-toggle Button (between the heading and the close Button)
+ * lets the user flip `sizeState` between `'default'`/`'wide'` at runtime.
+ *
+ * `sizeState` reseed rule, exactly as spec'd: a transition from `open`
+ * false→true reseeds `sizeState` from the current `size` prop (a fresh
+ * open never inherits a prior session's user-toggled size — AC-A15-6).
+ * `sizeState` is explicitly NOT reset by an in-drawer content swap
+ * (RPT-05's `title`-only change, still handled by the effect above,
+ * unmodified) — a user's manual toggle is a reading-comfort preference
+ * that survives a swapped-in document, not a per-content setting.
+ *
+ * RECONCILIATION WITH RPT-03 (load-bearing, flagged in the evidence
+ * return for review): Reporting.tsx's board-log sub-flow swaps its `size`
+ * PROP itself (not just `title`) between `'wide'` (report) and
+ * `'default'` (the board-log form) on the SAME open Drawer instance,
+ * never toggling `open` to false — a case the §2.8 state-machine table
+ * (which only names 4 transitions: two toggle presses, close, and the
+ * closed→open reseed) does not literally enumerate. To keep that
+ * pre-existing, dispatch-preserved behavior (reporting_fix_wave.test.tsx
+ * "RPT-03") passing without contradicting "sizeState is NOT reset by a
+ * content swap," `sizeState` also re-syncs whenever the `size` PROP's
+ * VALUE itself changes (a second, independent effect, decoupled from the
+ * title-keyed RPT-05 effect above) — i.e. an explicit new size REQUEST
+ * from the consumer always wins, the same way a fresh open does; only a
+ * same-size re-render (or a title-only swap) leaves a user's manual
+ * toggle alone. This is a mechanism choice to satisfy two independently-
+ * binding requirements (the §2.8 ACs and the preserved RPT-03 suite)
+ * that are otherwise both fully specified already — not a new externally
+ * visible interaction the spec left open — but is called out explicitly
+ * here and in the evidence return since the state-machine table itself
+ * is silent on this exact transition.
  */
 import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
@@ -212,7 +253,7 @@ const PRINT_STYLE = `
   [data-lf-drawer-body] { overflow: visible !important; height: auto !important; }
   [data-lf-drawer-body] div { overflow: visible !important; }
   [data-lf-composite='drawer-scrim'] { display: none !important; }
-  [data-lf-drawer-close], [data-lf-drawer-footer] { display: none !important; }
+  [data-lf-drawer-close], [data-lf-drawer-size-toggle], [data-lf-drawer-footer] { display: none !important; }
 }
 `;
 
@@ -223,6 +264,11 @@ export function Drawer({ open, title, onClose, children, footer, size = 'default
   const bodyRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const [phase, setPhase] = useState<DrawerPhase>('closed');
+  // A15 — the runtime size the drawer actually renders at (PI2-D14: Drawer
+  // owns this state machine). Seeded from `size` at mount; reseeded below
+  // whenever `open` transitions false->true, or the `size` prop's value
+  // itself changes (see the "RECONCILIATION WITH RPT-03" file-header note).
+  const [sizeState, setSizeState] = useState<DrawerSize>(size);
 
   // Drive the phase machine off the `open` prop only — intentionally not
   // reacting to `phase` itself here (see the two effects below for that),
@@ -237,6 +283,20 @@ export function Drawer({ open, title, onClose, children, footer, size = 'default
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- phase transitions are intentionally driven by `open` alone
   }, [open]);
+
+  // A15 — `sizeState` reseed. Fires on a fresh open (`open` false->true,
+  // per the §2.8 state machine's own closed->open row) AND whenever the
+  // consumer's `size` prop value itself changes while already open (the
+  // RPT-03 reconciliation, file header above) — deliberately NOT keyed on
+  // `title`, so the separate RPT-05 content-swap effect below never
+  // touches `sizeState`.
+  useEffect(() => {
+    if (open) setSizeState(size);
+  }, [open, size]);
+
+  const handleToggleSize = () => {
+    setSizeState((current) => (current === 'wide' ? 'default' : 'wide'));
+  };
 
   // opening -> open on the next paint (lets the enter transition animate),
   // then move initial focus to the heading (C7 a11y baseline).
@@ -348,14 +408,17 @@ export function Drawer({ open, title, onClose, children, footer, size = 'default
         onKeyDown={handleKeyDown}
         data-lf-composite="drawer"
         data-phase={phase}
-        data-size={size}
+        data-size={sizeState}
         style={{
           position: 'fixed',
           top: 0,
           right: 0,
           bottom: 0,
           // Base `.drawer.wide{width:min(920px,97vw)}` (source 326) — RPT-03.
-          width: size === 'wide' ? 'min(920px, 97vw)' : 'min(480px, 100vw)',
+          // 'default' amended by A15 (§2.8): min(clamp(480px, 40vw, 720px),
+          // 100vw) — floor reproduces the legacy 480px value verbatim on
+          // every viewport ≤1200px; grows fluidly above that, capped 720px.
+          width: sizeState === 'wide' ? 'min(920px, 97vw)' : 'min(clamp(480px, 40vw, 720px), 100vw)',
           background: 'var(--panel)',
           borderLeft: '1px solid var(--border)',
           boxShadow: '-8px 0 24px color-mix(in srgb, var(--bg) 55%, transparent)',
@@ -391,6 +454,17 @@ export function Drawer({ open, title, onClose, children, footer, size = 'default
           >
             {title}
           </h2>
+          {/* A15 (§2.8) — size-toggle: DOM order heading -> toggle -> close.
+              print-hidden like the close Button (data-lf-drawer-size-toggle). */}
+          <span data-lf-drawer-size-toggle>
+            <Button
+              variant="ghost"
+              icon={sizeState === 'wide' ? 'collapse' : 'expand'}
+              label={sizeState === 'wide' ? 'Collapse' : 'Expand'}
+              pressed={sizeState === 'wide'}
+              onPress={handleToggleSize}
+            />
+          </span>
           {/* data-lf-drawer-close: print-hidden, the base `.dclose` (RPT-01). */}
           <span data-lf-drawer-close>
             <Button variant="ghost" icon="close" label="Close" onPress={onClose} />
