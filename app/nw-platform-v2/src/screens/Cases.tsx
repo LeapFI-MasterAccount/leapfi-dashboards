@@ -145,6 +145,7 @@ import type { TopbarProps } from '../components/Topbar';
 import type { SidebarProps } from '../components/Sidebar';
 import { DataTable } from '../components/DataTable';
 import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
+import { Drawer } from '../components/Drawer';
 import { Toast } from '../components/Toast';
 import { Tag } from '../components/primitives/Tag';
 import type { NonRaciTagVariant } from '../components/primitives/Tag';
@@ -292,6 +293,8 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
   // timer and can vanish almost immediately.
   const [toast, setToast] = useState<{ key: number; variant: 'success' | 'info'; message: string } | null>(null);
   const requestSeqRef = useRef(0);
+  // PI2-D14 host migration — see the `displayCase` derivation below.
+  const lastSelectedCaseRef = useRef<Case | null>(null);
 
   function logEntry(c: Case, what: string, note: string): void {
     c.history.unshift({ when: stamp(), who: currentUser.name, role: currentUser.role, what, note });
@@ -486,7 +489,18 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
     }
   }
 
-  const selectedCase = selectedCaseId ? (CASES.find((c) => c.id === selectedCaseId) ?? null) : null;
+  const liveSelectedCase = selectedCaseId ? (CASES.find((c) => c.id === selectedCaseId) ?? null) : null;
+  if (liveSelectedCase) lastSelectedCaseRef.current = liveSelectedCase;
+  // PI2-D14 host migration: keeps the Drawer's title/body populated with
+  // the last-opened case through its ~200ms closing transition instead of
+  // blanking the instant `selectedCaseId` clears — same pattern
+  // `OnSideDocuments.tsx`'s `lastOpenDocRef` already established for the
+  // identical Drawer-closing-transition problem. A genuinely closed
+  // Drawer (open=false, phase 'closed') still renders nothing at all
+  // regardless of what `children` it is given (`Drawer.tsx` returns null
+  // in that phase), so this never resurrects a case after the Drawer is
+  // actually gone.
+  const displayCase = liveSelectedCase ?? lastSelectedCaseRef.current;
   const openCases = CASES.filter((c) => c.stage !== 'closed' && c.stage !== 'rejected');
   const doneCases = CASES.filter((c) => c.stage === 'closed' || c.stage === 'rejected');
   const undecidedCount = CASES.filter(isUntouched).length;
@@ -521,74 +535,93 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
     onPress: (row) => setSelectedCaseId(row.id),
   };
 
+  // PI2-D14 host migration (design_system_spec.md §2.10 preamble): the
+  // list is ALWAYS rendered in `<main>` now — no more full-page swap to
+  // `<CaseDetail>` — matching the master-list-plus-overlay-Drawer pattern
+  // every other screen with a detail Drawer already uses (e.g.
+  // `OnSideDocuments.tsx`'s DataTable-stays-mounted-under-the-Drawer
+  // shape). The case content itself moves into the shared Drawer (C7)
+  // below, opened on row-select via `rowAction`/`setSelectedCaseId`.
   return (
     <>
     <main id="cases-main" data-lf-render-tick={renderTick} style={MAIN_STYLE} aria-labelledby="cases-title">
-      {selectedCase ? (
-            <CaseDetail
-              caseItem={selectedCase}
-              doc={DOCLIB[selectedCase.doc]}
-              currentUser={currentUser}
-              onBack={() => setSelectedCaseId(null)}
-              onAction={handleAction}
-              pendingAction={pendingAction && pendingAction.caseId === selectedCase.id ? pendingAction.kind : null}
-              onNavigate={onNavigate}
-              {...(onDeepLink !== undefined ? { onDeepLink } : {})}
-              // Base switchUser doclinks (CS-08): the persona rows this
-              // screen already owns via the Topbar bundle are the twin's
-              // switch-user mechanism — only offered when the shell
-              // actually supplied persona rows (the fixture case of an
-              // empty menu renders no dead links).
-              {...(topbar.profileMenuItems.length > 0
-                ? {
-                    onSwitchUser: (userId: string) => {
-                      topbar.profileMenuItems.find((item) => item.id === userId)?.onPress();
-                    },
-                  }
-                : {})}
-            />
-          ) : (
-            <>
-              <div>
-                <h1 id="cases-title" style={TITLE_STYLE}>
-                  Cases
-                </h1>
-                <p style={{ ...NOTE_STYLE, marginTop: '0.5rem' }}>
-                  {undecidedCount > 0 ? `${undecidedCount === openCases.length ? 'None' : `${undecidedCount} of ${openCases.length}`} ${undecidedCount === 1 ? 'has' : 'have'} been decided yet.` : ''}
-                  {waitingOnMeCount > 0 ? ` ${waitingOnMeCount} ${waitingOnMeCount === 1 ? 'case is' : 'cases are'} waiting on you.` : ''}
-                </p>
-              </div>
+      <div>
+        <h1 id="cases-title" style={TITLE_STYLE}>
+          Cases
+        </h1>
+        <p style={{ ...NOTE_STYLE, marginTop: '0.5rem' }}>
+          {undecidedCount > 0 ? `${undecidedCount === openCases.length ? 'None' : `${undecidedCount} of ${openCases.length}`} ${undecidedCount === 1 ? 'has' : 'have'} been decided yet.` : ''}
+          {waitingOnMeCount > 0 ? ` ${waitingOnMeCount} ${waitingOnMeCount === 1 ? 'case is' : 'cases are'} waiting on you.` : ''}
+        </p>
+      </div>
 
-              <section aria-labelledby="cases-open-heading" style={SECTION_STYLE}>
-                <h2 id="cases-open-heading" style={SUBHEADING_STYLE}>
-                  {openCases.length} open
-                </h2>
-                <div style={SCROLL_WRAP_STYLE}>
-                  <DataTable
-                    caption="Open cases"
-                    columns={columns}
-                    rows={openCases}
-                    getRowId={(row) => row.id}
-                    rowAction={rowAction}
-                    emptyMessage="No open cases."
-                    defaultSortColumnId="id"
-                  />
-                </div>
-              </section>
+      <section aria-labelledby="cases-open-heading" style={SECTION_STYLE}>
+        <h2 id="cases-open-heading" style={SUBHEADING_STYLE}>
+          {openCases.length} open
+        </h2>
+        <div style={SCROLL_WRAP_STYLE}>
+          <DataTable
+            caption="Open cases"
+            columns={columns}
+            rows={openCases}
+            getRowId={(row) => row.id}
+            rowAction={rowAction}
+            emptyMessage="No open cases."
+            defaultSortColumnId="id"
+          />
+        </div>
+      </section>
 
-              {doneCases.length > 0 ? (
-                <section aria-labelledby="cases-closed-heading" style={SECTION_STYLE}>
-                  <h2 id="cases-closed-heading" style={SUBHEADING_STYLE}>
-                    Closed cases · {doneCases.length}
-                  </h2>
-                  <div style={SCROLL_WRAP_STYLE}>
-                    <DataTable caption="Closed cases" columns={columns} rows={doneCases} getRowId={(row) => row.id} rowAction={rowAction} />
-                  </div>
-                </section>
-              ) : null}
-            </>
-          )}
+      {doneCases.length > 0 ? (
+        <section aria-labelledby="cases-closed-heading" style={SECTION_STYLE}>
+          <h2 id="cases-closed-heading" style={SUBHEADING_STYLE}>
+            Closed cases · {doneCases.length}
+          </h2>
+          <div style={SCROLL_WRAP_STYLE}>
+            <DataTable caption="Closed cases" columns={columns} rows={doneCases} getRowId={(row) => row.id} rowAction={rowAction} />
+          </div>
+        </section>
+      ) : null}
     </main>
+
+      {/* PI2-D14 host migration — the one-case-page side-car: the shared
+          Drawer (C7), opened by `rowAction` above, closed by either
+          `CaseDetail`'s own "← All cases" Button or the Drawer's header
+          close control (both call the same `setSelectedCaseId(null)`).
+          Close-restore to the triggering "Open" row Button is C7's own
+          existing baseline (`Drawer.tsx`'s `returnFocusRef` — unchanged,
+          out of this lane's allowlist) — no new focus machinery here. */}
+      <Drawer
+        open={selectedCaseId !== null}
+        title={displayCase ? `${displayCase.id} · ${decodeText(displayCase.title)}` : ''}
+        onClose={() => setSelectedCaseId(null)}
+      >
+        {displayCase ? (
+          <CaseDetail
+            caseItem={displayCase}
+            doc={DOCLIB[displayCase.doc]}
+            currentUser={currentUser}
+            onBack={() => setSelectedCaseId(null)}
+            onAction={handleAction}
+            pendingAction={pendingAction && pendingAction.caseId === displayCase.id ? pendingAction.kind : null}
+            onNavigate={onNavigate}
+            {...(onDeepLink !== undefined ? { onDeepLink } : {})}
+            // Base switchUser doclinks (CS-08): the persona rows this
+            // screen already owns via the Topbar bundle are the twin's
+            // switch-user mechanism — only offered when the shell
+            // actually supplied persona rows (the fixture case of an
+            // empty menu renders no dead links).
+            {...(topbar.profileMenuItems.length > 0
+              ? {
+                  onSwitchUser: (userId: string) => {
+                    topbar.profileMenuItems.find((item) => item.id === userId)?.onPress();
+                  },
+                }
+              : {})}
+          />
+        ) : null}
+      </Drawer>
+
       {toast ? (
         // A-overlap-04: `Toast` is now self-positioning (fixed bottom-center,
         // its own internal anchor — see components/Toast.tsx's

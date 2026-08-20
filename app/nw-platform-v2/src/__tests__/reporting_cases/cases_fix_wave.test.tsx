@@ -278,7 +278,21 @@ describe('CS-08 — restored affordances (base doclinks with live twin targets)'
     const detail = openCaseDetail('CASE-2026-001');
 
     fireEvent.click(within(detail).getByRole('button', { name: 'View the email you were sent' }));
-    const dialog = screen.getByRole('dialog');
+    // PI2-D14 host migration STOP note (see CaseDetail.tsx's file header):
+    // `detail` now itself sits inside the host case-side-car Drawer, so
+    // this button's own pre-existing local `<Drawer>` (unchanged code,
+    // `emailOpen`) nests a SECOND `[role="dialog"]` inside the first —
+    // `screen.getByRole('dialog')` would now throw on 2 matches. Scoped to
+    // the email dialog specifically (the one carrying the sender header,
+    // never present on the host case dialog) rather than masking the
+    // now-two-dialogs fact with a looser query; the underlying nested-
+    // Drawer interaction itself is unresolved (see this lane's STOP
+    // report) and is NOT what this assertion set is verifying.
+    const dialogs = screen.getAllByRole('dialog');
+    expect(dialogs).toHaveLength(2);
+    const emailDialog = dialogs.find((node) => node.textContent?.includes('onside@leapfi.ai'));
+    expect(emailDialog).toBeDefined();
+    const dialog = emailDialog as HTMLElement;
     expect(dialog.textContent).toContain('onside@leapfi.ai');
     expect(dialog.textContent).toContain('Rachel Fischer <rachel.fischer@northwindscu.org>');
     expect(dialog.textContent).toContain('[CASE-2026-001] Approval needed · ');
@@ -401,8 +415,15 @@ describe("PI2-D5 — 'case'-kind deep link (App.tsx KIND VOCABULARY: id = the Ca
     const detail = document.querySelector('[data-lf-view="case-detail"]');
     expect(detail).not.toBeNull();
     expect((detail as HTMLElement).textContent).toContain('CASE-2026-002');
-    // Never the list view a plain nav would show.
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    // PI2-D14 host migration: the case content now opens in the shared
+    // Drawer (C7) over the list, not as a full-page swap replacing it —
+    // the list stays mounted underneath (same master-list-plus-overlay
+    // shape every other Drawer-hosted detail screen already uses). The
+    // deep link's own distinguishing behavior is that the Drawer opens
+    // pre-populated with the exact matching case, not that the list
+    // disappears.
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('table')).toBeInTheDocument();
     expect(onDeepLinkConsumed).toHaveBeenCalledWith(1);
   });
 
