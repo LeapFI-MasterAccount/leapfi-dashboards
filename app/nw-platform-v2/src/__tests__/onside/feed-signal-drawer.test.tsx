@@ -23,10 +23,9 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OnSideFeed } from '../../screens/OnSideFeed'
 import { SRC_ITEMS } from '../../data/onside'
-import { makeTopbarProps } from './helpers'
 
 function renderFeed() {
-  return render(<OnSideFeed topbar={makeTopbarProps()} onNavigate={() => {}} />)
+  return render(<OnSideFeed />)
 }
 
 function getSignalsTable() {
@@ -133,8 +132,6 @@ describe("PI2-D5 — 'signal'-kind deep link (App.tsx KIND VOCABULARY; r09 accep
   it('opens the matching signal row directly, never the wrong row, and consumes the nonce', async () => {
     render(
       <OnSideFeed
-        topbar={makeTopbarProps()}
-        onNavigate={() => {}}
         deepLink={{ screen: 'onside.feed', kind: 'signal', id: SIGNAL_ID, nonce: 1 }}
         onDeepLinkConsumed={() => {}}
       />,
@@ -158,8 +155,6 @@ describe("PI2-D5 — 'signal'-kind deep link (App.tsx KIND VOCABULARY; r09 accep
     const onDeepLinkConsumed = vi.fn()
     render(
       <OnSideFeed
-        topbar={makeTopbarProps()}
-        onNavigate={() => {}}
         deepLink={{ screen: 'onside.feed', kind: 'signal', id: SIGNAL_ID, nonce: 7 }}
         onDeepLinkConsumed={onDeepLinkConsumed}
       />,
@@ -172,8 +167,6 @@ describe("PI2-D5 — 'signal'-kind deep link (App.tsx KIND VOCABULARY; r09 accep
     const onDeepLinkConsumed = vi.fn()
     render(
       <OnSideFeed
-        topbar={makeTopbarProps()}
-        onNavigate={() => {}}
         deepLink={{ screen: 'onside.feed', kind: 'signal', id: 'no-such-signal', nonce: 8 }}
         onDeepLinkConsumed={onDeepLinkConsumed}
       />,

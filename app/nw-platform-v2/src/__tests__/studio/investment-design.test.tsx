@@ -27,19 +27,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { InvestmentDesign } from '../../screens/InvestmentDesign';
 import type { InvestmentDesignProps } from '../../screens/InvestmentDesign';
-import type { TopbarProps } from '../../components/Topbar';
 import { getDemoSliders, resetDemo } from '../../state/demoStore';
 
-const topbar: TopbarProps = {
-  breadcrumb: 'Studio · Investment Design',
-  onOpenBoardDeck: () => {},
-  date: 'Aug 19, 2026',
-  profile: { name: 'Rachel Fischer', initials: 'RF' },
-  profileMenuItems: [],
-};
-
 function renderScreen(overrides?: Partial<InvestmentDesignProps>) {
-  return render(<InvestmentDesign topbar={topbar} onNavigate={() => {}} {...overrides} />);
+  return render(<InvestmentDesign {...overrides} />);
 }
 
 beforeEach(() => {

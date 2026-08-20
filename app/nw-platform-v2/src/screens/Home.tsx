@@ -9,16 +9,14 @@
  * conditional) → primary CTA. Components used per spec: Topbar (C4),
  * Sidebar (C3), StatCard (C1), Button (P2).
  *
- * AMBIGUITY RESOLVED — Topbar/Sidebar data ownership: both composites
- * require persona/profile/notification/date/nav-callback data this screen
- * does not own (see `Topbar.tsx`'s `TopbarProps` and `Sidebar.tsx`'s
- * `SidebarProps`). Following the exact passthrough pattern already landed
- * in this worktree by the sibling `BoardDeck.tsx` dispatch (`topbar:
- * TopbarProps` full bundle), this screen accepts a full `topbar` prop and,
- * for Sidebar, only `onNavigate` (+ optional `sidebarVersionLabel`) — the
- * `activeId` half of `SidebarProps` is intrinsic to which screen is
- * rendering, so it is hardcoded here to `'home'` rather than accepted as a
- * prop the integrator could get wrong.
+ * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
+ * design_system_spec.md §3.0): both composites now mount exactly once, in
+ * App.tsx's persistent Shell, wrapping every routed screen's content
+ * region — no screen module (this one included) owns, imports, or renders
+ * its own copy of either. This screen no longer accepts a `topbar` prop or
+ * builds a local `SidebarProps` object; it keeps only `onNavigate`, which
+ * its own content (the primary CTA, HomePanels' go-links) still needs for
+ * in-screen navigation, unrelated to rendering Sidebar itself.
  *
  * HOME CUSTOMIZATION (W2, parity_ia_addendum.md §1.7 + Batch 7 line 403 —
  * resolves this header's original "STOP-item if a future dispatch surfaces
@@ -123,9 +121,6 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { DeepLinkScreenProps } from '../App';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
 import type { SidebarProps } from '../components/Sidebar';
 import { StatCard } from '../components/StatCard';
 import { Button } from '../components/primitives/Button';
@@ -133,25 +128,6 @@ import { HomeCustomizeBar, resolveVisibleKeys } from '../views/HomeCustomizeBar'
 import type { HomePanelKey } from '../views/HomeCustomizeBar';
 import { HomePanels } from '../views/HomePanels';
 import { CURRENT } from '../data/studio';
-
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-
-const BODY_ROW_STYLE: CSSProperties = {
-  display: 'flex',
-  flex: '1 1 auto',
-  minHeight: 0,
-};
-
-const SIDEBAR_REGION_STYLE: CSSProperties = {
-  flex: '0 0 240px',
-};
 
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
@@ -189,11 +165,8 @@ const CTA_ROW_STYLE: CSSProperties = {
 };
 
 export interface HomeProps extends DeepLinkScreenProps {
-  /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as `BoardDeck.tsx`). */
-  topbar: TopbarProps;
-  /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('home') and is not accepted as a prop. */
+  /** Navigation hook for this screen's own in-content links (the primary CTA, HomePanels' go-links) — unrelated to Sidebar, which this screen no longer renders (App.tsx's Shell owns it; see file header). */
   onNavigate: SidebarProps['onNavigate'];
-  sidebarVersionLabel?: string;
   /**
    * Active persona's role key / first name for the customization surfaces
    * (§1.7). Optional with `CURRENT` defaults — see file header "AMBIGUITY
@@ -204,7 +177,7 @@ export interface HomeProps extends DeepLinkScreenProps {
   roleFirstName?: string;
 }
 
-export function Home({ topbar, onNavigate, sidebarVersionLabel, roleKey = CURRENT.roleKey, roleFirstName = CURRENT.first, onDeepLink }: HomeProps) {
+export function Home({ onNavigate, roleKey = CURRENT.roleKey, roleFirstName = CURRENT.first, onDeepLink }: HomeProps) {
   // Lifted customization state (HomeCustomizeBar.tsx "WIRING RECIPE"): the
   // bar's toggles and HomePanels' render set share this one array. Re-derived
   // when `roleKey` changes via React's adjust-state-during-render pattern so
@@ -217,58 +190,39 @@ export function Home({ topbar, onNavigate, sidebarVersionLabel, roleKey = CURREN
   if (panelState.roleKey !== roleKey) {
     setPanelState({ roleKey, visibleKeys: resolveVisibleKeys(roleKey) });
   }
-  // Built conditionally (rather than `versionLabel={sidebarVersionLabel}`
-  // directly) because this project's `exactOptionalPropertyTypes` setting
-  // treats Sidebar's optional `versionLabel` as exactly `string`, not
-  // `string | undefined` — same pattern `StatCard.tsx`/`BoardDeck.tsx`
-  // document for their own optional-prop forwarding.
-  const sidebarProps: SidebarProps = {
-    activeId: 'home',
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
-
   return (
-    <div data-lf-screen="home" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="home-main" style={MAIN_STYLE} aria-labelledby="home-page-title">
-          <h1 id="home-page-title" style={TITLE_STYLE}>
-            Home
-          </h1>
-          <div style={STAT_ROW_STYLE}>
-            {/* survey_map.md 4197–4296: "$540,000/yr freed". G11: label carries
-                the exact "cost capacity already freed" measure distinction. */}
-            <StatCard label="Cost capacity already freed" value="$540,000" unit="/yr" />
-            {/* survey_map.md 4197–4296: "3.5 FTE". */}
-            <StatCard label="Capacity freed" value="3.5" unit="FTE" />
-          </div>
-          <div style={CTA_ROW_STYLE}>
-            {/* D18 (presenter_entry_redesign.md §1): product-native primary
-                CTA — same Button primitive, same slot, same weight; the
-                destination is script step 2's own `do` action. */}
-            <Button variant="primary" label="Open today's regulatory feed" onPress={() => onNavigate('onside.feed')} />
-          </div>
-          {/* W2 (addendum §1.7 / Batch 7): customization surfaces, strictly
-              below the unchanged StatCard row + primary CTA — see file
-              header "HOME CUSTOMIZATION." */}
-          <HomeCustomizeBar
-            roleKey={roleKey}
-            roleFirstName={roleFirstName}
-            visibleKeys={panelState.visibleKeys}
-            onChange={(nextVisibleKeys) => setPanelState({ roleKey, visibleKeys: nextVisibleKeys })}
-          />
-          <HomePanels
-            visibleKeys={panelState.visibleKeys}
-            currentRoleKey={roleKey}
-            onNavigate={onNavigate}
-            {...(onDeepLink !== undefined ? { onDeepLink } : {})}
-          />
-        </main>
+    <main id="home-main" style={MAIN_STYLE} aria-labelledby="home-page-title">
+      <h1 id="home-page-title" style={TITLE_STYLE}>
+        Home
+      </h1>
+      <div style={STAT_ROW_STYLE}>
+        {/* survey_map.md 4197–4296: "$540,000/yr freed". G11: label carries
+            the exact "cost capacity already freed" measure distinction. */}
+        <StatCard label="Cost capacity already freed" value="$540,000" unit="/yr" />
+        {/* survey_map.md 4197–4296: "3.5 FTE". */}
+        <StatCard label="Capacity freed" value="3.5" unit="FTE" />
       </div>
-    </div>
+      <div style={CTA_ROW_STYLE}>
+        {/* D18 (presenter_entry_redesign.md §1): product-native primary
+            CTA — same Button primitive, same slot, same weight; the
+            destination is script step 2's own `do` action. */}
+        <Button variant="primary" label="Open today's regulatory feed" onPress={() => onNavigate('onside.feed')} />
+      </div>
+      {/* W2 (addendum §1.7 / Batch 7): customization surfaces, strictly
+          below the unchanged StatCard row + primary CTA — see file
+          header "HOME CUSTOMIZATION." */}
+      <HomeCustomizeBar
+        roleKey={roleKey}
+        roleFirstName={roleFirstName}
+        visibleKeys={panelState.visibleKeys}
+        onChange={(nextVisibleKeys) => setPanelState({ roleKey, visibleKeys: nextVisibleKeys })}
+      />
+      <HomePanels
+        visibleKeys={panelState.visibleKeys}
+        currentRoleKey={roleKey}
+        onNavigate={onNavigate}
+        {...(onDeepLink !== undefined ? { onDeepLink } : {})}
+      />
+    </main>
   );
 }

@@ -20,6 +20,15 @@
  * reachable via in-screen links only" (no 5th OnSide child added; this
  * screen already exists at the reserved `onside.ownership` leaf).
  *
+ * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
+ * design_system_spec.md §3.0): both composites now mount exactly once, in
+ * App.tsx's persistent Shell — this screen no longer accepts a `topbar`
+ * prop or builds a local `SidebarProps`. It also no longer accepts
+ * `onNavigate`: this screen never called it directly (every internal
+ * action here is a Drawer open/close), so that plumbing was dead the
+ * moment its only consumer (the local `sidebarProps` construction) was
+ * removed.
+ *
  * STOP-ITEM RESOLVED — App.tsx routing (stale claim corrected by the
  * fix-wave gate dispatch, RPT-10 class; an earlier revision of this
  * header still reported the case as "not wired" pending an App-owning
@@ -227,10 +236,6 @@
  */
 import { useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
-import type { SidebarProps } from '../components/Sidebar';
 import { DataTable } from '../components/DataTable';
 import type { DataTableColumn } from '../components/DataTable';
 import { Drawer } from '../components/Drawer';
@@ -442,17 +447,6 @@ const STATUS_TAG_VARIANT: Record<DocStatus, NonRaciTagVariant> = {
 
 /* ============ layout constants — see file header ============ */
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-
-const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
-const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
 // third-party overlays tomorrow) so an unpinned absolute box resolves
@@ -505,15 +499,10 @@ export const TWO_ENGINES_CARD_STYLE: CSSProperties = {
   ...PANEL_STYLE,
 };
 
-export interface OnSideOwnershipProps extends DeepLinkScreenProps {
-  /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as every sibling screen). */
-  topbar: TopbarProps;
-  /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('onside.ownership') and is not accepted as a prop. */
-  onNavigate: SidebarProps['onNavigate'];
-  sidebarVersionLabel?: string;
-}
+/** No screen-specific members beyond deep-link — `topbar`/`onNavigate` were removed as dead once Sidebar/Topbar mount moved to App.tsx's Shell (see file header); this screen never called `onNavigate` directly, only fed it to the Sidebar it no longer renders. */
+export type OnSideOwnershipProps = DeepLinkScreenProps;
 
-export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel, onDeepLink }: OnSideOwnershipProps) {
+export function OnSideOwnership({ onDeepLink }: OnSideOwnershipProps) {
   // Re-renders on demo-store writes so live DOCLIB reads (doc status /
   // version after an adopt on OnSideDocuments) stay current — see the
   // file-header adoption-state note.
@@ -559,20 +548,9 @@ export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel, onDee
 
   const drawerTags: DrawerContentTag[] = displayDoc ? [{ text: STATUS_LABEL[displayDoc.status], variant: STATUS_TAG_VARIANT[displayDoc.status] }] : [];
 
-  const sidebarProps: SidebarProps = {
-    activeId: 'onside.ownership',
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
-
   return (
-    <div data-lf-screen="onside-ownership" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="onside-ownership-main" style={MAIN_STYLE} aria-labelledby="onside-ownership-title">
+    <>
+      <main id="onside-ownership-main" style={MAIN_STYLE} aria-labelledby="onside-ownership-title">
           <h1 id="onside-ownership-title" style={TITLE_STYLE}>
             OnSide · Ownership
           </h1>
@@ -651,8 +629,7 @@ export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel, onDee
               <h3 style={DOMAIN_HEADING_STYLE}>{TWO_ENGINES_HEADING}</h3>
             </div>
           </section>
-        </main>
-      </div>
+      </main>
 
       <Drawer open={openDocId !== null} title={displayDoc ? decodeText(displayDoc.t) : ''} onClose={() => setOpenDocId(null)}>
         {displayDoc ? (
@@ -671,6 +648,6 @@ export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel, onDee
           </>
         ) : null}
       </Drawer>
-    </div>
+    </>
   );
 }

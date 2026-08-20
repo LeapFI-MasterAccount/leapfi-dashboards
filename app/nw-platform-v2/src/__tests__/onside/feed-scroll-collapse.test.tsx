@@ -38,10 +38,9 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { OnSideFeed } from '../../screens/OnSideFeed'
-import { makeTopbarProps } from './helpers'
 
 function renderFeed() {
-  return render(<OnSideFeed topbar={makeTopbarProps()} onNavigate={() => {}} />)
+  return render(<OnSideFeed />)
 }
 
 describe('OnSide feed · signal table scroll-collapse (flex-shrink crush)', () => {

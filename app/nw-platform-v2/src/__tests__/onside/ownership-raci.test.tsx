@@ -25,11 +25,10 @@ import { describe, expect, it } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import { OnSideOwnership } from '../../screens/OnSideOwnership'
 import { M, ROLES } from '../../data/onside'
-import { makeTopbarProps } from './helpers'
 import { rowgroupHeaderTextsFor } from '../a11y/tableRowgroupAccessibleName'
 
 function renderOwnership() {
-  return render(<OnSideOwnership topbar={makeTopbarProps()} onNavigate={() => {}} />)
+  return render(<OnSideOwnership />)
 }
 
 const TOTAL_DOCS = M.reduce((sum, [, , docs]) => sum + docs.length, 0)

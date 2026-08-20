@@ -45,12 +45,11 @@ import { describe, expect, it } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import { OnSideDocuments } from '../../screens/OnSideDocuments'
 import { DOCLIB } from '../../data/doclib'
-import { makeTopbarProps } from './helpers'
 
 const ALL_DOCS = Object.values(DOCLIB)
 
 function renderDocuments() {
-  return render(<OnSideDocuments topbar={makeTopbarProps()} onNavigate={() => {}} />)
+  return render(<OnSideDocuments />)
 }
 
 describe('OnSide documents · document library table scroll-collapse (flex-shrink crush)', () => {

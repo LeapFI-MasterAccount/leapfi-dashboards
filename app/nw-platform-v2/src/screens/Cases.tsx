@@ -10,15 +10,18 @@
  * NO SIDEBAR LEAF (design_system_spec.md §3.1's own explicit disposition:
  * "`Cases`/`Lifecycle`/`board-update`/`Onboarding` (OnSide) are **not**
  * separate nested sidebar entries — reachable via in-screen links only").
- * This screen still renders the full Topbar+Sidebar+`<main>` shell (the
- * addendum's own `screens/` vs `views/` method note: a `screens/` file "has
- * its own ScreenId in App.tsx, is a full Topbar+Sidebar+<main>
- * composition") — it just never appears as a highlighted `Sidebar` item.
- * `sidebarProps.activeId` below is set to `'cases'`, an id that matches no
- * entry in `Sidebar.tsx`'s `NAV` table by construction, so nothing
- * highlights and no group force-expands — an honest "you are somewhere the
- * primary nav doesn't name" state, not a fabricated match onto an unrelated
- * item (Core Principle 3).
+ * SUPERSEDED — shell composition (amendment A11, design_system_spec.md
+ * §3.0): Sidebar/Topbar now mount exactly once, in App.tsx's persistent
+ * Shell — this screen no longer renders either itself; it contributes only
+ * its own `<main>` content region into the Shell. App.tsx's Shell passes
+ * `screenId` (`'cases'`) directly as Sidebar's `activeId`, an id that
+ * matches no entry in `Sidebar.tsx`'s `NAV` table by construction, so
+ * nothing highlights and no group force-expands — the same honest "you are
+ * somewhere the primary nav doesn't name" state this screen always had
+ * (Core Principle 3), now derived at the Shell level instead of locally.
+ * This screen keeps the full `topbar: TopbarProps` prop regardless — not to
+ * render `<Topbar>`, but because it reads `topbar.profileMenuItems`
+ * internally (CS-08 switch-user doclinks inside `CaseDetail`, below).
  *
  * ENTRY POINTS (all three are now wired — this paragraph previously
  * claimed "none of these three is wired yet", stale since the shell gave
@@ -138,9 +141,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { DeepLinkRequest, DeepLinkTarget } from '../App';
-import { Topbar } from '../components/Topbar';
 import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
 import type { SidebarProps } from '../components/Sidebar';
 import { DataTable } from '../components/DataTable';
 import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
@@ -218,16 +219,6 @@ function waitingOnRoleKey(stage: string): string | null {
  * Principle 1, rather than an instant flip indistinguishable from fake. */
 const ACTION_COMMIT_DELAY_MS = 550;
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
-const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
 // third-party overlays tomorrow) so an unpinned absolute box resolves
@@ -252,11 +243,10 @@ const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 const CITE_STYLE: CSSProperties = { margin: '0.15rem 0 0', fontSize: '0.8125rem', color: 'var(--ink2)' };
 
 export interface CasesProps {
-  /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as `Home.tsx`/`OnSideDocuments.tsx`). */
+  /** NOT for rendering `<Topbar>` (App.tsx's Shell owns that; see file header) — this screen reads `topbar.profileMenuItems` internally for CS-08's switch-user doclinks inside `CaseDetail`. */
   topbar: TopbarProps;
-  /** Sidebar navigation hook. `activeId` is intrinsic to this screen and deliberately matches nothing in `Sidebar.tsx`'s `NAV` table — see file header "NO SIDEBAR LEAF." */
+  /** Navigation hook for this screen's own in-content links — unrelated to Sidebar, which App.tsx's Shell owns (see file header). */
   onNavigate: SidebarProps['onNavigate'];
-  sidebarVersionLabel?: string;
   /** Defaults to `CURRENT` (Rachel Fischer, CRO), matching `App.tsx`'s own default persona. See file header ENTRY POINTS. */
   currentUser?: StudioUser;
   /** Deep-entry hook for the three named entry points — opens straight to a case's detail state instead of the list. App.tsx passes the bell row's case id here (see file header ENTRY POINTS). */
@@ -275,7 +265,7 @@ export interface CasesProps {
   onDeepLinkConsumed?: (nonce: number) => void;
 }
 
-export function Cases({ topbar, onNavigate, sidebarVersionLabel, currentUser = CURRENT, initialCaseId, deepLink, onDeepLink, onDeepLinkConsumed }: CasesProps) {
+export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId, deepLink, onDeepLink, onDeepLinkConsumed }: CasesProps) {
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(initialCaseId ?? null);
 
   // PI2-D5 — 'case'-kind deep-link consumption: standard nonce-keyed
@@ -531,21 +521,10 @@ export function Cases({ topbar, onNavigate, sidebarVersionLabel, currentUser = C
     onPress: (row) => setSelectedCaseId(row.id),
   };
 
-  const sidebarProps: SidebarProps = {
-    activeId: 'cases',
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
-
   return (
-    <div data-lf-screen="cases" data-lf-render-tick={renderTick} style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="cases-main" style={MAIN_STYLE} aria-labelledby="cases-title">
-          {selectedCase ? (
+    <>
+    <main id="cases-main" data-lf-render-tick={renderTick} style={MAIN_STYLE} aria-labelledby="cases-title">
+      {selectedCase ? (
             <CaseDetail
               caseItem={selectedCase}
               doc={DOCLIB[selectedCase.doc]}
@@ -609,9 +588,7 @@ export function Cases({ topbar, onNavigate, sidebarVersionLabel, currentUser = C
               ) : null}
             </>
           )}
-        </main>
-      </div>
-
+    </main>
       {toast ? (
         // A-overlap-04: `Toast` is now self-positioning (fixed bottom-center,
         // its own internal anchor — see components/Toast.tsx's
@@ -622,6 +599,6 @@ export function Cases({ topbar, onNavigate, sidebarVersionLabel, currentUser = C
         // (CS-09) so every confirmation gets its full 5s.
         <Toast key={toast.key} variant={toast.variant} message={toast.message} onDismiss={() => setToast(null)} autoDismissMs={5000} />
       ) : null}
-    </div>
+    </>
   );
 }

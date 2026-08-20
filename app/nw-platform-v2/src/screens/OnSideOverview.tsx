@@ -22,11 +22,12 @@
  * for the objectives strip, SetupCard (C15, `interactive`) for the Cases
  * entry point, Button (P2, `ghost`) for the Connect teaser link.
  *
- * AMBIGUITY RESOLVED — Topbar/Sidebar data ownership: identical
- * passthrough pattern to every already-landed screen in this worktree
- * (`Home.tsx`, `OnSideDocuments.tsx`, `StudioAsk.tsx`) — full `topbar:
- * TopbarProps` bundle, `onNavigate: SidebarProps['onNavigate']`,
- * `activeId` hardcoded to `'onside.overview'` (intrinsic to this screen).
+ * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
+ * design_system_spec.md §3.0): both composites now mount exactly once, in
+ * App.tsx's persistent Shell — this screen no longer accepts a `topbar`
+ * prop or builds a local `SidebarProps`; it keeps only `onNavigate` for its
+ * own in-content links (KPI cards, objective chips, the Connect teaser,
+ * the Cases entry point) — unrelated to rendering Sidebar itself.
  * Per the dispatch brief, `Sidebar.tsx`'s `NAV` array does not carry an
  * `onside.overview` child yet (that is this dispatch's flagged, explicitly
  * out-of-allowlist wiring note — parity_ia_addendum.md §0/OQ-A) — until
@@ -167,9 +168,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { DeepLinkScreenProps } from '../App';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
 import type { SidebarProps } from '../components/Sidebar';
 import { StatCard } from '../components/StatCard';
 import { SetupCard } from '../components/SetupCard';
@@ -258,16 +256,6 @@ const OBL_STATUS_VARIANT: Record<ObligationRow['st'], NonRaciTagVariant> = {
  * server has). */
 const ADOPT_COMMIT_DELAY_MS = 650;
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
-const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
 // third-party overlays tomorrow) so an unpinned absolute box resolves
@@ -397,16 +385,13 @@ function DomainPostureCard({ domain, onOpen }: { domain: OnsideDomain; onOpen: (
 }
 
 export interface OnSideOverviewProps extends DeepLinkScreenProps {
-  /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as every other screen in this worktree). */
-  topbar: TopbarProps;
-  /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('onside.overview') and is not accepted as a prop. */
+  /** Navigation hook for this screen's own in-content links (KPI cards, objective chips, the Connect teaser, the Cases entry point) — unrelated to Sidebar, which App.tsx's Shell owns (see file header). */
   onNavigate: SidebarProps['onNavigate'];
-  sidebarVersionLabel?: string;
   /** LEGACY — see file header "LEGACY deepLinkDomainKey PROP." Superseded by `deepLink`/`onDeepLinkConsumed` (`DeepLinkScreenProps`, above); accepted only so `App.tsx`'s existing call site keeps compiling. No longer read by this screen's own logic. */
   deepLinkDomainKey?: string;
 }
 
-export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLink, onDeepLinkConsumed }: OnSideOverviewProps) {
+export function OnSideOverview({ onNavigate, deepLink, onDeepLinkConsumed }: OnSideOverviewProps) {
   // Re-renders this screen on every demo-store write (Adopt cascade,
   // Discovery accepts, resetDemo) — see the ONSIDE-02 file-header note.
   useDemoStore();
@@ -615,20 +600,9 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
       />
     ) : null;
 
-  const sidebarProps: SidebarProps = {
-    activeId: 'onside.overview',
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
-
   return (
-    <div data-lf-screen="onside-overview" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="onside-overview-main" style={MAIN_STYLE} aria-labelledby="onside-overview-title">
+    <>
+      <main id="onside-overview-main" style={MAIN_STYLE} aria-labelledby="onside-overview-title">
           <h1 id="onside-overview-title" style={TITLE_STYLE}>
             OnSide · Overview
           </h1>
@@ -737,8 +711,7 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
               onOpenObligation={handleOpenObligation}
             />
           </section>
-        </main>
-      </div>
+      </main>
 
       {/* B-dead-interactions-02 — obligation-detail Drawer (base openObl,
           source 2949-2997): evidence-on-file field, and a real
@@ -755,6 +728,6 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
       </Drawer>
 
       {adoptToast ? <Toast variant="success" message={adoptToast} onDismiss={() => setAdoptToast(null)} /> : null}
-    </div>
+    </>
   );
 }

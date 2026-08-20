@@ -188,11 +188,23 @@
  *     prefix, e.g. 'MRM-09' (the r16 QuickFind "type MRM-09 anywhere"
  *     shape — distinct from 'obligation''s `${domKey}:${oblId}`
  *     encoding), resolved to its owning domain via `data/onside.ts`'s `OBL`.
- *   - PLUMBED EVERYWHERE NOW: `{...deepLinkProps}` is spread onto every
- *     routed screen below. A screen that has not yet declared the props
- *     simply ignores them (JSX spread performs no excess-property check);
- *     the moment a screen batch adds `extends DeepLinkScreenProps`, the
- *     same spread type-checks against its declaration. The 'domain' kind
+ *   - PLUMBED EVERYWHERE NOW, WITH ONE PAIR OF EXCEPTIONS (amendment A11
+ *     shell restructure): `{...deepLinkProps}` is spread onto every routed
+ *     screen below whose own `Props` type is not a bare `object` — a
+ *     screen that has not yet declared the props simply ignores them (JSX
+ *     spread performs no excess-property check); the moment a screen batch
+ *     adds `extends DeepLinkScreenProps`, the same spread type-checks
+ *     against its declaration. `SettingsToggles`/`SettingsAbout` are the
+ *     two screens whose `Props` type collapsed to a bare `object` once the
+ *     A11 shell restructure removed their last remaining members
+ *     (`topbar`/`onNavigate`, both dead there even before this wave — see
+ *     each file's own header): `exactOptionalPropertyTypes` + TS's
+ *     weak-type-detection then reads a spread with zero overlapping keys
+ *     against an all-(zero)-optional-properties target as an error (real
+ *     TS behavior, not a bug in the pattern), so the spread is omitted at
+ *     those two call sites only — neither screen has ever consumed
+ *     `deepLink`/`onDeepLink`/`onDeepLinkConsumed`, so this drops no live
+ *     behavior. The 'domain' kind
  *     resolves purely through that same `deepLink`/`onDeepLinkConsumed`
  *     contract now — LEGACY BRIDGE REMOVED (App-side cleanup, this wave):
  *     `OnSideOverview.tsx`'s own header ("DEEP-LINK CONTRACT MIGRATION",
@@ -288,10 +300,71 @@
  * panel, presenter rail, topbar, sidebar, home, theme toggle, live demo
  * state, deep-link payload navigation) and type-checked via
  * `npx tsc --noEmit` (strict, `exactOptionalPropertyTypes`).
+ *
+ * SHELL COMPOSITION — PERSISTENT MOUNT (amendment A11, design_system_spec.md
+ * §3.0; closes the Sprint-1 hostile-review E1 finding): Sidebar (C3) and
+ * Topbar (C4) are now mounted exactly once here, wrapping whichever screen
+ * `renderActiveScreen()` returns — never per-screen. Before this fix, every
+ * one of the 13 routed screen modules under `src/screens/*.tsx` composed its
+ * own `<Sidebar>`/`<Topbar>` inside its own JSX tree, so React unmounted and
+ * remounted a fresh `Sidebar` (`overrides={}`) on every `ScreenId` change,
+ * silently discarding a presenter's manual collapse/expand on the very next
+ * navigation — the opposite of `Sidebar.tsx`'s own claimed invariant ("a
+ * manual override always wins"), which was only ever true for the life of
+ * one mount. §3.0's ruling is BEHAVIOUR-IS-WRONG, not a narrowed claim: the
+ * per-screen mount was an unexamined composition artifact, not a recorded
+ * anatomy decision, so it is fixed here, not documented as intended.
+ *
+ * `renderActiveScreen()` below now returns each screen's CONTENT ONLY (its
+ * own `<main>`, plus any screen-local `<Drawer>`/`<Toast>` — Drawer/Toast
+ * both self-position via CSS `position: fixed`, so their place in the tree
+ * is immaterial to layout). `SHELL_STYLE`/`SHELL_BODY_STYLE`/
+ * `SIDEBAR_REGION_STYLE` below are the exact three layout constants every
+ * screen used to declare and repeat locally (`SCREEN_STYLE`/
+ * `BODY_ROW_STYLE`/`SIDEBAR_REGION_STYLE`) — hoisted here once, since they
+ * described SHELL layout, not screen-content layout; each screen's own
+ * `MAIN_STYLE` (padding/overflow/scroll of its content region) stays local,
+ * unchanged, since that is genuinely screen-owned.
+ *
+ * `[data-lf-screen]` (PresenterRail's occlusion-inset selector, an
+ * attribute-EXISTS selector, not value-specific — `PresenterRail.tsx`'s own
+ * `[data-lf-screen] { height: calc(100vh - ...) }` rule) moves from each
+ * screen's own now-removed wrapper onto this file's persistent Shell root.
+ * Exactly one such element exists in the DOM at any time, before and after
+ * this change — the Shell never remounts, so this is a strictly equivalent
+ * target for that rule, not a new behavior. Its value is now the literal,
+ * dot-qualified `ScreenId` (`screenId`) rather than each screen's own ad hoc
+ * kebab-case string (`'onside-overview'`, `'investment-design'`, …) — no
+ * consumer anywhere keyed off the old per-screen values (confirmed by
+ * search), so this is a strictly more precise debug label, not a behavior
+ * change.
+ *
+ * SIDEBAR EXEMPTION PRESERVED: Board Deck (`'board-deck'`) is the one
+ * screen anatomy (§5.7) that deliberately renders no Sidebar — "not a
+ * Sidebar item; this is a flow-level presentation surface" — while still
+ * rendering Topbar. `showSidebar` below is the single boolean gate that
+ * carries that exemption forward into the shared Shell; Board Deck keeps
+ * its Topbar (rendered by the Shell, same as every other screen) and loses
+ * only the Sidebar column.
+ *
+ * `topbar: TopbarProps` IS NO LONGER PASSED to any routed screen except
+ * `Cases`: no screen renders its own `<Topbar>` anymore, so the full prop
+ * bundle serves no purpose for the other 12 — removed from their `Props`
+ * types and call sites (dead plumbing this refactor is the direct cause of
+ * retiring, not a separate cleanup). `Cases.tsx` is the one exception: it
+ * reads `topbar.profileMenuItems` internally (CS-08's switch-user doclinks
+ * inside `CaseDetail`), a real data dependency unrelated to rendering
+ * `<Topbar>` itself, so it keeps the full bundle as a prop.
+ * `sidebarVersionLabel` is removed from every screen's `Props` for the same
+ * reason — no screen renders `<Sidebar>` anymore, and no call site ever
+ * passed a non-default value (confirmed by search), so the plumbing carried
+ * no live behavior to preserve.
  */
 import { useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import './App.css'
+import { Sidebar } from './components/Sidebar'
+import type { SidebarProps } from './components/Sidebar'
 import { Home } from './screens/Home'
 import { ConnectSoon } from './screens/ConnectSoon'
 import { OnSideFeed } from './screens/OnSideFeed'
@@ -306,6 +379,7 @@ import { Cases } from './screens/Cases'
 import { Reporting } from './screens/Reporting'
 import { SettingsToggles } from './screens/SettingsToggles'
 import { SettingsAbout } from './screens/SettingsAbout'
+import { Topbar } from './components/Topbar'
 import type { TopbarProfileMenuItem, TopbarProps } from './components/Topbar'
 import { PresenterRail } from './components/PresenterRail'
 import { Toast } from './components/Toast'
@@ -327,6 +401,23 @@ function getInitialTheme(): Theme {
   const stored = window.localStorage.getItem(THEME_STORAGE_KEY)
   return stored === 'light' || stored === 'dark' ? stored : 'dark'
 }
+
+// Shell layout — hoisted verbatim from every screen's former identical
+// SCREEN_STYLE/BODY_ROW_STYLE/SIDEBAR_REGION_STYLE (file header "SHELL
+// COMPOSITION — PERSISTENT MOUNT"). Each screen's own MAIN_STYLE (content
+// padding/overflow) stays local to that screen — this is shell chrome only.
+const SHELL_STYLE: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  width: '100%',
+  height: '100vh',
+  background: 'var(--bg)',
+  boxSizing: 'border-box',
+}
+
+const SHELL_BODY_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 }
+
+const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' }
 
 /** demo_script_draft.md Step 1 "See" line / §5.7 board-deck stamp — see file header "DEMO_DATE_LABEL." */
 const DEMO_DATE_LABEL = 'Friday, August 15, 2026'
@@ -630,7 +721,6 @@ function App() {
         // paint is unchanged.
         return (
           <Home
-            topbar={topbarProps}
             onNavigate={navigateToScreen}
             roleKey={currentUser.roleKey}
             roleFirstName={currentUser.first}
@@ -645,15 +735,15 @@ function App() {
         // cleanup, this wave): `OnSideOverview.tsx` migrated off it
         // (B3 dispatch, that file's header "DEEP-LINK CONTRACT
         // MIGRATION") and its own logic never read it.
-        return <OnSideOverview topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
+        return <OnSideOverview onNavigate={navigateToScreen} {...deepLinkProps} />
       case 'onside.feed':
-        return <OnSideFeed topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
+        return <OnSideFeed {...deepLinkProps} />
       case 'onside.documents':
-        return <OnSideDocuments topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
+        return <OnSideDocuments {...deepLinkProps} />
       case 'onside.ownership':
-        return <OnSideOwnership topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
+        return <OnSideOwnership {...deepLinkProps} />
       case 'studio.ask':
-        return <StudioAsk topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
+        return <StudioAsk onNavigate={navigateToScreen} {...deepLinkProps} />
       case 'studio.investment-design':
         // `initialSliders`: App-level live-lever provisioning (SH-6/RPT-04
         // backbone) — every mount starts from the store's live lever
@@ -664,14 +754,12 @@ function App() {
         // batch's wiring).
         return (
           <InvestmentDesign
-            topbar={topbarProps}
-            onNavigate={navigateToScreen}
             initialSliders={getDemoSliders()}
             {...deepLinkProps}
           />
         )
       case 'studio.roadmap':
-        return <Roadmap topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
+        return <Roadmap onNavigate={navigateToScreen} {...deepLinkProps} />
       case 'connect':
       case 'connect.allrailz':
       case 'connect.vantage':
@@ -679,8 +767,6 @@ function App() {
         // "EVERY SIDEBAR DESTINATION ROUTES TO A REAL SCREEN."
         return (
           <ConnectSoon
-            topbar={topbarProps}
-            onNavigate={navigateToScreen}
             moduleKey={screenId === 'connect' ? 'connect' : screenId === 'connect.allrailz' ? 'allrailz' : 'vantage'}
             {...deepLinkProps}
           />
@@ -689,16 +775,20 @@ function App() {
         // `currentUser`: stamps `who` on committed board-log updates (the
         // regchange report's "Log an update →" sub-flow — base boardSave
         // reads the live persona global CURRENT, source 3589).
-        return <Reporting topbar={topbarProps} onNavigate={navigateToScreen} currentUser={currentUser} {...deepLinkProps} />
+        return <Reporting onNavigate={navigateToScreen} currentUser={currentUser} {...deepLinkProps} />
       case 'settings.toggles':
-        return <SettingsToggles topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
+        return <SettingsToggles />
       case 'settings.about':
-        return <SettingsAbout topbar={topbarProps} onNavigate={navigateToScreen} {...deepLinkProps} />
+        return <SettingsAbout />
       case 'cases':
         // `key`: see file header "NOTIFICATION BELL" — forces a remount so
         // `initialCaseId` is re-honored when a bell row is opened while
         // Cases is already the active screen (Cases.tsx itself is
         // unmodified; this is a pure parent-side composition technique).
+        // `topbar`: Cases.tsx is the one screen that still needs the full
+        // bundle — it reads `topbar.profileMenuItems` internally (CS-08
+        // switch-user doclinks), not to render its own `<Topbar>` (see file
+        // header "SHELL COMPOSITION — PERSISTENT MOUNT").
         return (
           <Cases
             key={pendingCaseId !== null ? `${pendingCaseId}·${bellPressNonce}` : 'cases-list'}
@@ -710,13 +800,34 @@ function App() {
           />
         )
       case 'board-deck':
-        return <BoardDeck topbar={topbarProps} onDesignPartnerRequest={handleDesignPartnerRequest} {...deepLinkProps} />
+        return <BoardDeck onDesignPartnerRequest={handleDesignPartnerRequest} {...deepLinkProps} />
     }
+  }
+
+  // §5.7: Board Deck is the one screen anatomy that deliberately renders no
+  // Sidebar ("not a Sidebar item; this is a flow-level presentation
+  // surface") while still rendering Topbar — see file header "SIDEBAR
+  // EXEMPTION PRESERVED."
+  const showSidebar = screenId !== 'board-deck'
+
+  const sidebarProps: SidebarProps = {
+    activeId: screenId,
+    onNavigate: navigateToScreen,
   }
 
   return (
     <>
-      {renderActiveScreen()}
+      <div data-lf-screen={screenId} style={SHELL_STYLE}>
+        <Topbar {...topbarProps} />
+        <div style={SHELL_BODY_STYLE}>
+          {showSidebar ? (
+            <div style={SIDEBAR_REGION_STYLE}>
+              <Sidebar {...sidebarProps} />
+            </div>
+          ) : null}
+          {renderActiveScreen()}
+        </div>
+      </div>
       <PresenterRail script={ACTIVE_SCRIPT} onNavigate={handlePresenterNavigate} onRestart={handleRestart} />
       {appToast ? (
         <Toast

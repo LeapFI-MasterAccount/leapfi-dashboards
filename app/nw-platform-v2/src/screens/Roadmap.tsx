@@ -89,11 +89,12 @@
  * closed `IconName` vocabulary — left unset rather than inventing a
  * mapping table SetupCard's own author did not sanction.
  *
- * AMBIGUITY RESOLVED — Topbar/Sidebar data ownership: identical
- * passthrough pattern to the sibling screens (`Home.tsx`, `BoardDeck.tsx`,
- * `OnSideFeed.tsx`): a full `topbar: TopbarProps` bundle prop, and for
- * Sidebar only `onNavigate` + optional `sidebarVersionLabel` — `activeId`
- * hardcoded to `'studio.roadmap'`.
+ * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
+ * design_system_spec.md §3.0): both composites now mount exactly once, in
+ * App.tsx's persistent Shell — this screen no longer accepts a `topbar`
+ * prop or builds a local `SidebarProps`; it keeps only `onNavigate` for its
+ * own in-content links (the "What's next" module SetupCards), unrelated to
+ * rendering Sidebar itself.
  *
  * Layout constants: same implementer-judgment category as `Home.tsx`'s/
  * `InvestmentDesign.tsx`'s identical header note (design_system_spec.md
@@ -103,9 +104,6 @@
  * against the base anchors above (vitest + @testing-library).
  */
 import type { CSSProperties } from 'react';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
 import type { SidebarProps } from '../components/Sidebar';
 import { RoadmapGantt } from '../components/RoadmapGantt';
 import type { RoadmapPhase, RoadmapSegment } from '../components/RoadmapGantt';
@@ -306,16 +304,6 @@ const MODULE_SCREEN_ID: Record<RoadmapModuleKey, string> = {
   vantage: 'connect.vantage',
 };
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
-const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
 // third-party overlays tomorrow) so an unpinned absolute box resolves
@@ -408,14 +396,11 @@ function PlayChipCard({ chip, onOpenPlay }: { chip: PlayChip; onOpenPlay: (name:
 }
 
 export interface RoadmapProps extends DeepLinkScreenProps {
-  /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as `Home.tsx`/`BoardDeck.tsx`/`OnSideFeed.tsx`/`InvestmentDesign.tsx`). */
-  topbar: TopbarProps;
-  /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('studio.roadmap') and is not accepted as a prop. */
+  /** Navigation hook for this screen's own in-content links (the "What's next" module SetupCards) — unrelated to Sidebar, which App.tsx's Shell owns (see file header). */
   onNavigate: SidebarProps['onNavigate'];
-  sidebarVersionLabel?: string;
 }
 
-export function Roadmap({ topbar, onNavigate, onDeepLink, sidebarVersionLabel }: RoadmapProps) {
+export function Roadmap({ onNavigate, onDeepLink }: RoadmapProps) {
   // Re-derives the Gantt from the LIVE plan on every store write (lever
   // changes, Discovery accepts) — base recompute() calls renderGantt(P)
   // on every input (1302; fix-wave STU-11).
@@ -428,24 +413,8 @@ export function Roadmap({ topbar, onNavigate, onDeepLink, sidebarVersionLabel }:
     onDeepLink?.({ screen: 'studio.investment-design', kind: 'play', id: name });
   };
 
-  // Built conditionally (rather than `versionLabel={sidebarVersionLabel}`
-  // directly) — this project's `exactOptionalPropertyTypes` setting treats
-  // Sidebar's optional `versionLabel` as exactly `string`, not `string |
-  // undefined` — same pattern `Home.tsx`/`OnSideFeed.tsx` document.
-  const sidebarProps: SidebarProps = {
-    activeId: 'studio.roadmap',
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
-
   return (
-    <div data-lf-screen="roadmap" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="roadmap-main" style={MAIN_STYLE} aria-labelledby="roadmap-title">
+    <main id="roadmap-main" style={MAIN_STYLE} aria-labelledby="roadmap-title">
           <div style={headerStyle}>
             <h1 id="roadmap-title" style={h1Style}>
               Roadmap
@@ -521,8 +490,6 @@ export function Roadmap({ topbar, onNavigate, onDeepLink, sidebarVersionLabel }:
               ))}
             </div>
           </div>
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }

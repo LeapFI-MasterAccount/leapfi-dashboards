@@ -15,12 +15,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Reporting } from '../../screens/Reporting';
-import { topbarFixture } from './fixtures';
 
 describe("gapboard report 'Open cases' (base 1503-1504)", () => {
   it("empty committee queue shows the fallback and 'Open cases →' emits the cases navigation intent", () => {
     const onNavigate = vi.fn();
-    render(<Reporting topbar={topbarFixture()} onNavigate={onNavigate} />);
+    render(<Reporting onNavigate={onNavigate} />);
 
     fireEvent.click(screen.getByRole('button', { name: /Gap Closure Board Approval Report/ }));
     const dialog = screen.getByRole('dialog');

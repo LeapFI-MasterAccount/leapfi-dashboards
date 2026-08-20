@@ -16,7 +16,6 @@
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Reporting } from '../../screens/Reporting';
-import { topbarFixture } from './fixtures';
 
 /** Pinned expectation data (hardcoded, not derived from app exports): the
  * base `osReports()` card titles in call order (source 3714-3722), then the
@@ -37,7 +36,7 @@ const EXPECTED_CARD_TITLES_IN_ORDER = [
 
 describe('Reporting index (base osReports 3710-3725 + openReport kinds 1474-1686)', () => {
   it('renders exactly 11 report cards, base 9 in osReports() order with plan/roadmap appended', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
 
     // The index main region contains the card grid and nothing else pressable.
     const main = screen.getByRole('main');
@@ -50,7 +49,7 @@ describe('Reporting index (base osReports 3710-3725 + openReport kinds 1474-1686
   });
 
   it('pressing a card opens the shared drawer report with that report title (base openReport head(), 1474-1686)', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
 
     fireEvent.click(screen.getByRole('button', { name: /Regulatory Change Briefing/ }));
 

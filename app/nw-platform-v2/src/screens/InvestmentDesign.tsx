@@ -145,20 +145,14 @@
  * output). Flagged per §d-5's explicit binding language rather than
  * silently treating a same-file `<Drawer>` as the final architecture.
  *
- * AMBIGUITY RESOLVED — Topbar/Sidebar data ownership: `Topbar`/`Sidebar`
- * (C4/C3) require persona/profile/notification/date/nav-callback state
- * this screen does not own (see `Topbar.tsx`'s `TopbarProps` and
- * `Sidebar.tsx`'s `SidebarProps`). This file follows the EXACT passthrough
- * pattern already landed by three sibling screens in this worktree
- * (`Home.tsx`, `BoardDeck.tsx`, `OnSideFeed.tsx`): a full `topbar:
- * TopbarProps` bundle prop, and for Sidebar only `onNavigate` + optional
- * `sidebarVersionLabel` — `activeId` is intrinsic to which screen is
- * rendering, so it is hardcoded here to `'studio.investment-design'`
- * (`Sidebar.tsx`'s own `NAV` entry id for this screen) rather than
- * accepted as a prop the integrator could get wrong. Matching this
- * pattern (rather than my own initially-drafted "content only, no shell"
- * shape) keeps all 5 screens landed in this worktree so far integrable
- * the same way by whatever dispatch assembles the app shell/router.
+ * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
+ * design_system_spec.md §3.0): both composites now mount exactly once, in
+ * App.tsx's persistent Shell — this screen no longer accepts a `topbar`
+ * prop or builds a local `SidebarProps`. It also no longer accepts
+ * `onNavigate` — its own content never called it directly (every internal
+ * navigation here is a local Drawer open/close, not a screen change), so
+ * that plumbing was dead the moment its only consumer (the local
+ * `sidebarProps` construction) was removed.
  *
  * Layout constants (240px sidebar column, 2rem content padding, 1.625rem
  * title size): design_system_spec.md §1.4 states this document carries no
@@ -176,10 +170,6 @@
  */
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
-import type { SidebarProps } from '../components/Sidebar';
 import { SliderControlRow } from '../components/SliderControlRow';
 import { PlanTable } from '../components/PlanTable';
 import { Drawer } from '../components/Drawer';
@@ -210,16 +200,6 @@ const INITIAL_SLIDERS: SliderState = {
   eff: 70,
 };
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
-const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
 // third-party overlays tomorrow) so an unpinned absolute box resolves
@@ -253,11 +233,6 @@ const miniTdLastStyle: CSSProperties = { ...miniTdStyle, borderRight: '1px solid
 const emptyNoteStyle: CSSProperties = { font: 'inherit', fontSize: '0.8125rem', color: 'var(--ink2)', margin: 0 };
 
 export interface InvestmentDesignProps extends DeepLinkScreenProps {
-  /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as `Home.tsx`/`BoardDeck.tsx`/`OnSideFeed.tsx`). */
-  topbar: TopbarProps;
-  /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('studio.investment-design') and is not accepted as a prop. */
-  onNavigate: SidebarProps['onNavigate'];
-  sidebarVersionLabel?: string;
   /** Testing/override hook. Defaults to `INITIAL_SLIDERS` (the corrected survey_map.md §a defaults, G7 fix applied). */
   initialSliders?: SliderState;
   /** Testing/override hook, mirrors SliderControlRow/PlanTable's own optional `opportunities` prop. Defaults to the full 15-play catalog (data/studio.ts `OPPS`) inside the engine. */
@@ -555,9 +530,6 @@ function BenchTable({ rows, onOpenPlay }: { rows: BenchRow[]; onOpenPlay: (name:
 }
 
 export function InvestmentDesign({
-  topbar,
-  onNavigate,
-  sidebarVersionLabel,
   initialSliders = INITIAL_SLIDERS,
   opportunities,
   deepLink,
@@ -619,55 +591,39 @@ export function InvestmentDesign({
 
   const drawerContent = activePlay ? buildPlayDrawerContent(activePlay, view.L, onDeepLink) : null;
 
-  // Built conditionally (rather than `versionLabel={sidebarVersionLabel}`
-  // directly) — this project's `exactOptionalPropertyTypes` setting treats
-  // Sidebar's optional `versionLabel` as exactly `string`, not `string |
-  // undefined` — same pattern `Home.tsx`/`OnSideFeed.tsx` document.
-  const sidebarProps: SidebarProps = {
-    activeId: 'studio.investment-design',
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
-
   return (
-    <div data-lf-screen="investment-design" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
+    <>
+      <main id="investment-design-main" style={MAIN_STYLE} aria-labelledby="investment-design-title">
+        <div style={headerStyle}>
+          <h1 id="investment-design-title" style={h1Style}>
+            Investment Design
+          </h1>
         </div>
-        <main id="investment-design-main" style={MAIN_STYLE} aria-labelledby="investment-design-title">
-          <div style={headerStyle}>
-            <h1 id="investment-design-title" style={h1Style}>
-              Investment Design
-            </h1>
-          </div>
 
-          <SliderControlRow sliders={sliders} onSlidersChange={handleSlidersChange} {...(opportunities !== undefined ? { opportunities } : {})} />
+        <SliderControlRow sliders={sliders} onSlidersChange={handleSlidersChange} {...(opportunities !== undefined ? { opportunities } : {})} />
 
+        <div style={sectionStyle}>
+          <h2 style={sectionHeadingStyle}>Your funded portfolio</h2>
+          <PlanTable rows={view.planRows} onOpenPlay={handleOpenPlay} />
+        </div>
+
+        <div style={sideListsGridStyle}>
           <div style={sectionStyle}>
-            <h2 style={sectionHeadingStyle}>Your funded portfolio</h2>
-            <PlanTable rows={view.planRows} onOpenPlay={handleOpenPlay} />
+            <h2 style={sectionHeadingStyle}>Sequence-gated</h2>
+            <GatedTable rows={view.gatedRows} onOpenPlay={handleOpenPlayByName} />
           </div>
-
-          <div style={sideListsGridStyle}>
-            <div style={sectionStyle}>
-              <h2 style={sectionHeadingStyle}>Sequence-gated</h2>
-              <GatedTable rows={view.gatedRows} onOpenPlay={handleOpenPlayByName} />
-            </div>
-            <div style={sectionStyle}>
-              <h2 style={sectionHeadingStyle}>Cleared governance, outside budget</h2>
-              <BenchTable rows={view.benchRows} onOpenPlay={handleOpenPlayByName} />
-            </div>
+          <div style={sectionStyle}>
+            <h2 style={sectionHeadingStyle}>Cleared governance, outside budget</h2>
+            <BenchTable rows={view.benchRows} onOpenPlay={handleOpenPlayByName} />
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
 
       <Drawer open={drawerOpen} title={activePlay?.name ?? 'Play detail'} onClose={handleCloseDrawer}>
         {drawerContent ? (
           <DrawerContent kind="play" fields={drawerContent.fields} tags={drawerContent.tags} actions={drawerContent.actions} />
         ) : null}
       </Drawer>
-    </div>
+    </>
   );
 }

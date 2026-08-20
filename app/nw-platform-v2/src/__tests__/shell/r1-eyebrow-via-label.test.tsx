@@ -45,16 +45,7 @@ import { InvestmentDesign } from '../../screens/InvestmentDesign';
 import { PresenterRail } from '../../components/PresenterRail';
 import { NotificationBellPanel } from '../../views/NotificationBellPanel';
 import { SCRIPTS } from '../../data/script';
-import type { TopbarProps } from '../../components/Topbar';
 import { resetDemo } from '../../state/demoStore';
-
-const topbar: TopbarProps = {
-  breadcrumb: 'Studio',
-  onOpenBoardDeck: () => {},
-  date: 'Aug 19, 2026',
-  profile: { name: 'Rachel Fischer', initials: 'RF' },
-  profileMenuItems: [],
-};
 
 /** Any element OTHER than Label's own rendered span that still carries
  * its own `letterSpacing` inline style — should be empty once a site is
@@ -72,7 +63,7 @@ function eyebrowLabels(container: HTMLElement): HTMLElement[] {
 
 describe('§8 R-1 — eyebrow treatment authored only by Label (P3) eyebrow', () => {
   it('Roadmap.tsx — KPI label and quarter-head text render through Label eyebrow', () => {
-    const { container } = render(<Roadmap topbar={topbar} onNavigate={() => {}} />);
+    const { container } = render(<Roadmap onNavigate={() => {}} />);
     const labels = eyebrowLabels(container);
     expect(labels.length).toBeGreaterThan(0);
     labels.forEach((el) => expect(el.textContent).not.toBe(''));
@@ -83,7 +74,7 @@ describe('§8 R-1 — eyebrow treatment authored only by Label (P3) eyebrow', ()
     resetDemo();
     vi.useFakeTimers();
     try {
-      render(<StudioAsk topbar={topbar} onNavigate={() => {}} />);
+      render(<StudioAsk onNavigate={() => {}} />);
       const main = screen.getByRole('main');
       const input = within(main).getByRole('textbox', { name: 'Ask a policy question' });
       fireEvent.change(input, { target: { value: 'What are our rules on indirect auto lending?' } });
@@ -102,7 +93,7 @@ describe('§8 R-1 — eyebrow treatment authored only by Label (P3) eyebrow', ()
   });
 
   it('InvestmentDesign.tsx — mini-table column headers and slider eyebrow labels render through Label eyebrow, PlanTable header row unaffected in shape', () => {
-    const { container } = render(<InvestmentDesign topbar={topbar} onNavigate={() => {}} />);
+    const { container } = render(<InvestmentDesign />);
     const labels = eyebrowLabels(container);
     expect(labels.length).toBeGreaterThan(0);
     expect(strayLetterSpacingElements(container)).toHaveLength(0);

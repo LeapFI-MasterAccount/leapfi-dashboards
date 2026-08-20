@@ -180,33 +180,33 @@ describe('DEFECT 1 fix, part 1 — every sr-only-shaped element pins top/left to
 
 describe('DEFECT 1 fix, part 1 (continued) — screens carrying the recipe as one-off inline JSX (no standalone component to mount)', () => {
   it("OnSideOverview — the KPI-strip and Cases-section sr-only <h2> headings (each its own one-off object literal)", () => {
-    const { container } = render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} />)
+    const { container } = render(<OnSideOverview onNavigate={() => {}} />)
     // The two hand-written <h2> literals, at minimum (DomainsAccordion's
     // rows are collapsed by default so contribute no DataTable of their own).
     expectEverySrOnlyElementPinnedAtOrigin(container, 2)
   })
 
   it('InvestmentDesign — the FeatureTable/BenchTable "Action" column spans (each its own one-off object literal), plus its composed PlanTable/SliderControlRow', () => {
-    const { container } = render(<InvestmentDesign topbar={makeTopbarProps()} onNavigate={() => {}} />)
+    const { container } = render(<InvestmentDesign />)
     expectEverySrOnlyElementPinnedAtOrigin(container, 2)
   })
 })
 
 describe('DEFECT 1 fix, part 2 — every screen\'s scrolling <main> is a positioned containing block', () => {
   const SCREEN_CASES: ReadonlyArray<[name: string, element: () => ReactElement]> = [
-    ['OnSideOverview', () => <OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} />],
-    ['Reporting', () => <Reporting topbar={makeTopbarProps()} onNavigate={() => {}} />],
-    ['Roadmap', () => <Roadmap topbar={makeTopbarProps()} onNavigate={() => {}} />],
-    ['Home', () => <Home topbar={makeTopbarProps()} onNavigate={() => {}} />],
-    ['OnSideDocuments', () => <OnSideDocuments topbar={makeTopbarProps()} onNavigate={() => {}} />],
-    ['SettingsToggles', () => <SettingsToggles topbar={makeTopbarProps()} onNavigate={() => {}} />],
-    ['ConnectSoon', () => <ConnectSoon topbar={makeTopbarProps()} onNavigate={() => {}} moduleKey="connect" />],
-    ['OnSideOwnership', () => <OnSideOwnership topbar={makeTopbarProps()} onNavigate={() => {}} />],
-    ['StudioAsk', () => <StudioAsk topbar={makeTopbarProps()} onNavigate={() => {}} />],
+    ['OnSideOverview', () => <OnSideOverview onNavigate={() => {}} />],
+    ['Reporting', () => <Reporting onNavigate={() => {}} />],
+    ['Roadmap', () => <Roadmap onNavigate={() => {}} />],
+    ['Home', () => <Home onNavigate={() => {}} />],
+    ['OnSideDocuments', () => <OnSideDocuments />],
+    ['SettingsToggles', () => <SettingsToggles />],
+    ['ConnectSoon', () => <ConnectSoon moduleKey="connect" />],
+    ['OnSideOwnership', () => <OnSideOwnership />],
+    ['StudioAsk', () => <StudioAsk onNavigate={() => {}} />],
     ['Cases', () => <Cases topbar={makeTopbarProps()} onNavigate={() => {}} />],
-    ['OnSideFeed', () => <OnSideFeed topbar={makeTopbarProps()} onNavigate={() => {}} />],
-    ['SettingsAbout', () => <SettingsAbout topbar={makeTopbarProps()} onNavigate={() => {}} />],
-    ['InvestmentDesign', () => <InvestmentDesign topbar={makeTopbarProps()} onNavigate={() => {}} />],
+    ['OnSideFeed', () => <OnSideFeed />],
+    ['SettingsAbout', () => <SettingsAbout />],
+    ['InvestmentDesign', () => <InvestmentDesign />],
   ]
 
   for (const [name, element] of SCREEN_CASES) {

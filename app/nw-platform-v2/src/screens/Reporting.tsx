@@ -37,12 +37,12 @@
  * unset on all 11 cards rather than inventing a glyph→`IconName` mapping table
  * SetupCard's own author did not sanction.
  *
- * AMBIGUITY RESOLVED — Topbar/Sidebar data ownership: identical passthrough
- * pattern to every sibling screen already landed in this worktree (`Home.tsx`,
- * `OnSideFeed.tsx`, `Roadmap.tsx`, …) — a full `topbar: TopbarProps` bundle
- * prop, and for Sidebar only `onNavigate` + optional `sidebarVersionLabel`;
- * `activeId` is hardcoded here to `'reporting'` (`Sidebar.tsx`'s own `NAV`
- * entry id for this screen, already reserved per the dispatch brief).
+ * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
+ * design_system_spec.md §3.0): both composites now mount exactly once, in
+ * App.tsx's persistent Shell — this screen no longer accepts a `topbar`
+ * prop or builds a local `SidebarProps`; it keeps only `onNavigate` for its
+ * own in-content links (gapboard's "Open cases →", "Open full governance
+ * detail · OnSide →"), unrelated to rendering Sidebar itself.
  *
  * Wiring note (RESOLVED): `App.tsx`'s `reporting` case now mounts this screen
  * directly (the parity-assembly dispatch landed that one-line swap).
@@ -95,9 +95,6 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
 import type { SidebarProps } from '../components/Sidebar';
 import { SetupCard } from '../components/SetupCard';
 import { Drawer } from '../components/Drawer';
@@ -118,16 +115,6 @@ function isReportKind(id: string): id is ReportKind {
   return (REPORT_KIND_ORDER as readonly string[]).includes(id);
 }
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
-const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
 // third-party overlays tomorrow) so an unpinned absolute box resolves
@@ -149,11 +136,8 @@ const h1Style: CSSProperties = { font: 'inherit', fontSize: '1.625rem', fontWeig
 const cardRowStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))', gap: '1rem' };
 
 export interface ReportingProps extends DeepLinkScreenProps {
-  /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as every sibling screen). */
-  topbar: TopbarProps;
-  /** Sidebar navigation hook, also reused to route `gapboard`'s "Open cases →" link (`onNavigate('cases')` — see file header STOP-item). `activeId` is intrinsic to this screen ('reporting') and is not accepted as a prop. */
+  /** Navigation hook for this screen's own in-content links, including `gapboard`'s "Open cases →" link (`onNavigate('cases')` — see file header STOP-item) — unrelated to Sidebar, which App.tsx's Shell owns (see file header). */
   onNavigate: SidebarProps['onNavigate'];
-  sidebarVersionLabel?: string;
   /**
    * Active persona — stamps `who` on committed board-log updates (base
    * `boardSave`: `CURRENT.first+' '+(CURRENT.role||'')`, source 3589, where
@@ -165,7 +149,7 @@ export interface ReportingProps extends DeepLinkScreenProps {
   currentUser?: StudioUser;
 }
 
-export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser = CURRENT, deepLink, onDeepLink, onDeepLinkConsumed }: ReportingProps) {
+export function Reporting({ onNavigate, currentUser = CURRENT, deepLink, onDeepLink, onDeepLinkConsumed }: ReportingProps) {
   const [selectedKind, setSelectedKind] = useState<ReportKind | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Board-log sub-flow state (see file header "BOARD-LOG SUB-FLOW"): when
@@ -275,28 +259,13 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser
     }, 900);
   };
 
-  // Built conditionally (rather than `versionLabel={sidebarVersionLabel}`
-  // directly) — this project's `exactOptionalPropertyTypes` setting treats
-  // Sidebar's optional `versionLabel` as exactly `string`, not `string |
-  // undefined` — same pattern every sibling screen documents.
-  const sidebarProps: SidebarProps = {
-    activeId: 'reporting',
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
-
   // Base `dtitle` in form mode: "Log an update · {id}" (source 3581).
   const drawerTitle =
     boardLogId !== null ? `Log an update · ${boardLogId}` : selectedKind ? REPORT_META[selectedKind].title : 'Report';
 
   return (
-    <div data-lf-screen="reporting" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="reporting-main" style={MAIN_STYLE} aria-labelledby="reporting-title">
+    <>
+      <main id="reporting-main" style={MAIN_STYLE} aria-labelledby="reporting-title">
           <div style={headerStyle}>
             <h1 id="reporting-title" style={h1Style}>
               Reporting
@@ -315,8 +284,7 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser
               );
             })}
           </div>
-        </main>
-      </div>
+      </main>
       <Drawer
         open={drawerOpen}
         title={drawerTitle}
@@ -354,6 +322,6 @@ export function Reporting({ topbar, onNavigate, sidebarVersionLabel, currentUser
           />
         ) : null}
       </Drawer>
-    </div>
+    </>
   );
 }

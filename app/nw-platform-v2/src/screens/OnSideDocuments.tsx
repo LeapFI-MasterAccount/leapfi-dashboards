@@ -11,11 +11,14 @@
  * RedlineDiffView (C9), Tag (`hitl`), Button (`primary`/`ghost`/`row`),
  * Toast (C17).
  *
- * AMBIGUITY RESOLVED — Topbar/Sidebar data ownership: identical passthrough
- * pattern to the already-landed `Home.tsx`/`BoardDeck.tsx` screens in this
- * worktree — `topbar: TopbarProps` full bundle, `onNavigate:
- * SidebarProps['onNavigate']`, `activeId` hardcoded to `'onside.documents'`
- * (intrinsic to this screen, not a prop the integrator could get wrong).
+ * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
+ * design_system_spec.md §3.0): both composites now mount exactly once, in
+ * App.tsx's persistent Shell — this screen no longer accepts a `topbar`
+ * prop or builds a local `SidebarProps`. It also no longer accepts
+ * `onNavigate`: unlike most sibling screens, this one never called it
+ * directly (every internal action here is a Drawer open/close or a
+ * deep-link, not a screen change), so that plumbing was dead the moment
+ * its only consumer (the local `sidebarProps` construction) was removed.
  *
  * AMBIGUITY RESOLVED — Drawer single-instance scoping (C7 a11y baseline:
  * "single shared instance app-wide... never a second instance"): this
@@ -172,10 +175,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { DeepLinkScreenProps } from '../App';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
-import type { SidebarProps } from '../components/Sidebar';
 import { DataTable } from '../components/DataTable';
 import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
 import { FilterBar } from '../components/FilterBar';
@@ -324,17 +323,6 @@ const ADOPT_COMMIT_DELAY_MS = 650;
  * runs just after it so it never races the Drawer's own restore. */
 const FOCUS_FALLBACK_DELAY_MS = 260;
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-
-const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
-const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
 // third-party overlays tomorrow) so an unpinned absolute box resolves
@@ -430,15 +418,10 @@ const SR_ONLY_STYLE: CSSProperties = {
   border: 0,
 };
 
-export interface OnSideDocumentsProps extends DeepLinkScreenProps {
-  /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as `Home.tsx`). */
-  topbar: TopbarProps;
-  /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('onside.documents') and is not accepted as a prop. */
-  onNavigate: SidebarProps['onNavigate'];
-  sidebarVersionLabel?: string;
-}
+/** No screen-specific members — `DeepLinkScreenProps` (deep-link consume) supplies every prop this screen actually reads; `topbar`/`onNavigate` were removed as dead once Sidebar/Topbar mount moved to App.tsx's Shell (see file header). */
+export type OnSideDocumentsProps = DeepLinkScreenProps;
 
-export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel, deepLink, onDeepLinkConsumed }: OnSideDocumentsProps) {
+export function OnSideDocuments({ deepLink, onDeepLinkConsumed }: OnSideDocumentsProps) {
   // Re-renders this screen on every demo-store write (its own adopt
   // cascade included) — see the ONSIDE-02 file-header note.
   useDemoStore();
@@ -848,23 +831,12 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel, deepL
     ];
   }
 
-  const sidebarProps: SidebarProps = {
-    activeId: 'onside.documents',
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
-
   return (
-    <div data-lf-screen="onside-documents" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="onside-documents-main" style={MAIN_STYLE} aria-labelledby="onside-documents-title">
-          <h1 id="onside-documents-title" ref={titleRef} tabIndex={-1} style={TITLE_STYLE}>
-            OnSide · Documents
-          </h1>
+    <>
+      <main id="onside-documents-main" style={MAIN_STYLE} aria-labelledby="onside-documents-title">
+        <h1 id="onside-documents-title" ref={titleRef} tabIndex={-1} style={TITLE_STYLE}>
+          OnSide · Documents
+        </h1>
 
           <FilterBar groups={[domainFilterGroup, statusFilterGroup, redlineFilterGroup]} />
 
@@ -929,8 +901,7 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel, deepL
               ))}
             </div>
           </section>
-        </main>
-      </div>
+      </main>
 
       {/* B-dead-interactions-01/-02 — one shared Drawer, branched on which
           kind was opened last (`activeDrawerKind`): the doc/redline
@@ -982,6 +953,6 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel, deepL
           {...(toast.cascade.length > 0 ? { linkLabel: 'View impact →', onLinkPress: handleViewImpact, dismissOnLinkPress: true } : {})}
         />
       ) : null}
-    </div>
+    </>
   );
 }
