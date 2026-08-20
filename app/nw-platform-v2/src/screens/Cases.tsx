@@ -150,7 +150,7 @@ import { Tag } from '../components/primitives/Tag';
 import type { NonRaciTagVariant } from '../components/primitives/Tag';
 import { CaseDetail } from '../views/CaseDetail';
 import type { CaseActionKind } from '../views/CaseDetail';
-import { APPROVAL, CASES, seedCases, stamp, tierOf } from '../data/cases';
+import { APPROVAL, CASES, isUntouched, seedCases, stamp, tierOf } from '../data/cases';
 import type { Case } from '../data/cases';
 import { DOCLIB } from '../data/doclib';
 import { CURRENT } from '../data/studio';
@@ -187,10 +187,6 @@ function decodeText(input: string): string {
   return input
     .replace(/<\/?(b|strong|em|br)\s*\/?>/gi, '')
     .replace(/&[a-z#0-9]+;/gi, (match) => ENTITY_MAP[match] ?? match);
-}
-
-function isUntouched(c: Case): boolean {
-  return c.stage === 'analyst' && !c.edited && c.history.length <= 1;
 }
 
 function stagePill(c: Case): { text: string; variant: NonRaciTagVariant } {
