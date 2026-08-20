@@ -161,24 +161,32 @@
  *     control, rail)
  *     drops any unconsumed payload — a plain click means "open the screen
  *     plain", exactly like that function's existing `pendingCaseId` clear.
- *   - KIND VOCABULARY (id encodings): 'doc-redline' → onside.documents,
- *     id = DOCLIB doc id (base openDocView, 2899/3175); 'obligation' →
- *     id = `${domKey}:${oblId}`, e.g. 'mrm:MRM-08' (base
- *     openObl(domKey, oid), 2949/3106/1590–1612); 'play' → id = the play
- *     name `n` (base openPlay, 4249/4325); 'feed-source' → onside.feed,
- *     id = source key (base onsideShow('feed-sources')); 'report' →
- *     reporting, id = report kind, e.g. 'roi' (base openReport, 872/4242);
- *     'section' → id = a section key on the target screen, e.g.
+ *   - KIND VOCABULARY (id encodings; CLASS annotations added by the
+ *     hostile-review fix wave, Class A / A5 — see the exported
+ *     `DeepLinkKind` union just below for the authoritative, per-member
+ *     class and its full rationale): 'obligation' [CLASS 2, wired this
+ *     wave] → id = `${domKey}:${oblId}`, e.g. 'mrm:MRM-08' (base
+ *     openObl(domKey, oid), 2949/3106/1590–1612); 'play' [CLASS 1] → id =
+ *     the play name `n` (base openPlay, 4249/4325); 'feed-source' [CLASS
+ *     3, no producer yet] → onside.feed, id = source key (base
+ *     onsideShow('feed-sources')); 'report' [CLASS 1] → reporting, id =
+ *     report kind, e.g. 'roi' (base openReport, 872/4242); 'section'
+ *     [CLASS 2, 'lifecycle' id wired this wave; 'gaps' id an open
+ *     STOP-item] → id = a section key on the target screen, e.g.
  *     'lifecycle' on onside.feed (base goOnside('feed-lifecycle'), 869) or
- *     'gaps' (878); 'domain' → onside.overview, id = domain key (base
- *     goOnside('dom-mrm')). PI2-D5 (Sprint 1 union extension): 'signal' →
- *     onside.feed, id = the SignalRow id `${sourceKey}::${itemIndex}`;
- *     'case' → cases, id = the Case id (data/cases.ts, e.g.
- *     'CASE-2026-001'); 'document' → onside.documents, id = the DOCLIB doc
- *     id (opens the full document Drawer, distinct from the still-unconsumed
- *     'doc-redline'); 'control' → onside.overview, id = a bare control id
- *     with no domKey prefix, e.g. 'MRM-09' (the r16 QuickFind "type MRM-09
- *     anywhere" shape — distinct from 'obligation''s `${domKey}:${oblId}`
+ *     'gaps' (878, disputed target screen — see OnSideFeed.tsx header);
+ *     'domain' [CLASS 1] → onside.overview, id = domain key (base
+ *     goOnside('dom-mrm')). PI2-D5 (Sprint 1 union extension): 'signal'
+ *     [CLASS 3, no producer yet] → onside.feed, id = the SignalRow id
+ *     `${sourceKey}::${itemIndex}`; 'case' [CLASS 1] → cases, id = the
+ *     Case id (data/cases.ts, e.g. 'CASE-2026-001'); 'document' [CLASS 1]
+ *     → onside.documents, id = the DOCLIB doc id (opens the full document
+ *     Drawer — also the re-pointed target of the retired 'doc-redline'
+ *     kind, amendment A9: that kind was a duplicate of this one and is
+ *     removed from the union this wave); 'control' [CLASS 3, no producer
+ *     yet] → onside.overview, id = a bare control id with no domKey
+ *     prefix, e.g. 'MRM-09' (the r16 QuickFind "type MRM-09 anywhere"
+ *     shape — distinct from 'obligation''s `${domKey}:${oblId}`
  *     encoding), resolved to its owning domain via `data/onside.ts`'s `OBL`.
  *   - PLUMBED EVERYWHERE NOW: `{...deepLinkProps}` is spread onto every
  *     routed screen below. A screen that has not yet declared the props
@@ -352,20 +360,44 @@ function isScreenId(id: string): id is ScreenId {
   return (SCREEN_IDS as readonly string[]).includes(id)
 }
 
-/** See file header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS" — the item kinds a deep link can open, one per base cross-screen verb (id encodings in the header's KIND VOCABULARY). */
+/** See file header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS" — the item kinds a
+ * deep link can open, one per base cross-screen verb (id encodings in the
+ * header's KIND VOCABULARY).
+ *
+ * CLASSIFIED (hostile-review fix wave, Class A / A5 — design authority
+ * ruling, amendment A12): a full producer/consumer sweep of every
+ * non-test `onDeepLink`/`fireOrDeepLink` call site and every
+ * `deepLink.kind` consumer guard in `src/` (screens/ + views/) sorts
+ * these into three classes. `doc-redline` (ruled a duplicate of
+ * `document`, amendment A9) is REMOVED from this union this wave — its
+ * one producer (`HomePanels.tsx`'s Strategic Signal drawer doc chip) is
+ * re-pointed onto `document`, the kind it duplicated.
+ *   - CLASS 1 — wired end to end (5): `domain`, `play`, `case`,
+ *     `document`, `report`. Both a live producer and a matching consumer
+ *     effect exist; no action needed.
+ *   - CLASS 2 — producer with a consumer added THIS WAVE (2): `obligation`
+ *     (OnSideOverview.tsx gains a consumer effect mirroring its existing
+ *     `control` effect's shape) and `section` (OnSideFeed.tsx gains a
+ *     consumer effect for the `'lifecycle'` id — the `'gaps'` id stays an
+ *     open STOP-item, a target-screen ambiguity recorded in
+ *     `OnSideFeed.tsx`'s own header, not resolved here).
+ *   - CLASS 3 — consumer with no producer (3): `feed-source`, `signal`,
+ *     `control`. Each has a built, TESTED consumer effect but no live call
+ *     site fires it anywhere in shipped code; their natural dispatch
+ *     sites are out of this wave's scope (Sprint 2/3).
+ */
 export type DeepLinkKind =
-  | 'doc-redline' // base openDocView(id) — OnSide·Documents doc/redline slide-out (source 2899, 3175)
-  | 'obligation' // base openObl(domKey, oid) — id is `${domKey}:${oblId}` (source 2949, 3106, 1590–1612)
-  | 'play' // base openPlay(n) — id is the play name (source 4249, 4325)
-  | 'feed-source' // base onsideShow('feed-sources') + source focus — id is the source key
-  | 'report' // base openReport(kind) — id is the report kind, e.g. 'roi' (source 872, 4242)
-  | 'section' // base goOnside(section) — id is a section key on the target screen, e.g. 'lifecycle' (source 869, 878)
-  | 'domain' // base goOnside('dom-KEY') — id is the domain key; OnSideOverview consumes it via `deepLink` (no legacy bridge, this wave's App-side cleanup)
+  | 'obligation' // CLASS 2 (wired this wave) — base openObl(domKey, oid) — id is `${domKey}:${oblId}` (source 2949, 3106, 1590–1612); OnSideOverview.tsx consumes via `deepLink`, mirroring its 'control' effect
+  | 'play' // CLASS 1 — base openPlay(n) — id is the play name (source 4249, 4325)
+  | 'feed-source' // CLASS 3 (no producer yet) — base onsideShow('feed-sources') + source focus — id is the source key
+  | 'report' // CLASS 1 — base openReport(kind) — id is the report kind, e.g. 'roi' (source 872, 4242)
+  | 'section' // CLASS 2 (wired this wave, 'lifecycle' id only) — base goOnside(section) — id is a section key on the target screen, e.g. 'lifecycle' (source 869) or 'gaps' (878, STOP-item — see OnSideFeed.tsx header)
+  | 'domain' // CLASS 1 — base goOnside('dom-KEY') — id is the domain key; OnSideOverview consumes it via `deepLink` (no legacy bridge, this wave's App-side cleanup)
   // PI2-D5 (Sprint 1 union extension, implementation/DECISIONS.md — dan_review_directives.md §1 steps 5-7 signal→domain→language→document): the four kinds below.
-  | 'signal' // onside.feed — id is the signal row id (`${sourceKey}::${itemIndex}`, OnSideFeed.tsx's own `SignalRow.id`); OnSideFeed consumes via `deepLink`, opening that row's Drawer directly
-  | 'case' // cases — id is the Case id (data/cases.ts `Case.id`, e.g. 'CASE-2026-001'); Cases.tsx consumes via `deepLink`, opening that case's detail directly
-  | 'document' // onside.documents — id is the DOCLIB doc id; distinct from 'doc-redline' (that kind has no consumer today) — OnSideDocuments.tsx consumes via `deepLink`, opening the full document Drawer (secs + redline) for that id
-  | 'control' // onside.overview — id is a bare control id (e.g. 'MRM-09', no domKey prefix — the r16 QuickFind "type MRM-09 anywhere" shape, unlike 'obligation''s `${domKey}:${oblId}` encoding); OnSideOverview.tsx resolves the owning domain via OBL and opens both the domain row and that control's obligation drawer
+  | 'signal' // CLASS 3 (no producer yet) — onside.feed — id is the signal row id (`${sourceKey}::${itemIndex}`, OnSideFeed.tsx's own `SignalRow.id`); OnSideFeed consumes via `deepLink`, opening that row's Drawer directly
+  | 'case' // CLASS 1 — cases — id is the Case id (data/cases.ts `Case.id`, e.g. 'CASE-2026-001'); Cases.tsx consumes via `deepLink`, opening that case's detail directly
+  | 'document' // CLASS 1 — onside.documents — id is the DOCLIB doc id; also the re-pointed target of the retired 'doc-redline' kind (amendment A9) — OnSideDocuments.tsx consumes via `deepLink`, opening the full document Drawer (secs + redline) for that id
+  | 'control' // CLASS 3 (no producer yet) — onside.overview — id is a bare control id (e.g. 'MRM-09', no domKey prefix — the r16 QuickFind "type MRM-09 anywhere" shape, unlike 'obligation''s `${domKey}:${oblId}` encoding); OnSideOverview.tsx resolves the owning domain via OBL and opens both the domain row and that control's obligation drawer
 
 /** A screen's deep-link request: navigate to `screen` AND open the `kind`/`id` item there. */
 export interface DeepLinkRequest {

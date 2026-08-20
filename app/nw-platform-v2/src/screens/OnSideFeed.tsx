@@ -243,16 +243,32 @@
  * key" seam) so a deep-linked source can show and flip its real alert
  * state in one step, closing this gap fully.
  *
- * ALSO STILL OPEN (STOP-item, discovered but out of this dispatch's exact
- * scope): the 'section' kind (id `'lifecycle'`/`'gaps'`, both targeting
- * `onside.feed` per App.tsx's KIND VOCABULARY, source 869/878) is fired
- * today by `InvestmentDesign.tsx` (`kind: 'section', id: 'gaps'`, its own
- * "See the gap queue" action) but this screen still does not consume it —
- * that press lands here plain, same "never delivers" defect class as
- * SEAM 2, just a different kind. Left unconsumed here because the
- * dispatch brief scoped this seam to 'feed-source' specifically ("open the
- * named source's detail per the feed's source-drawer union"); flagging so
- * it is not mistaken for closed.
+ * HOSTILE-REVIEW FIX WAVE (Class A, finding A3) — PARTIALLY RESOLVED: the
+ * 'section' kind (id `'lifecycle'`/`'gaps'`, both targeting `onside.feed`
+ * per App.tsx's KIND VOCABULARY, source 869/878) previously had no
+ * consumer here at all (this note's earlier "ALSO STILL OPEN" text,
+ * superseded). This screen now consumes id `'lifecycle'`: it resolves to
+ * a real, unambiguous section already rendered below
+ * (`RegulatoryFeedLifecycle`) and scrolls/focuses it — closing the dead
+ * click on `HomePanels.tsx`'s "Full lifecycle →" link and its Strategic
+ * Signal drawer action.
+ *
+ * STILL OPEN (STOP-item, a design decision, not an implementation one):
+ * id `'gaps'` (fired by `InvestmentDesign.tsx`'s "See the gap queue" play-
+ * drawer action) is NOT resolved here — this screen renders no "gaps"
+ * content anywhere (only Sources, Lifecycle, Inforce sections), and
+ * `HomePanels.tsx`'s own file header documents a live disagreement in
+ * this codebase about where the base's "gaps" concept even belongs:
+ * App.tsx's KIND VOCABULARY comment and this exact `InvestmentDesign.tsx`
+ * producer both name `onside.feed`, but `HomePanels.tsx`'s own
+ * established, test-pinned convention (`buildQueueBucket`'s rows, "All
+ * open items →") targets `onside.documents` instead for the same base
+ * verb — and `investment-design.test.tsx` independently pins the current
+ * `onside.feed` dispatch as correct base-anchor behavior. Silently
+ * picking either side would contradict the other's passing test; flagged
+ * for the design authority, not guessed here. An id this effect does not
+ * recognize (including 'gaps') still consumes the nonce but opens
+ * nothing — never a fabricated destination.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
@@ -562,6 +578,17 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel, deepLink, 
     sourcesSectionRef.current?.focus();
   };
 
+  // HOSTILE-REVIEW FIX WAVE (Class A, finding A3) — scroll/focus target
+  // for `RegulatoryFeedLifecycle`, the real section the 'section'-kind
+  // 'lifecycle' id resolves to. Identical shape to `sourcesSectionRef`/
+  // `handleOpenSources` immediately above (same handoff technique, one
+  // section earlier in this screen's own 1→2→3 section order).
+  const lifecycleSectionRef = useRef<HTMLDivElement | null>(null);
+  const handleOpenLifecycle = () => {
+    lifecycleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    lifecycleSectionRef.current?.focus();
+  };
+
   // SEAM 2 (B3 dispatch, see file header) — 'feed-source' deep-link
   // consumption: standard nonce-keyed effect (App.tsx's documented CONSUME
   // contract), same pattern `InvestmentDesign.tsx`'s 'play'-kind and
@@ -592,6 +619,44 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel, deepLink, 
     if (row) {
       setSelection({ kind: 'signal', row });
       setDrawerOpen(true);
+    }
+    onDeepLinkConsumed?.(deepLink.nonce);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed read fresh from closure, not tracked as a re-trigger dep
+  }, [deepLink?.nonce]);
+
+  // HOSTILE-REVIEW FIX WAVE (Class A, finding A3) — 'section'-kind deep
+  // link: id names a section key on THIS screen (App.tsx KIND VOCABULARY).
+  // Only 'lifecycle' resolves to a real, unambiguous section here today —
+  // scrolls/focuses `RegulatoryFeedLifecycle` via `handleOpenLifecycle`,
+  // the identical handoff `handleOpenSources` already uses for
+  // 'feed-source'. Confirmed live producers (Sprint 1 hostile review,
+  // finding A3): HomePanels.tsx's "Full lifecycle →" panel-header link and
+  // its Strategic Signal drawer action (both id 'lifecycle') — both
+  // previously landed here and opened nothing (this file's own former
+  // header note, "ALSO STILL OPEN").
+  //
+  // The 'gaps' id (InvestmentDesign.tsx's "See the gap queue" play-drawer
+  // action) is DELIBERATELY left unresolved — a STOP-item, not an
+  // oversight: `HomePanels.tsx`'s own file header documents a live
+  // disagreement between App.tsx's KIND VOCABULARY comment / this exact
+  // 'gaps' producer (both name `onside.feed` as its target) and
+  // `HomePanels.tsx`'s own established, test-pinned convention (its
+  // `buildQueueBucket` rows and "All open items →" link) that targets
+  // `onside.documents` instead for the same base "gaps" concept —
+  // `investment-design.test.tsx` also already pins the current dispatch
+  // (`{ screen: 'onside.feed', kind: 'section', id: 'gaps' }`) as correct
+  // base-anchor behavior, so silently redirecting it to onside.documents
+  // here would contradict a passing, pinned test. Picking a side is a
+  // design decision, not an implementation one — flagged for the design
+  // authority rather than resolved here. An id this effect does not
+  // recognize (including 'gaps') still consumes the nonce (never gets
+  // stuck) but opens nothing — the same defensive "no fabricated
+  // destination" shape the 'feed-source'/'signal' effects above already
+  // use for an unresolvable id.
+  useEffect(() => {
+    if (!deepLink || deepLink.kind !== 'section') return;
+    if (deepLink.id === 'lifecycle') {
+      handleOpenLifecycle();
     }
     onDeepLinkConsumed?.(deepLink.nonce);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed read fresh from closure, not tracked as a re-trigger dep
@@ -801,7 +866,9 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel, deepLink, 
           <div ref={sourcesSectionRef} tabIndex={-1}>
             <RegulatoryFeedSources onOpenSource={handleOpenSource} onOpenInstrument={handleOpenInstrument} />
           </div>
-          <RegulatoryFeedLifecycle onOpenInstrument={handleOpenInstrument} onOpenSources={handleOpenSources} />
+          <div ref={lifecycleSectionRef} tabIndex={-1} data-lf-section="lifecycle">
+            <RegulatoryFeedLifecycle onOpenInstrument={handleOpenInstrument} onOpenSources={handleOpenSources} />
+          </div>
           <RegulatoryFeedInforce onOpenInstrument={handleOpenInstrument} />
         </main>
       </div>

@@ -233,7 +233,7 @@ describe('B3 SEAM 1 — onDeepLink threaded from Home.tsx (App.tsx NAV-PAYLOAD c
     expect(onNavigate).not.toHaveBeenCalled()
   })
 
-  it('Strategic signal touch actions fire domain/doc-redline kinds, and "Open the full lifecycle →" fires a section deep link', async () => {
+  it('Strategic signal touch actions fire domain/document kinds (hostile-review fix wave A1: doc-redline retired, re-pointed onto \'document\' — App.tsx KIND VOCABULARY, amendment A9/A12), and "Open the full lifecycle →" fires a section deep link', async () => {
     const user = userEvent.setup()
     const onNavigate = vi.fn()
     const onDeepLink = vi.fn()
@@ -249,7 +249,7 @@ describe('B3 SEAM 1 — onDeepLink threaded from Home.tsx (App.tsx NAV-PAYLOAD c
 
     onDeepLink.mockClear()
     await user.click(within(dialog).getByRole('button', { name: 'Capital Narrative · CBLR' }))
-    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.documents', kind: 'doc-redline', id: 'capital-narr' })
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.documents', kind: 'document', id: 'capital-narr' })
 
     onDeepLink.mockClear()
     await user.click(within(dialog).getByRole('button', { name: 'Open the full lifecycle →' }))

@@ -42,7 +42,7 @@ vi.mock('../../screens/Home', () => ({
     <div>
       <h1>home-probe</h1>
       <button onClick={() => props.onNavigate?.('onside.documents')}>probe-nav-documents</button>
-      <button onClick={() => props.onDeepLink?.({ screen: 'onside.documents', kind: 'doc-redline', id: 'ln-policy' })}>
+      <button onClick={() => props.onDeepLink?.({ screen: 'onside.documents', kind: 'document', id: 'ln-policy' })}>
         probe-deeplink-doc
       </button>
       <button onClick={() => props.onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: 'mrm' })}>
@@ -59,7 +59,7 @@ vi.mock('../../screens/OnSideDocuments', () => ({
       <output data-testid="deep-link-view">
         {props.deepLink ? `${props.deepLink.kind}:${props.deepLink.id}:${props.deepLink.nonce}` : 'none'}
       </output>
-      <button onClick={() => props.onDeepLink?.({ screen: 'onside.documents', kind: 'doc-redline', id: 'ln-policy' })}>
+      <button onClick={() => props.onDeepLink?.({ screen: 'onside.documents', kind: 'document', id: 'ln-policy' })}>
         probe-refire-same-target
       </button>
       <button onClick={() => props.deepLink && props.onDeepLinkConsumed?.(props.deepLink.nonce)}>probe-consume</button>
@@ -78,7 +78,7 @@ describe('deep-link trigger (onDeepLink → navigate + deliver payload)', () => 
     await user.click(screen.getByRole('button', { name: 'probe-deeplink-doc' }))
 
     expect(screen.getByRole('heading', { name: 'documents-probe' })).toBeInTheDocument()
-    expect(screen.getByTestId('deep-link-view')).toHaveTextContent(/^doc-redline:ln-policy:1$/)
+    expect(screen.getByTestId('deep-link-view')).toHaveTextContent(/^document:ln-policy:1$/)
   })
 
   it('a same-target re-press delivers a FRESH nonce with no remount needed (SH-8 generalized)', async () => {
@@ -87,7 +87,7 @@ describe('deep-link trigger (onDeepLink → navigate + deliver payload)', () => 
     await user.click(screen.getByRole('button', { name: 'probe-deeplink-doc' })) // nonce 1
     await user.click(screen.getByRole('button', { name: 'probe-refire-same-target' })) // same screen+kind+id
 
-    expect(screen.getByTestId('deep-link-view')).toHaveTextContent(/^doc-redline:ln-policy:2$/)
+    expect(screen.getByTestId('deep-link-view')).toHaveTextContent(/^document:ln-policy:2$/)
   })
 })
 
@@ -103,7 +103,7 @@ describe('consume + clear (onDeepLinkConsumed)', () => {
     // would be Object.is-equal to the consumed press for any consumer
     // keying on the nonce (the SH-8 dead-re-press failure mode).
     await user.click(screen.getByRole('button', { name: 'probe-refire-same-target' }))
-    expect(screen.getByTestId('deep-link-view')).toHaveTextContent(/^doc-redline:ln-policy:2$/)
+    expect(screen.getByTestId('deep-link-view')).toHaveTextContent(/^document:ln-policy:2$/)
   })
 
   it('a stale consume never clobbers a newer press', async () => {
@@ -113,7 +113,7 @@ describe('consume + clear (onDeepLinkConsumed)', () => {
     await user.click(screen.getByRole('button', { name: 'probe-refire-same-target' })) // nonce 2
     await user.click(screen.getByRole('button', { name: 'probe-consume-nonce-1' })) // stale consume of nonce 1
 
-    expect(screen.getByTestId('deep-link-view')).toHaveTextContent(/^doc-redline:ln-policy:2$/)
+    expect(screen.getByTestId('deep-link-view')).toHaveTextContent(/^document:ln-policy:2$/)
   })
 })
 
