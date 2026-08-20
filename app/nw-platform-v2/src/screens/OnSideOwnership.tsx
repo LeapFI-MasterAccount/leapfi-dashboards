@@ -247,6 +247,8 @@ import { StatCard } from '../components/StatCard';
 import { Icon } from '../components/primitives/Icon';
 import { Tag } from '../components/primitives/Tag';
 import type { NonRaciTagVariant, RaciMark } from '../components/primitives/Tag';
+import { Button } from '../components/primitives/Button';
+import { AskChatPanel } from '../components/AskChatPanel';
 import type { DeepLinkScreenProps } from '../App';
 import { ROLES, M } from '../data/onside';
 import type { DocRaci } from '../data/onside';
@@ -254,6 +256,7 @@ import { DOCLIB } from '../data/doclib';
 import type { DocEntry, DocStatus } from '../data/doclib';
 import { useDemoStore } from '../state/demoStore';
 import { PANEL_STYLE } from '../theme/panelStyle';
+import { ONSIDE_CHAT_MODULE_CONFIG } from '../data/askChatModuleConfig';
 
 type DisplayDoc = DocEntry & { id: string };
 
@@ -464,6 +467,9 @@ const MAIN_STYLE: CSSProperties = {
   gap: '2rem',
 };
 const TITLE_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
+/** §5.8 region map addition (amendment A16, PI2-D42) — utility corner
+ * (§5.1's originally-named placement), seated beside the page title. */
+const HEADER_ROW_STYLE: CSSProperties = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' };
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.125rem', fontWeight: 700, color: 'var(--ink)' };
 const DOMAIN_HEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1rem', fontWeight: 700, color: 'var(--ink)' };
@@ -509,6 +515,12 @@ export function OnSideOwnership({ onDeepLink }: OnSideOwnershipProps) {
   useDemoStore();
   const [openDocId, setOpenDocId] = useState<string | null>(null);
   const lastOpenDocRef = useRef<DisplayDoc | null>(null);
+  // §2.9 — the "Ask OnSide" chat as a second, mutually-exclusive content
+  // target on this SAME shared Drawer (never a second instance). Bumping
+  // `chatOpenNonce` forces AskChatPanel to remount fresh on every open
+  // (§2.9.5 fresh-open reseed, AC-A16-8).
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpenNonce, setChatOpenNonce] = useState(0);
 
   const openDoc: DisplayDoc | null = openDocId && DOCLIB[openDocId] ? { id: openDocId, ...DOCLIB[openDocId] } : null;
   if (openDoc) lastOpenDocRef.current = openDoc;
@@ -522,7 +534,17 @@ export function OnSideOwnership({ onDeepLink }: OnSideOwnershipProps) {
   // `docLink`); see file header "The redundant 'Open' column" in the
   // dispatch return, and DataTable.tsx's own CLICK-AFFORDANCE STANDARD
   // for the chevron/hover/focus treatment this reuses unmodified.
-  const handleOpenRaciRow = (row: RaciRow) => setOpenDocId(row.doc[0]);
+  const handleOpenRaciRow = (row: RaciRow) => {
+    setChatOpen(false);
+    setOpenDocId(row.doc[0]);
+  };
+
+  /** §2.9.5 entry affordance — "Ask OnSide" utility-corner trigger. */
+  const handleOpenChat = () => {
+    setOpenDocId(null);
+    setChatOpenNonce((n) => n + 1);
+    setChatOpen(true);
+  };
 
   const raciRow = displayDoc ? RACI_BY_DOC_ID[displayDoc.id] : undefined;
 
@@ -551,9 +573,14 @@ export function OnSideOwnership({ onDeepLink }: OnSideOwnershipProps) {
   return (
     <>
       <main id="onside-ownership-main" style={MAIN_STYLE} aria-labelledby="onside-ownership-title">
-          <h1 id="onside-ownership-title" style={TITLE_STYLE}>
-            OnSide · Ownership
-          </h1>
+          <div style={HEADER_ROW_STYLE}>
+            <h1 id="onside-ownership-title" style={TITLE_STYLE}>
+              OnSide · Ownership
+            </h1>
+            {/* §5.8 entry affordance (amendment A16, PI2-D42) — uniform
+                across all four onside.* screens. */}
+            <Button variant="ghost" label={ONSIDE_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
+          </div>
 
           <section aria-labelledby="onside-raci-heading" style={SECTION_STYLE}>
             <h2 id="onside-raci-heading" style={SUBHEADING_STYLE}>
@@ -631,8 +658,18 @@ export function OnSideOwnership({ onDeepLink }: OnSideOwnershipProps) {
           </section>
       </main>
 
-      <Drawer open={openDocId !== null} title={displayDoc ? decodeText(displayDoc.t) : ''} onClose={() => setOpenDocId(null)}>
-        {displayDoc ? (
+      <Drawer
+        open={openDocId !== null || chatOpen}
+        title={chatOpen ? ONSIDE_CHAT_MODULE_CONFIG.drawerTitle : displayDoc ? decodeText(displayDoc.t) : ''}
+        onClose={() => {
+          setOpenDocId(null);
+          setChatOpen(false);
+        }}
+      >
+        {chatOpen ? (
+          // §2.9.1 item 2 — one more content state of this SAME Drawer.
+          <AskChatPanel key={chatOpenNonce} config={ONSIDE_CHAT_MODULE_CONFIG} {...(onDeepLink ? { onDeepLinkPress: onDeepLink } : {})} />
+        ) : displayDoc ? (
           <>
             <DrawerContent kind="doc" fields={drawerFields} tags={drawerTags} />
             {displayDoc.redline ? (

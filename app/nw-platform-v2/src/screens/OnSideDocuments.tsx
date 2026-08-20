@@ -187,6 +187,7 @@ import { Toast } from '../components/Toast';
 import { Button } from '../components/primitives/Button';
 import { Tag } from '../components/primitives/Tag';
 import type { NonRaciTagVariant } from '../components/primitives/Tag';
+import { AskChatPanel } from '../components/AskChatPanel';
 import { DOCLIB } from '../data/doclib';
 import type { DocEntry, DocStatus } from '../data/doclib';
 import { DOMAINS, GAPS, OBL } from '../data/onside';
@@ -194,6 +195,7 @@ import type { GapItem, ObligationRow } from '../data/onside';
 import { CURRENT } from '../data/studio';
 import { findRedlineDocForObligation } from '../views/DomainsAccordion';
 import { applyGapClosure, useDemoStore } from '../state/demoStore';
+import { ONSIDE_CHAT_MODULE_CONFIG } from '../data/askChatModuleConfig';
 
 /** Base rlAction's document-level adopted marker (source 2478) — runtime
  * bookkeeping attached to the live DOCLIB entry, not part of doclib.ts's
@@ -340,6 +342,9 @@ const MAIN_STYLE: CSSProperties = {
   gap: '2rem',
 };
 const TITLE_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
+/** §5.8 region map addition (amendment A16, PI2-D42) — utility corner
+ * (§5.1's originally-named placement), seated beside the page title. */
+const HEADER_ROW_STYLE: CSSProperties = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' };
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = {
   margin: 0,
@@ -421,7 +426,7 @@ const SR_ONLY_STYLE: CSSProperties = {
 /** No screen-specific members — `DeepLinkScreenProps` (deep-link consume) supplies every prop this screen actually reads; `topbar`/`onNavigate` were removed as dead once Sidebar/Topbar mount moved to App.tsx's Shell (see file header). */
 export type OnSideDocumentsProps = DeepLinkScreenProps;
 
-export function OnSideDocuments({ deepLink, onDeepLinkConsumed }: OnSideDocumentsProps) {
+export function OnSideDocuments({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideDocumentsProps) {
   // Re-renders this screen on every demo-store write (its own adopt
   // cascade included) — see the ONSIDE-02 file-header note.
   useDemoStore();
@@ -435,6 +440,12 @@ export function OnSideDocuments({ deepLink, onDeepLinkConsumed }: OnSideDocument
   // `handleDrawerClose` below) so the single shared Drawer never has to
   // reconcile two simultaneous "which content" truths.
   const [openObligation, setOpenObligation] = useState<{ domain: string; id: string } | null>(null);
+  // §2.9 — the "Ask OnSide" chat as a third mutually-exclusive content
+  // target on this SAME shared Drawer (never a second instance). Bumping
+  // `chatOpenNonce` on every open forces AskChatPanel to remount fresh
+  // (§2.9.5 fresh-open reseed, AC-A16-8).
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpenNonce, setChatOpenNonce] = useState(0);
   const [adoptingDocId, setAdoptingDocId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [updatingObligationIds, setUpdatingObligationIds] = useState<ReadonlySet<string>>(new Set());
@@ -445,7 +456,7 @@ export function OnSideDocuments({ deepLink, onDeepLinkConsumed }: OnSideDocument
   const updatingTimeoutRef = useRef<number | undefined>(undefined);
   const lastOpenDocRef = useRef<DocRow | null>(null);
   const lastOpenObligationRef = useRef<{ domain: string; id: string } | null>(null);
-  const lastDrawerKindRef = useRef<'doc' | 'obligation' | null>(null);
+  const lastDrawerKindRef = useRef<'doc' | 'obligation' | 'chat' | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
 
   // Rebuilt per render from the LIVE DOCLIB singleton — adoption mutates
@@ -466,6 +477,7 @@ export function OnSideDocuments({ deepLink, onDeepLinkConsumed }: OnSideDocument
     const match = allDocs.find((doc) => doc.id === deepLink.id);
     if (match) {
       setOpenObligation(null);
+      setChatOpen(false);
       setOpenDocId(match.id);
     }
     onDeepLinkConsumed?.(deepLink.nonce);
@@ -498,6 +510,7 @@ export function OnSideDocuments({ deepLink, onDeepLinkConsumed }: OnSideDocument
   // currently non-null, since Adopt clears `openDocId` on success too).
   if (openDocId !== null) lastDrawerKindRef.current = 'doc';
   else if (openObligation !== null) lastDrawerKindRef.current = 'obligation';
+  else if (chatOpen) lastDrawerKindRef.current = 'chat';
   const activeDrawerKind = lastDrawerKindRef.current;
 
   /** B-dead-interactions-01/-02 — opens the obligation-detail drawer,
@@ -505,12 +518,23 @@ export function OnSideDocuments({ deepLink, onDeepLinkConsumed }: OnSideDocument
    * targets on the one shared Drawer instance). */
   function openObligationDrawer(domain: string, id: string) {
     setOpenDocId(null);
+    setChatOpen(false);
     setOpenObligation({ domain, id });
   }
 
   const handleDrawerClose = () => {
     setOpenDocId(null);
     setOpenObligation(null);
+    setChatOpen(false);
+  };
+
+  /** §2.9.5 entry affordance — "Ask OnSide" utility-corner trigger. Always
+   * opens (or content-swaps, §2.9.1 item 2) at the fresh idle state. */
+  const handleOpenChat = () => {
+    setOpenDocId(null);
+    setOpenObligation(null);
+    setChatOpenNonce((n) => n + 1);
+    setChatOpen(true);
   };
 
   const handleAdopt = (doc: DocRow) => {
@@ -634,6 +658,7 @@ export function OnSideDocuments({ deepLink, onDeepLinkConsumed }: OnSideDocument
     label: (row) => (row.redline ? 'Review' : 'View'),
     onPress: (row) => {
       setOpenObligation(null);
+      setChatOpen(false);
       setOpenDocId(row.id);
     },
   };
@@ -649,6 +674,7 @@ export function OnSideDocuments({ deepLink, onDeepLinkConsumed }: OnSideDocument
         openObligationDrawer(gap.obl[0], gap.obl[1]);
       } else if (gap.doc) {
         setOpenObligation(null);
+        setChatOpen(false);
         setOpenDocId(gap.doc);
       }
     },
@@ -834,9 +860,14 @@ export function OnSideDocuments({ deepLink, onDeepLinkConsumed }: OnSideDocument
   return (
     <>
       <main id="onside-documents-main" style={MAIN_STYLE} aria-labelledby="onside-documents-title">
-        <h1 id="onside-documents-title" ref={titleRef} tabIndex={-1} style={TITLE_STYLE}>
-          OnSide · Documents
-        </h1>
+        <div style={HEADER_ROW_STYLE}>
+          <h1 id="onside-documents-title" ref={titleRef} tabIndex={-1} style={TITLE_STYLE}>
+            OnSide · Documents
+          </h1>
+          {/* §5.8 entry affordance (amendment A16, PI2-D42) — uniform
+              across all four onside.* screens. */}
+          <Button variant="ghost" label={ONSIDE_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
+        </div>
 
           <FilterBar groups={[domainFilterGroup, statusFilterGroup, redlineFilterGroup]} />
 
@@ -908,20 +939,26 @@ export function OnSideDocuments({ deepLink, onDeepLinkConsumed }: OnSideDocument
           content (unchanged) or the obligation-detail content (evidence
           chips + Approve & adopt). Never two simultaneous targets. */}
       <Drawer
-        open={openDocId !== null || openObligation !== null}
+        open={openDocId !== null || openObligation !== null || chatOpen}
         title={
-          activeDrawerKind === 'obligation'
-            ? displayObligation
-              ? `${displayObligation.id} · Obligation`
-              : ''
-            : displayDoc
-              ? decodeDocText(displayDoc.t)
-              : ''
+          activeDrawerKind === 'chat'
+            ? ONSIDE_CHAT_MODULE_CONFIG.drawerTitle
+            : activeDrawerKind === 'obligation'
+              ? displayObligation
+                ? `${displayObligation.id} · Obligation`
+                : ''
+              : displayDoc
+                ? decodeDocText(displayDoc.t)
+                : ''
         }
         onClose={handleDrawerClose}
-        footer={activeDrawerKind === 'obligation' ? obligationDrawerFooter : drawerFooter}
+        footer={activeDrawerKind === 'chat' ? undefined : activeDrawerKind === 'obligation' ? obligationDrawerFooter : drawerFooter}
       >
-        {activeDrawerKind === 'obligation' ? (
+        {activeDrawerKind === 'chat' ? (
+          // §2.9.1 item 2 — one more content state of this SAME Drawer;
+          // AskChatPanel owns its own body, no DrawerContent involved.
+          <AskChatPanel key={chatOpenNonce} config={ONSIDE_CHAT_MODULE_CONFIG} {...(onDeepLink ? { onDeepLinkPress: onDeepLink } : {})} />
+        ) : activeDrawerKind === 'obligation' ? (
           displayObligation ? <DrawerContent kind="doc" fields={obligationDrawerFields} tags={obligationDrawerTags} actions={obligationDrawerActions} /> : null
         ) : displayDoc ? (
           <>

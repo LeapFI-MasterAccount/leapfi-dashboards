@@ -137,10 +137,12 @@ import { ChatHero } from '../components/ChatHero';
 import type { ChatCounter, ChatMessage, ChatHeroState } from '../components/ChatHero';
 import { DataTable } from '../components/DataTable';
 import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
+import { Drawer } from '../components/Drawer';
 import { Tag } from '../components/primitives/Tag';
 import { Label } from '../components/primitives/Label';
 import { Chip } from '../components/primitives/Chip';
 import { Button } from '../components/primitives/Button';
+import { AskChatPanel } from '../components/AskChatPanel';
 import { ChatIntakeWizard } from '../views/ChatIntakeWizard';
 import type { ChatIntakeWizardHandle } from '../views/ChatIntakeWizard';
 import { COPILOT_QA, AUTO_LOAN_OPPORTUNITY, AUTO_LOAN_DETAIL } from '../data/misc';
@@ -150,6 +152,7 @@ import { DOCLIB } from '../data/doclib';
 import { fmt } from '../engine/plan';
 import type { PlanOpportunity } from '../engine/plan';
 import { acceptOpportunity, adoptionScaledValue, getLiveLevers, useDemoStore } from '../state/demoStore';
+import { STUDIO_CHAT_MODULE_CONFIG } from '../data/askChatModuleConfig';
 import type { DeepLinkScreenProps } from '../App';
 import { PANEL_STYLE } from '../theme/panelStyle';
 
@@ -313,6 +316,9 @@ const MAIN_STYLE: CSSProperties = {
   gap: '2rem',
 };
 const TITLE_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
+/** §5.8 region map addition (amendment A16, PI2-D42) — utility corner
+ * (§5.1's originally-named placement), seated beside the page title. */
+const HEADER_ROW_STYLE: CSSProperties = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' };
 export const CHAT_PANEL_STYLE: CSSProperties = {
   ...PANEL_STYLE,
   padding: '1.5rem',
@@ -374,6 +380,18 @@ export interface StudioAskProps extends DeepLinkScreenProps {
 }
 
 export function StudioAsk({ onNavigate, onDeepLink }: StudioAskProps) {
+  // §2.9.1 item 4 — this screen gains its FIRST local Drawer instance,
+  // scoped to the chat only (StudioAsk.tsx today mounts no `<Drawer>` at
+  // all — its own live Ask flow above is a Shell-mounted, engine-driven
+  // full-page surface, categorically different from this stateless,
+  // read-only, scripted Q&A chat, §2.9.6). Bumping `chatOpenNonce` forces
+  // AskChatPanel to remount fresh on every open (§2.9.5, AC-A16-8).
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpenNonce, setChatOpenNonce] = useState(0);
+  const handleOpenChat = () => {
+    setChatOpenNonce((n) => n + 1);
+    setChatOpen(true);
+  };
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   /** The intake wizard's own transcript, mirrored up via
    * `onTranscriptChange` (fix C-unbounded-growth-01) — merged into
@@ -690,10 +708,19 @@ export function StudioAsk({ onNavigate, onDeepLink }: StudioAskProps) {
     : undefined;
 
   return (
+    <>
     <main id="studio-ask-main" style={MAIN_STYLE} aria-labelledby="studio-ask-title">
-          <h1 id="studio-ask-title" style={TITLE_STYLE}>
-            Studio · Ask
-          </h1>
+          <div style={HEADER_ROW_STYLE}>
+            <h1 id="studio-ask-title" style={TITLE_STYLE}>
+              Studio · Ask
+            </h1>
+            {/* §5.8 entry affordance (amendment A16, PI2-D42) — uniform
+                across all three studio.* screens. Coexists with this
+                screen's own primary "Ask" Button below without hierarchy
+                ambiguity (§2.9.5 — ghost-weight utility chrome, never
+                competes with the stated primary CTA, §6). */}
+            <Button variant="ghost" label={STUDIO_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
+          </div>
 
           <div style={CHAT_PANEL_STYLE}>
             <ChatHero
@@ -787,5 +814,12 @@ export function StudioAsk({ onNavigate, onDeepLink }: StudioAskProps) {
             </div>
           </section>
     </main>
+
+    {/* §2.9.1 item 4 — this screen's first (and only) local Drawer
+        instance, scoped to the "Ask Studio" chat only. */}
+    <Drawer open={chatOpen} title={STUDIO_CHAT_MODULE_CONFIG.drawerTitle} onClose={() => setChatOpen(false)}>
+      <AskChatPanel key={chatOpenNonce} config={STUDIO_CHAT_MODULE_CONFIG} {...(onDeepLink ? { onDeepLinkPress: onDeepLink } : {})} />
+    </Drawer>
+    </>
   );
 }

@@ -178,11 +178,13 @@ import type { DrawerContentAction, DrawerContentField, DrawerContentTag } from '
 import { Tag } from '../components/primitives/Tag';
 import { Button } from '../components/primitives/Button';
 import { Label } from '../components/primitives/Label';
+import { AskChatPanel } from '../components/AskChatPanel';
 import { deriveRecomputeView, fmt, riskLabel } from '../engine/plan';
 import type { SliderState, PlanOpportunity, PlanTableRow, GatedRow, BenchRow, Levers } from '../engine/plan';
 import { OPPS, DETAIL, CTRL, CTRLDOM, GREEN, GOV, REGMAP } from '../data/studio';
 import type { StudioPlayDetail } from '../data/studio';
 import { setDemoSliders, useDemoStore } from '../state/demoStore';
+import { STUDIO_CHAT_MODULE_CONFIG } from '../data/askChatModuleConfig';
 import type { DeepLinkRequest, DeepLinkScreenProps } from '../App';
 
 /**
@@ -219,6 +221,10 @@ const MAIN_STYLE: CSSProperties = {
 };
 const headerStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem' };
 const h1Style: CSSProperties = { font: 'inherit', fontSize: '1.625rem', fontWeight: 700, color: 'var(--ink)', margin: 0 };
+/** §5.8 region map addition (amendment A16, PI2-D42) — utility corner
+ * (§5.1's originally-named placement), seated beside the page title, nested
+ * inside `headerStyle`'s outer column wrapper. */
+const headerTopRowStyle: CSSProperties = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' };
 const sectionStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.75rem' };
 const sectionHeadingStyle: CSSProperties = { font: 'inherit', fontSize: '1rem', fontWeight: 700, color: 'var(--ink)', margin: 0 };
 const sideListsGridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(20rem, 1fr))', gap: '1.25rem' };
@@ -539,6 +545,12 @@ export function InvestmentDesign({
   const [sliders, setSliders] = useState<SliderState>(initialSliders);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activePlay, setActivePlay] = useState<PlanTableRow | null>(null);
+  // §2.9 — the "Ask Studio" chat as a second, mutually-exclusive content
+  // target on this SAME shared Drawer (never a second instance). Bumping
+  // `chatOpenNonce` forces AskChatPanel to remount fresh on every open
+  // (§2.9.5 fresh-open reseed, AC-A16-8).
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpenNonce, setChatOpenNonce] = useState(0);
 
   // Subscribes to the shared demo store so the live opportunity pool
   // (Discovery-accepted plays pushed by demoStore.acceptOpportunity) is
@@ -559,6 +571,7 @@ export function InvestmentDesign({
   };
 
   const handleOpenPlay = (row: PlanTableRow) => {
+    setChatOpen(false);
     setActivePlay(row);
     setDrawerOpen(true);
   };
@@ -573,6 +586,14 @@ export function InvestmentDesign({
 
   const handleCloseDrawer = () => {
     setDrawerOpen(false);
+    setChatOpen(false);
+  };
+
+  /** §2.9.5 entry affordance — "Ask Studio" utility-corner trigger. */
+  const handleOpenChat = () => {
+    setDrawerOpen(false);
+    setChatOpenNonce((n) => n + 1);
+    setChatOpen(true);
   };
 
   // Fix B-dead-interactions-03/04 (nav-payload CONSUME half — App.tsx file
@@ -595,9 +616,14 @@ export function InvestmentDesign({
     <>
       <main id="investment-design-main" style={MAIN_STYLE} aria-labelledby="investment-design-title">
         <div style={headerStyle}>
-          <h1 id="investment-design-title" style={h1Style}>
-            Investment Design
-          </h1>
+          <div style={headerTopRowStyle}>
+            <h1 id="investment-design-title" style={h1Style}>
+              Investment Design
+            </h1>
+            {/* §5.8 entry affordance (amendment A16, PI2-D42) — uniform
+                across all three studio.* screens. */}
+            <Button variant="ghost" label={STUDIO_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
+          </div>
         </div>
 
         <SliderControlRow sliders={sliders} onSlidersChange={handleSlidersChange} {...(opportunities !== undefined ? { opportunities } : {})} />
@@ -619,8 +645,15 @@ export function InvestmentDesign({
         </div>
       </main>
 
-      <Drawer open={drawerOpen} title={activePlay?.name ?? 'Play detail'} onClose={handleCloseDrawer}>
-        {drawerContent ? (
+      <Drawer
+        open={drawerOpen || chatOpen}
+        title={chatOpen ? STUDIO_CHAT_MODULE_CONFIG.drawerTitle : (activePlay?.name ?? 'Play detail')}
+        onClose={handleCloseDrawer}
+      >
+        {chatOpen ? (
+          // §2.9.1 item 2 — one more content state of this SAME Drawer.
+          <AskChatPanel key={chatOpenNonce} config={STUDIO_CHAT_MODULE_CONFIG} {...(onDeepLink ? { onDeepLinkPress: onDeepLink } : {})} />
+        ) : drawerContent ? (
           <DrawerContent kind="play" fields={drawerContent.fields} tags={drawerContent.tags} actions={drawerContent.actions} />
         ) : null}
       </Drawer>
