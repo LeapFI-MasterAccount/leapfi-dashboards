@@ -249,7 +249,7 @@ const groupCellStyle: CSSProperties = {
   fontSize: '0.6875rem',
   fontWeight: 700,
   textTransform: 'uppercase',
-  letterSpacing: '0.06em',
+  letterSpacing: '0.05em' /* T7 F11: was 0.06em (verbatim v1 tr.dgroup), doctrine TYP-4 is 0.05em */,
   color: 'var(--chart-axis)',
 };
 

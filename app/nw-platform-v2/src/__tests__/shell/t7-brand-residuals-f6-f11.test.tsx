@@ -175,7 +175,7 @@ describe('F11 — ALL-CAPS letter-spacing at doctrine TYP-4 (+0.05em), every kno
     expect(offenders).toEqual([])
   })
 
-  it('project-wide sweep: exactly 9 inline letterSpacing declarations exist in src/ — the full F11 site count; a silent 10th site (compliant or not) fails this canary', () => {
+  it('project-wide sweep: exactly 10 inline letterSpacing declarations exist in src/ — the full F11 site count (9 original + DataTable.tsx groupCellStyle, brought into TYP-4 compliance at 0.05em rather than exempted); a silent 11th site (compliant or not) fails this canary', () => {
     let count = 0
     const walk = (dir: string) => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -190,6 +190,6 @@ describe('F11 — ALL-CAPS letter-spacing at doctrine TYP-4 (+0.05em), every kno
       }
     }
     walk(srcRoot)
-    expect(count).toBe(9)
+    expect(count).toBe(10)
   })
 })
