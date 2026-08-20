@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import { PANEL_STYLE } from '../panelStyle';
 
 // r13 A.2 — theme/panelStyle.ts consolidation.
@@ -171,4 +173,103 @@ describe('theme/panelStyle — consolidated call sites (12 default-radius + 2 ra
       padding: '1.5rem',
     });
   });
+});
+
+// r13 A.2 hostile-review fix (finding D1) — the header comment above and the
+// original version of this test hand-counted "14 consolidated sites". A
+// re-sweep found 19 `...PANEL_STYLE` spread sites across 16 files (five real
+// consumers — FilterBar, Topbar, DomainsAccordion, HomeCustomizeBar,
+// NotificationBellPanel — were never added to the hand-maintained list
+// above); a sixth site, SliderControlRow.tsx's `stanceBoxStyle`, was
+// converted to spread PANEL_STYLE in this same fix pass (finding D2),
+// bringing the current total to 20 sites across 17 files. A hand-maintained
+// count/list is exactly the kind of thing that goes stale silently; instead
+// of extending the manual list again, this block DERIVES the current site
+// set by scanning the actual `src` tree for `...PANEL_STYLE` spreads, so any
+// future site (added or removed) shows up in this test's own output rather
+// than only in a comment nobody re-reads.
+const SRC_DIR = path.resolve(__dirname, '..', '..');
+const PANEL_STYLE_DEFINITION_FILE = path.resolve(__dirname, '..', 'panelStyle.ts');
+const SPREAD_PATTERN = /\.\.\.\s*PANEL_STYLE\b/;
+
+interface PanelStyleSite {
+  file: string; // path relative to src/
+  line: number;
+}
+
+function findPanelStyleSpreadSites(dir: string): PanelStyleSite[] {
+  const sites: PanelStyleSite[] = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === 'node_modules' || entry.name === '__tests__') continue;
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      sites.push(...findPanelStyleSpreadSites(fullPath));
+      continue;
+    }
+    if (!/\.(ts|tsx)$/.test(entry.name)) continue;
+    if (fullPath === PANEL_STYLE_DEFINITION_FILE) continue; // the shared constant's own declaration is not a "consumer"
+    const lines = fs.readFileSync(fullPath, 'utf8').split('\n');
+    lines.forEach((line, index) => {
+      if (SPREAD_PATTERN.test(line)) {
+        sites.push({ file: path.relative(SRC_DIR, fullPath), line: index + 1 });
+      }
+    });
+  }
+  return sites;
+}
+
+describe('theme/panelStyle — real consumer set, derived from the codebase (not hand-counted)', () => {
+  const sites = findPanelStyleSpreadSites(SRC_DIR).sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line);
+  const files = [...new Set(sites.map((s) => s.file))].sort();
+
+  it('finds every `...PANEL_STYLE` spread site currently in src/ by scanning, not by a hardcoded list', () => {
+    // Pinned to the actual re-swept count at this commit: 20 sites in 17
+    // files (the 14 originally documented + FilterBar, Topbar,
+    // DomainsAccordion, HomeCustomizeBar, NotificationBellPanel, and
+    // SliderControlRow's `stanceBoxStyle` converted in this same pass).
+    expect(files.length).toBe(17);
+    expect(sites.length).toBe(20);
+  });
+
+  it('the derived file set matches the corrected consumer list (regression lock — a removed or newly-added file changes this)', () => {
+    expect(files).toEqual([
+      'components/FilterBar.tsx',
+      'components/SetupCard.tsx',
+      'components/SliderControlRow.tsx',
+      'components/StatCard.tsx',
+      'components/Topbar.tsx',
+      'screens/OnSideOverview.tsx',
+      'screens/OnSideOwnership.tsx',
+      'screens/Roadmap.tsx',
+      'screens/SettingsAbout.tsx',
+      'screens/SettingsToggles.tsx',
+      'screens/StudioAsk.tsx',
+      'views/CaseDetail.tsx',
+      'views/ChatIntakeWizard.tsx',
+      'views/DomainsAccordion.tsx',
+      'views/HomeCustomizeBar.tsx',
+      'views/NotificationBellPanel.tsx',
+      'views/RegulatoryFeedSources.tsx',
+    ]);
+  });
+
+  it('the previously-uncovered six sites (FilterBar, Topbar, DomainsAccordion, HomeCustomizeBar, NotificationBellPanel, SliderControlRow) really do spread PANEL_STYLE, not just import it unused', () => {
+    const uncovered = [
+      'components/FilterBar.tsx',
+      'components/Topbar.tsx',
+      'views/DomainsAccordion.tsx',
+      'views/HomeCustomizeBar.tsx',
+      'views/NotificationBellPanel.tsx',
+      'components/SliderControlRow.tsx',
+    ];
+    for (const file of uncovered) {
+      const siteCount = sites.filter((s) => s.file === file).length;
+      expect(siteCount).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  // SliderControlRow's `stanceBoxStyle` is module-private (not exported), so
+  // its converted shape is asserted at the rendered-DOM level — see
+  // src/__tests__/components/slider-control-row-stance-box-panel-style.test.tsx
+  // (finding D2).
 });
