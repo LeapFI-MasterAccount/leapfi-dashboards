@@ -137,6 +137,7 @@ import { Button } from '../components/primitives/Button';
 import { Chip } from '../components/primitives/Chip';
 import { Label } from '../components/primitives/Label';
 import { HP, HOME_ORDER } from '../data/misc';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 export type HomePanelKey = 'posture' | 'legis' | 'invest' | 'queue' | 'qa';
 
@@ -224,9 +225,7 @@ const panelStyle: CSSProperties = {
   overflowY: 'auto',
   boxSizing: 'border-box',
   padding: '0.875rem',
-  borderRadius: 'var(--radius-md, 10px)',
-  border: '1px solid var(--border)',
-  background: 'var(--panel)',
+  ...PANEL_STYLE,
 };
 // `flexBasis: '100%'` (old) forced the note block onto its own line under
 // the previous `flexWrap: 'wrap'` row layout; under the new column layout
