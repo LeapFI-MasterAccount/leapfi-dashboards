@@ -75,7 +75,7 @@ const tableStyle: CSSProperties = {
 const thStyle: CSSProperties = {
   fontSize: '0.6875rem',
   textTransform: 'uppercase',
-  letterSpacing: '0.07em',
+  letterSpacing: '0.05em', /* T7 F11: was 0.07em, doctrine TYP-4 is 0.05em */
   color: 'var(--ink2)',
   textAlign: 'left',
   fontWeight: 700,

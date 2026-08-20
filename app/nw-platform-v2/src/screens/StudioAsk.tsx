@@ -326,7 +326,7 @@ const CHAT_PANEL_STYLE: CSSProperties = {
 const SCOPE_CHIP_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' };
 const INTAKE_SLOT_STYLE: CSSProperties = { marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' };
 const SOURCES_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
-const SOURCES_HEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--ink2)', textTransform: 'uppercase', letterSpacing: '0.06em' };
+const SOURCES_HEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--ink2)', textTransform: 'uppercase', letterSpacing: '0.05em' /* T7 F11: was 0.06em, doctrine TYP-4 is 0.05em */ };
 const SOURCES_LIST_STYLE: CSSProperties = { margin: 0, padding: '0 0 0 1.1rem', fontSize: '0.875rem', color: 'var(--ink)', lineHeight: 1.6 };
 /** Fix B-dead-interactions-10: base `.doclink` styling (underlined, accent-colored, inline) rendered as a real `<button>` so each source is keyboard-operable. */
 const CITATION_LINK_STYLE: CSSProperties = {

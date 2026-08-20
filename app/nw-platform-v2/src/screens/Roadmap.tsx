@@ -347,7 +347,7 @@ const kpiCardStyle: CSSProperties = {
   flexDirection: 'column',
   gap: '0.25rem',
 };
-const kpiLabelStyle: CSSProperties = { fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink2)', fontWeight: 700 };
+const kpiLabelStyle: CSSProperties = { fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.05em' /* T7 F11: was 0.06em, doctrine TYP-4 is 0.05em */, color: 'var(--ink2)', fontWeight: 700 };
 const kpiValueStyle: CSSProperties = { fontSize: '1.25rem', fontWeight: 700, color: 'var(--ink)' };
 const kpiSubStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
 
@@ -365,7 +365,7 @@ const quarterColStyle: CSSProperties = {
   flexDirection: 'column',
   gap: '0.5rem',
 };
-const quarterHeadStyle: CSSProperties = { display: 'flex', justifyContent: 'space-between', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink2)', fontWeight: 700 };
+const quarterHeadStyle: CSSProperties = { display: 'flex', justifyContent: 'space-between', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.05em' /* T7 F11: was 0.06em, doctrine TYP-4 is 0.05em */, color: 'var(--ink2)', fontWeight: 700 };
 const chipStyle: CSSProperties = {
   border: '1px solid var(--border)',
   borderRadius: 'var(--radius-sm, 6px)',

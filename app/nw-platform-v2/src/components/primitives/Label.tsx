@@ -4,16 +4,14 @@
  * Variants: `body-secondary`, `eyebrow` (ALL-CAPS, tracking per doctrine
  * TYP-4 — "value not restated here" per the spec's own text).
  *
- * AMBIGUITY RESOLVED: TYP-4's exact letter-spacing value lives in
- * brand_doctrine.md's Typography section, which is outside this
- * dispatch's cited sources (design_system_spec.md §1.4 explicitly
- * excludes typography values from this document, and tokens.css only
- * carries color roles, not type tracking). I used a conventional eyebrow
- * tracking value (`0.08em`) as a structural placeholder so the
- * ALL-CAPS + letterspacing *shape* required by the spec text is present;
- * the exact TYP-4 figure should be swapped in by whoever owns
- * brand_doctrine.md typography values. STOP-item, not silently invented
- * as final: flagging for verification against TYP-4 directly.
+ * STOP-item CLOSED (T7 F11): TYP-4's exact letter-spacing value lives in
+ * brand_doctrine.md's Typography section ("Letter-spacing +0.05em for
+ * ALL-CAPS labels only") — this primitive originally shipped a conventional
+ * eyebrow tracking value (`0.08em`) as a structural placeholder pending
+ * that lookup; it is now the pinned `0.05em`, matching the 7 other ad hoc
+ * ALL-CAPS sites the same audit finding named (Roadmap.tsx x2, StudioAsk.tsx,
+ * SliderControlRow.tsx, InvestmentDesign.tsx, PresenterRail.tsx,
+ * PlanTable.tsx, NotificationBellPanel.tsx — all corrected in the same pass).
  *
  * a11y baseline (spec P3): "Eyebrow labels are supplementary, never the
  * only accessible name for the section they head — always paired with a
@@ -45,7 +43,7 @@ const VARIANT_STYLE: Record<LabelVariant, CSSProperties> = {
     fontWeight: 700,
     color: 'var(--ink2)',
     textTransform: 'uppercase',
-    letterSpacing: '0.08em',
+    letterSpacing: '0.05em', /* T7 F11: doctrine TYP-4 value; was 0.08em placeholder per this file's own header STOP-item */
   },
 };
 

@@ -78,7 +78,14 @@ function variantStyle(variant: ButtonVariant, hover: boolean, active: boolean): 
     case 'primary':
       return {
         background: active ? 'var(--accent2)' : 'var(--accent)',
-        color: 'var(--bg)',
+        // T7 F6 fix: the pressed (active) fill is Cobalt (--accent2), and
+        // --bg (Black in dark mode) on Cobalt measured 4.05:1 — under the
+        // 4.5:1 AA text floor (A11Y-1). --accent2-ink (White, 5.18:1 on
+        // Cobalt in both themes) is scoped to this pressed state only; the
+        // default/hover pairing (--bg on --accent/Cyan, 15.14:1) is
+        // untouched — see tokens.css's --accent2-ink comment for the full
+        // computation.
+        color: active ? 'var(--accent2-ink)' : 'var(--bg)',
         borderColor: 'transparent',
         opacity: hover && !active ? 0.9 : 1,
       };

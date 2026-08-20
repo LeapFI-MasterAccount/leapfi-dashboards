@@ -263,7 +263,7 @@ const RULES_HEADING_STYLE: CSSProperties = {
   fontWeight: 700,
   color: 'var(--ink2)',
   textTransform: 'uppercase',
-  letterSpacing: '0.06em',
+  letterSpacing: '0.05em', /* T7 F11: was 0.06em, doctrine TYP-4 is 0.05em */
 };
 
 const RULES_TAG_ROW_STYLE: CSSProperties = {

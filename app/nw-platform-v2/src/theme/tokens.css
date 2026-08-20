@@ -32,6 +32,18 @@
   --ink3: #7b8794;
   --accent: #00f2ff; /* Brand Cyan — THE ONLY primary accent in dark mode */
   --accent2: #2d5bff; /* Cobalt — secondary accent, gradient partner to Cyan only */
+  /* T7 F6 fix: primitives/Button.tsx's primary-variant PRESSED state fills
+     with --accent2 (Cobalt) and previously reused --bg (Black, #000000) as
+     the label color — Black-on-Cobalt measured 4.05:1, under A11Y-1's 4.5:1
+     AA text floor (doctrine's Accessibility approved-pairs list does not
+     include black-on-Cobalt either). White (--ink's dark-mode value, already
+     a pinned doctrine color — PAL-3) holds 5.18:1 against Cobalt regardless
+     of theme (WCAG 2.1 relative-luminance, independently computed) — pinned
+     here as its own token, not aliased to --ink, because --ink is Midnight
+     (#0A2342) in the light block and would regress that pairing to 3.04:1.
+     The pressed state's own colors are the fix; --accent/--accent2 and the
+     resting (default/hover) state's black-on-Cyan pairing are untouched. */
+  --accent2-ink: #ffffff;
   /* Focus treatment: brand_doctrine.md Accessibility — "Focus states visible, cyan glow preferred" */
   --focus-ring: 0 0 0 2px #000000, 0 0 0 4px #00f2ff, 0 0 12px 2px rgba(0, 242, 255, 0.65);
   --focus-ring-outline: 2px solid #00f2ff;
@@ -81,6 +93,10 @@
   --ink3: #4a5568; /* LM-PAL-5 — Dim Grey, tertiary text (unchanged from dark-mode original) */
   --accent: #006d75; /* LM-PAL-6 — Deep Teal, THE ONLY primary accent in light mode (Cyan excluded, S1/S3.5) */
   --accent2: #2d5bff; /* LM-PAL-7 — Cobalt, secondary accent (unchanged) */
+  /* T7 F6 fix (see dark block's identical comment): same White-on-Cobalt
+     pairing, 5.18:1, independent of theme — defined here too so Button.tsx's
+     pressed state never depends on --bg/--ink happening to equal white. */
+  --accent2-ink: #ffffff;
   /* LM-FOCUS-1: solid ring, not a glow — a glow effect reads as dark-mode-
      specific visual language (amendment S2 LM-FOCUS-1 row). */
   --focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px #006d75;
