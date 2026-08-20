@@ -19,15 +19,12 @@
  * "submitting"/"answer-rendering"/"no-match" locally (Core Principle 3:
  * "no fabricated intermediate state").
  *
- * AMBIGUITY RESOLVED (StatCard row): StatCard (C1) is a sibling composite
- * with no file in this worktree — same reasoning as `PlanTable.tsx`'s
- * DataTable note. The counters render via a local `CounterTile` helper
- * (StatValue only, P11) rather than importing an unbuilt component under
- * a guessed prop contract — see SliderControlRow.tsx's identical note
- * for why C1's Label half is intentionally not reproduced per-tile
- * (StatValue's own accessible-name contract already bundles "value +
- * its label" as one unit). Mechanical drop-in for the real StatCard.tsx
- * once that dispatch lands.
+ * StatCard row (r13 A.1): the counters render via the real, shared
+ * `StatCard` (C1, `components/StatCard.tsx`) — the mechanical drop-in the
+ * component's own file header anticipated once that composite landed.
+ * Each `ChatCounter` maps 1:1 onto `StatCardProps` (`label`/`value`/
+ * `unit?`); no `onPress` is wired since neither the §5.4 region map nor
+ * this screen's own props expose a navigation target for a counter tile.
  *
  * A11y (spec C10): "Answer region is a live region (`aria-live="polite"`)
  * so the rendered answer is announced as it completes." Matching the
@@ -64,7 +61,7 @@ import { Button } from './primitives/Button';
 import { Chip } from './primitives/Chip';
 import { Input } from './primitives/Input';
 import { Spinner } from './primitives/Spinner';
-import { StatValue } from './primitives/StatValue';
+import { StatCard } from './StatCard';
 
 export interface ChatCounter {
   value: string | number;
@@ -129,20 +126,6 @@ const suggestionRowStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', g
 
 const askRowStyle: CSSProperties = { display: 'flex', gap: '0.625rem', alignItems: 'flex-end' };
 
-/**
- * Local stand-in for StatCard (C1 = StatValue + Label) — see the file
- * header's AMBIGUITY RESOLVED note. Duplicated (not shared) with
- * SliderControlRow.tsx's identical helper: the two composites are not
- * otherwise related, and both copies disappear once the real
- * StatCard.tsx lands.
- */
-function CounterTile({ value, unit, label }: ChatCounter) {
-  // exactOptionalPropertyTypes: forwarding a possibly-`undefined` optional
-  // prop verbatim (`unit={unit}`) is rejected — StatValue's `unit?: string`
-  // means "present and a string, or absent," not "present as undefined."
-  return unit === undefined ? <StatValue value={value} label={label} /> : <StatValue value={value} unit={unit} label={label} />;
-}
-
 export function ChatHero({ counters, messages, suggestions, inputValue, onInputChange, onAsk, state, noMatchMessage }: ChatHeroProps) {
   const busy = state === 'submitting' || state === 'answer-rendering';
   const isFinal = state === 'answer-complete' || state === 'no-match';
@@ -167,7 +150,7 @@ export function ChatHero({ counters, messages, suggestions, inputValue, onInputC
     <div style={rootStyle} data-lf-composite="chat-hero" data-state={state}>
       <div role="group" aria-label="Studio · Ask coverage" style={counterRowStyle}>
         {counters.map((counter) => (
-          <CounterTile key={counter.label} {...counter} />
+          <StatCard key={counter.label} {...counter} />
         ))}
       </div>
 
