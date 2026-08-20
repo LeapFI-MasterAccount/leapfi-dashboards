@@ -372,7 +372,10 @@ const chipStyle: CSSProperties = {
 const chipNameStyle: CSSProperties = { fontSize: '0.8125rem', fontWeight: 700, color: 'var(--ink)' };
 const chipCatStyle: CSSProperties = { fontSize: '0.6875rem', color: 'var(--ink2)' };
 const chipNoteStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
-const quarterMarkerStyle: CSSProperties = { fontSize: '0.6875rem', color: 'var(--ink2)', marginTop: 'auto' };
+// A14 (design_system_spec.md §2.7, Camille ruling 1): direct child of
+// quarterColStyle (spreads PANEL_STYLE) with no intervening explicit
+// background — same fix, same rationale as its sibling kpiSubStyle above.
+const quarterMarkerStyle: CSSProperties = { fontSize: '0.6875rem', color: 'var(--chart-axis)', marginTop: 'auto' };
 const chipRowStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(13rem, 1fr))', gap: '0.625rem' };
 const foundationLinkStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)', margin: 0, textAlign: 'center' };
 
@@ -425,7 +428,7 @@ export function Roadmap({ onNavigate, onDeepLink }: RoadmapProps) {
           <div style={kpiRowStyle} role="group" aria-label="Roadmap economics">
             {roadmap.kpis.map((kpi) => (
               <div key={kpi.label} style={kpiCardStyle}>
-                <Label text={kpi.label} variant="eyebrow" />
+                <Label text={kpi.label} variant="eyebrow" surface="panel" />
                 <span style={kpiValueStyle}>{kpi.value}</span>
                 <span style={kpiSubStyle}>{kpi.sub}</span>
               </div>
@@ -450,8 +453,8 @@ export function Roadmap({ onNavigate, onDeepLink }: RoadmapProps) {
                   {year.quarters.map((quarter) => (
                     <div key={quarter.label} style={quarterColStyle}>
                       <div style={quarterHeadStyle}>
-                        <Label text={quarter.label} variant="eyebrow" />
-                        <Label text={quarter.spendText} variant="eyebrow" />
+                        <Label text={quarter.label} variant="eyebrow" surface="panel" />
+                        <Label text={quarter.spendText} variant="eyebrow" surface="panel" />
                       </div>
                       {quarter.chips.map((chip) => (
                         <PlayChipCard key={chip.play.n} chip={chip} onOpenPlay={handleOpenPlay} />

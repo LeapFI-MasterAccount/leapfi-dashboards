@@ -146,7 +146,11 @@ function SetupCardBody({ title, description, icon, count }: SetupCardBodyProps) 
           <span style={TITLE_TEXT_STYLE}>{title}</span>
           {count ? <Tag text={count} variant="count" /> : null}
         </span>
-        {description ? <Label text={description} variant="body-secondary" /> : null}
+        {/* A14 (design_system_spec.md §2.1 P3, §2.7): CARD_BASE_STYLE
+            spreads PANEL_STYLE for both `interactive` and `locked` variants
+            — no non-panel render path exists — so this description Label
+            is always panel-seated. */}
+        {description ? <Label text={description} variant="body-secondary" surface="panel" /> : null}
       </span>
     </>
   );

@@ -11,16 +11,30 @@
  * the composite (StatCard / SliderControlRow per spec), not this
  * primitive — this component only renders `loading` and `updating`
  * visual states.
+ *
+ * `surface` prop (amendment A14, design_system_spec.md §2.1 P11 / §2.7):
+ * the `unit`/`label` caption styles hardcoded `--ink2` unconditionally,
+ * which fails the 4.5:1 AA floor in light theme wherever this StatValue's
+ * immediate rendering context is a `--panel` surface. `surface="page"`
+ * (default) is byte-identical to pre-A14 behavior; `surface="panel"`
+ * resolves the caption color to `--chart-axis` instead — REQUIRED at every
+ * current call site (StatCard's own body; ShowTheWorkingPanel's Drawer
+ * body), per §2.7's binding population.
  */
 import type { CSSProperties } from 'react';
 
 export type StatValueState = 'default' | 'loading' | 'updating';
+export type StatValueSurface = 'page' | 'panel';
 
 export interface StatValueProps {
   value: string | number;
   unit?: string;
   label: string;
   state?: StatValueState;
+  /** A14 — `'page'` (default, `--ink2`, byte-identical to pre-A14) or
+   * `'panel'` (`--chart-axis`, REQUIRED when this StatValue's immediate
+   * rendering context is a `--panel` surface — design_system_spec.md §2.7). */
+  surface?: StatValueSurface;
 }
 
 const wrapStyle: CSSProperties = {
@@ -44,12 +58,15 @@ const valueStyle: CSSProperties = {
 
 const unitStyle: CSSProperties = {
   fontSize: '0.8125rem',
-  color: 'var(--ink2)',
 };
 
 const labelStyle: CSSProperties = {
   fontSize: '0.75rem',
-  color: 'var(--ink2)',
+};
+
+const SURFACE_COLOR: Record<StatValueSurface, string> = {
+  page: 'var(--ink2)',
+  panel: 'var(--chart-axis)',
 };
 
 // No CSS @keyframes pulse here: this component's allowlist is this file
@@ -65,14 +82,15 @@ const skeletonStyle: CSSProperties = {
   border: '1px solid var(--border)',
 };
 
-export function StatValue({ value, unit, label, state = 'default' }: StatValueProps) {
+export function StatValue({ value, unit, label, state = 'default', surface = 'page' }: StatValueProps) {
   const accessibleName = `${value}${unit ? ` ${unit}` : ''}, ${label}`;
+  const captionColor = SURFACE_COLOR[surface];
 
   if (state === 'loading') {
     return (
-      <div style={wrapStyle} role="text" aria-label={`${label}, loading`} data-lf-primitive="stat-value" data-state="loading">
+      <div style={wrapStyle} role="text" aria-label={`${label}, loading`} data-lf-primitive="stat-value" data-state="loading" data-surface={surface}>
         <span aria-hidden="true" style={skeletonStyle} />
-        <span aria-hidden="true" style={labelStyle}>
+        <span aria-hidden="true" style={{ ...labelStyle, color: captionColor }}>
           {label}
         </span>
       </div>
@@ -86,6 +104,7 @@ export function StatValue({ value, unit, label, state = 'default' }: StatValuePr
       aria-label={accessibleName}
       data-lf-primitive="stat-value"
       data-state={state}
+      data-surface={surface}
     >
       <div aria-hidden="true" style={numberRowStyle}>
         <span
@@ -97,9 +116,9 @@ export function StatValue({ value, unit, label, state = 'default' }: StatValuePr
         >
           {value}
         </span>
-        {unit ? <span style={unitStyle}>{unit}</span> : null}
+        {unit ? <span style={{ ...unitStyle, color: captionColor }}>{unit}</span> : null}
       </div>
-      <span aria-hidden="true" style={labelStyle}>
+      <span aria-hidden="true" style={{ ...labelStyle, color: captionColor }}>
         {label}
       </span>
     </div>

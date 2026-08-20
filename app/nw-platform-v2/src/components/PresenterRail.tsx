@@ -445,9 +445,12 @@ export const PresenterRail = forwardRef<PresenterRailHandle, PresenterRailProps>
         {announcement}
       </span>
 
+      {/* A14 (design_system_spec.md §2.7): RAIL_STYLE (this component's own
+          root) sets background: var(--panel) unconditionally — every Label
+          in this component is panel-seated. */}
       <div style={HEADER_ROW_STYLE}>
         <div style={HEADER_TEXT_STYLE}>
-          <Label text={`STEP ${stepIndex + 1} OF ${stepCount}`} variant="eyebrow" />
+          <Label text={`STEP ${stepIndex + 1} OF ${stepCount}`} variant="eyebrow" surface="panel" />
           <h2 style={TITLE_STYLE}>{currentStep?.title ?? script.label}</h2>
         </div>
         <Button
@@ -461,11 +464,11 @@ export const PresenterRail = forwardRef<PresenterRailHandle, PresenterRailProps>
       {expanded ? (
         <div style={BODY_STYLE}>
           <div style={TEXT_BLOCK_STYLE}>
-            <Label text="Say" variant="body-secondary" />
+            <Label text="Say" variant="body-secondary" surface="panel" />
             <p style={TEXT_STYLE}>{currentStep?.say}</p>
           </div>
           <div style={TEXT_BLOCK_STYLE}>
-            <Label text="Do" variant="body-secondary" />
+            <Label text="Do" variant="body-secondary" surface="panel" />
             <p style={TEXT_STYLE}>{currentStep?.do}</p>
           </div>
         </div>
@@ -473,14 +476,14 @@ export const PresenterRail = forwardRef<PresenterRailHandle, PresenterRailProps>
 
       <div style={RULES_SECTION_STYLE}>
         <h3 style={RULES_HEADING_STYLE}>
-          <Label text="Standing rules" variant="eyebrow" />
+          <Label text="Standing rules" variant="eyebrow" surface="panel" />
         </h3>
         <div style={RULES_TAG_ROW_STYLE}>
           {STANDING_RULES.map((rule) => (
             <Tag key={rule.tagText} text={rule.tagText} variant={rule.tagVariant} />
           ))}
         </div>
-        <Label text="Bind every step of this script." variant="body-secondary" />
+        <Label text="Bind every step of this script." variant="body-secondary" surface="panel" />
       </div>
 
       <div style={CONTROLS_ROW_STYLE}>

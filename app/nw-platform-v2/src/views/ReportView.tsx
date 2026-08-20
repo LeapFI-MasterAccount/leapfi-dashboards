@@ -444,9 +444,13 @@ function DocLink({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 function TableSection({ heading, children }: { heading: string; children: ReactNode }) {
+  // A14 (design_system_spec.md §2.7): ReportView is rendered only as a
+  // child of Reporting.tsx's shared Drawer (root background var(--panel));
+  // neither this component nor ReportView's own root overrides it —
+  // panel-seated.
   return (
     <div style={sectionStyle}>
-      <Label text={heading} variant="eyebrow" />
+      <Label text={heading} variant="eyebrow" surface="panel" />
       <div style={tableScrollStyle}>{children}</div>
     </div>
   );
@@ -585,11 +589,11 @@ function GapboardReport({ onOpenCases }: { onOpenCases?: () => void }) {
               <strong>Prepared by:</strong> P. Raman, Risk Analyst
               {c.edited ? ' (language edited from the OnSide draft)' : ''}
             </p>
-            <Label text="Before · in force until this is adopted" variant="eyebrow" />
+            <Label text="Before · in force until this is adopted" variant="eyebrow" surface="panel" />
             <p style={{ ...bodyTextStyle, borderLeft: '2px solid var(--sem-alert)', paddingLeft: '0.75rem' }}>
               {doc?.redline?.old ?? ''}
             </p>
-            <Label text={'After · for the committee’s approval'} variant="eyebrow" />
+            <Label text={'After · for the committee’s approval'} variant="eyebrow" surface="panel" />
             <p style={{ ...bodyTextStyle, borderLeft: '2px solid var(--sem-positive)', paddingLeft: '0.75rem' }}>
               {c.lang}
             </p>
@@ -812,7 +816,7 @@ function BoardReport() {
       </TableSection>
       {/* Base source 1523-1531: the appendix — all sections simultaneously
         * visible below the deck, never behind slide navigation (RPT-09). */}
-      <Label text="The appendix · the one-page read behind the deck" variant="eyebrow" />
+      <Label text="The appendix · the one-page read behind the deck" variant="eyebrow" surface="panel" />
       <p style={bodyTextStyle}>
         {`At a ${toleranceWord(view.L.tol)} risk tolerance and a ${view.levers.budgetLabel} annual budget, the plan funds ${view.plan.funded.length} of ${view.economics.totalOpportunities} plays for a one-time build of ${view.economics.buildCostText}, returning an expected ${view.economics.roiText} over three years (${view.economics.annualValueText}/yr at ${view.levers.adoptionLabel} adoption, ~${view.economics.paybackText} payback). Ambition is set to ${view.levers.ambitionLabel} against a current ${BANDS[CUR] ?? ''} posture; closing ${view.economics.controlsToCloseCount} control families releases the remaining ${view.plan.gated.length} higher-value plays.`}
       </p>
@@ -1492,10 +1496,11 @@ export function ReportView({ kind, onOpenCases, onLogUpdate, onOpenGovernance, o
         * report head carried alongside them. */}
       <div style={chromeRowStyle}>
         <div style={chromeLabelsStyle}>
-          <Label text="LEAPFI · Reporting · generated from the live record" variant="eyebrow" />
+          <Label text="LEAPFI · Reporting · generated from the live record" variant="eyebrow" surface="panel" />
           <Label
             text={`${reportSub(kind)} · NorthWinds Credit Union · illustrative model on sample data`}
             variant="body-secondary"
+            surface="panel"
           />
         </div>
         {onOpenGovernance ? <Button variant="ghost" label="Open full governance detail · OnSide →" onPress={onOpenGovernance} /> : null}

@@ -281,6 +281,8 @@ export function SettingsToggles() {
   const [committeeName, setCommitteeName] = useState<string>(APPROVAL.committee);
 
   function renderToggleCard(title: string, rows: ToggleRow[], state: Record<string, boolean>, setState: (next: Record<string, boolean>) => void, headingId: string) {
+    // A14 (design_system_spec.md §2.7): CARD_STYLE spreads PANEL_STYLE —
+    // every Label inside it is panel-seated.
     return (
       <div style={CARD_STYLE} role="group" aria-labelledby={headingId}>
         <h2 id={headingId} style={CARD_TITLE_STYLE}>
@@ -293,7 +295,7 @@ export function SettingsToggles() {
               label={row.label}
               onChange={(checked) => setState({ ...state, [row.key]: checked })}
             />
-            <Label text={row.description} variant="body-secondary" />
+            <Label text={row.description} variant="body-secondary" surface="panel" />
           </div>
         ))}
       </div>
@@ -311,6 +313,8 @@ export function SettingsToggles() {
             </h1>
           </div>
 
+          {/* A14 (design_system_spec.md §2.7): CARD_STYLE spreads
+              PANEL_STYLE — every Label inside it is panel-seated. */}
           <div style={CARD_STYLE} role="group" aria-labelledby="approval-matrix-heading">
             <h2 id="approval-matrix-heading" style={CARD_TITLE_STYLE}>
               Approval matrix
@@ -321,11 +325,11 @@ export function SettingsToggles() {
               const requiresCommittee = committeeState[tier.k] ?? tier.committee;
               return (
                 <div key={tier.k} style={index === 0 ? TIER_ROW_FIRST_STYLE : TIER_ROW_STYLE}>
-                  <Label text={tier.n} variant="eyebrow" />
+                  <Label text={tier.n} variant="eyebrow" surface="panel" />
                   <p style={TIER_DESC_STYLE}>{tier.d}</p>
-                  <Label text={`Example: ${tier.ex}`} variant="body-secondary" />
+                  <Label text={`Example: ${tier.ex}`} variant="body-secondary" surface="panel" />
                   <div style={TIER_META_ROW_STYLE}>
-                    <Label text={caseCountText} variant="body-secondary" />
+                    <Label text={caseCountText} variant="body-secondary" surface="panel" />
                   </div>
                   {/* B-15: base per-tier `.toggle` (`toggleTierCommittee`, source 3975). */}
                   <Switch
@@ -337,7 +341,7 @@ export function SettingsToggles() {
               );
             })}
             <div style={STATIC_ROW_STYLE}>
-              <Label text="Approving committee" variant="eyebrow" />
+              <Label text="Approving committee" variant="eyebrow" surface="panel" />
               {/* B-15: base editable committee-name `<input>` (`setCommitteeName`, source 3968-3983). */}
               <label>
                 <span style={srOnlyStyle}>Approving committee name</span>
@@ -350,8 +354,8 @@ export function SettingsToggles() {
               </label>
             </div>
             <div style={STATIC_ROW_STYLE}>
-              <Label text="Conditions the CRO can attach" variant="eyebrow" />
-              <Label text={conditionsText} variant="body-secondary" />
+              <Label text="Conditions the CRO can attach" variant="eyebrow" surface="panel" />
+              <Label text={conditionsText} variant="body-secondary" surface="panel" />
             </div>
           </div>
 

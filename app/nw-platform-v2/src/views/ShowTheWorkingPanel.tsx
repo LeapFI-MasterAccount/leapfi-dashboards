@@ -87,9 +87,11 @@ export function ShowTheWorkingPanel({ open, onClose, baseline }: ShowTheWorkingP
         valueText={`${eff}%`}
         onChange={setEff}
       />
+      {/* A14 (design_system_spec.md §2.7): rendered inside the Drawer (C7)
+          body, whose root background is var(--panel) — panel-seated. */}
       <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1.25rem' }}>
-        <StatValue value={view.economics.roiText} label="Expected 3-year ROI" />
-        <StatValue value={view.economics.annualValueText} label="Annual value" />
+        <StatValue value={view.economics.roiText} label="Expected 3-year ROI" surface="panel" />
+        <StatValue value={view.economics.annualValueText} label="Annual value" surface="panel" />
       </div>
     </Drawer>
   );

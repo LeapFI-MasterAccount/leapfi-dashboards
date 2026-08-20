@@ -359,9 +359,13 @@ function DomainPostureCard({ domain, onOpen }: { domain: OnsideDomain; onOpen: (
             {/* Stretched hit area — part of the button, covers the card. */}
             <span aria-hidden="true" style={{ position: 'absolute', inset: 0, cursor: 'pointer' }} />
           </button>
+          {/* A14 (design_system_spec.md §2.7): rendered inside CARD_STYLE
+              (spreads PANEL_STYLE, position:'relative' override does not
+              touch background) — panel-seated. */}
           <Label
             text={`${domain.bodies} · ${domain.appl}${domain.tot > domain.appl ? ` of ${domain.tot}` : ''} obligations in scope`}
             variant="body-secondary"
+            surface="panel"
           />
         </div>
         <Tag text={DOMAIN_STATUS_LABEL[status]} variant={DOMAIN_STATUS_VARIANT[status]} />
