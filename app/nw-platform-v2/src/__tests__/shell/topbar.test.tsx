@@ -346,3 +346,37 @@ describe('ProfileMenu disclosure (C4 a11y baseline, design_system_spec.md §2.2;
     expect(trigger).toHaveFocus()
   })
 })
+
+describe('theme live region — Sprint 1 hostile-review findings S2 (Topbar.tsx:835)', () => {
+  it('B2: mounting with a `theme` prop already set does NOT announce a "theme changed" claim — nothing changed yet, this is first paint', () => {
+    // The pre-fix region was coupled to the theme VALUE, not a change
+    // event: `{theme ? <span aria-live>Theme changed to {theme} mode</span> : null}`
+    // mounts already populated the instant `theme` is truthy, which is
+    // true on every first render (App always passes a theme). A
+    // screen-reader user booting the app heard a change announcement
+    // having changed nothing.
+    render(<Topbar {...minimalTopbarProps({ theme: 'dark' })} />)
+    const falseClaims = Array.from(document.querySelectorAll('[aria-live]')).filter((region) =>
+      /theme changed/i.test(region.textContent ?? ''),
+    )
+    expect(falseClaims).toHaveLength(0)
+  })
+
+  it('B2: re-mounting with a different `theme` value (simulating the cross-screen remount the finding describes) still announces no claim on mount', () => {
+    const { unmount } = render(<Topbar {...minimalTopbarProps({ theme: 'dark' })} />)
+    unmount()
+    render(<Topbar {...minimalTopbarProps({ theme: 'light' })} />)
+    const falseClaims = Array.from(document.querySelectorAll('[aria-live]')).filter((region) =>
+      /theme changed/i.test(region.textContent ?? ''),
+    )
+    expect(falseClaims).toHaveLength(0)
+  })
+
+  it('B3: no custom "theme changed" live region exists at all — the native role="switch"/aria-checked state change (Switch, P8) is the sole, authoritative announcement, never doubled', () => {
+    render(<Topbar {...minimalTopbarProps({ theme: 'dark', themeToggleSlot: <span role="switch" aria-checked="false" aria-label="Light theme" /> })} />)
+    const themeAnnouncements = Array.from(document.querySelectorAll('[aria-live]')).filter((region) =>
+      /theme/i.test(region.textContent ?? ''),
+    )
+    expect(themeAnnouncements).toHaveLength(0)
+  })
+})

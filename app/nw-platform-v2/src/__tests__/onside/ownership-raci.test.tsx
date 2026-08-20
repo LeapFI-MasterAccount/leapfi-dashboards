@@ -26,6 +26,7 @@ import { render, screen, within } from '@testing-library/react'
 import { OnSideOwnership } from '../../screens/OnSideOwnership'
 import { M, ROLES } from '../../data/onside'
 import { makeTopbarProps } from './helpers'
+import { rowgroupHeaderTextsFor } from '../a11y/tableRowgroupAccessibleName'
 
 function renderOwnership() {
   return render(<OnSideOwnership topbar={makeTopbarProps()} onNavigate={() => {}} />)
@@ -126,6 +127,43 @@ describe('OnSide ownership · RACI matrix (base 3498–3573 osRaci)', () => {
     // BOARD ∈ Informed
     const board = within(cells[8] as HTMLElement).getByRole('img', { name: 'Informed' })
     expect(board.textContent).toBe('I')
+  })
+
+  it('Sprint 1 hostile-review S1 / amendment A10 (§2.4 G8): each domain group renders in its OWN <tbody>, never one shared by the whole matrix', () => {
+    renderOwnership()
+    const table = screen.getByRole('table', { name: 'RACI · policy ownership matrix' })
+    const tbodies = table.querySelectorAll(':scope > tbody')
+    // 8 domains -> 8 <tbody> elements (one per M domain), never 1 shared.
+    expect(tbodies).toHaveLength(M.length)
+    tbodies.forEach((tbody) => {
+      expect(tbody.querySelectorAll('th[scope="rowgroup"]')).toHaveLength(1)
+    })
+  })
+
+  it("Sprint 1 hostile-review S1 / amendment A10: a data row in the LAST (8th) domain's accessible name derives ONLY from that domain's own group header — not from all 7 prior domains stacking in", () => {
+    const { container } = renderOwnership()
+    const [, lastDomainLabel] = M[M.length - 1] as (typeof M)[number]
+
+    const groupRows = container.querySelectorAll('tr[data-lf-group-row="true"]')
+    const lastGroupRow = groupRows[groupRows.length - 1]
+    expect(lastGroupRow?.textContent).toContain(lastDomainLabel)
+
+    // G2/G3 (group order and membership invariant, authored order): the
+    // table's LAST rendered data cell is guaranteed to belong to the last
+    // (8th) domain's last document row.
+    const table = screen.getByRole('table', { name: 'RACI · policy ownership matrix' })
+    const allDataCells = within(table).getAllByRole('cell')
+    const lastCell = allDataCells[allDataCells.length - 1]
+    expect(lastCell).toBeDefined()
+
+    const headers = rowgroupHeaderTextsFor(lastCell as Element)
+    expect(headers).toEqual([lastDomainLabel])
+    // The S1 bleed: every prior domain's header stacking into this cell's
+    // accessible name. None of the other 7 domain labels may appear.
+    const otherDomainLabels = M.slice(0, -1).map(([, label]) => label)
+    otherDomainLabels.forEach((label) => {
+      expect(headers).not.toContain(label)
+    })
   })
 
   it('renders the R/A/C/I legend with each mark, its full-word name, and its meaning (base 3569 raci-legend)', () => {

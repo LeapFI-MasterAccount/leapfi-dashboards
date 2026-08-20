@@ -47,6 +47,31 @@ describe('Tag — raci-mark variant (§2.5)', () => {
   });
 });
 
+describe('Tag — accessibleText contract gap (Sprint 1 hostile-review finding B4)', () => {
+  it('B4: a raci-mark Tag with accessibleText="" fails at runtime — the required prop\'s TYPE guarantees presence, not content, so an empty string must not silently become the accessible name', () => {
+    // The compile-time contract (A6, pinned above) only proves a value was
+    // supplied — `""` satisfies `string`. An empty aria-label announces
+    // NOTHING to assistive tech (the bare letter is never read back as a
+    // fallback — see the "never falls back" test above), which is worse
+    // than the abbreviation this variant exists to replace: total silence
+    // where a legible word was promised.
+    expect(() => render(<Tag variant="raci-mark" text="R" accessibleText="" />)).toThrow();
+  });
+
+  it('B4: a raci-mark Tag with a whitespace-only accessibleText also fails — "   " is not meaningful content either', () => {
+    expect(() => render(<Tag variant="raci-mark" text="R" accessibleText="   " />)).toThrow();
+  });
+
+  it('B4: a non-raci-mark Tag with an explicit accessibleText="" also fails — the same empty-override defeats P4\'s "never rely on color alone" baseline by silently replacing legible visible text with nothing', () => {
+    expect(() => render(<Tag variant="status-positive" text="Current" accessibleText="" />)).toThrow();
+  });
+
+  it('B4 regression guard: a non-empty accessibleText on a non-raci-mark Tag still renders normally (both current call sites stay correct)', () => {
+    render(<Tag variant="raci-mark" text="R" accessibleText="Responsible" />);
+    expect(screen.getByRole('img', { name: 'Responsible' })).toBeInTheDocument();
+  });
+});
+
 /**
  * Compile-time-only fixtures — never rendered, never invoked at runtime.
  * Exported so `noUnusedLocals` does not flag them.
