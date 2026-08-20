@@ -26,6 +26,22 @@
  * rendering a silent blank icon. STOP-item: if a screen composite needs
  * a glyph outside this set, that is new spec surface a design_system_spec
  * update should name explicitly, not a per-consumer freeform string.
+ *
+ * AMENDMENT A15 (design_system_spec.md §2.1 P1, §2.8 — PI2-D13): two new
+ * closed-set members, `'expand'` / `'collapse'`, for the Drawer (C7)
+ * header size-toggle (Drawer.tsx). Per §2.8: "a double-chevron pair
+ * (outward-pointing for 'expand', inward-pointing, mirrored, for
+ * 'collapse'), functionally distinct from the existing single-chevron
+ * glyphs... reusing that exact shape for an unrelated resize action would
+ * be a glyph-meaning collision." `'expand'` renders two chevrons pointing
+ * away from the vertical center line (a left-pointing chevron on the left
+ * half, a right-pointing chevron on the right half); `'collapse'` mirrors
+ * that pair pointing inward toward the center. Exact path coordinates are
+ * this primitive's own SVG-authoring judgment, the same latitude already
+ * exercised for every other glyph in this file (bell/lock/calendar were
+ * not spec-dictated path data either) — the spec binds the shape's
+ * *meaning* (outward vs. inward, double vs. single chevron), not its
+ * literal path string.
  */
 import type { CSSProperties, SVGProps } from 'react';
 
@@ -38,7 +54,9 @@ export type IconName =
   | 'arrow-right'
   | 'check'
   | 'lock'
-  | 'calendar';
+  | 'calendar'
+  | 'expand'
+  | 'collapse';
 
 export type IconTone = 'default' | 'interactive' | 'disabled';
 
@@ -100,6 +118,18 @@ const GLYPHS: Record<IconName, GlyphProps[]> = {
     { d: 'M4 9h16' },
     { d: 'M8 3v4' },
     { d: 'M16 3v4' },
+  ],
+  // A15 — outward-pointing double chevron (left half points left, right
+  // half points right): "grow" / expand the Drawer's width.
+  expand: [
+    { d: 'M10 6L4 12l6 6' },
+    { d: 'M14 6l6 6-6 6' },
+  ],
+  // A15 — inward-pointing double chevron, mirrored from `expand`: "shrink" /
+  // collapse the Drawer back down.
+  collapse: [
+    { d: 'M4 6l6 6-6 6' },
+    { d: 'M20 6l-6 6 6 6' },
   ],
 };
 
