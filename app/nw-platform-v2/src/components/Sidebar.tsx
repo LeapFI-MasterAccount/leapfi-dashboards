@@ -66,41 +66,6 @@
  * base-faithful replacement. Absent any override or child activity, a
  * group falls back to `defaultExpanded`.
  *
- * MANUAL OVERRIDE SURVIVES CROSS-SCREEN REMOUNT (E1, hostile-review
- * sprint1-hostile-verdict.md; design-authority ruling BEHAVIOUR-IS-WRONG,
- * amendment A11): the paragraph above's "a manual override always wins"
- * claim was accurate only for the life of one mounted `Sidebar` instance.
- * App.tsx's `renderActiveScreen()` returns a DIFFERENT top-level React
- * component per `ScreenId`, and all 13 routed screens under
- * `src/screens/*.tsx` independently compose their own `<Sidebar
- * {...sidebarProps} />` (grep `<Sidebar` across `src/screens/*.tsx` — none
- * hoisted to a shared ancestor). React therefore unmounts/remounts a fresh
- * `Sidebar` on every `ScreenId` change, including between two children of
- * the SAME nested group — so a `useState`-only override never survived
- * even the very next click, contradicting the file's own claimed
- * invariant (confirmed by `__tests__/shell/sidebar.test.tsx`'s prior
- * FINDING comment, now superseded by this section and its test). Fix:
- * `overrides` and the "clear stale override on arrival" tracker
- * (`lastActiveId` below) are now seeded from and written through to
- * `sidebarOverridesStore` / `sidebarLastActiveIdStore`, two plain
- * module-level singletons declared just above this component — they
- * outlive any one `Sidebar` mount because a JS module's top-level
- * bindings persist for the life of the page, unlike a component's
- * `useState`. Only one `Sidebar` is ever mounted at a time (one active
- * screen), so a plain mutable singleton is sufficient — no
- * `useSyncExternalStore` cross-instance fan-out is needed the way
- * `state/demoStore.ts` needs one for its many simultaneous readers. The
- * "clear stale override on arrival" half now runs in a `useLayoutEffect`
- * (fires synchronously before the browser paints, preserving the "same
- * commit as the navigation" guarantee the old render-phase-adjustment
- * comment described) instead of a bare render-phase mutation, because it
- * now needs to read/write an external singleton — mutating external state
- * directly during render is the exact impurity React's Strict Mode double
- * -invokes render to catch; `useLayoutEffect` is the sanctioned place for
- * synchronizing an external store from a commit. Session-lifetime only —
- * not persisted to storage, resets on a full page reload, same as every
- * other in-memory demo-state singleton in this app.
- *
  * NAV SCROLL CONTAINMENT (fix A-overlap-03 / C-unbounded-growth-03; base
  * anchor leapfi-platform.html:35 `.nav{flex:1;...;overflow-y:auto}`): the
  * base's nav column was its own bounded scroll surface, so a fully
@@ -226,7 +191,7 @@
  *     by the Topbar.tsx D21 author already; not re-verified per-dispatch
  *     here, same limitation, same workaround).
  */
-import { useLayoutEffect, useState } from 'react';
+import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { SidebarItem, sidebarNestedListId } from './SidebarItem';
 import type { IconName } from './primitives/Icon';
@@ -298,15 +263,6 @@ const NAV: NavTopItem[] = [
     ],
   },
 ];
-
-// MANUAL OVERRIDE SURVIVES CROSS-SCREEN REMOUNT (file header — full
-// rationale there): plain module-level singletons, mutated only through
-// this component's own `setOverrides` wrapper and the arrival-sync
-// `useLayoutEffect`. `sidebarLastActiveIdStore` starts `null` so the very
-// first mount of the app (no prior screen to compare against) never
-// mistakes app boot for a navigation.
-let sidebarOverridesStore: Record<string, boolean> = {};
-let sidebarLastActiveIdStore: string | null = null;
 
 // SIDEBAR DARK-LOCK (file header "SIDEBAR DARK-LOCK" — full rationale,
 // sourcing, and contrast disposition there): forces every `var(--x)` color
@@ -390,45 +346,25 @@ export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071' }: Side
   // entries fall back to child-active auto-expand, then `defaultExpanded`.
   // See file header DESIGN NOTE: an override always wins — the base's
   // toggles collapse a group even while it owns the active screen.
-  //
-  // See file header "MANUAL OVERRIDE SURVIVES CROSS-SCREEN REMOUNT": seeded
-  // from the module-level singleton (outlives this component's own mount),
-  // and every write goes through `setOverrides` below, which persists the
-  // next value back to that singleton before returning it to `useState`.
-  const [overrides, setOverridesState] = useState<Record<string, boolean>>(() => sidebarOverridesStore);
-
-  const setOverrides = (updater: (prev: Record<string, boolean>) => Record<string, boolean>) => {
-    setOverridesState((prev) => {
-      const next = updater(prev);
-      sidebarOverridesStore = next;
-      return next;
-    });
-  };
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
 
   // Base `go()` (source 3813–3816) force-opens the destination's group on
   // every navigation into it. Port: when `activeId` moves into a group
   // that carries a collapse override, clear it so the arrival is visible.
-  // Runs in `useLayoutEffect` (see file header) so the clear is applied
-  // before the browser paints — a fresh `Sidebar` mount included, since
-  // every real cross-screen navigation is a fresh mount (file header).
-  useLayoutEffect(() => {
-    const prevActiveId = sidebarLastActiveIdStore;
-    sidebarLastActiveIdStore = activeId;
-    if (prevActiveId === null || prevActiveId === activeId) return;
+  // (Render-phase derived-state adjustment, not an effect, so the cleared
+  // override is applied in the same commit as the navigation itself.)
+  const [lastActiveId, setLastActiveId] = useState(activeId);
+  if (lastActiveId !== activeId) {
+    setLastActiveId(activeId);
     // B-11: a navigable group header's own screen (e.g. 'connect') also
     // force-opens its group on arrival, same as a child destination.
     const owningGroup = NAV.find(
       (item) => item.children !== undefined && (item.id === activeId || item.children.some((child) => child.id === activeId)),
     );
-    if (owningGroup && sidebarOverridesStore[owningGroup.id] === false) {
+    if (owningGroup && overrides[owningGroup.id] === false) {
       setOverrides((prev) => ({ ...prev, [owningGroup.id]: true }));
     }
-    // Intentionally runs once per mount only: every real cross-screen
-    // navigation is a fresh Sidebar mount (file header), so a mount-time
-    // comparison against the previous mount's activeId is the only
-    // transition this component can ever observe.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }
 
   const handleToggle = (itemId: string, currentlyExpanded: boolean) => {
     setOverrides((prev) => ({ ...prev, [itemId]: !currentlyExpanded }));
