@@ -81,7 +81,18 @@ export function Switch({ checked, label, onChange, disabled = false }: SwitchPro
         />
       </button>
       <span>{label}</span>
-      <span aria-hidden="true" style={{ color: 'var(--ink2)', fontSize: '0.8125rem' }}>
+      {/* FIX WAVE (Class C, C1): every real call site of this primitive
+          (SettingsToggles.tsx CARD_STYLE, RegulatoryFeedSources.tsx
+          CARD_STYLE — both spread PANEL_STYLE — and App.tsx's
+          themeToggleSlot, which renders inside Topbar's permanently-dark
+          chrome band) either sits on var(--panel) or on the dark-forced
+          chrome; --ink2 fails AA on var(--panel) in light theme, so
+          --chart-axis (which clears AA on both --panel and the dark
+          chrome band, in both themes) is used unconditionally here —
+          unlike Label.tsx/Input.tsx/StatValue.tsx (see spec_questions),
+          Switch has no currently-compliant page-background call site this
+          swap would needlessly touch. */}
+      <span aria-hidden="true" style={{ color: 'var(--chart-axis)', fontSize: '0.8125rem' }}>
         {checked ? 'On' : 'Off'}
       </span>
     </label>

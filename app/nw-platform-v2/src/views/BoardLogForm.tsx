@@ -102,8 +102,14 @@ const WRAP_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', ga
 const FORM_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.75rem' };
 const SAVE_ROW_STYLE: CSSProperties = { display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' };
 /** Same token-styled semantic textarea CaseDetail.tsx already ships (see
- * file header) — duplicated per the codebase's per-file style convention. */
-const TEXTAREA_LABEL_STYLE: CSSProperties = { display: 'block', marginBottom: '0.375rem', fontSize: '0.8125rem', color: 'var(--ink2)' };
+ * file header) — duplicated per the codebase's per-file style convention.
+ * FIX WAVE (Class C, C1): BoardLogForm is rendered only as a child of the
+ * shared reporting Drawer (screens/Reporting.tsx), whose root background
+ * is var(--panel), always — a single, unambiguous render context — so
+ * --ink2 fails AA here in light theme; --chart-axis is the prescribed
+ * panel-seated substitute (same fix as CaseDetail.tsx's own
+ * TEXTAREA_LABEL_STYLE, cited above). */
+const TEXTAREA_LABEL_STYLE: CSSProperties = { display: 'block', marginBottom: '0.375rem', fontSize: '0.8125rem', color: 'var(--chart-axis)' };
 const TEXTAREA_STYLE: CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',

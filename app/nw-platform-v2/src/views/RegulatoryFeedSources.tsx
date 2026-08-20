@@ -216,7 +216,10 @@ const DIGEST_GRID_STYLE: CSSProperties = {
 const DIGEST_FIELD_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
 const CHIP_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' };
 const SWITCH_COLUMN_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.6rem' };
-const DIGEST_HINT_STYLE: CSSProperties = { margin: 0, fontSize: '0.8125rem', color: 'var(--ink2)' };
+// FIX WAVE (Class C, C1): rendered inside CARD_STYLE (spreads
+// PANEL_STYLE) — --ink2 fails AA on --panel in light theme; --chart-axis
+// is the prescribed panel-seated substitute.
+const DIGEST_HINT_STYLE: CSSProperties = { margin: 0, fontSize: '0.8125rem', color: 'var(--chart-axis)' };
 const DIGEST_COUNT_STYLE: CSSProperties = { margin: 0, fontSize: '1.75rem', fontWeight: 700, color: 'var(--ink)' };
 
 interface SourceListRow {

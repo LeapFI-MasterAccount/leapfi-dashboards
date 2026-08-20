@@ -363,11 +363,14 @@ const SUBHEADING_STYLE: CSSProperties = {
   alignItems: 'center',
   gap: '0.625rem',
 };
+// FIX WAVE (Class C, C1): background is literally var(--panel) here —
+// --ink2 fails AA on it in light theme; --chart-axis is the prescribed
+// panel-seated substitute.
 const COUNT_BADGE_STYLE: CSSProperties = {
   font: 'inherit',
   fontSize: '0.75rem',
   fontWeight: 600,
-  color: 'var(--ink2)',
+  color: 'var(--chart-axis)',
   background: 'var(--panel)',
   border: '1px solid var(--border)',
   borderRadius: 'var(--radius-pill, 999px)',
@@ -960,7 +963,11 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel, deepL
                   hitl
                   hitlText={isDisplayDocAdopted ? 'Adopted' : 'HITL review'}
                 />
-                <p style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: 'var(--ink2)' }}>{decodeDocText(displayDoc.redline.note)}</p>
+                {/* FIX WAVE (Class C, C1): rendered inside the shared
+                    Drawer, whose root background is var(--panel) —
+                    --ink2 fails AA there in light theme; --chart-axis is
+                    the prescribed panel-seated substitute. */}
+                <p style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: 'var(--chart-axis)' }}>{decodeDocText(displayDoc.redline.note)}</p>
               </div>
             ) : null}
           </>

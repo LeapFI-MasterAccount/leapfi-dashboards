@@ -170,10 +170,19 @@ const baseStyle: CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
+// FIX WAVE (Class C, finding C2): text color on the three flat semantic
+// fills was `var(--bg)` — the PAGE-background role, not a color chosen for
+// legibility against the fill. `--bg` swaps per theme while EXT-3's
+// semantic hexes are theme-invariant, so the pairing was only accidentally
+// legible in dark mode (white text on white --bg would break in light
+// mode). `--sem-ink` (tokens.css) is a fixed #000000, pinned identically
+// in both theme blocks, verified to clear 4.5:1 AA against all three
+// fills in both themes (9.22:1 / 9.78:1 / 5.58:1) — see that token's own
+// comment for the full derivation.
 const VARIANT_STYLE: Record<NonRaciTagVariant, CSSProperties> = {
-  'status-positive': { background: 'var(--sem-positive)', color: 'var(--bg)' },
-  'status-caution': { background: 'var(--sem-caution)', color: 'var(--bg)' },
-  'status-alert': { background: 'var(--sem-alert)', color: 'var(--bg)' },
+  'status-positive': { background: 'var(--sem-positive)', color: 'var(--sem-ink)' },
+  'status-caution': { background: 'var(--sem-caution)', color: 'var(--sem-ink)' },
+  'status-alert': { background: 'var(--sem-alert)', color: 'var(--sem-ink)' },
   // hitl (human-in-the-loop marker): accent is reserved as "THE ONLY
   // primary accent" per tokens.css — used here as an outline+text tint
   // (not a competing solid fill) so it stays a secondary, informational
