@@ -135,7 +135,7 @@ describe("PI2-D5 — 'document'-kind deep link (App.tsx KIND VOCABULARY: id = DO
       <OnSideDocuments
         topbar={makeTopbarProps()}
         onNavigate={() => {}}
-        deepLink={{ screen: 'onside.documents', kind: 'doc-redline', id: 'irp', nonce: 1 }}
+        deepLink={{ screen: 'onside.documents', kind: 'domain', id: 'irp', nonce: 1 }}
         onDeepLinkConsumed={onDeepLinkConsumed}
       />,
     )

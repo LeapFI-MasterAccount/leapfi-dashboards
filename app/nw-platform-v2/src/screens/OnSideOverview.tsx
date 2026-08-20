@@ -528,6 +528,36 @@ export function OnSideOverview({ topbar, onNavigate, sidebarVersionLabel, deepLi
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed read fresh from closure, not tracked as a re-trigger dep
   }, [deepLink?.nonce]);
 
+  // HOSTILE-REVIEW FIX WAVE (Class A, finding A2) — 'obligation'-kind deep
+  // link: id already carries its domain (`${domKey}:${oblId}`, e.g.
+  // 'mrm:MRM-08' — unlike 'control''s bare id, which needs the OBL scan
+  // above to find its owning domain). Mirrors the 'control' effect
+  // immediately above verbatim (design authority ruling, amendment A12:
+  // "OnSideOverview.tsx gains an 'obligation' consumer effect, mirroring
+  // its existing 'control' effect's shape"): force-expands + scrolls the
+  // owning domain row and opens this screen's own obligation drawer for
+  // that exact obligation. Confirmed live producers (Sprint 1 hostile
+  // review, finding A2): Reporting.tsx's obligation quick-open
+  // (`handleOpenObligation`) and HomePanels.tsx's Strategic Signal touch
+  // chips (`touchToDeepLinkRequest`'s `obl` branch) — both previously
+  // landed on this screen and opened nothing. An id whose domain segment
+  // or obligation id doesn't resolve in OBL still consumes the nonce but
+  // opens nothing (never a fabricated obligation, same guard shape as the
+  // 'control' effect's own unresolved-id branch).
+  useEffect(() => {
+    if (!deepLink || deepLink.kind !== 'obligation') return;
+    const sep = deepLink.id.indexOf(':');
+    const domainKey = sep === -1 ? deepLink.id : deepLink.id.slice(0, sep);
+    const oblId = sep === -1 ? '' : deepLink.id.slice(sep + 1);
+    if (oblId && OBL[domainKey]?.some((row) => row.id === oblId)) {
+      setExpandedDomainKeys((prev) => (prev.has(domainKey) ? prev : new Set(prev).add(domainKey)));
+      setPendingScrollKey(domainKey);
+      setOpenObligationTarget({ domain: domainKey, id: oblId });
+    }
+    onDeepLinkConsumed?.(deepLink.nonce);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed read fresh from closure, not tracked as a re-trigger dep
+  }, [deepLink?.nonce]);
+
   const openDomain = (key: string) => {
     setExpandedDomainKeys((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
     setPendingScrollKey(key);

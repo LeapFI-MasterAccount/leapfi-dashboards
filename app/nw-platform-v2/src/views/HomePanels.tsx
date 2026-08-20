@@ -71,19 +71,22 @@
  *     end to end (`OnSideOverview.tsx`'s own B3 migration onto the same
  *     contract, its header "DEEP-LINK CONTRACT MIGRATION").
  *   - Strategic signal's per-touch actions — `obl`/`dom`/`doc` tuples map
- *     onto the exact `'obligation'`/`'domain'`/`'doc-redline'` kinds
+ *     onto the exact `'obligation'`/`'domain'`/`'document'` kinds
  *     App.tsx's KIND VOCABULARY defines (id encodings verbatim from that
  *     header) via `touchToDeepLinkRequest` below, plus "Open the full
  *     lifecycle →" now firing `kind: 'section', id: 'lifecycle'` (base
  *     openSignal's own button, source 4111, goes to `goOnside('feed-
- *     lifecycle')`). Delivers to the right SCREEN today; item-level
- *     opening on the receiving end depends on that screen's own
- *     consumption (`onside.overview` consumes `'domain'` today via the
- *     migration above; `'obligation'`/`'doc-redline'` and `onside.feed`'s
- *     `'section'` kind have no consumer yet anywhere in this worktree —
- *     honest partial fidelity, not a regression from this file's prior
- *     plain-nav behavior, which delivered no more than screen-level nav
- *     either).
+ *     lifecycle')`). HOSTILE-REVIEW FIX WAVE (Class A, findings A1/A2/A3):
+ *     `doc` tuples now fire `'document'`, not the retired `'doc-redline'`
+ *     (amendment A9 ruled the latter a straight duplicate of the former;
+ *     `App.tsx`'s `DeepLinkKind` union no longer carries it at all).
+ *     `'obligation'` now delivers item-level: `OnSideOverview.tsx` gained a
+ *     consumer effect this wave (design authority amendment A12). `'domain'`
+ *     and `'document'` deliver end to end, same as before. `onside.feed`'s
+ *     `'section'` kind now has a consumer for the `'lifecycle'` id this
+ *     panel actually fires (`OnSideFeed.tsx` gained a consumer effect this
+ *     wave, same amendment) — no more dead click on "Open the full
+ *     lifecycle →".
  *   - The Investment panel's `TopPlaysList` "Open →" per play — `kind:
  *     'play'`, id = the play's own name (base `openPlay(o.n)`, source
  *     4249-region) — DELIVERS END TO END: `InvestmentDesign.tsx` already
@@ -100,12 +103,10 @@
  *     `kind: 'section', id: 'lifecycle'` (base `goOnside('feed-
  *     lifecycle')`, source 869 — the same line App.tsx's own header cites
  *     alongside `'roi'` in "THE CONTRACT the screen batches wire their
- *     consumers against"). `onside.feed` does not yet consume `'section'`
- *     (STOP-item — see `OnSideFeed.tsx`'s own header "ALSO STILL OPEN," a
- *     gap this same B3 dispatch discovered but left for a follow-up scoped
- *     to that file), so this link still lands on the plain screen today;
- *     using `onDeepLink` here regardless matches the documented contract
- *     and needs no further change here once that screen adds the consumer.
+ *     consumers against"). HOSTILE-REVIEW FIX WAVE (A3): `onside.feed` now
+ *     consumes the `'lifecycle'` id (`OnSideFeed.tsx` gained a `'section'`
+ *     consumer effect this wave) — this link now scrolls/focuses the real
+ *     Rulemaking-lifecycle section, no longer a dead click.
  *   - "Gaps & levers →" (posture header, base `goOnside('domains')`) and
  *     "Work the levers →" (invest header, base `goStudio('design')`) carry
  *     no per-item id in App.tsx's KIND VOCABULARY at all — these stay
@@ -270,12 +271,16 @@ function touchLabel(t: SignalTouch): string {
  * tuple actually carries an obligation id — every `SIGNAL` `obl` entry in
  * `data/misc.ts` does, but the type itself makes the third element
  * optional, so this stays a real, checked guard rather than a `!`
- * assertion); `doc` -> `'doc-redline'`, id = the doc id; `dom` ->
- * `'domain'`, id = the domain key. Returns `null` for a shape the
- * vocabulary has no kind for (never observed today, but not a case to
- * silently mis-target). */
+ * assertion); `doc` -> `'document'`, id = the doc id (HOSTILE-REVIEW FIX
+ * WAVE, finding A1: re-pointed from the retired `'doc-redline'` kind —
+ * amendment A9 ruled it a straight duplicate of `'document'`, same id
+ * encoding, DOCLIB doc id, and `OnSideDocuments.tsx` already consumes
+ * `'document'`; the old kind dispatched here with no consumer anywhere,
+ * a dead click on this exact touch chip); `dom` -> `'domain'`, id = the
+ * domain key. Returns `null` for a shape the vocabulary has no kind for
+ * (never observed today, but not a case to silently mis-target). */
 function touchToDeepLinkRequest(t: SignalTouch): DeepLinkRequest | null {
-  if (t[0] === 'doc') return { screen: 'onside.documents', kind: 'doc-redline', id: t[1] };
+  if (t[0] === 'doc') return { screen: 'onside.documents', kind: 'document', id: t[1] };
   if (t[0] === 'dom') return { screen: 'onside.overview', kind: 'domain', id: t[1] };
   if (t[0] === 'obl' && t[2]) return { screen: 'onside.overview', kind: 'obligation', id: `${t[1]}:${t[2]}` };
   return null;
