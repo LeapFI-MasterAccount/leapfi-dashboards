@@ -12,6 +12,7 @@
  *
  *   1. Home                          (no children)
  *   2. OnSide    -> Overview, Regulatory feed, Documents, Ownership
+ *                   (expanded by default, PI2-D33)
  *   3. Studio    -> Ask, Investment Design, Roadmap
  *   4. Connect   -> AllRailz, Vantage        (expanded by default)
  *   5. Reporting                     (no children)
@@ -38,6 +39,14 @@
  * Settings to collapsed, matching the OnSide/Studio baseline rather than
  * Connect's stated exception, since the spec only carves the exception
  * out for Connect and gives no basis to extend it to Settings.
+ *
+ * SUPERSEDED IN PART — PI2-D33 (r07 OQ-5): the §3.1 "OnSide collapsed by
+ * default" premise this note relied on is overruled for OnSide only.
+ * OnSide's group header stays, its children stay nested (no top-level
+ * promotion — see NAV below), and it now ships `defaultExpanded: true`,
+ * via the same mechanism Connect already uses. Studio keeps the original
+ * collapsed-by-default reading (PI2-D33 Q2 = NO); Settings keeps this
+ * note's own collapsed default, unchanged.
  *
  * DESIGN NOTE — group toggle while a child is active (base-faithful per
  * leapfi-platform.html @1c230fe): the base's group toggles collapse an
@@ -211,6 +220,11 @@ const NAV: NavTopItem[] = [
   {
     id: 'onside',
     label: 'OnSide',
+    defaultExpanded: true,
+    // PI2-D33: OnSide's group header stays, its children stay nested (not
+    // promoted to top level), and the group ships default-expanded — the
+    // mechanism Connect already proves below. Studio and Settings stay
+    // collapsed by default (PI2-D33 Q2 = NO).
     children: [
       { id: 'onside.overview', label: 'Overview' },
       { id: 'onside.feed', label: 'Regulatory feed' },

@@ -46,17 +46,12 @@ describe('sidebar structure (base L762–821)', () => {
   })
 })
 
-describe('OnSide nested expand/collapse (base L762–821 os-sub; addendum §0 ordering)', () => {
-  it('OnSide starts collapsed, expands on press with aria-expanded, and lists 4 children with Overview first (base L762–821, addendum §0)', async () => {
-    const user = userEvent.setup()
+describe('OnSide nested default-expanded (PI2-D33: OnSide is defaultExpanded:true; header stays, children stay nested, no top-level promotion)', () => {
+  it('OnSide renders already expanded on initial load — aria-expanded=true and all 4 children present with Overview first, with no click required (PI2-D33)', () => {
     render(<App />)
     const nav = screen.getByRole('navigation', { name: 'Primary' })
     const onSide = within(nav).getByRole('button', { name: 'OnSide' })
 
-    expect(onSide).toHaveAttribute('aria-expanded', 'false')
-    expect(within(nav).queryByRole('button', { name: 'Overview' })).not.toBeInTheDocument()
-
-    await user.click(onSide)
     expect(onSide).toHaveAttribute('aria-expanded', 'true')
 
     const nested = within(nav).getByRole('list', { name: 'OnSide sections' })
@@ -67,26 +62,38 @@ describe('OnSide nested expand/collapse (base L762–821 os-sub; addendum §0 or
     expect(childLabels).toEqual(['Overview', 'Regulatory feed', 'Documents', 'Ownership'])
   })
 
-  it('pressing OnSide again collapses the group and removes the nested items from the DOM (base sidebar nesting toggle, §(b) L2 gesture)', async () => {
+  it('Studio and Settings remain collapsed by default (PI2-D33: only OnSide flips) — their children are absent until pressed', () => {
+    render(<App />)
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+
+    expect(within(nav).getByRole('button', { name: 'Studio' })).toHaveAttribute('aria-expanded', 'false')
+    expect(within(nav).queryByRole('button', { name: 'Ask' })).not.toBeInTheDocument()
+
+    expect(within(nav).getByRole('button', { name: 'Settings' })).toHaveAttribute('aria-expanded', 'false')
+    expect(within(nav).queryByRole('button', { name: 'Toggles' })).not.toBeInTheDocument()
+  })
+
+  it('pressing OnSide collapses the already-open group, and pressing again re-expands it (base sidebar nesting toggle, §(b) L2 gesture)', async () => {
     const user = userEvent.setup()
     render(<App />)
     const nav = screen.getByRole('navigation', { name: 'Primary' })
     const onSide = within(nav).getByRole('button', { name: 'OnSide' })
 
-    await user.click(onSide)
-    expect(within(nav).getByRole('button', { name: 'Regulatory feed' })).toBeInTheDocument()
-
+    // Already expanded on load (PI2-D33) — first press collapses it.
     await user.click(onSide)
     expect(onSide).toHaveAttribute('aria-expanded', 'false')
     expect(within(nav).queryByRole('button', { name: 'Regulatory feed' })).not.toBeInTheDocument()
+
+    await user.click(onSide)
+    expect(onSide).toHaveAttribute('aria-expanded', 'true')
+    expect(within(nav).getByRole('button', { name: 'Regulatory feed' })).toBeInTheDocument()
   })
 
-  it('a nested child navigates to its screen and becomes the current item (base onsideShow nav, §(b); breadcrumb per topbar L823–854)', async () => {
+  it('a nested child navigates to its screen and becomes the current item, with no click needed to open the already-expanded group (base onsideShow nav, §(b); breadcrumb per topbar L823–854)', async () => {
     const user = userEvent.setup()
     render(<App />)
     const nav = screen.getByRole('navigation', { name: 'Primary' })
 
-    await user.click(within(nav).getByRole('button', { name: 'OnSide' }))
     await user.click(within(nav).getByRole('button', { name: 'Regulatory feed' }))
 
     // New screen's topbar breadcrumb reflects the destination.
@@ -107,7 +114,7 @@ describe('group toggle while a child is active (SH-11; base toggleOnsideNav @383
     render(<App />)
     const nav = () => screen.getByRole('navigation', { name: 'Primary' })
 
-    await user.click(within(nav()).getByRole('button', { name: 'OnSide' }))
+    // OnSide is already expanded on load (PI2-D33) — no click needed to open it.
     await user.click(within(nav()).getByRole('button', { name: 'Regulatory feed' }))
     const onSide = within(nav()).getByRole('button', { name: 'OnSide' })
     expect(onSide).toHaveAttribute('aria-expanded', 'true')
@@ -125,27 +132,49 @@ describe('group toggle while a child is active (SH-11; base toggleOnsideNav @383
     expect(within(nav()).getByRole('button', { name: 'Regulatory feed' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('navigating into a group clears a stale collapse override (base go() force-open @3813–3816) — no deferred surprise-collapse and the aria-current row is revealed on arrival', async () => {
+  // FINDING (surfaced by PI2-D33, pre-existing and out of this dispatch's
+  // scope — see r07 evidence return spec_questions): every screen module
+  // (`Home`, `OnSideFeed`, ...) mounts its OWN `<Sidebar>` instance
+  // (App.tsx `renderActiveScreen`'s per-case `<Home .../>` /
+  // `<OnSideFeed .../>` etc., each importing and rendering `Sidebar`
+  // itself — grep `<Sidebar` across `src/screens/*.tsx`). React unmounts
+  // the outgoing screen (and its `Sidebar`) and mounts a fresh one on
+  // every CROSS-SCREEN navigation, so `overrides` (Sidebar.tsx's manual
+  // collapse/expand state, module-local `useState`) never survives a
+  // real navigation between screens — it always resets to `{}`, and the
+  // group's expand state falls back to `childActive || defaultExpanded`
+  // on arrival. Before PI2-D33, OnSide's old `defaultExpanded: false`
+  // made that reset LOOK like override persistence by coincidence (both
+  // landed on `false`); flipping OnSide to `true` breaks that coincidence
+  // and shows the override never actually survived cross-screen
+  // navigation. The render-phase "clear stale override" block this test
+  // targets only fires when the SAME Sidebar instance sees two different
+  // `activeId` values, which cross-screen navigation never allows — verified
+  // empirically (see r07 evidence return). This test is corrected to pin
+  // that verified reality; whether cross-screen collapse-state persistence
+  // is desired product behavior is a design/scope question, not decided here.
+  it('navigating away and back resets the group to its default-expand state — the collapse override does not survive a real cross-screen navigation (Sidebar remounts per screen; see FINDING above)', async () => {
     const user = userEvent.setup()
     render(<App />)
     const nav = () => screen.getByRole('navigation', { name: 'Primary' })
 
-    // Expand OnSide, land on Regulatory feed, then collapse the group
-    // while it is active (allowed, per the test above).
-    await user.click(within(nav()).getByRole('button', { name: 'OnSide' }))
+    // OnSide is already expanded on load (PI2-D33) — land on Regulatory
+    // feed, then collapse the group while it is active (allowed, per the
+    // test above).
     await user.click(within(nav()).getByRole('button', { name: 'Regulatory feed' }))
     await user.click(within(nav()).getByRole('button', { name: 'OnSide' }))
     expect(within(nav()).getByRole('button', { name: 'OnSide' })).toHaveAttribute('aria-expanded', 'false')
 
-    // Leave for Home: the group was already visibly collapsed by the
-    // user's own press — nothing collapses "later by surprise".
+    // Leave for Home: a DIFFERENT screen module, which mounts its own
+    // fresh Sidebar — the collapse override does not travel with it, so
+    // the group reverts to its default-expand state (true, PI2-D33).
     await user.click(within(nav()).getByRole('button', { name: 'Home' }))
-    expect(within(nav()).getByRole('button', { name: 'OnSide' })).toHaveAttribute('aria-expanded', 'false')
+    expect(within(nav()).getByRole('button', { name: 'OnSide' })).toHaveAttribute('aria-expanded', 'true')
 
     // Navigate back INTO the group from outside the sidebar — Home's D18
-    // primary CTA deep-links to OnSide · Regulatory feed. Base go()
-    // force-opens the destination group; the port clears the collapse
-    // override so the current row is visible on arrival.
+    // primary CTA deep-links to OnSide · Regulatory feed. The destination
+    // is reached with the group already expanded (its default), and the
+    // current row is visible on arrival either way.
     await user.click(screen.getByRole('button', { name: "Open today's regulatory feed" }))
     const onSide = within(nav()).getByRole('button', { name: 'OnSide' })
     expect(onSide).toHaveAttribute('aria-expanded', 'true')
