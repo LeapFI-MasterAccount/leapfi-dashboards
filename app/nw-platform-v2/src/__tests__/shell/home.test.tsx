@@ -1,9 +1,19 @@
 /**
- * Shell regression — Home: stat cards + customization visibleKeys flow
- * (bar -> panels).
+ * Shell regression — Home: greeting heading + customization visibleKeys
+ * flow (bar -> panels).
+ *
+ * PI2-D40 (user directive 2026-08-20): the two base-anchored KPI StatCards
+ * ("Cost capacity already freed" $540,000/yr, "Capacity freed" 3.5 FTE,
+ * base leapfi-platform.html source 4197–4296) are REMOVED from Home
+ * entirely — the page's purpose is the user configuring the KPIs/flash
+ * updates they want to see, not displaying two fixed ones. The former
+ * "Home" static h1 becomes a randomized greeting + the active persona's
+ * first name (see the "Home greeting heading" describe block below); the
+ * `HomeCustomizeBar` moves from below the CTA row into the top-right
+ * utility corner alongside the page title, compact, D22 behavior
+ * unchanged.
  *
  * D17: base anchors (leapfi-platform.html @1c230fe via survey_map.md):
- *  - source 4197–4296  `renderHome` — "$540,000/yr freed", "3.5 FTE".
  *  - source 4122–4193  home customization: `HP` panel catalog (4122–4125),
  *    `homeOrder()` healing (4126–4133), `homePanelToggle`/`homePanelsClear`/
  *    `homePanelsReset` (4149–4172), `applyHomePanels` ordered render
@@ -22,6 +32,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../../App'
 import { HOME_ORDER } from '../../data/misc'
+import { HOME_GREETINGS } from '../../screens/Home'
 
 beforeEach(() => {
   for (const key of Object.keys(HOME_ORDER)) {
@@ -35,17 +46,59 @@ function panelKeysInOrder(container: HTMLElement): string[] {
   )
 }
 
-describe('Home stat cards (base renderHome, source 4197–4296)', () => {
-  it('shows the two base figures: $540,000/yr freed and 3.5 FTE', () => {
+describe('Home greeting heading (PI2-D40 — replaces the static "Home" h1)', () => {
+  it('renders the page title as one of the defined greetings + the active persona\'s first name (default persona: Rachel)', () => {
     render(<App />)
 
-    const freed = screen.getByRole('group', { name: 'Cost capacity already freed' })
-    expect(within(freed).getByText('$540,000')).toBeInTheDocument()
-    expect(within(freed).getByText('/yr')).toBeInTheDocument()
+    const heading = screen.getByRole('heading', { level: 1 })
+    expect(heading).toHaveAttribute('id', 'home-page-title')
+    const possible = HOME_GREETINGS.map((g) => `${g}, Rachel`)
+    expect(possible).toContain(heading.textContent)
+  })
 
-    const fte = screen.getByRole('group', { name: 'Capacity freed' })
-    expect(within(fte).getByText('3.5')).toBeInTheDocument()
-    expect(within(fte).getByText('FTE')).toBeInTheDocument()
+  it('keeps aria-labelledby wired from the main region to the greeting heading', () => {
+    render(<App />)
+
+    const main = document.getElementById('home-main')
+    expect(main).toHaveAttribute('aria-labelledby', 'home-page-title')
+    expect(document.getElementById('home-page-title')).toBe(screen.getByRole('heading', { level: 1 }))
+  })
+})
+
+describe('Home KPI StatCards removed (PI2-D40)', () => {
+  it('no longer renders the two base-anchored KPI figures ($540,000/yr freed, 3.5 FTE) or their StatCard groups', () => {
+    render(<App />)
+
+    expect(screen.queryByText('$540,000')).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Cost capacity already freed' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Capacity freed' })).not.toBeInTheDocument()
+    expect(screen.queryByText('3.5')).not.toBeInTheDocument()
+  })
+})
+
+describe('HomeCustomizeBar placement (PI2-D40 — top-right utility corner, compact)', () => {
+  it('seats the customize trigger in a dedicated header row with the page title, not directly under #home-main', () => {
+    const { container } = render(<App />)
+
+    const heading = screen.getByRole('heading', { level: 1 })
+    const bar = container.querySelector('[data-lf-composite="home-customize-bar"]')
+    const main = document.getElementById('home-main')
+    expect(bar).not.toBeNull()
+    // A dedicated header row wraps both the title and the bar — not a bare
+    // stack of direct #home-main children (the pre-D40 shape).
+    expect(heading.parentElement).not.toBe(main)
+    expect(heading.parentElement?.contains(bar as Node)).toBe(true)
+  })
+
+  it('renders the customize trigger before the primary CTA in DOM order — the utility corner sits above the CTA row, not stacked below it', () => {
+    render(<App />)
+
+    const bar = document.querySelector('[data-lf-composite="home-customize-bar"]') as Node
+    const cta = screen.getByRole('button', { name: "Open today's regulatory feed" })
+    // Node.DOCUMENT_POSITION_FOLLOWING (4) set on `cta` relative to `bar`
+    // means bar precedes cta in document order.
+    const position = bar.compareDocumentPosition(cta)
+    expect(Boolean(position & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true)
   })
 })
 
