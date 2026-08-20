@@ -79,6 +79,7 @@ import { BANDS } from '../data/studio';
 import { DOM_OPEN, GAPS, OBL } from '../data/onside';
 import type { DomOpenItem, ObligationRow, OnsideDomain } from '../data/onside';
 import type { PostureSegment } from '../engine/plan';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 /* ============ shared status/posture derivations — source lines 1881-1885 ============
  * Exported so the owning screen (OnSideOverview.tsx) can reuse the exact
@@ -215,10 +216,8 @@ function openItemColumns(): DataTableColumn<DomOpenItem & { id: string }>[] {
 }
 
 const cardStyle = (open: boolean): CSSProperties => ({
-  border: '1px solid var(--border)',
+  ...PANEL_STYLE,
   borderColor: open ? 'var(--accent)' : 'var(--border)',
-  borderRadius: 'var(--radius-md, 10px)',
-  background: 'var(--panel)',
   boxSizing: 'border-box',
   outline: 'none',
 });

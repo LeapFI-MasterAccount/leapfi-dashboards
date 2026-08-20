@@ -367,6 +367,7 @@ import { Button } from './primitives/Button';
 import { Icon } from './primitives/Icon';
 import { Tag } from './primitives/Tag';
 import { resetDemo } from '../state/demoStore';
+import { PANEL_STYLE } from '../theme/panelStyle';
 // D21 (decisions.md; file header "D21 — DARK CHROME BAND, SINGLE-MASTER
 // LOGO"): `-Black` is NOT imported. The topbar's chrome band is now a
 // constant dark surface in both themes, and `-Transparent` (background-
@@ -498,6 +499,20 @@ const LABEL_STYLE: CSSProperties = {
   fontWeight: 500,
   color: 'var(--ink2)',
   whiteSpace: 'nowrap',
+};
+
+const profileMenuStyle: CSSProperties = {
+  position: 'absolute',
+  top: 'calc(100% + 0.375rem)',
+  right: 0,
+  minWidth: 200,
+  ...PANEL_STYLE,
+  borderRadius: 'var(--radius-sm, 6px)',
+  padding: '0.375rem',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.125rem',
+  zIndex: 50,
 };
 
 // D20: LOGO-6-safe fixed height, width left `auto` so the asset's native
@@ -641,28 +656,7 @@ function ProfileMenu({ profile, items }: { profile: TopbarProfile; items: Topbar
           aria-label={`${profile.name} account menu`}
           data-lf-composite="profile-menu-list"
           onKeyDown={handleMenuKeyDown}
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 0.375rem)',
-            right: 0,
-            minWidth: 200,
-            background: 'var(--panel)',
-            // Elevation is carried by the border + panel/bg contrast only —
-            // tokens.css defines no elevation/shadow role (§1.1's named-role
-            // table has no shadow entry), and no sibling primitive in this
-            // codebase uses a raw-color drop shadow (Button/Chip/Input/
-            // Switch/Avatar/Slider all reserve box-shadow exclusively for
-            // `--focus-ring`). Inventing an un-tokenized rgba shadow here
-            // would repeat the raw-color mistake the styling hard rule
-            // forbids, just spelled as rgba() instead of hex.
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-sm, 6px)',
-            padding: '0.375rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.125rem',
-            zIndex: 50,
-          }}
+          style={profileMenuStyle}
         >
           {items.length === 0 ? (
             <span style={{ ...LABEL_STYLE, padding: '0.5rem' }}>No account actions available</span>

@@ -109,6 +109,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent } from 'react';
 import { Button } from './primitives/Button';
 import { Chip } from './primitives/Chip';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 export interface FilterOption {
   id: string;
@@ -176,9 +177,8 @@ const panelStyle: CSSProperties = {
   overflowY: 'auto',
   boxSizing: 'border-box',
   padding: '0.375rem',
+  ...PANEL_STYLE,
   borderRadius: 'var(--radius-sm, 6px)',
-  border: '1px solid var(--border)',
-  background: 'var(--panel)',
 };
 
 // Visually-hidden recipe — `top`/`left` pinned to 0 is load-bearing;

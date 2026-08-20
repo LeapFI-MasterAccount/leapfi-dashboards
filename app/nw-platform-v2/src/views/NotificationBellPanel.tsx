@@ -100,6 +100,7 @@ import { Tag } from '../components/primitives/Tag';
 import { Button } from '../components/primitives/Button';
 import { Label } from '../components/primitives/Label';
 import type { Notif } from '../data/cases';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 /** Runtime-validated shape of one NOTIFS entry — see file header "CONTRACT GAP." */
 export interface BellNotification {
@@ -174,8 +175,7 @@ const panelStyle: CSSProperties = {
   maxHeight: '24rem',
   overflowY: 'auto',
   boxSizing: 'border-box',
-  background: 'var(--panel)',
-  border: '1px solid var(--border)',
+  ...PANEL_STYLE,
   borderRadius: 'var(--radius-sm, 6px)',
   padding: '0.5rem',
   zIndex: 50,
