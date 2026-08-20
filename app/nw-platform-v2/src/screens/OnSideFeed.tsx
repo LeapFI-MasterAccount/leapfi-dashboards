@@ -456,8 +456,35 @@ const TITLE_STYLE: CSSProperties = {
 /** A-overlap-06 — the per-table horizontal-scroll wrapper every other
  * table in this codebase uses (base `.raci-wrap{overflow-x:auto}`,
  * leapfi-platform.html:146); this screen's own signal table was the sole
- * omission. */
-const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
+ * omission.
+ *
+ * FIX WAVE (feed-scroll-collapse) — `flexShrink: 0` added: this div is a
+ * flex ITEM of `MAIN_STYLE`'s `flex-direction:column` container (`main` has
+ * a resolved, height-constrained size — flexed to fill the viewport minus
+ * Topbar — which is the intentional "scroll inside the shell" pattern via
+ * `overflowY:'auto'` on `main`, not itself a defect). Declaring only
+ * `overflowX:'auto'` here, with `overflow-y` left at its initial `visible`,
+ * trips the CSS Overflow spec's implicit rule that the *other* axis also
+ * computes to `auto` whenever one axis is non-visible — so this element is
+ * actually a scroll container in both axes. Per CSS Flexbox, a scroll
+ * container's automatic `min-height:auto` resolves to `0`, while this div's
+ * non-scroll-container siblings (`h1`, `FilterBar`, the three below-the-fold
+ * sections) keep their content-based automatic minimum and refuse to
+ * shrink below it. With the default `flex-shrink:1` this wrapper was
+ * therefore the ONLY sibling the flex algorithm could shrink to fit
+ * `main`'s constrained height — and it shrank to 0, taking the entire
+ * 40-row signal `<table>` down with it (regression test:
+ * `src/__tests__/onside/feed-scroll-collapse.test.tsx`). `flexShrink: 0`
+ * excludes it from shrinking at all, so it renders at its full
+ * content height and `main`'s existing `overflow-y:auto` scrolls the page,
+ * exactly as that property was already set up to do. Deliberately NOT
+ * touching `MAIN_STYLE`'s height/overflow behavior: that flex-resolved
+ * height plus `overflowY:'auto'` is the "scroll inside the shell" fix a
+ * prior wave already put in place on purpose — reintroducing a page-level
+ * scroll there would resurrect the sr-only/scroll-past-shell bug that wave
+ * fixed (see `DataTable.tsx`'s `srOnlyStyle` invariant note and this
+ * screen's `MAIN_STYLE` `position:'relative'` comment). */
+const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 
 const SIGNAL_CELL_STYLE: CSSProperties = {
   display: 'flex',

@@ -374,7 +374,39 @@ const COUNT_BADGE_STYLE: CSSProperties = {
 };
 const DOMAIN_HEADING_STYLE: CSSProperties = { margin: '0 0 0.625rem', font: 'inherit', fontSize: '1rem', fontWeight: 700, color: 'var(--ink)' };
 const DOMAIN_SECTION_STYLE: CSSProperties = { outline: 'none' };
-const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
+/** FIX WAVE (documents-scroll-collapse) — `flexShrink: 0` added: at its
+ * `:815` use, this div is a direct flex ITEM of `MAIN_STYLE`'s
+ * `flex-direction:column` container (`main` has a resolved,
+ * height-constrained size — flexed to fill the viewport minus Topbar —
+ * the intentional "scroll inside the shell" pattern via `overflowY:'auto'`
+ * on `main`, not itself a defect). Declaring only `overflowX:'auto'` here,
+ * with `overflow-y` left at its initial `visible`, trips the CSS Overflow
+ * spec's implicit rule that the *other* axis also computes to `auto`
+ * whenever one axis is non-visible — so this element is actually a scroll
+ * container in both axes. Per CSS Flexbox, a scroll container's automatic
+ * `min-height:auto` resolves to `0`, while this div's non-scroll-container
+ * siblings under `<main>` (`h1`, `FilterBar`, the below-the-fold
+ * `<section>`s) keep their content-based automatic minimum and refuse to
+ * shrink below it. With the default `flex-shrink:1` this wrapper was
+ * therefore the ONLY direct-main-child sibling the flex algorithm could
+ * shrink to fit `main`'s constrained height — and it shrank to 0, taking
+ * the entire Document library `<table>` (all rows) down with it
+ * (regression test:
+ * `src/__tests__/onside/documents-scroll-collapse.test.tsx`). `flexShrink:
+ * 0` excludes it from shrinking at all, so it renders at its full content
+ * height and `main`'s existing `overflow-y:auto` scrolls the page, exactly
+ * as that property was already set up to do. Same fix layer as
+ * `OnSideFeed.tsx`'s `SCROLL_WRAP_STYLE` (feed-scroll-collapse fix wave) —
+ * that screen's identical mechanism, applied here for consistency.
+ *
+ * This constant is also reused at `:832` (Open governance gaps) and `:862`
+ * (per-domain Domain impact tables), where the scroll-wrap div is NOT a
+ * direct child of `<main>` — it sits inside a `<section style={SECTION_STYLE}>`
+ * / a plain per-domain `<div>` respectively, so `<main>`'s shrink algorithm
+ * never reaches it and those two were never crushed. `flexShrink: 0` is a
+ * no-op there today (no shrink pressure reaches them), and keeps all three
+ * uses of this shared style on one contract rather than forking it. */
+const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 /** Visually-hidden recipe — `top`/`left` pinned to 0 is load-bearing;
  * see the invariant note on `DataTable.tsx`'s `srOnlyStyle`. Without it
  * an unpositioned absolute box falls back to its in-flow static
