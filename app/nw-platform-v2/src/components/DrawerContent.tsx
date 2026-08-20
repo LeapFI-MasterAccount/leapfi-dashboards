@@ -218,8 +218,11 @@ export function DrawerContent({ kind, fields, tags, actions, loading = false }: 
         >
           {fields.map((field) => (
             <Fragment key={field.label}>
+              {/* A14 (design_system_spec.md §2.7): every real consumer of
+                  this component renders it inside a Drawer (C7), whose root
+                  background is var(--panel) — panel-seated. */}
               <dt style={{ margin: 0 }}>
-                <Label text={field.label} variant="body-secondary" />
+                <Label text={field.label} variant="body-secondary" surface="panel" />
               </dt>
               <dd style={{ margin: 0, color: 'var(--ink)', fontSize: '0.9375rem', alignSelf: 'start' }}>
                 <DrawerContentFieldValue value={field.value} {...(field.onPress ? { onPress: field.onPress } : {})} />

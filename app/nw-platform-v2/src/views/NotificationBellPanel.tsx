@@ -285,8 +285,10 @@ export function NotificationBellPanel({ notifs, currentRoleKey, currentRoleLabel
 
       {open ? (
         <div ref={panelRef} role="group" aria-label={`Notifications · ${currentRoleLabel}`} data-lf-composite="notification-bell-panel-list" style={panelStyle}>
+          {/* A14 (design_system_spec.md §2.7): rendered inside `panelStyle`
+              (spreads PANEL_STYLE) — panel-seated. */}
           <div style={headerStyle}>
-            <Label text={`Notifications · ${currentRoleLabel}`} variant="eyebrow" />
+            <Label text={`Notifications · ${currentRoleLabel}`} variant="eyebrow" surface="panel" />
           </div>
           {myNotifs.length === 0 ? (
             <p style={emptyStyle}>Nothing waiting on you. Cases you are asked to action land here, and by email if the case says so.</p>
@@ -296,7 +298,7 @@ export function NotificationBellPanel({ notifs, currentRoleKey, currentRoleLabel
                 <li key={`${notif.cid}-${index}`} style={rowStyle}>
                   <span style={rowTextWrapStyle}>
                     <span style={rowTitleStyle}>{notif.title}</span>
-                    <Label text={`${notif.when} · ${notif.cid} · ${notif.kind === 'email' ? 'email + in-app' : 'in-app'}`} variant="body-secondary" />
+                    <Label text={`${notif.when} · ${notif.cid} · ${notif.kind === 'email' ? 'email + in-app' : 'in-app'}`} variant="body-secondary" surface="panel" />
                   </span>
                   <Button
                     variant="row"

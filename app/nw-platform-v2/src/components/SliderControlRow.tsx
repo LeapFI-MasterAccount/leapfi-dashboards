@@ -251,8 +251,10 @@ export function SliderControlRow({ sliders, onSlidersChange, onCommit, opportuni
     <div style={rootStyle} data-lf-composite="slider-control-row">
       <div>
         <h3 style={sectionHeadingStyle}>Your levers</h3>
+        {/* A14 (design_system_spec.md §2.7): stanceBoxStyle spreads
+            PANEL_STYLE — panel-seated. */}
         <div style={stanceBoxStyle(stance.tension)}>
-          <Label text="Your stance" variant="eyebrow" />
+          <Label text="Your stance" variant="eyebrow" surface="panel" />
           <p style={{ ...stanceTextStyle, margin: 0 }}>
             <strong style={{ color: 'var(--accent)' }}>{stance.lead}</strong> {stance.body}
           </p>

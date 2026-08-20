@@ -142,6 +142,8 @@ export function SettingsAbout() {
             </h1>
           </div>
 
+          {/* A14 (design_system_spec.md §2.7): CARD_STYLE spreads
+              PANEL_STYLE — every Label inside it is panel-seated. */}
           <div style={CARD_STYLE} role="group" aria-labelledby="about-heading">
             <h2 id="about-heading" style={CARD_TITLE_STYLE}>
               About
@@ -149,8 +151,8 @@ export function SettingsAbout() {
             {ABOUT_ROWS.map((row, index) => (
               <div key={row.label} style={index === 0 ? ABOUT_ROW_FIRST_STYLE : ABOUT_ROW_STYLE}>
                 <div style={ABOUT_ROW_MAIN_STYLE}>
-                  <Label text={row.label} variant="eyebrow" />
-                  <Label text={row.value} variant="body-secondary" />
+                  <Label text={row.label} variant="eyebrow" surface="panel" />
+                  <Label text={row.value} variant="body-secondary" surface="panel" />
                 </div>
                 <Tag text={row.pill} variant="count" />
               </div>

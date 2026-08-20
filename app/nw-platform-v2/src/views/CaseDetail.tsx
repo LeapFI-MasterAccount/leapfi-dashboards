@@ -452,7 +452,10 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
           </div>
           {pickingCondition ? (
             <div>
-              <Label text="Approve subject to" variant="eyebrow" />
+              {/* A14 (design_system_spec.md §2.7): renderActions() is called
+                  only from within the case-language-heading CARD_STYLE
+                  section (spreads PANEL_STYLE) — panel-seated. */}
+              <Label text="Approve subject to" variant="eyebrow" surface="panel" />
               <div style={CONDITION_LIST_STYLE}>
                 {APPROVAL.conditions.map((cond) => (
                   <Button
@@ -546,10 +549,13 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
         <Button variant="ghost" label="← All cases" icon="chevron-left" onPress={onBack} />
       </div>
 
+      {/* A14 (design_system_spec.md §2.7): every Label below in this
+          section renders inside CARD_STYLE (spreads PANEL_STYLE) —
+          panel-seated. */}
       <section aria-labelledby="case-detail-title" style={CARD_STYLE}>
         <div style={HEADER_ROW_STYLE}>
           <div>
-            <Label text="Case · opened by OnSide on detection" variant="eyebrow" />
+            <Label text="Case · opened by OnSide on detection" variant="eyebrow" surface="panel" />
             <h2 id="case-detail-title" style={TITLE_STYLE}>
               {caseItem.id} · {decodeText(caseItem.title)}
             </h2>
@@ -571,23 +577,23 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
 
         <div style={META_GRID_STYLE}>
           <div style={META_LABEL_WRAP}>
-            <Label text="Detected" variant="eyebrow" />
+            <Label text="Detected" variant="eyebrow" surface="panel" />
             <span style={META_VALUE_STYLE}>{caseItem.detected} · 6:12 AM ET sweep</span>
           </div>
           <div style={META_LABEL_WRAP}>
-            <Label text="Domain" variant="eyebrow" />
+            <Label text="Domain" variant="eyebrow" surface="panel" />
             <span style={META_VALUE_STYLE}>{DOMAIN_LABEL[caseItem.dom] ?? caseItem.dom}</span>
           </div>
           <div style={META_LABEL_WRAP}>
-            <Label text="Policy owner" variant="eyebrow" />
+            <Label text="Policy owner" variant="eyebrow" surface="panel" />
             <span style={META_VALUE_STYLE}>{decodeText(caseItem.owner)}</span>
           </div>
           <div style={META_LABEL_WRAP}>
-            <Label text="Currently with" variant="eyebrow" />
+            <Label text="Currently with" variant="eyebrow" surface="panel" />
             <span style={META_VALUE_STYLE}>{stageOwnerLabel(caseItem)}</span>
           </div>
           <div style={META_LABEL_WRAP}>
-            <Label text="Approval tier" variant="eyebrow" />
+            <Label text="Approval tier" variant="eyebrow" surface="panel" />
             <span style={META_VALUE_STYLE}>{tier.n} · {tier.committee ? `${APPROVAL.committee} votes before adoption` : 'CRO adopts'}</span>
             {/* Base "matrix →" doclink, `go('settings')` (2891 — CS-08). */}
             {onNavigate ? (
@@ -598,13 +604,13 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
           </div>
           {caseItem.cond ? (
             <div style={META_LABEL_WRAP}>
-              <Label text="Condition" variant="eyebrow" />
+              <Label text="Condition" variant="eyebrow" surface="panel" />
               <span style={META_VALUE_STYLE}>{caseItem.cond} · {caseItem.condMet ? 'satisfied' : 'outstanding'}</span>
             </div>
           ) : null}
           {caseItem.opinion ? (
             <div style={META_LABEL_WRAP}>
-              <Label text="Counsel" variant="eyebrow" />
+              <Label text="Counsel" variant="eyebrow" surface="panel" />
               <span style={META_VALUE_STYLE}>D. Reyes · {caseItem.opinion}</span>
             </div>
           ) : null}
@@ -614,7 +620,7 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
               batch. */}
           {doc && onNavigate ? (
             <div style={META_LABEL_WRAP}>
-              <Label text="Document" variant="eyebrow" />
+              <Label text="Document" variant="eyebrow" surface="panel" />
               <span>
                 <Button variant="ghost" label={`${decodeText(caseItem.title)} →`} onPress={() => onNavigate('onside.documents')} />
               </span>
@@ -725,7 +731,9 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
           email's own (non-interactive) button graphic, as in the base. */}
       <Drawer open={emailOpen} title={`${caseItem.id} is waiting on you`} onClose={() => setEmailOpen(false)}>
         <div style={SECTION_GAP}>
-          <Label text="Notification · email preview" variant="eyebrow" />
+          {/* A14 (design_system_spec.md §2.7): sits directly inside the
+              shared Drawer's root var(--panel) — panel-seated. */}
+          <Label text="Notification · email preview" variant="eyebrow" surface="panel" />
           <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm, 6px)', overflow: 'hidden' }}>
             <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', background: 'var(--bg2)', fontSize: '0.8125rem', color: 'var(--ink2)', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
               <div><strong style={SCREEN_TEXT}>From</strong> OnSide &lt;onside@leapfi.ai&gt;</div>
@@ -756,15 +764,17 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
         </div>
       </Drawer>
 
+      {/* A14 (design_system_spec.md §2.7): every Label below renders inside
+          CARD_STYLE (spreads PANEL_STYLE) — panel-seated. */}
       <section aria-labelledby="case-history-heading" style={CARD_STYLE}>
         <h3 id="case-history-heading" style={SUBHEADING_STYLE}>Case history</h3>
         <div style={HISTORY_LIST_STYLE}>
           {caseItem.history.map((entry, index) => (
             // eslint-disable-next-line react/no-array-index-key -- history is prepended (unshift) per action; entries never reorder independently of that append, so index is a stable enough key for this session-local list
             <div key={index} style={HISTORY_ROW_STYLE}>
-              <Label text={entry.when} variant="eyebrow" />
-              <Label text={entry.what} variant="body-secondary" />
-              <Label text={`${entry.who}${entry.role ? ` · ${entry.role}` : ''}${entry.note ? ` · ${entry.note}` : ''}`} variant="body-secondary" />
+              <Label text={entry.when} variant="eyebrow" surface="panel" />
+              <Label text={entry.what} variant="body-secondary" surface="panel" />
+              <Label text={`${entry.who}${entry.role ? ` · ${entry.role}` : ''}${entry.note ? ` · ${entry.note}` : ''}`} variant="body-secondary" surface="panel" />
             </div>
           ))}
         </div>

@@ -168,8 +168,11 @@ export function BoardLogForm({
     <div data-lf-view="board-log-form" style={WRAP_STYLE}>
       {/* Base `dcat`, line 3581. Paired with the parent Drawer's own heading
         * (its `title` carries the base `dtitle`), so this eyebrow is never
-        * the only accessible name — Label's a11y baseline. */}
-      <Label text="Board reporting · open item" variant="eyebrow" />
+        * the only accessible name — Label's a11y baseline.
+        * A14 (design_system_spec.md §2.7): rendered inside the shared
+        * reporting Drawer, whose root background is var(--panel) (see this
+        * file's own header note above) — panel-seated. */}
+      <Label text="Board reporting · open item" variant="eyebrow" surface="panel" />
 
       <div style={FORM_STYLE}>
         <Input
@@ -209,9 +212,9 @@ export function BoardLogForm({
             {entries.map((entry, index) => (
               // eslint-disable-next-line react/no-array-index-key -- entries are prepended (unshift) per save; rows never reorder independently of that prepend, so index is a stable enough key for this session-local list (same justification as CaseDetail.tsx's history rows)
               <div key={index} style={HISTORY_ROW_STYLE}>
-                <Label text={`Logged ${entry.when}`} variant="eyebrow" />
-                <Label text={entry.txt} variant="body-secondary" />
-                <Label text={`${entry.who}${entry.date ? ` · target ${entry.date}` : ''}`} variant="body-secondary" />
+                <Label text={`Logged ${entry.when}`} variant="eyebrow" surface="panel" />
+                <Label text={entry.txt} variant="body-secondary" surface="panel" />
+                <Label text={`${entry.who}${entry.date ? ` · target ${entry.date}` : ''}`} variant="body-secondary" surface="panel" />
               </div>
             ))}
           </div>

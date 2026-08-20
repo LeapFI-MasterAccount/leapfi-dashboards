@@ -162,16 +162,21 @@ export function StatCard({ label, value, unit, state = 'loaded', onPress, qualif
   // Non-interactive shape is untouched (same DOM as before this standard)
   // — the label is not wrapped in the flex row used to lay out the
   // trailing chevron, so a screen not passing `onPress` renders identically.
+  // A14 (design_system_spec.md §2.2 C1, §2.7): C1's card region is
+  // unconditionally panel-seated (cardStyle/interactiveCardBaseStyle both
+  // spread PANEL_STYLE — no non-panel render path exists in this
+  // vocabulary), so both Label children are wired to surface="panel"
+  // unconditionally, not as a caller-configurable choice.
   const labelBlock = interactive ? (
     <span style={labelRowStyle}>
       <span id={labelId}>
-        <Label text={label} variant="eyebrow" />
+        <Label text={label} variant="eyebrow" surface="panel" />
       </span>
       <Icon name="chevron-right" size={16} tone="interactive" />
     </span>
   ) : (
     <span id={labelId}>
-      <Label text={label} variant="eyebrow" />
+      <Label text={label} variant="eyebrow" surface="panel" />
     </span>
   );
 
@@ -179,7 +184,7 @@ export function StatCard({ label, value, unit, state = 'loaded', onPress, qualif
     <>
       {labelBlock}
       <div aria-live="polite" aria-atomic="true">
-        <StatValue {...statValueProps} />
+        <StatValue {...statValueProps} surface="panel" />
       </div>
       {qualifier !== undefined ? (
         <span aria-hidden="true" style={qualifierStyle}>

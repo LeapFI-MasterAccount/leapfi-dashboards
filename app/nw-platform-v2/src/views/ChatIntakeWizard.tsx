@@ -463,22 +463,24 @@ export const ChatIntakeWizard = forwardRef<ChatIntakeWizardHandle, ChatIntakeWiz
       ) : null}
 
       {phase === 'reviewing' && opportunity ? (
+        // A14 (design_system_spec.md §2.7): reviewPanelStyle spreads
+        // PANEL_STYLE — every Label below is panel-seated.
         <div style={reviewPanelStyle} aria-label="Scoping result">
           <div style={reviewRowStyle}>
-            <Label text="Build" variant="eyebrow" />
+            <Label text="Build" variant="eyebrow" surface="panel" />
             <span>
               ≈ {fmt(opportunity.cost)} one-time · {riskLabel(opportunity.r)} risk profile ({opportunity.c})
             </span>
           </div>
           <div style={reviewRowStyle}>
             {/* Base finishIntake Value row (4390): lever-scaled, at the live adoption setting (STU-07). */}
-            <Label text="Value" variant="eyebrow" />
+            <Label text="Value" variant="eyebrow" surface="panel" />
             <span>
               ≈ {fmt(opportunity.val * L.eff)}/yr at your {Math.round(L.eff * 100)}% adoption setting
             </span>
           </div>
           <div style={reviewRowStyle}>
-            <Label text="Controls" variant="eyebrow" />
+            <Label text="Controls" variant="eyebrow" surface="panel" />
             <div style={tagRowStyle}>
               {opportunity.g.map((gate) => {
                 const score = CTRL[gate] ?? 0;
@@ -489,7 +491,7 @@ export const ChatIntakeWizard = forwardRef<ChatIntakeWizardHandle, ChatIntakeWiz
           </div>
           <div style={reviewRowStyle}>
             {/* Base Regulations row (4392) incl. its conditional SOX-404/ICFR and GLBA-safeguards clauses (STU-09). */}
-            <Label text="Regulations impacted" variant="eyebrow" />
+            <Label text="Regulations impacted" variant="eyebrow" surface="panel" />
             <span>
               {dedupe(opportunity.g.map((gate) => REGMAP[gate]).filter((value): value is string => Boolean(value))).join(' · ')}
               {finrep ? ' · SOX 404 / ICFR: controls over financial reporting must be evidenced through the tool' : ''}
@@ -498,12 +500,12 @@ export const ChatIntakeWizard = forwardRef<ChatIntakeWizardHandle, ChatIntakeWiz
           </div>
           <div style={reviewRowStyle}>
             {/* Display-name domains via domainsFor/DOMMAP (base 4299-4300, 4392) — never CTRLDOM routing slugs (STU-02). */}
-            <Label text="Domains touched" variant="eyebrow" />
+            <Label text="Domains touched" variant="eyebrow" surface="panel" />
             <span>{domainsFor(opportunity.g).join(' · ')}</span>
           </div>
           <div style={reviewRowStyle}>
             {/* Base Placement row (4394): ready vs sequence-gated at the live tolerance (STU-07). */}
-            <Label text="Placement" variant="eyebrow" />
+            <Label text="Placement" variant="eyebrow" surface="panel" />
             <span>
               {opportunity.minGate >= L.threshold
                 ? 'Would be ready now at your current tolerance.'

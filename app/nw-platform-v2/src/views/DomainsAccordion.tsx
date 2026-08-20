@@ -392,8 +392,10 @@ export function DomainsAccordion({ domains, expandedKeys, onToggle, pendingScrol
 
                 <PosturePillBar segments={domainPostureSegments(current, domain.target)} />
 
+                {/* A14 (design_system_spec.md §2.7): the accordion row's
+                    own `cardStyle` spreads PANEL_STYLE — panel-seated. */}
                 <div style={targetLineStyle}>
-                  <Label text={`Target · ${domain.target} · ${BANDS[domain.target - 1] ?? ''}`} variant="body-secondary" />
+                  <Label text={`Target · ${domain.target} · ${BANDS[domain.target - 1] ?? ''}`} variant="body-secondary" surface="panel" />
                   {' — '}
                   {toClose > 0 ? `${toClose} obligation${toClose === 1 ? '' : 's'} to close for this target` : 'At your bar today'}
                 </div>

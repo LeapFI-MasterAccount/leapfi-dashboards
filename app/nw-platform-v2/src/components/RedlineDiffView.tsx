@@ -244,18 +244,20 @@ export function RedlineDiffView({
       ) : (
         <div style={{ display: 'grid', gap: '1rem' }}>
           <div>
-            <Label text={beforeLabel} variant="eyebrow" />
-            {/* FIX WAVE (Class C, C1): every call site of this component
-                (CaseDetail.tsx's CARD_STYLE, OnSideDocuments.tsx and
-                OnSideOwnership.tsx's shared Drawer) renders on var(--panel)
-                — --ink2 fails AA there in light theme; --chart-axis is the
-                prescribed panel-seated substitute. */}
+            {/* FIX WAVE (Class C, C1) / A14 (design_system_spec.md §2.7):
+                every call site of this component (CaseDetail.tsx's
+                CARD_STYLE, OnSideDocuments.tsx and OnSideOwnership.tsx's
+                shared Drawer) renders on var(--panel) — --ink2 fails AA
+                there in light theme; --chart-axis is the prescribed
+                panel-seated substitute. The paragraph below was already
+                fixed; this Label was not — same site, same fix. */}
+            <Label text={beforeLabel} variant="eyebrow" surface="panel" />
             <p style={{ margin: '0.4rem 0 0', fontSize: '0.9375rem', lineHeight: 1.6, color: 'var(--chart-axis)' }}>
               {renderBefore(parts)}
             </p>
           </div>
           <div>
-            <Label text={afterLabel} variant="eyebrow" />
+            <Label text={afterLabel} variant="eyebrow" surface="panel" />
             <p style={{ margin: '0.4rem 0 0', fontSize: '0.9375rem', lineHeight: 1.6, color: 'var(--ink)' }}>
               {renderAfter(parts)}
             </p>

@@ -362,8 +362,10 @@ export function HomeCustomizeBar({ roleKey, roleFirstName, visibleKeys, onChange
           })}
           <Chip text="Clear all" variant="suggestion" onPress={clearAll} />
           <Chip text="Reset layout" variant="suggestion" onPress={resetLayout} />
+          {/* A14 (design_system_spec.md §2.7): rendered inside `panelStyle`
+              (spreads PANEL_STYLE) — panel-seated. */}
           <div style={noteStyle}>
-            <Label text={noteText} variant="body-secondary" />
+            <Label text={noteText} variant="body-secondary" surface="panel" />
           </div>
         </div>
       ) : null}
