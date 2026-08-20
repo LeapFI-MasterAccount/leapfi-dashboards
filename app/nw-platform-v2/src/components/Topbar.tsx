@@ -659,7 +659,17 @@ function ProfileMenu({ profile, items }: { profile: TopbarProfile; items: Topbar
           style={profileMenuStyle}
         >
           {items.length === 0 ? (
-            <span style={{ ...LABEL_STYLE, padding: '0.5rem' }}>No account actions available</span>
+            // FIX WAVE (Class C, C1): this popover (`profile-menu-list`)
+            // is the one subtree the D21 scoped-override CSS above
+            // deliberately leaves on PAGE theme rather than forcing dark
+            // (see file header "PROFILEMENU DROPDOWN"), and its own root
+            // (`profileMenuStyle`) spreads PANEL_STYLE — so in light theme
+            // this span sits on a real var(--panel), where LABEL_STYLE's
+            // --ink2 fails AA (4.34:1). `--chart-axis` is the prescribed
+            // panel-seated substitute; overridden here only (not in
+            // LABEL_STYLE itself, whose other two call sites render on the
+            // permanently-dark chrome band, where --ink2 already passes).
+            <span style={{ ...LABEL_STYLE, padding: '0.5rem', color: 'var(--chart-axis)' }}>No account actions available</span>
           ) : (
             items.map((item) => (
               <div key={item.id} role="none">

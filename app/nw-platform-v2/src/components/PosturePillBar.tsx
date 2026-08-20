@@ -85,9 +85,12 @@ function segmentStyle(segment: PostureSegment): CSSProperties {
   }
   if (segment.isBetween) {
     // On the path from current to goal: a soft accent tint, still clearly secondary to both endpoints.
-    return { ...baseSegmentStyle, background: 'var(--panel)', color: 'var(--ink2)', borderColor: 'var(--accent)' };
+    // FIX WAVE (Class C, C1): --ink2 on --panel fails AA in light theme
+    // (tokens.css LM-PAL-4: "never on --panel"); --chart-axis is the
+    // token file's own prescribed panel-seated substitute.
+    return { ...baseSegmentStyle, background: 'var(--panel)', color: 'var(--chart-axis)', borderColor: 'var(--accent)' };
   }
-  return { ...baseSegmentStyle, background: 'var(--panel)', color: 'var(--ink2)', borderColor: 'var(--border)' };
+  return { ...baseSegmentStyle, background: 'var(--panel)', color: 'var(--chart-axis)', borderColor: 'var(--border)' };
 }
 
 export function PosturePillBar({ segments, state = 'default' }: PosturePillBarProps) {

@@ -245,7 +245,12 @@ export function RedlineDiffView({
         <div style={{ display: 'grid', gap: '1rem' }}>
           <div>
             <Label text={beforeLabel} variant="eyebrow" />
-            <p style={{ margin: '0.4rem 0 0', fontSize: '0.9375rem', lineHeight: 1.6, color: 'var(--ink2)' }}>
+            {/* FIX WAVE (Class C, C1): every call site of this component
+                (CaseDetail.tsx's CARD_STYLE, OnSideDocuments.tsx and
+                OnSideOwnership.tsx's shared Drawer) renders on var(--panel)
+                — --ink2 fails AA there in light theme; --chart-axis is the
+                prescribed panel-seated substitute. */}
+            <p style={{ margin: '0.4rem 0 0', fontSize: '0.9375rem', lineHeight: 1.6, color: 'var(--chart-axis)' }}>
               {renderBefore(parts)}
             </p>
           </div>

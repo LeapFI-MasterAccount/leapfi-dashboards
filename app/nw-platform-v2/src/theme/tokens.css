@@ -61,6 +61,25 @@
   --sem-positive: #22c55e;
   --sem-caution: #f59e0b;
   --sem-alert: #ef4444;
+  /* Hostile-review fix wave, Class C finding C2 (primitives/Tag.tsx's
+     `status-positive`/`status-caution`/`status-alert` variants): the text
+     color on those flat semantic fills was `var(--bg)`, i.e. borrowed from
+     the PAGE-background role rather than a color chosen for legibility
+     against the fill. `--bg` swaps per theme (black dark / white light)
+     while EXT-3's semantic hexes are theme-invariant ("Hexes unchanged
+     across themes"), so the pairing was only accidentally legible in dark
+     mode and fails once the theme flips (white text on these three fills:
+     2.28:1 / 2.15:1 / 3.76:1 — all fail 4.5:1 AA). Fixed black (#000000)
+     is the only value clearing 4.5:1 against all three fills in BOTH
+     themes (independently verified: 9.22:1 / 9.78:1 / 5.58:1), so it is
+     pinned identically in both this block and the `[data-theme='light']`
+     block below — same theme-invariant-token pattern this file already
+     uses for `--accent2-ink` (see that token's own comment). Brand
+     authority ruling: CONFIRMED, exact substitution specified; only the
+     token's name is this implementer's choice, named for its role
+     (the ink/text color for the semantic-fill family) to match
+     `--accent2-ink`'s naming convention. */
+  --sem-ink: #000000;
 
   /* Categorical (charts, <=6 series) — brand_doctrine.md, identities unchanged across themes */
   --cat-1: #3a6eac; /* Steel Blue */
@@ -116,6 +135,13 @@
   --sem-positive: #22c55e;
   --sem-caution: #f59e0b;
   --sem-alert: #ef4444;
+  /* Hostile-review fix wave, Class C finding C2 — pinned identically to
+     the dark block's value; see that block's comment for the full
+     derivation. Fixed black clears 4.5:1 against all three theme-
+     invariant semantic fills (9.22:1 / 9.78:1 / 5.58:1), unconditionally
+     of theme, so this is the SAME value in both blocks, not a light-mode
+     variant. */
+  --sem-ink: #000000;
 
   /* Categorical identities unchanged (S9); Aqua/Glacier require the 1px
      Midnight outline-stroke treatment on light fills per amendment S6.2

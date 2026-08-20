@@ -381,7 +381,10 @@ function DomainPostureCard({ domain, onOpen }: { domain: OnsideDomain; onOpen: (
 
       <PosturePillBar segments={domainPostureSegments(current, domain.target)} />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', color: 'var(--ink2)' }}>
+      {/* FIX WAVE (Class C, C1): rendered inside CARD_STYLE (spreads
+          PANEL_STYLE) — --ink2 fails AA on --panel in light theme;
+          --chart-axis is the prescribed panel-seated substitute. */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', color: 'var(--chart-axis)' }}>
         <span>
           {domain.met} at required maturity · {toClose} to close for target
         </span>

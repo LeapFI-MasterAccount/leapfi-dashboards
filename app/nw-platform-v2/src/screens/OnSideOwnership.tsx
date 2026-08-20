@@ -661,7 +661,11 @@ export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel, onDee
             {displayDoc.redline ? (
               <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
                 <RedlineDiffView before={decodeText(displayDoc.redline.old)} after={decodeText(displayDoc.redline.nw)} hitl hitlText="HITL review" />
-                <p style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: 'var(--ink2)' }}>{decodeText(displayDoc.redline.note)}</p>
+                {/* FIX WAVE (Class C, C1): rendered inside the shared
+                    Drawer, whose root background is var(--panel) —
+                    --ink2 fails AA there in light theme; --chart-axis is
+                    the prescribed panel-seated substitute. */}
+                <p style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: 'var(--chart-axis)' }}>{decodeText(displayDoc.redline.note)}</p>
               </div>
             ) : null}
           </>

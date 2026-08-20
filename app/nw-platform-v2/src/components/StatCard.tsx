@@ -127,12 +127,16 @@ const labelRowStyle: CSSProperties = {
 // not authored through Label itself (R-1 binds only the `eyebrow`
 // treatment). See LabelVariant's VARIANT_STYLE['body-secondary'] in
 // primitives/Label.tsx for the source values this mirrors.
+// FIX WAVE (Class C, C1): rendered inside `cardStyle`, which spreads
+// PANEL_STYLE (background: var(--panel)) — --ink2 fails AA there in
+// light theme (tokens.css LM-PAL-4); --chart-axis is the prescribed
+// panel-seated substitute.
 const qualifierStyle: CSSProperties = {
   display: 'block',
   font: 'inherit',
   fontSize: '0.875rem',
   fontWeight: 500,
-  color: 'var(--ink2)',
+  color: 'var(--chart-axis)',
 };
 
 export function StatCard({ label, value, unit, state = 'loaded', onPress, qualifier }: StatCardProps) {

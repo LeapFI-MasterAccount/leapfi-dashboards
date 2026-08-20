@@ -221,6 +221,12 @@ export function Toast({
         aria-label="Dismiss notification"
         onClick={beginDismiss}
         data-lf-composite="toast-close"
+        // FIX WAVE (Class C, C1): this toast card always sets its own
+        // background to var(--panel) (see the root style above); this
+        // button's own 'transparent' background is not an opaque override,
+        // so the visible surface underneath is still var(--panel), always
+        // — --ink2 fails AA there in light theme; --chart-axis is the
+        // prescribed panel-seated substitute.
         style={{
           flex: '0 0 auto',
           display: 'inline-flex',
@@ -232,7 +238,7 @@ export function Toast({
           background: 'transparent',
           border: 'none',
           borderRadius: 'var(--radius-sm, 6px)',
-          color: 'var(--ink2)',
+          color: 'var(--chart-axis)',
           cursor: 'pointer',
           outline: 'none',
         }}
