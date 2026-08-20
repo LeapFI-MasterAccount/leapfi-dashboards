@@ -127,6 +127,19 @@ export interface Case {
 
 export let CASES: Case[] = [];
 
+/**
+ * Shared "still needs a first look" predicate — the SAME test
+ * `screens/Cases.tsx`'s own "N of M have been decided yet" header
+ * (`CASES.filter(isUntouched).length`) and Sidebar's OnSide · Cases count
+ * badge (App.tsx) both read, so the two numbers can never independently
+ * drift (sprint-1.1 S1.1-04, PI2-D43). Relocated here (rather than kept
+ * private to `Cases.tsx`) per that task's explicit "file placement is the
+ * implementer's call, the predicate itself is not."
+ */
+export function isUntouched(c: Case): boolean {
+  return c.stage === 'analyst' && !c.edited && c.history.length <= 1;
+}
+
 export interface Notif {
   [key: string]: unknown;
 }

@@ -22,11 +22,22 @@
  * Frost White in light mode). This describe block pins the closing fix:
  * Sidebar's own scoped dark-token override, same technique as
  * `TOPBAR_DARK_CHROME_CSS`.
+ *
+ * DISPATCH ADDITION — OnSide · Cases nested badge (USER RULING PI2-D43,
+ * sprint-1.1 S1.1-04): pins AC-S1.1-04-1 through -7 — the new nested "Cases"
+ * row, its `count`-Tag undecided-case badge (sourced from the ONE exported
+ * `data/cases.ts` `isUntouched` predicate, never a second literal), the
+ * zero-count-is-no-badge rule, live updates off the shell's existing
+ * `useDemoStore()` subscription even while Cases is not the active screen,
+ * the untouched seven-top-level tripwire, and A13 hidden-state compliance.
  */
-import { afterEach, describe, expect, it } from 'vitest'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../../App'
+import { Sidebar } from '../../components/Sidebar'
+import { CASES, isUntouched, seedCases } from '../../data/cases'
+import { DOCLIB } from '../../data/doclib'
 
 describe('sidebar structure (base L762–821)', () => {
   // COUNT CHANGED BY DIRECTIVE (PI2-D39, settled): Connect's group dissolves
@@ -143,8 +154,16 @@ describe('OnSide nested default-expanded (PI2-D33: OnSide is defaultExpanded:tru
     const childLabels = within(nested)
       .getAllByRole('button')
       .map((b) => b.textContent?.trim())
-    // Base `os-sub` ordering, overview first (survey_map.md 762–821 / addendum §0).
-    expect(childLabels).toEqual(['Overview', 'Regulatory feed', 'Documents', 'Ownership'])
+    // Base `os-sub` ordering, overview first (survey_map.md 762–821 / addendum
+    // §0). USER RULING PI2-D43 (S1.1-04): a 5th nested child, "Cases", now
+    // follows "Ownership" — its accessible text is "Cases" plus its badge
+    // digits (SidebarItem's own count-Tag render, no separating space in the
+    // DOM), so this pins the label prefix rather than an exact "Cases"
+    // string; the badge's own value is pinned by the dedicated describe
+    // block below.
+    expect(childLabels.slice(0, 4)).toEqual(['Overview', 'Regulatory feed', 'Documents', 'Ownership'])
+    expect(childLabels).toHaveLength(5)
+    expect(childLabels[4]).toMatch(/^Cases/)
   })
 
   it('Studio and Settings remain collapsed by default (PI2-D33: only OnSide flips) — their children are absent until pressed', () => {
@@ -485,5 +504,149 @@ describe('BoardDeck exemption — mount semantics (amendment A13, design_system_
 
     await user.click(screen.getByRole('button', { name: 'LeapFI — Home' }))
     expect(within(nav()).getByRole('button', { name: 'Studio' })).toHaveAttribute('aria-expanded', 'true')
+  })
+})
+
+describe('OnSide · Cases nested badge (USER RULING PI2-D43, q11-01 CLOSED YES; sprint-1.1 S1.1-04)', () => {
+  beforeEach(() => {
+    // Deterministic undecided count for every test in this block,
+    // independent of any other file/test-level mutation: seedCases()
+    // reseeds all 8 CASES fresh at stage 'analyst', edited:false,
+    // history.length===1 — every seeded case is `isUntouched`, so the
+    // known starting undecided count is 8.
+    seedCases(DOCLIB)
+  })
+
+  it('AC-S1.1-04-1 — a 5th nested "Cases" row follows "Ownership" and navigates to the existing `cases` screen via the same onNavigate(child.id) path every OnSide child already uses', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    const nested = within(nav).getByRole('list', { name: 'OnSide sections' })
+    const casesRow = within(nested).getByRole('button', { name: /^Cases/ })
+    expect(casesRow).toBeInTheDocument()
+
+    await user.click(casesRow)
+    const banner = screen.getByRole('banner')
+    expect(within(banner).getByText(/Cases/)).toBeInTheDocument()
+  })
+
+  it('AC-S1.1-04-2 — Sidebar renders a count-variant Tag with the exact number when casesUndecidedCount > 0, and renders no count Tag at all when casesUndecidedCount is 0 (unit-level, direct Sidebar render)', () => {
+    const { unmount } = render(<Sidebar activeId="home" onNavigate={() => {}} casesUndecidedCount={3} />)
+    let nav = screen.getByRole('navigation', { name: 'Primary' })
+    let nested = within(nav).getByRole('list', { name: 'OnSide sections' })
+    let casesRow = within(nested).getByRole('button', { name: /^Cases/ })
+    let badge = casesRow.querySelector('[data-lf-primitive="tag"][data-variant="count"]')
+    expect(badge).not.toBeNull()
+    expect(badge?.textContent).toBe('3')
+    unmount()
+
+    render(<Sidebar activeId="home" onNavigate={() => {}} casesUndecidedCount={0} />)
+    nav = screen.getByRole('navigation', { name: 'Primary' })
+    nested = within(nav).getByRole('list', { name: 'OnSide sections' })
+    casesRow = within(nested).getByRole('button', { name: 'Cases' })
+    badge = casesRow.querySelector('[data-lf-primitive="tag"][data-variant="count"]')
+    expect(badge).toBeNull()
+  })
+
+  it('AC-S1.1-04-3 — the badge count equals CASES.filter(isUntouched).length, the identical value driving Cases.tsx\'s own header, via the ONE shared exported predicate', async () => {
+    const user = userEvent.setup()
+    // Diverge one seeded case from "untouched" (edited, still `analyst`
+    // stage) so `undecidedCount` (7) differs from `openCases.length` (8) —
+    // Cases.tsx's header renders literal "None have been decided yet." when
+    // the two are equal, which this test must not be mistaken for.
+    const firstCase = CASES[0]
+    if (!firstCase) throw new Error('expected at least one seeded case')
+    firstCase.edited = true
+    const expectedCount = CASES.filter(isUntouched).length
+    expect(expectedCount).toBe(7)
+
+    render(<App />)
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    const nested = within(nav).getByRole('list', { name: 'OnSide sections' })
+    const casesRow = within(nested).getByRole('button', { name: /^Cases/ })
+    const badge = casesRow.querySelector('[data-lf-primitive="tag"][data-variant="count"]')
+    expect(badge?.textContent).toBe(String(expectedCount))
+
+    // Navigate to the Cases screen itself and read its own header-derived
+    // count — same fixture data, same exported predicate, never two
+    // independently-written literals that merely happen to match.
+    await user.click(casesRow)
+    expect(screen.getByText(new RegExp(`${expectedCount} of \\d+ have been decided yet`))).toBeInTheDocument()
+  })
+
+  it('AC-S1.1-04-4 — a case-stage-changing action lowers the badge even while Cases is not the active screen, without remounting Cases', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    // Switch persona to the analyst (Priya Raman) — only the case's owning
+    // role can act on it (waitingOnRoleKey('analyst') === 'analyst').
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Rachel Fischer' }))
+    await user.click(screen.getByRole('menuitem', { name: /Priya Raman/ }))
+
+    const nav = () => screen.getByRole('navigation', { name: 'Primary' })
+    const nested = () => within(nav()).getByRole('list', { name: 'OnSide sections' })
+    const casesRow = () => within(nested()).getByRole('button', { name: /^Cases/ })
+
+    const startCount = CASES.filter(isUntouched).length
+    expect(casesRow().querySelector('[data-lf-primitive="tag"][data-variant="count"]')?.textContent).toBe(String(startCount))
+
+    await user.click(casesRow())
+    const firstCase = CASES[0]
+    if (!firstCase) throw new Error('expected at least one seeded case')
+    const idCell = screen.getByText(firstCase.id)
+    const row = idCell.closest('tr')
+    if (!row) throw new Error('expected a table row for the seeded case')
+    await user.click(within(row as HTMLElement).getByRole('button', { name: 'Open' }))
+    await user.click(screen.getByRole('button', { name: 'Accept & route for approval' }))
+
+    // Cases.tsx's own pessimistic commit delay (ACTION_COMMIT_DELAY_MS,
+    // 550ms) — wait for the real, server-truth-only state transition rather
+    // than asserting on an optimistic intermediate render.
+    await waitFor(() => expect(firstCase.stage).toBe('cro'), { timeout: 2000 })
+    const newExpectedCount = CASES.filter(isUntouched).length
+    expect(newExpectedCount).toBe(startCount - 1)
+
+    // Navigate away from Cases to an unrelated screen before reading the
+    // badge, proving the count is derived from the shell's own
+    // already-subscribed render, not from a still-mounted Cases screen.
+    await user.click(within(nav()).getByRole('button', { name: 'Home' }))
+    expect(screen.queryByText(firstCase.id)).not.toBeInTheDocument() // Cases is unmounted
+
+    expect(casesRow().querySelector('[data-lf-primitive="tag"][data-variant="count"]')?.textContent).toBe(String(newExpectedCount))
+  })
+
+  it('AC-S1.1-04-5 — the seven-top-level-items tripwire (PI2-D39) is unaffected: the new "Cases" row renders data-level="nested", never counted by the top-level query', () => {
+    render(<App />)
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    const topLevelButtons = nav.querySelectorAll('[data-lf-composite="sidebar-item"][data-level="top"]')
+    expect(topLevelButtons).toHaveLength(7)
+
+    const nested = within(nav).getByRole('list', { name: 'OnSide sections' })
+    const casesRow = within(nested).getByRole('button', { name: /^Cases/ })
+    expect(casesRow).toHaveAttribute('data-level', 'nested')
+  })
+
+  it('AC-S1.1-04-6 — the badge and the "Cases" row are absent from the DOM when Sidebar\'s hidden prop is true (A13 Board Deck exemption), via the component\'s existing early return', () => {
+    const { container } = render(<Sidebar activeId="home" onNavigate={() => {}} casesUndecidedCount={5} hidden />)
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Cases/ })).not.toBeInTheDocument()
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it('AC-S1.1-04-7 — reuse discipline: SidebarItem.tsx is unmodified by this task (its count prop/Tag render branch already existed) and no new TagVariant is introduced', async () => {
+    // Static-file evidence for this AC is a `git diff`/grep check (no
+    // SidebarItem.tsx diff, no new TagVariant member), reported in the
+    // implementer's evidence return — not independently re-provable from
+    // inside a render. This test instead pins the RUNTIME contract that
+    // evidence rests on: the badge is rendered via `SidebarItem`'s existing,
+    // generic `count` prop (the same `Tag` `variant="count"` primitive
+    // every other count badge in this codebase already uses), not a
+    // bespoke one-off element.
+    render(<Sidebar activeId="home" onNavigate={() => {}} casesUndecidedCount={2} />)
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    const nested = within(nav).getByRole('list', { name: 'OnSide sections' })
+    const casesRow = within(nested).getByRole('button', { name: /^Cases/ })
+    const badge = casesRow.querySelector('[data-lf-primitive="tag"]')
+    expect(badge).toHaveAttribute('data-variant', 'count')
   })
 })

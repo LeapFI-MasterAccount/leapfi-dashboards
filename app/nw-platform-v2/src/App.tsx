@@ -409,7 +409,7 @@ import { Toast } from './components/Toast'
 import { Switch } from './components/primitives/Switch'
 import { NotificationBellPanel } from './views/NotificationBellPanel'
 import { CURRENT, USERS } from './data/studio'
-import { NOTIFS } from './data/cases'
+import { CASES, NOTIFS, isUntouched } from './data/cases'
 import { DEFAULT_SCRIPT_KEY, resolveTarget, SCRIPTS } from './data/script'
 import { getDemoSliders, openNotificationForCase, resetDemo, useDemoStore } from './state/demoStore'
 
@@ -839,9 +839,23 @@ function App() {
   // EXEMPTION PRESERVED."
   const showSidebar = screenId !== 'board-deck'
 
+  // USER RULING PI2-D43 (S1.1-04): the SAME undecided-case count
+  // `screens/Cases.tsx`'s own "N of M have been decided yet" header
+  // computes (`CASES.filter(isUntouched).length`, `screens/Cases.tsx:492`),
+  // read here via the ONE shared exported predicate (`data/cases.ts`
+  // `isUntouched`) so the two numbers can never independently drift. This
+  // shell already calls `useDemoStore()` unconditionally above and already
+  // re-renders on every demo-state version bump — the same bump every
+  // case-stage-changing action's `notify()` call already fires (file header
+  // "NOTIFICATION BELL") — so computing this inline on that same,
+  // already-subscribed render reflects a case action even while Cases is
+  // not the active screen, with no second store/subscription introduced.
+  const casesUndecidedCount = CASES.filter(isUntouched).length
+
   const sidebarProps: SidebarProps = {
     activeId: screenId,
     onNavigate: navigateToScreen,
+    casesUndecidedCount,
   }
 
   return (

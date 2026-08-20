@@ -295,6 +295,16 @@ const NAV: NavTopItem[] = [
       { id: 'onside.feed', label: 'Regulatory feed' },
       { id: 'onside.documents', label: 'Documents' },
       { id: 'onside.ownership', label: 'Ownership' },
+      // USER RULING PI2-D43 (q11-01 CLOSED, YES; sprint-1.1 S1.1-04): a 5th
+      // OnSide nested child, after Ownership, carrying a persistent
+      // undecided-case count badge fed by `casesUndecidedCount` below. `id`
+      // is reused verbatim from the already-routed `ScreenId` `'cases'`
+      // (App.tsx `SCREEN_IDS`) — same reuse-not-rename precedent PI2-D39 set
+      // for Connect/Vantage — so App.tsx's routing needs no edit. This is a
+      // NESTED child (depth 1, matching OnSide's other four), not a new
+      // top-level row, so it does not touch the ≤7 top-level budget (§3.1)
+      // or the `sidebar.test.tsx` seven-top-level-items tripwire.
+      { id: 'cases', label: 'Cases' },
     ],
   },
   {
@@ -378,6 +388,20 @@ export interface SidebarProps {
    * or leaving `hidden`, but only if the instance is never destroyed.
    */
   hidden?: boolean;
+  /**
+   * USER RULING PI2-D43 (S1.1-04): the current undecided-case count, sourced
+   * by the caller (App.tsx) from the SAME exported predicate
+   * (`data/cases.ts` `isUntouched`) `screens/Cases.tsx`'s own "N of M have
+   * been decided yet" header already computes
+   * (`CASES.filter(isUntouched).length`) — never a second, independently
+   * derived count. Attached ONLY to the `cases` nested child's `count` Tag
+   * (`SidebarItem`'s existing `count?: number` prop/render branch,
+   * `SidebarItem.tsx:118-119,182,252` — unmodified, no new component); every
+   * other row passes no `count`. AC-S1.1-04-2: a zero-badge is not a call to
+   * action, so when the source count is `0` this component passes
+   * `undefined` to `SidebarItem`, not `0` — `undefined` is the default.
+   */
+  casesUndecidedCount?: number;
 }
 
 const NAV_STYLE: CSSProperties = {
@@ -419,7 +443,13 @@ const FOOTER_STYLE: CSSProperties = {
   borderTop: '1px solid var(--border)',
 };
 
-export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071', hidden = false }: SidebarProps) {
+export function Sidebar({
+  activeId,
+  onNavigate,
+  versionLabel = 'v 1.071',
+  hidden = false,
+  casesUndecidedCount,
+}: SidebarProps) {
   // Manual collapse/expand overrides, keyed by top-level item id. Absent
   // entries fall back to child-active auto-expand, then `defaultExpanded`.
   // See file header DESIGN NOTE: an override always wins — the base's
@@ -524,6 +554,12 @@ export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071', hidden
                           level="nested"
                           current={child.id === activeId}
                           onPress={() => onNavigate(child.id)}
+                          // PI2-D43 (S1.1-04): only the `cases` child ever
+                          // carries a count badge; every other nested row
+                          // passes no `count` (undefined), same as before.
+                          {...(child.id === 'cases' && typeof casesUndecidedCount === 'number' && casesUndecidedCount > 0
+                            ? { count: casesUndecidedCount }
+                            : {})}
                         />
                       </li>
                     ))}
