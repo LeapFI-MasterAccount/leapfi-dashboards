@@ -107,6 +107,7 @@ import type { SidebarProps } from '../components/Sidebar';
 import { Switch } from '../components/primitives/Switch';
 import { Label } from '../components/primitives/Label';
 import { APPROVAL, CASES } from '../data/cases';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 interface ToggleRow {
   key: string;
@@ -201,14 +202,12 @@ const MAIN_STYLE: CSSProperties = {
 const HEADER_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.375rem' };
 const TITLE_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
 const GRID_STYLE: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' };
-const CARD_STYLE: CSSProperties = {
+export const CARD_STYLE: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: '0.875rem',
   padding: '1.1rem 1.25rem',
-  borderRadius: 'var(--radius-md, 10px)',
-  border: '1px solid var(--border)',
-  background: 'var(--panel)',
+  ...PANEL_STYLE,
   boxSizing: 'border-box',
   minWidth: 0,
 };

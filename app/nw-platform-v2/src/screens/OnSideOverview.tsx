@@ -177,6 +177,7 @@ import { PosturePillBar } from '../components/PosturePillBar';
 import { Drawer } from '../components/Drawer';
 import { DrawerContent } from '../components/DrawerContent';
 import type { DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
+import { PANEL_STYLE } from '../theme/panelStyle';
 import { Toast } from '../components/Toast';
 import { Button } from '../components/primitives/Button';
 import { Chip } from '../components/primitives/Chip';
@@ -274,10 +275,8 @@ const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column',
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.125rem', fontWeight: 700, color: 'var(--ink)' };
 const KPI_GRID_STYLE: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.875rem' };
 const POSTURE_GRID_STYLE: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '0.875rem' };
-const CARD_STYLE: CSSProperties = {
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-md, 10px)',
-  background: 'var(--panel)',
+export const CARD_STYLE: CSSProperties = {
+  ...PANEL_STYLE,
   padding: '1.25rem',
   boxSizing: 'border-box',
   display: 'flex',

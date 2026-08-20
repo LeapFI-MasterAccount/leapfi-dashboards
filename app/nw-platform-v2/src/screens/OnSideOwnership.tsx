@@ -248,6 +248,7 @@ import type { DocRaci } from '../data/onside';
 import { DOCLIB } from '../data/doclib';
 import type { DocEntry, DocStatus } from '../data/doclib';
 import { useDemoStore } from '../state/demoStore';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 type DisplayDoc = DocEntry & { id: string };
 
@@ -476,23 +477,19 @@ const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 /** Shared by the R/A/C/I mark legend and the 8-role legend below it — both
  * are "legend on a panel" boxes, kept visually paired. Label text in both
  * uses `--chart-axis`, not `--ink2` — see file header "Adjacent fix". */
-const ROLE_LEGEND_STYLE: CSSProperties = {
+export const ROLE_LEGEND_STYLE: CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
   gap: '0.5rem',
   padding: '0.875rem 1rem',
-  borderRadius: 'var(--radius-md, 10px)',
-  border: '1px solid var(--border)',
-  background: 'var(--panel)',
+  ...PANEL_STYLE,
 };
-const RACI_MARK_LEGEND_STYLE: CSSProperties = {
+export const RACI_MARK_LEGEND_STYLE: CSSProperties = {
   display: 'flex',
   flexWrap: 'wrap',
   gap: '1rem',
   padding: '0.875rem 1rem',
-  borderRadius: 'var(--radius-md, 10px)',
-  border: '1px solid var(--border)',
-  background: 'var(--panel)',
+  ...PANEL_STYLE,
 };
 const RACI_MARK_LEGEND_ITEM_STYLE: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '0.4rem' };
 const LEGEND_TEXT_STYLE: CSSProperties = { fontSize: '0.875rem', fontWeight: 500, color: 'var(--chart-axis)' };
@@ -500,14 +497,12 @@ const STEP_LIST_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap:
 const STEP_ITEM_STYLE: CSSProperties = { flex: '1 1 220px', minWidth: 220 };
 const STAT_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '1rem' };
 const STAT_ITEM_STYLE: CSSProperties = { flex: '1 1 220px', minWidth: 220, display: 'flex', flexDirection: 'column', gap: '0.5rem' };
-const TWO_ENGINES_CARD_STYLE: CSSProperties = {
+export const TWO_ENGINES_CARD_STYLE: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: '0.5rem',
   padding: '1.1rem 1.25rem',
-  borderRadius: 'var(--radius-md, 10px)',
-  border: '1px solid var(--border)',
-  background: 'var(--panel)',
+  ...PANEL_STYLE,
 };
 
 export interface OnSideOwnershipProps extends DeepLinkScreenProps {

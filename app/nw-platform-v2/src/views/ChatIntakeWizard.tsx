@@ -138,6 +138,7 @@ import { CTRL, GREEN, REGMAP, domainsFor } from '../data/studio';
 import { fmt, riskLabel } from '../engine/plan';
 import type { PlanOpportunity } from '../engine/plan';
 import { getLiveLevers, useDemoStore } from '../state/demoStore';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 /** Implementer judgment call (design_system_spec.md §1.4 carries no timing
  * values) — long enough that the "Thinking…" transition between questions
@@ -208,13 +209,11 @@ function bubbleStyle(role: ChatMessage['role']): CSSProperties {
 
 const suggestionRowStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' };
 const cancelRowStyle: CSSProperties = { display: 'flex' };
-const reviewPanelStyle: CSSProperties = {
+export const reviewPanelStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: '0.75rem',
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-md, 10px)',
-  background: 'var(--panel)',
+  ...PANEL_STYLE,
   padding: '1rem 1.125rem',
 };
 const reviewRowStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.875rem', color: 'var(--ink)' };

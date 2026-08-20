@@ -51,6 +51,7 @@ import { Icon } from './primitives/Icon';
 import type { IconName } from './primitives/Icon';
 import { Label } from './primitives/Label';
 import { Tag } from './primitives/Tag';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 export type SetupCardVariant = 'interactive' | 'locked';
 
@@ -65,7 +66,7 @@ export interface SetupCardProps {
   onPress?: () => void;
 }
 
-const CARD_BASE_STYLE: CSSProperties = {
+export const CARD_BASE_STYLE: CSSProperties = {
   display: 'flex',
   alignItems: 'flex-start',
   gap: '0.75rem',
@@ -74,9 +75,7 @@ const CARD_BASE_STYLE: CSSProperties = {
   font: 'inherit',
   boxSizing: 'border-box',
   padding: '1rem',
-  borderRadius: 'var(--radius-md, 10px)',
-  border: '1px solid var(--border)',
-  background: 'var(--panel)',
+  ...PANEL_STYLE,
   outline: 'none',
   transition: 'background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease',
 };
