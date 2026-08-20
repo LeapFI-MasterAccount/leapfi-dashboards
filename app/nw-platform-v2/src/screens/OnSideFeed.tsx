@@ -285,12 +285,14 @@ import { DrawerContent } from '../components/DrawerContent';
 import type { DrawerContentAction, DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
 import { Button } from '../components/primitives/Button';
 import { Tag } from '../components/primitives/Tag';
+import { AskChatPanel } from '../components/AskChatPanel';
 import { RegulatoryFeedSources } from '../views/RegulatoryFeedSources';
 import type { SourceDetailRow } from '../views/RegulatoryFeedSources';
 import { RegulatoryFeedLifecycle } from '../views/RegulatoryFeedLifecycle';
 import { RegulatoryFeedInforce } from '../views/RegulatoryFeedInforce';
 import { DOMAINS, INSTR, SRC_ITEMS, SRC_ROWS, SRC_LAYERS } from '../data/onside';
 import type { OnsideInstrument } from '../data/onside';
+import { ONSIDE_CHAT_MODULE_CONFIG } from '../data/askChatModuleConfig';
 import type { DeepLinkScreenProps } from '../App';
 
 /** Ports the source engine's `srcRow()`/`srcItems()` `.replace(/&amp;/g,'&')`
@@ -347,11 +349,15 @@ interface FeedSourceLookup {
  * 2, B3 dispatch) a deep-link-only `feed-source` shape — kept distinct
  * from `source` because it carries no live alert state (see
  * `FeedSourceLookup` above). */
+/** §2.9.1 item 2 — the chat is one more discriminated content state of this
+ * SAME shared Drawer, never a second Drawer instance (amendment A16,
+ * PI2-D42). */
 type DrawerSelection =
   | { kind: 'signal'; row: SignalRow }
   | { kind: 'source'; row: SourceDetailRow }
   | { kind: 'instrument'; instrumentKey: string; instrument: OnsideInstrument }
-  | { kind: 'feed-source'; lookup: FeedSourceLookup };
+  | { kind: 'feed-source'; lookup: FeedSourceLookup }
+  | { kind: 'chat' };
 
 // normalizeAmp on the label — ONSIDE-01: the Regional layer label is the
 // verbatim-ported 'Regional · national, state &amp; local' (base 3335,
@@ -457,6 +463,11 @@ const TITLE_STYLE: CSSProperties = {
   color: 'var(--ink)',
 };
 
+/** §5.8 region map addition (amendment A16, PI2-D42) — "utility corner"
+ * (§5.1's originally-named placement, Home.tsx/PI2-D40 precedent), seated
+ * beside the page title. */
+const HEADER_ROW_STYLE: CSSProperties = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' };
+
 /** A-overlap-06 — the per-table horizontal-scroll wrapper every other
  * table in this codebase uses (base `.raci-wrap{overflow-x:auto}`,
  * leapfi-platform.html:146); this screen's own signal table was the sole
@@ -546,6 +557,11 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [selection, setSelection] = useState<DrawerSelection | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // §2.9.5 fresh-open reseed — bumped on every "Ask OnSide" press and used
+  // as AskChatPanel's `key`, forcing a fresh mount (fresh greeting +
+  // suggestion Chips, no carried-forward transcript) even on a same-screen
+  // re-open with no navigation in between.
+  const [chatOpenNonce, setChatOpenNonce] = useState(0);
   // B-dead-interactions-16 — scroll/focus target for RegulatoryFeedSources'
   // "Sources & connectors" section, below the fold.
   const sourcesSectionRef = useRef<HTMLDivElement | null>(null);
@@ -690,6 +706,14 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
 
   const handleDrawerClose = () => setDrawerOpen(false);
 
+  /** §2.9.5 entry affordance — "Ask OnSide" utility-corner trigger. Always
+   * opens (or content-swaps, §2.9.1 item 2) at the fresh idle state. */
+  const handleOpenChat = () => {
+    setChatOpenNonce((n) => n + 1);
+    setSelection({ kind: 'chat' });
+    setDrawerOpen(true);
+  };
+
   // Signal branch below is behavior-identical to pre-W1 (same title format,
   // same five fields, same badge Tag); the source/instrument branches are
   // additive.
@@ -702,7 +726,9 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
           ? `Source — ${selection.row.name}`
           : selection.kind === 'feed-source'
             ? `Source — ${selection.lookup.name}`
-            : normalizeAmp(selection.instrument.n);
+            : selection.kind === 'chat'
+              ? ONSIDE_CHAT_MODULE_CONFIG.drawerTitle
+              : normalizeAmp(selection.instrument.n);
 
   const drawerFields: DrawerContentField[] =
     selection === null
@@ -736,7 +762,9 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
                 { label: '30-day activity', value: String(selection.lookup.activity30d) },
                 { label: 'Connector phase', value: selection.lookup.phaseLabel },
               ]
-            : [
+            : selection.kind === 'chat'
+              ? [] // AskChatPanel owns its own body content — DrawerContent renders nothing for this branch (see the Drawer body below).
+              : [
                 // Base openInstr detail fields, source 2937–2947.
                 { label: 'Kind', value: normalizeAmp(selection.instrument.kind) },
                 { label: 'Issuer', value: normalizeAmp(selection.instrument.issuer) },
@@ -808,9 +836,14 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
   return (
     <>
       <main id="onside-feed-main" style={MAIN_STYLE} aria-labelledby="onside-feed-title">
-          <h1 id="onside-feed-title" style={TITLE_STYLE}>
-            Regulatory feed
-          </h1>
+          <div style={HEADER_ROW_STYLE}>
+            <h1 id="onside-feed-title" style={TITLE_STYLE}>
+              Regulatory feed
+            </h1>
+            {/* §5.8 entry affordance (amendment A16, PI2-D42) — uniform
+                across all four onside.* screens. */}
+            <Button variant="ghost" label={ONSIDE_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
+          </div>
           <FilterBar groups={filterGroups} />
           <div style={SCROLL_WRAP_STYLE}>
             <DataTable
@@ -840,22 +873,32 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
             branch reuses the same "source" hint (same conceptual detail,
             partial fidelity, see file header); signal + instrument shapes
             keep "signal" (non-structural data-attribute hint). */}
-        <DrawerContent
-          kind={selection !== null && (selection.kind === 'source' || selection.kind === 'feed-source') ? 'source' : 'signal'}
-          fields={drawerFields}
-          tags={drawerTags}
-          actions={drawerActions}
-        />
-        {selection !== null && selection.kind === 'source' ? (
-          // ONSIDE-04 — stable-node alert toggle; see the file-header note.
-          <div style={{ marginTop: '1.25rem' }}>
-            <Button
-              variant="secondary"
-              label={selection.row.alertOn ? 'Turn alerts off' : 'Turn alerts on'}
-              onPress={handleAlertTogglePress}
+        {selection !== null && selection.kind === 'chat' ? (
+          // §2.9.1 item 2 — one more content state of this SAME Drawer;
+          // AskChatPanel owns its own body, no DrawerContent involved.
+          // `key={chatOpenNonce}` forces a fresh mount (fresh greeting +
+          // Chips) on every "Ask OnSide" press (§2.9.5 fresh-open reseed).
+          <AskChatPanel key={chatOpenNonce} config={ONSIDE_CHAT_MODULE_CONFIG} {...(onDeepLink ? { onDeepLinkPress: onDeepLink } : {})} />
+        ) : (
+          <>
+            <DrawerContent
+              kind={selection !== null && (selection.kind === 'source' || selection.kind === 'feed-source') ? 'source' : 'signal'}
+              fields={drawerFields}
+              tags={drawerTags}
+              actions={drawerActions}
             />
-          </div>
-        ) : null}
+            {selection !== null && selection.kind === 'source' ? (
+              // ONSIDE-04 — stable-node alert toggle; see the file-header note.
+              <div style={{ marginTop: '1.25rem' }}>
+                <Button
+                  variant="secondary"
+                  label={selection.row.alertOn ? 'Turn alerts off' : 'Turn alerts on'}
+                  onPress={handleAlertTogglePress}
+                />
+              </div>
+            ) : null}
+          </>
+        )}
       </Drawer>
     </>
   );

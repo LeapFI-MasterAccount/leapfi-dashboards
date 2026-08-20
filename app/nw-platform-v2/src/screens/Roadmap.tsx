@@ -103,18 +103,23 @@
  * Tests: src/__tests__/studio/roadmap.test.tsx executes this screen
  * against the base anchors above (vitest + @testing-library).
  */
+import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { SidebarProps } from '../components/Sidebar';
 import { RoadmapGantt } from '../components/RoadmapGantt';
 import type { RoadmapPhase, RoadmapSegment } from '../components/RoadmapGantt';
 import { SetupCard } from '../components/SetupCard';
 import { Label } from '../components/primitives/Label';
+import { Button } from '../components/primitives/Button';
+import { Drawer } from '../components/Drawer';
+import { AskChatPanel } from '../components/AskChatPanel';
 import { SOON } from '../data/misc';
 import type { SoonEntry } from '../data/misc';
 import { DETAIL } from '../data/studio';
 import { fmt } from '../engine/plan';
 import type { PlanOpportunity, PlanResult } from '../engine/plan';
 import { computeLivePlan, useDemoStore } from '../state/demoStore';
+import { STUDIO_CHAT_MODULE_CONFIG } from '../data/askChatModuleConfig';
 import type { DeepLinkScreenProps } from '../App';
 import { PANEL_STYLE } from '../theme/panelStyle';
 
@@ -323,6 +328,10 @@ const MAIN_STYLE: CSSProperties = {
 };
 const headerStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem' };
 const h1Style: CSSProperties = { font: 'inherit', fontSize: '1.625rem', fontWeight: 700, color: 'var(--ink)', margin: 0 };
+/** §5.8 region map addition (amendment A16, PI2-D42) — utility corner
+ * (§5.1's originally-named placement), seated beside the page title, nested
+ * inside `headerStyle`'s outer column wrapper. */
+const headerTopRowStyle: CSSProperties = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' };
 const sectionStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.75rem' };
 const sectionHeadingStyle: CSSProperties = { font: 'inherit', fontSize: '1rem', fontWeight: 700, color: 'var(--ink)', margin: 0 };
 const setupCardRowStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))', gap: '1rem' };
@@ -407,6 +416,18 @@ export function Roadmap({ onNavigate, onDeepLink }: RoadmapProps) {
   useDemoStore();
   const roadmap = deriveRoadmap();
 
+  // §2.9.1 item 4 — this screen gains its FIRST local Drawer instance,
+  // scoped to the "Ask Studio" chat only (`Roadmap.tsx` today mounts no
+  // `<Drawer>` at all — play chips deep-link to `InvestmentDesign.tsx`'s
+  // Drawer instead, unchanged below). Bumping `chatOpenNonce` forces
+  // AskChatPanel to remount fresh on every open (§2.9.5, AC-A16-8).
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpenNonce, setChatOpenNonce] = useState(0);
+  const handleOpenChat = () => {
+    setChatOpenNonce((n) => n + 1);
+    setChatOpen(true);
+  };
+
   /** Fix B-dead-interactions-04 — see file header "PLAY CHIPS OPEN FULL
    * SCOPE." */
   const handleOpenPlay = (name: string) => {
@@ -414,11 +435,17 @@ export function Roadmap({ onNavigate, onDeepLink }: RoadmapProps) {
   };
 
   return (
+    <>
     <main id="roadmap-main" style={MAIN_STYLE} aria-labelledby="roadmap-title">
           <div style={headerStyle}>
-            <h1 id="roadmap-title" style={h1Style}>
-              Roadmap
-            </h1>
+            <div style={headerTopRowStyle}>
+              <h1 id="roadmap-title" style={h1Style}>
+                Roadmap
+              </h1>
+              {/* §5.8 entry affordance (amendment A16, PI2-D42) — uniform
+                  across all three studio.* screens. */}
+              <Button variant="ghost" label={STUDIO_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
+            </div>
           </div>
 
           {/* Base rm-kpis row (1308-1312), live-derived. */}
@@ -491,5 +518,12 @@ export function Roadmap({ onNavigate, onDeepLink }: RoadmapProps) {
             </div>
           </div>
     </main>
+
+    {/* §2.9.1 item 4 — this screen's first (and only) local Drawer
+        instance, scoped to the "Ask Studio" chat only. */}
+    <Drawer open={chatOpen} title={STUDIO_CHAT_MODULE_CONFIG.drawerTitle} onClose={() => setChatOpen(false)}>
+      <AskChatPanel key={chatOpenNonce} config={STUDIO_CHAT_MODULE_CONFIG} {...(onDeepLink ? { onDeepLinkPress: onDeepLink } : {})} />
+    </Drawer>
+    </>
   );
 }
