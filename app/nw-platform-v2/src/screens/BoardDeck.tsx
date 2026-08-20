@@ -59,14 +59,13 @@
  * — see App.tsx's own `showSidebar` gate) but the Topbar half of the old
  * per-screen passthrough is now dead, and removed.
  *
- * G11 label requirement (§5.7): "both the Home StatCard... and the deck's
- * economics DeckSlide ('value at adoption') carry explicit measure
- * labels... this is a Label (P3) addition on each StatValue (P11), not a
- * new component." The economics slide's three stats each carry their own
- * explicit `label` (required on `DeckSlideStat`, enforced by `DeckSlide`
- * itself) so the $4.5M/yr "value at adoption" figure can never render
- * unlabelled next to Home's differently-measured $540k/yr "cost capacity
- * already freed" figure and read as a contradiction.
+ * G11 label requirement (§5.7): the deck's economics DeckSlide ('value at
+ * adoption') carries explicit measure labels — a Label (P3) addition on
+ * each StatValue (P11), not a new component. The economics slide's three
+ * stats each carry their own explicit `label` (required on `DeckSlideStat`,
+ * enforced by `DeckSlide` itself), ensuring the $4.5M/yr "value at adoption"
+ * figure is unambiguously labelled. Home's contrast ($540k/yr "cost capacity
+ * already freed") was removed per PI2-D40.
  *
  * STOP-item — no executable test run: this worktree's `package.json` (out
  * of this dispatch's ALLOWLIST) has no test runner or component-testing
