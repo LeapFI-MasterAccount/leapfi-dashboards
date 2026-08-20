@@ -29,12 +29,29 @@ import userEvent from '@testing-library/user-event'
 import App from '../../App'
 
 describe('sidebar structure (base L762–821)', () => {
-  it('renders the six top-level items and the "v 1.071" footer (base L762–821)', () => {
+  // COUNT CHANGED BY DIRECTIVE (PI2-D39, settled): Connect's group dissolves
+  // — Connect and Vantage each become their own flat, disabled, top-level
+  // entry (no more Connect->Vantage nesting) — so the top-level count moves
+  // from six to seven, still within the ≤7 budget design_system_spec.md
+  // §3.1 states (at the limit, not over it). This is not a re-litigation of
+  // that budget; PI2-D39 is the settled decision this test now pins.
+  // Accessible names below match via a leading-substring RegExp (not
+  // `exact: false` — @testing-library/dom's `name` matcher only supports
+  // substring matching through a RegExp/function matcher; a plain string
+  // is always an exact-equality match regardless of `exact`) because a
+  // disabled item's row also carries the "Coming Soon" Tag as part of the
+  // same button's content, so its full accessible name is e.g. "Connect
+  // Coming Soon" (see SidebarItem.tsx file header "COMING SOON MARKER").
+  it('renders the seven top-level items and the "v 1.071" footer (PI2-D39: Connect/Vantage promoted to flat top-level entries)', () => {
     render(<App />)
     const nav = screen.getByRole('navigation', { name: 'Primary' })
-    for (const label of ['Home', 'OnSide', 'Studio', 'Connect', 'Reporting', 'Settings']) {
-      expect(within(nav).getByRole('button', { name: label })).toBeInTheDocument()
+    for (const label of ['Home', 'OnSide', 'Studio', 'Connect', 'Vantage', 'Reporting', 'Settings']) {
+      expect(within(nav).getByRole('button', { name: new RegExp(`^${label}`) })).toBeInTheDocument()
     }
+    // Count what RENDERS, not what NAV declares: exactly 7 top-level rows,
+    // never 8 — SidebarItem marks every top-level row `data-level="top"`.
+    const topLevelButtons = nav.querySelectorAll('[data-lf-composite="sidebar-item"][data-level="top"]')
+    expect(topLevelButtons).toHaveLength(7)
     // Footer version string, verbatim from the base sidebar footer (L762–821).
     expect(within(nav).getByText('v 1.071')).toBeInTheDocument()
   })
@@ -42,6 +59,74 @@ describe('sidebar structure (base L762–821)', () => {
   it('boots with Home as the current item (base boot lands on #mod-home, L858–881 / §(b))', () => {
     render(<App />)
     const nav = screen.getByRole('navigation', { name: 'Primary' })
+    expect(within(nav).getByRole('button', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('AllRailz is absent from the sidebar navigation', () => {
+    render(<App />)
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    expect(within(nav).queryByRole('button', { name: 'AllRailz' })).not.toBeInTheDocument()
+  })
+})
+
+describe('Connect and Vantage: disabled, top-level, "Coming Soon" (PI2-D39, settled user decision)', () => {
+  it('Connect and Vantage are flat top-level rows — no group, no nested list, no chevron', () => {
+    render(<App />)
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    const connect = within(nav).getByRole('button', { name: /^Connect/ })
+    const vantage = within(nav).getByRole('button', { name: /^Vantage/ })
+    // A group header carries aria-expanded; a flat leaf item never does.
+    expect(connect).not.toHaveAttribute('aria-expanded')
+    expect(vantage).not.toHaveAttribute('aria-expanded')
+    expect(within(nav).queryByRole('list', { name: 'Connect sections' })).not.toBeInTheDocument()
+    expect(within(nav).queryByRole('button', { name: 'Connect sections' })).not.toBeInTheDocument()
+  })
+
+  it('both rows are truly disabled — native disabled control, not merely styled to look inactive', () => {
+    render(<App />)
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    const connect = within(nav).getByRole('button', { name: /^Connect/ })
+    const vantage = within(nav).getByRole('button', { name: /^Vantage/ })
+
+    // toBeDisabled() (jest-dom) checks the real HTML `disabled` state.
+    expect(connect).toBeDisabled()
+    expect(vantage).toBeDisabled()
+
+    // Not reachable by keyboard as an actionable control: per the HTML
+    // living standard a disabled form control is not a focusable area —
+    // `.focus()` on it is a no-op, so it can never become
+    // `document.activeElement` via Tab or any other keyboard path.
+    // (Not asserted via `.tabIndex`: jsdom does not compute that IDL
+    // attribute's disabled-element special case per spec, an
+    // environment gap, not a claim about this component.)
+    connect.focus()
+    expect(document.activeElement).not.toBe(connect)
+    vantage.focus()
+    expect(document.activeElement).not.toBe(vantage)
+  })
+
+  it('both rows are marked "Coming Soon" — visible, perceivable text, not a color-only cue', () => {
+    render(<App />)
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    const connect = within(nav).getByRole('button', { name: /^Connect/ })
+    const vantage = within(nav).getByRole('button', { name: /^Vantage/ })
+    expect(within(connect).getByText('Coming Soon')).toBeInTheDocument()
+    expect(within(vantage).getByText('Coming Soon')).toBeInTheDocument()
+  })
+
+  it('clicking either row does not navigate — the sidebar stays on Home, no double-submit-style stale reachability', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    const connect = within(nav).getByRole('button', { name: /^Connect/ })
+    const vantage = within(nav).getByRole('button', { name: /^Vantage/ })
+
+    expect(within(screen.getByRole('banner')).getByText('Home')).toBeInTheDocument()
+    await user.click(connect)
+    expect(within(screen.getByRole('banner')).getByText('Home')).toBeInTheDocument()
+    await user.click(vantage)
+    expect(within(screen.getByRole('banner')).getByText('Home')).toBeInTheDocument()
+    // Still current: Home never lost aria-current to a disabled press.
     expect(within(nav).getByRole('button', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
   })
 })

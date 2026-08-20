@@ -50,14 +50,12 @@ const SLIDES: DeckViewSlide[] = [
   { id: 's3', kind: 'generic', heading: 'Gamma' },
 ]
 
-/** The shell Topbar (C4). Not `getByRole('banner')` on splash screens:
- * SoonSplash's own `<header>` is ALSO computed as a banner by
- * testing-library's role engine (same workaround as connect-soon.test.tsx). */
-function shellTopbar(): HTMLElement {
-  const el = document.querySelector('[data-lf-composite="topbar"]')
-  if (!(el instanceof HTMLElement)) throw new Error('Topbar not rendered')
-  return el
-}
+// PI2-D39 (Sidebar.tsx file header "SUPERSEDED — PI2-D39"): the former
+// `shellTopbar()` helper here existed only for the two Connect-group B-11
+// tests this dispatch replaced (below) — Connect no longer navigates to
+// its own splash from the sidebar, so no test in this file needs the
+// Topbar's `[data-lf-composite="topbar"]` node anymore. Removed rather
+// than left as unused dead code.
 
 function topbarProps(overrides: Partial<TopbarProps> = {}): TopbarProps {
   return {
@@ -119,45 +117,50 @@ describe('A-overlap-03 / C-unbounded-growth-03 — sidebar nav is its own scroll
 })
 
 describe('B-dead-interactions-11 — Connect group header navigates AND expands; chevron toggles only (base 803)', () => {
-  it('pressing the Connect label navigates to the Connect splash and marks the header current', async () => {
+  // SUPERSEDED (PI2-D39, settled user decision, not re-litigated here): the
+  // two tests this block used to carry both exercised Connect specifically
+  // as a `navigable: true` GROUP (label press navigates+expands, a split
+  // chevron toggles only). PI2-D39 dissolves that group — Connect is now a
+  // flat, disabled, top-level leaf with no children, no chevron, and no
+  // `navigable` contract at all (Sidebar.tsx file header "SUPERSEDED —
+  // PI2-D39"). The two tests below replace them, pinning the ABSENCE of
+  // the old group shape rather than testing removed functionality — the
+  // same "prior test pinned removed behavior, replace, don't leave stale"
+  // pattern this file's own A11 section above already used once. The B-11
+  // split-control MECHANISM itself (SidebarItem.tsx's `onChevronPress`
+  // prop) is not deleted and is not being re-tested here — see
+  // Sidebar.tsx's own file-header note that it currently has no live NAV
+  // caller, Connect having been its only one.
+  it('Connect is a flat, disabled leaf — no chevron, no expand, no navigable-group contract', async () => {
     const user = userEvent.setup()
     render(<App />)
     const nav = () => screen.getByRole('navigation', { name: 'Primary' })
 
-    // Connect ships expanded (§3.1) — collapse it first via the chevron so
-    // the label press can demonstrate navigate-AND-expand.
-    await user.click(within(nav()).getByRole('button', { name: 'Connect sections' }))
-    expect(within(nav()).queryByRole('button', { name: 'AllRailz' })).not.toBeInTheDocument()
+    // No split chevron control exists for Connect anymore.
+    expect(within(nav()).queryByRole('button', { name: 'Connect sections' })).not.toBeInTheDocument()
 
-    await user.click(within(nav()).getByRole('button', { name: 'Connect' }))
+    const connect = within(nav()).getByRole('button', { name: /^Connect/ })
+    expect(connect).not.toHaveAttribute('aria-expanded')
+    expect(connect).toBeDisabled()
 
-    // Navigated: the topbar breadcrumb is the Connect module splash's label,
-    // and the splash heading renders (base go('connect'), source 803).
-    expect(within(shellTopbar()).getByText('Connect')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'LeapFI · Connect' })).toBeInTheDocument()
-    // Expanded: the children are revealed by the same press.
-    expect(within(nav()).getByRole('button', { name: 'AllRailz' })).toBeInTheDocument()
-    // The routed group header is itself the current item.
-    expect(within(nav()).getByRole('button', { name: 'Connect' })).toHaveAttribute('aria-current', 'page')
+    // Pressing it does not navigate — still at Home, never the Connect splash.
+    await user.click(connect)
+    expect(within(screen.getByRole('banner')).getByText('Home')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'LeapFI · Connect' })).not.toBeInTheDocument()
   })
 
-  it('the chevron control toggles expansion WITHOUT navigating, and carries the disclosure semantics', async () => {
-    const user = userEvent.setup()
+  it('Vantage (formerly Connect\'s sole nested child) is its own flat, disabled, top-level row, not a child of Connect', () => {
     render(<App />)
     const nav = () => screen.getByRole('navigation', { name: 'Primary' })
-    const chevron = () => within(nav()).getByRole('button', { name: 'Connect sections' })
 
-    expect(chevron()).toHaveAttribute('aria-expanded', 'true')
-    await user.click(chevron())
-    expect(chevron()).toHaveAttribute('aria-expanded', 'false')
-    expect(within(nav()).queryByRole('button', { name: 'Vantage' })).not.toBeInTheDocument()
-    // No navigation happened: still at Home.
-    expect(within(screen.getByRole('banner')).getByText('Home')).toBeInTheDocument()
+    // No nested list exists under Connect for Vantage to live inside.
+    expect(within(nav()).queryByRole('list', { name: 'Connect sections' })).not.toBeInTheDocument()
 
-    await user.click(chevron())
-    expect(chevron()).toHaveAttribute('aria-expanded', 'true')
-    expect(within(nav()).getByRole('button', { name: 'Vantage' })).toBeInTheDocument()
-    expect(within(screen.getByRole('banner')).getByText('Home')).toBeInTheDocument()
+    const vantage = within(nav()).getByRole('button', { name: /^Vantage/ })
+    expect(vantage).not.toHaveAttribute('aria-expanded')
+    expect(vantage).toBeDisabled()
+    // Top-level, same as every other top-level row (data-level="top").
+    expect(vantage).toHaveAttribute('data-level', 'top')
   })
 
   it('non-navigable group headers (OnSide) keep the original toggle-on-press contract', async () => {
