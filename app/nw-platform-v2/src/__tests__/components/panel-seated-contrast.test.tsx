@@ -52,6 +52,7 @@ import { NotificationBellPanel } from '../../views/NotificationBellPanel';
 import { ChatIntakeWizard } from '../../views/ChatIntakeWizard';
 import { BoardLogForm } from '../../views/BoardLogForm';
 import { HomeCustomizeBar, DEFAULT_VISIBLE_KEYS, HOME_PANEL_DEFS } from '../../views/HomeCustomizeBar';
+import { REPORT_KIND_ORDER, REPORT_META } from '../../views/ReportView';
 import { resetDemo, DEFAULT_SLIDERS } from '../../state/demoStore';
 import { CASES, seedCases } from '../../data/cases';
 import { DOCLIB } from '../../data/doclib';
@@ -380,29 +381,55 @@ describe('CLASS SWEEP — OnSideOverview screen (DomainPostureCard, CARD_STYLE) 
     expectNoPanelSeatedInk2(container, 'OnSideOverview (posture grid)');
   });
 
-  it('an expanded DomainsAccordion row: its own "Target · N · band" Label is fixed; the disclosed residual is DataTable\'s (C6) header-cell Label — the MECHANISM is now built (DataTable gains the same `surface` prop A14 established, see the "DataTable (C6) header-cell Labels" CLASS SWEEP above), but WIRING `surface="panel"` at this call site requires editing `views/DomainsAccordion.tsx`, which is outside this dispatch\'s ALLOWLIST (components/** [primitives + DataTable + DeckSlide] + BoardLogForm.tsx + ShowTheWorkingPanel.tsx + __tests__/** only) — STOP item, disclosed not silently dropped. DataTable is panel-seated here (the accordion row\'s own cardStyle) and, separately, at every DataTable inside ReportView.tsx\'s shared reporting Drawer (see the "ReportView (Investment Plan report...)" CLASS SWEEP below); it stays page-seated at every OTHER traced consumer (OnSideDocuments/OnSideFeed/OnSideOwnership/Cases/StudioAsk/HomePanels/RegulatoryFeed*), which is exactly why DataTable.tsx\'s default stays `surface="page"` (byte-identical, no regression) rather than hardcoding `"panel"` unconditionally', async () => {
+  it('an expanded DomainsAccordion row: its own "Target · N · band" Label AND BOTH of its DataTable (C6) call sites\' header-cell Labels ("Top open items" branch AND "Gaps & partials" obligation-register branch) are fixed — DomainsAccordion.tsx now wires `surface="panel"` on both its DataTable calls (A14-residual wave, call-site wiring closes this file\'s own prior STOP-item)', async () => {
     const user = userEvent.setup();
-    render(<OnSideOverview onNavigate={() => {}} />);
+    const { container } = render(<OnSideOverview onNavigate={() => {}} />);
+
+    // DOMAINS[0] ('bsa') has no OBL entry — its accordion body renders the
+    // second call site's "Top open items" DataTable (openItemColumns).
     const firstDomain = DOMAINS[0]!;
     // DomainPostureCard (posture grid, above) ALSO renders a same-named
     // button — scope to the accordion header specifically (it alone
     // carries aria-expanded; DomainPostureCard's title button does not).
-    const candidates = screen.getAllByRole('button', { name: new RegExp(firstDomain.name) });
-    const accordionHeader = candidates.find((el) => el.hasAttribute('aria-expanded'));
-    expect(accordionHeader).toBeDefined();
-    await user.click(accordionHeader as HTMLElement);
+    const firstCandidates = screen.getAllByRole('button', { name: new RegExp(firstDomain.name) });
+    const firstAccordionHeader = firstCandidates.find((el) => el.hasAttribute('aria-expanded'));
+    expect(firstAccordionHeader).toBeDefined();
+    await user.click(firstAccordionHeader as HTMLElement);
     // The fix: the accordion's own "Target · N · band" Label is no longer
     // var(--ink2) (it now resolves to var(--chart-axis)).
     expect(screen.getByText(/^Target ·/).style.color).toBe('var(--chart-axis)');
-    // The disclosed residual: the nested obligations/top-open-items
-    // DataTable's own header-cell Label(s) — pinned, not silently dropped.
+    // The fix: the "Top open items" DataTable's own header-cell Label now
+    // resolves via `surface="panel"`, wired at this call site.
     const openItemHeader = screen.getByText('Open item');
-    expect(openItemHeader.style.color).toBe('var(--ink2)');
+    expect(openItemHeader.style.color).toBe('var(--chart-axis)');
+    expect(openItemHeader.style.color).not.toBe('var(--ink2)');
+
+    // DOMAINS entry keyed 'mrm' HAS an OBL entry — its accordion body takes
+    // the OTHER branch: the "Gaps & partials" obligation-register DataTable
+    // (obligationColumns, the first call site). Expanding it independently
+    // exercises the call site the `bsa` row above never reaches.
+    const mrmDomain = DOMAINS.find((d) => d.key === 'mrm')!;
+    const mrmCandidates = screen.getAllByRole('button', { name: new RegExp(mrmDomain.name) });
+    const mrmAccordionHeader = mrmCandidates.find((el) => el.hasAttribute('aria-expanded'));
+    expect(mrmAccordionHeader).toBeDefined();
+    await user.click(mrmAccordionHeader as HTMLElement);
+    expect(screen.getByText(/^Gaps & partials ·/)).toBeInTheDocument();
+    // The fix: the "Gaps & partials" obligation register's own header-cell
+    // Label ("Requirement") now resolves via `surface="panel"`, wired at
+    // this — the other — call site.
+    const requirementHeader = screen.getByText('Requirement');
+    expect(requirementHeader.style.color).toBe('var(--chart-axis)');
+    expect(requirementHeader.style.color).not.toBe('var(--ink2)');
+
+    // Whole-view sweep: zero remaining var(--ink2) on var(--panel) anywhere,
+    // with both accordion rows (and therefore both DataTable call sites)
+    // expanded simultaneously.
+    expectNoPanelSeatedInk2(container, 'DomainsAccordion (both branches expanded)');
   });
 });
 
-describe('CLASS SWEEP — ReportView (Investment Plan report), DataTable header cells inside the shared Drawer (var(--panel) root)', () => {
-  it('SortHeaderButton ("Play") + non-sortable ("Category") header Labels remain the disclosed DataTable residual — mechanism built, wiring blocked by this dispatch\'s ALLOWLIST (views/ReportView.tsx is not in it)', () => {
+describe('CLASS SWEEP — ReportView, DataTable header cells inside the shared Drawer (var(--panel) root), every report kind (A14-residual wave)', () => {
+  it('Investment Plan report: SortHeaderButton ("Play") + non-sortable ("Category") header Labels both resolve to var(--chart-axis) — ReportView.tsx now wires `surface="panel"` on this call site\'s DataTable calls', () => {
     render(<Reporting onNavigate={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: /Investment Plan/ }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -411,10 +438,32 @@ describe('CLASS SWEEP — ReportView (Investment Plan report), DataTable header 
     // instance is checked, not just the first.
     const playHeaders = screen.getAllByText('Play');
     expect(playHeaders.length).toBeGreaterThan(0);
-    for (const header of playHeaders) expect(header.style.color).toBe('var(--ink2)');
+    for (const header of playHeaders) {
+      expect(header.style.color).toBe('var(--chart-axis)');
+      expect(header.style.color).not.toBe('var(--ink2)');
+    }
     const categoryHeaders = screen.getAllByText('Category');
     expect(categoryHeaders.length).toBeGreaterThan(0);
-    for (const header of categoryHeaders) expect(header.style.color).toBe('var(--ink2)');
+    for (const header of categoryHeaders) {
+      expect(header.style.color).toBe('var(--chart-axis)');
+      expect(header.style.color).not.toBe('var(--ink2)');
+    }
+  });
+
+  // CLASS SWEEP proper: every one of the 11 report kinds is opened through
+  // the real Reporting screen (the same shared, always-panel-seated Drawer
+  // traced above) and swept end-to-end for ANY remaining panel-seated
+  // var(--ink2) — not just the "Play"/"Category" DataTable columns pinned
+  // above, but every DataTable in every report body (12 call sites total
+  // across the 11 kinds — `board`'s DeckView-embedded DeckSlide is a
+  // separate composite, covered by its own describe block below).
+  it.each(REPORT_KIND_ORDER)('report kind "%s": zero panel-seated var(--ink2) anywhere in the opened report', (kind) => {
+    resetDemo();
+    const { container } = render(<Reporting onNavigate={() => {}} />);
+    const meta = REPORT_META[kind];
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(meta.indexTitle) }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expectNoPanelSeatedInk2(container, `ReportView (kind="${kind}")`);
   });
 });
 
@@ -604,23 +653,28 @@ describe('CLASS SWEEP — SliderControlRow ("Your stance" eyebrow, stanceBoxStyl
 });
 
 describe('CLASS SWEEP — ReportView (rendered only inside Reporting\'s shared Drawer, var(--panel) root)', () => {
-  it('the chrome eyebrows + TableSection heading + appendix eyebrow Labels are fixed; the disclosed residual is DeckSlide\'s (composite, reused both page-seated on the real Board Deck screen and panel-seated here) own body-paragraph + eyebrow color — the MECHANISM is now built (DeckSlide gains the same `surface` prop A14 established, fixing BOTH defects at once — see the "DeckSlide (composite C19)" CLASS SWEEP above), but WIRING `surface="panel"` at this reuse site requires editing `views/ReportView.tsx` (its `boardDeckSlides()` slide data), which is outside this dispatch\'s ALLOWLIST — STOP item, disclosed not silently dropped', () => {
-    render(<Reporting onNavigate={() => {}} />);
+  it('the chrome eyebrows + TableSection heading + appendix eyebrow Labels AND the embedded DeckView\'s (C18) DeckSlide (composite C19, reused both page-seated on the real Board Deck screen and panel-seated here) own body-paragraph + eyebrow are ALL fixed — `boardDeckSlides()` now maps `surface: \'panel\'` onto every returned slide object (DeckView spreads each slide directly onto DeckSlide, so the surface travels through the slide data, not a container prop), closing this file\'s own prior STOP-item', () => {
+    const { container } = render(<Reporting onNavigate={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: /Board Pack/ }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     // The fix: ReportView's own chrome + TableSection + appendix Labels no
     // longer carry var(--ink2).
     expect(screen.getByText('LEAPFI · Reporting · generated from the live record').style.color).not.toBe('var(--ink2)');
     expect(screen.getByText('The appendix · the one-page read behind the deck').style.color).not.toBe('var(--ink2)');
-    // The disclosed residual: DeckSlide.tsx's body-paragraph and eyebrow
-    // both still resolve to var(--ink2) here — ReportView.tsx never passes
-    // `surface="panel"` (it is outside this dispatch's ALLOWLIST), so
-    // DeckSlide's own default (`surface="page"`, byte-identical to
-    // pre-fix behavior) applies. Pinned, not silently dropped.
+    // The fix: DeckSlide.tsx's body-paragraph and eyebrow (the deck opens on
+    // slide 1, the title slide, whose eyebrow/body this asserts) both now
+    // resolve to var(--chart-axis) — `boardDeckSlides()` passes
+    // `surface="panel"` through the slide data (ReportView.tsx), the same
+    // `surface` prop A14 established for the primitive/composite.
     const bodyParagraph = screen.getByText(/Prepared for the Board Risk Committee/);
-    expect(bodyParagraph.style.color).toBe('var(--ink2)');
+    expect(bodyParagraph.style.color).toBe('var(--chart-axis)');
+    expect(bodyParagraph.style.color).not.toBe('var(--ink2)');
     const eyebrow = screen.getByText('LEAPFI PLATFORM · BOARD REVIEW · AUG 2026');
-    expect(eyebrow.style.color).toBe('var(--ink2)');
+    expect(eyebrow.style.color).toBe('var(--chart-axis)');
+    expect(eyebrow.style.color).not.toBe('var(--ink2)');
+    // Whole-report sweep: zero remaining var(--ink2) on var(--panel)
+    // anywhere in the opened Board Presentation (deck + appendix).
+    expectNoPanelSeatedInk2(container, 'ReportView (board, deck + appendix)');
   });
 });
 
