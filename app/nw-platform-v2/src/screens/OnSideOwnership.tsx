@@ -61,25 +61,94 @@
  * in this file has to render the Drawer JSX for the row-open interaction
  * to exist.
  *
- * AMBIGUITY RESOLVED — RACI table shape vs. DataTable's flat row model: the
- * base engine's `osRaci()` renders ONE table with `<tr class="dgroup">`
- * domain-divider rows spanning all columns (source 3552, 3562). This
- * worktree's `DataTable` (C6) has no spanning group-row primitive — it is
- * deliberately generic/column-driven (see its own file header). Grouping
- * "by domain per M" is built the same way `OnSideDocuments.tsx`'s own
- * "Domain impact" section already groups `OBL` by domain: one `<h3>` +
- * one `DataTable` per `M` entry, not one giant table with synthetic group
- * rows. Same precedent, same composite, no new component.
+ * FIX WAVE (RACI DENSITY REGRESSION) — this screen now renders v1's exact
+ * shape, ONE table: the earlier revision of this header documented
+ * DataTable (C6) as having "no spanning group-row primitive" and worked
+ * around that gap by rendering one `<h3>` + one `DataTable` per `M` domain
+ * — 8 separate tables, each re-declaring the full 8-role header row, each
+ * sizing its own columns independently so the same role column landed at
+ * a different x-position in every block (you could not scan one role
+ * DOWN the page — the entire reason a RACI matrix exists). That was a
+ * measurable regression from the base engine's `osRaci()` (leapfi-
+ * platform.html 3498–3573), which renders ONE `<table class="raci">` with
+ * `<tr class="dgroup">` domain-divider rows spanning all columns (source
+ * 3552, 3562) inside it. Per D24 (reuse over invention; retire drift),
+ * the fix is not an Ownership-specific special case: `DataTable.tsx` gains
+ * a general `groupKey`/`renderGroupHeader` capability (its own file header,
+ * "GROUP-ROW CAPABILITY") — this screen is that capability's first call
+ * site, not a fork of DataTable. `RACI_ROWS` below flattens `M` into one
+ * ordered row list (still M's authored domain order, still each domain's
+ * authored document order) with a `domainKey` carried per row so a single
+ * `DataTable` can group by it; every role column is now declared exactly
+ * once and aligns for the full page. Sorting the document column (still
+ * user-sortable, ONSIDE-10 below) reorders rows WITHIN a domain only —
+ * DataTable's own group-aware sort — never across domains.
  *
- * RACI cells as plain text (dispatch TASK line, explicit): rendered as the
- * full word ("Responsible"/"Accountable"/"Consulted"/"Informed"), not the
- * base engine's single-letter color-coded badge (`raci-badge raci-R` etc.,
- * source 3558) and not wrapped in `Tag` — `Tag`'s own a11y baseline ("never
- * the sole carrier of meaning") is the reasoning the brief cites for this,
- * and plain text alone already carries the full meaning with nothing added
- * that would need a color-only fallback. Empty cells render a muted "—",
- * matching the muted "no value" convention `OnSideDocuments.tsx` already
- * uses for its own "no redline" cells.
+ * Domain group-row label deep-links (v1 parity, source 3552's
+ * `onsideShow('dom-'+g[0])`): renders via this screen's own established
+ * `DeepLinkScreenProps`/`onDeepLink` contract (App.tsx "NAVIGATION-WITH-
+ * PAYLOAD / DEEP LINKS"; identical `{ screen: 'onside.overview', kind:
+ * 'domain', id: domainKey }` shape `Reporting.tsx`'s `handleOpenDomain`
+ * and `StudioAsk.tsx` already use) — lands on OnSide · Overview with that
+ * domain's card expanded and scrolled into view, i.e. its gaps and
+ * levers, matching the base's own `dom-` destination. This screen did not
+ * previously declare `DeepLinkScreenProps` even though App.tsx's routing
+ * switch already spread `deepLinkProps` onto it (dead/unused props);
+ * `OnSideOwnershipProps` now extends it so `onDeepLink` is actually read.
+ *
+ * RACI cells as R/A/C/I badges (v1 parity, source 3558's `raci-badge
+ * raci-R` etc.; supersedes an earlier revision of this header that
+ * rendered full words citing `Tag`'s "never the sole carrier of meaning"
+ * baseline): that baseline is satisfied here without spelling every word
+ * out four times per row — each badge is `role="img"` with `aria-label`
+ * carrying the full word ("Responsible" etc.) as its ONLY accessible
+ * name (the visible letter is not also read; this is the same name-
+ * replaces-content technique `Icon.tsx`'s own labelled/`role="img"` mode
+ * already uses, D24 reuse), so sighted users scan a compact letter and
+ * assistive tech gets the complete word — meaning is carried by text
+ * (the accessible name), never color alone. See "THEME-SAFE BADGE
+ * COLORS" below for why each badge's token pairing was chosen. Empty
+ * cells render v1's quiet middot ("·", source 3558's `&middot;`), not a
+ * heavy em-dash — muted `--ink3`, `aria-hidden` (nothing to announce; a
+ * screen-reader user already gets silence — no R/A/C/I badge — for that
+ * role, which is itself the "no assignment" signal, same as v1's own
+ * middot carrying no semantic markup either).
+ *
+ * THEME-SAFE BADGE COLORS (D13 dual-theme, brand_doctrine 4.5:1 AA
+ * floor) — v1's badge colors are hard-coded rgba tuned for its dark-only
+ * page (CSS `.raci-R`/`.raci-A`/`.raci-C`/`.raci-I`, leapfi-platform.html
+ * ~155–158) and are NOT reused verbatim: this screen's main content is
+ * theme-aware (D13/D21 — only the shell chrome is dark-locked), so a
+ * badge's text color must clear 4.5:1 against its own background in BOTH
+ * themes. Of tokens.css's roles, only three actually swap value per
+ * theme AND independently clear 4.5:1 on `--panel` in both themes:
+ * `--accent` (13.16:1 dark / 5.57:1 light), `--chart-axis` (5.33:1 dark /
+ * 4.97:1 light), `--ink3` (4.98:1 dark / 6.87:1 light) — used for R, C,
+ * I respectively. `--accent2` (Cobalt, v1's "A" hue) does NOT swap
+ * between themes (`#2d5bff` both) and measures only 3.52:1 on dark
+ * `--panel` — below the 4.5:1 floor — so it is NOT used as badge TEXT.
+ * Per this dispatch's own fallback instruction ("propose the nearest
+ * compliant token rather than shipping a failing colour"), "A" instead
+ * uses `--ink` (the app's own primary-text pairing, 18.24:1 dark /
+ * 14.39:1 light on `--panel` — the largest margin of the four) for text,
+ * with `--accent2` kept only as a decorative border (no text-contrast
+ * requirement applies to a border; it still clears the lower 3:1 non-
+ * text-UI floor in both themes: 3.52:1 dark / 4.73:1 light) so the "A"
+ * badge still carries a distinct, v1-adjacent blue identity without
+ * shipping failing text. All eight ratios (hex inputs, both themes) are
+ * reported in this dispatch's return, not just asserted here.
+ *
+ * Adjacent fix, same file, same section: the existing 8-role legend
+ * below (`ROLE_LEGEND_STYLE`, pre-dating this dispatch) rendered its
+ * labels via `<Label variant="body-secondary">`, which is `--ink2` —
+ * tokens.css's OWN comment bans `--ink2` on `--panel` ("never on
+ * --panel" / light: "FAILS AA (4.34:1) on --panel... use --chart-axis
+ * ... instead for panel-seated labels") and `ROLE_LEGEND_STYLE` paints
+ * `--panel` as its background, so that pre-existing pairing was already
+ * failing AA in light mode. Fixed in place here (same file, same RACI
+ * section, the token file's own prescribed substitute) rather than left
+ * inconsistent next to the new legend below it, which uses the same
+ * `--chart-axis` token from the start.
  *
  * "Domain owners" sub-table intentionally omitted: the base engine's
  * `osRaci()` also renders a second "Domain owners" table from a local,
@@ -163,15 +232,16 @@ import type { TopbarProps } from '../components/Topbar';
 import { Sidebar } from '../components/Sidebar';
 import type { SidebarProps } from '../components/Sidebar';
 import { DataTable } from '../components/DataTable';
-import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
+import type { DataTableColumn } from '../components/DataTable';
 import { Drawer } from '../components/Drawer';
 import { DrawerContent } from '../components/DrawerContent';
 import type { DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
 import { RedlineDiffView } from '../components/RedlineDiffView';
 import { SetupCard } from '../components/SetupCard';
 import { StatCard } from '../components/StatCard';
-import { Label } from '../components/primitives/Label';
+import { Icon } from '../components/primitives/Icon';
 import type { TagVariant } from '../components/primitives/Tag';
+import type { DeepLinkScreenProps } from '../App';
 import { ROLES, M } from '../data/onside';
 import type { DocRaci } from '../data/onside';
 import { DOCLIB } from '../data/doclib';
@@ -284,25 +354,117 @@ function raciMarkFor(doc: DocRaci, roleCode: string): RaciMark | null {
   return null;
 }
 
-const RACI_COLUMNS: DataTableColumn<DocRaci>[] = [
+/* ============ RACI badges — see file header "THEME-SAFE BADGE COLORS" ============ */
+
+/** Text (and, for R/C/I, border) color per mark, plus a separate border
+ * override for "A" — see file header for why `--accent2` is decorative-
+ * border-only rather than badge text. */
+const RACI_BADGE_TEXT: Record<RaciMark, string> = {
+  R: 'var(--accent)',
+  A: 'var(--ink)',
+  C: 'var(--chart-axis)',
+  I: 'var(--ink3)',
+};
+const RACI_BADGE_BORDER: Record<RaciMark, string> = {
+  ...RACI_BADGE_TEXT,
+  A: 'var(--accent2)',
+};
+
+const RACI_BADGE_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minWidth: '1.5rem',
+  height: '1.5rem',
+  padding: '0 0.3rem',
+  borderRadius: 'var(--radius-xs, 4px)',
+  border: '1px solid',
+  background: 'var(--panel)',
+  fontSize: '0.75rem',
+  fontWeight: 800,
+  lineHeight: 1,
+};
+
+/** `role="img"` + `aria-label` makes the full word (e.g. "Responsible")
+ * the badge's ONLY accessible name — the visible letter is replaced
+ * content for assistive tech, not additionally announced (same
+ * name-replaces-content technique `Icon.tsx`'s labelled/`role="img"`
+ * mode already uses). See file header "RACI cells as R/A/C/I badges". */
+function RaciBadge({ mark }: { mark: RaciMark }) {
+  return (
+    <span
+      role="img"
+      aria-label={RACI_WORD[mark]}
+      style={{ ...RACI_BADGE_STYLE, color: RACI_BADGE_TEXT[mark], borderColor: RACI_BADGE_BORDER[mark] }}
+    >
+      {mark}
+    </span>
+  );
+}
+
+/** v1's quiet middot for "no assignment" (source 3558 `&middot;`) — see
+ * file header. `aria-hidden`: absence of a badge already is the signal. */
+function RaciEmptyCell() {
+  return (
+    <span aria-hidden="true" style={{ color: 'var(--ink3)' }}>
+      ·
+    </span>
+  );
+}
+
+const RACI_LEGEND_ITEMS: readonly { mark: RaciMark; description: string }[] = [
+  { mark: 'R', description: 'does the work' },
+  { mark: 'A', description: 'owns the outcome' },
+  { mark: 'C', description: 'input before decisions' },
+  { mark: 'I', description: 'kept current' },
+];
+
+/** One row per governance document, carrying its domain key — the flat
+ * shape `DataTable`'s new `groupKey`/`renderGroupHeader` capability
+ * groups by (file header "FIX WAVE (RACI DENSITY REGRESSION)"). Order is
+ * `M`'s own authored order, domain-major then document-minor — identical
+ * traversal order to the pre-fix per-domain tables, just one array now. */
+interface RaciRow {
+  domainKey: string;
+  doc: DocRaci;
+}
+
+const RACI_ROWS: RaciRow[] = M.flatMap(([domainKey, , docs]) => docs.map((doc) => ({ domainKey, doc })));
+
+const RACI_COLUMNS: DataTableColumn<RaciRow>[] = [
   {
     id: 'doc',
     header: 'Governance document',
     sortable: true,
-    sortValue: (row) => decodeText(DOCLIB[row[0]]?.t ?? row[0]),
-    render: (row) => <span>{decodeText(DOCLIB[row[0]]?.t ?? row[0])}</span>,
+    sortValue: (row) => decodeText(DOCLIB[row.doc[0]]?.t ?? row.doc[0]),
+    render: (row) => <span>{decodeText(DOCLIB[row.doc[0]]?.t ?? row.doc[0])}</span>,
   },
   ...ROLES.map(
-    ([code]): DataTableColumn<DocRaci> => ({
+    ([code]): DataTableColumn<RaciRow> => ({
       id: code,
       header: code,
       render: (row) => {
-        const mark = raciMarkFor(row, code);
-        return mark ? <span>{RACI_WORD[mark]}</span> : <span style={{ color: 'var(--ink3)' }}>—</span>;
+        const mark = raciMarkFor(row.doc, code);
+        return mark ? <RaciBadge mark={mark} /> : <RaciEmptyCell />;
       },
     }),
   ),
 ];
+
+const GROUP_LINK_STYLE: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.3rem',
+  font: 'inherit',
+  fontSize: 'inherit',
+  fontWeight: 700,
+  color: 'var(--accent)',
+  background: 'transparent',
+  border: 'none',
+  padding: 0,
+  margin: 0,
+  cursor: 'pointer',
+};
 
 const STATUS_LABEL: Record<DocStatus, string> = {
   good: 'Current',
@@ -350,6 +512,9 @@ const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column',
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.125rem', fontWeight: 700, color: 'var(--ink)' };
 const DOMAIN_HEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1rem', fontWeight: 700, color: 'var(--ink)' };
 const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
+/** Shared by the R/A/C/I mark legend and the 8-role legend below it — both
+ * are "legend on a panel" boxes, kept visually paired. Label text in both
+ * uses `--chart-axis`, not `--ink2` — see file header "Adjacent fix". */
 const ROLE_LEGEND_STYLE: CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
@@ -359,6 +524,17 @@ const ROLE_LEGEND_STYLE: CSSProperties = {
   border: '1px solid var(--border)',
   background: 'var(--panel)',
 };
+const RACI_MARK_LEGEND_STYLE: CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '1rem',
+  padding: '0.875rem 1rem',
+  borderRadius: 'var(--radius-md, 10px)',
+  border: '1px solid var(--border)',
+  background: 'var(--panel)',
+};
+const RACI_MARK_LEGEND_ITEM_STYLE: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '0.4rem' };
+const LEGEND_TEXT_STYLE: CSSProperties = { fontSize: '0.875rem', fontWeight: 500, color: 'var(--chart-axis)' };
 const STEP_LIST_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.75rem', margin: 0, padding: 0, listStyle: 'none' };
 const STEP_ITEM_STYLE: CSSProperties = { flex: '1 1 220px', minWidth: 220 };
 const STAT_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '1rem' };
@@ -373,7 +549,7 @@ const TWO_ENGINES_CARD_STYLE: CSSProperties = {
   background: 'var(--panel)',
 };
 
-export interface OnSideOwnershipProps {
+export interface OnSideOwnershipProps extends DeepLinkScreenProps {
   /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as every sibling screen). */
   topbar: TopbarProps;
   /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('onside.ownership') and is not accepted as a prop. */
@@ -381,7 +557,7 @@ export interface OnSideOwnershipProps {
   sidebarVersionLabel?: string;
 }
 
-export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel }: OnSideOwnershipProps) {
+export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel, onDeepLink }: OnSideOwnershipProps) {
   // Re-renders on demo-store writes so live DOCLIB reads (doc status /
   // version after an adopt on OnSideDocuments) stay current — see the
   // file-header adoption-state note.
@@ -396,10 +572,12 @@ export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel }: OnS
   // cleared — same technique OnSideDocuments.tsx uses, see its own header.
   const displayDoc = openDoc ?? lastOpenDocRef.current;
 
-  const raciRowAction: DataTableRowAction<DocRaci> = {
-    label: () => 'Open',
-    onPress: (row) => setOpenDocId(row[0]),
-  };
+  // Whole-row click affordance, not a `rowAction` "Open" column — v1 has
+  // no such column (the document name IS the control, source 3556's
+  // `docLink`); see file header "The redundant 'Open' column" in the
+  // dispatch return, and DataTable.tsx's own CLICK-AFFORDANCE STANDARD
+  // for the chevron/hover/focus treatment this reuses unmodified.
+  const handleOpenRaciRow = (row: RaciRow) => setOpenDocId(row.doc[0]);
 
   const raciRow = displayDoc ? RACI_BY_DOC_ID[displayDoc.id] : undefined;
 
@@ -448,27 +626,44 @@ export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel }: OnS
               RACI · policy ownership matrix
             </h2>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-              {M.map(([domainKey, domainLabel, docs]) => (
-                <div key={domainKey}>
-                  <h3 style={{ ...DOMAIN_HEADING_STYLE, marginBottom: '0.625rem' }}>{domainLabel}</h3>
-                  <div style={SCROLL_WRAP_STYLE}>
-                    <DataTable
-                      caption={`${domainLabel} RACI matrix`}
-                      columns={RACI_COLUMNS}
-                      rows={docs}
-                      getRowId={(row) => row[0]}
-                      rowAction={raciRowAction}
-                      emptyMessage="No governance documents mapped for this domain."
-                    />
-                  </div>
-                </div>
+            <div style={SCROLL_WRAP_STYLE}>
+              <DataTable
+                caption="RACI · policy ownership matrix"
+                columns={RACI_COLUMNS}
+                rows={RACI_ROWS}
+                getRowId={(row) => `${row.domainKey}:${row.doc[0]}`}
+                onRowClick={handleOpenRaciRow}
+                emptyMessage="No governance documents mapped."
+                groupKey={(row) => row.domainKey}
+                renderGroupHeader={(domainKey) => (
+                  <button
+                    type="button"
+                    onClick={() => onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: domainKey })}
+                    style={GROUP_LINK_STYLE}
+                  >
+                    {DOMAIN_LABEL_BY_KEY[domainKey] ?? domainKey}
+                    <Icon name="arrow-right" size={16} tone="interactive" />
+                  </button>
+                )}
+              />
+            </div>
+
+            <div style={RACI_MARK_LEGEND_STYLE}>
+              {RACI_LEGEND_ITEMS.map(({ mark, description }) => (
+                <span key={mark} style={RACI_MARK_LEGEND_ITEM_STYLE}>
+                  <RaciBadge mark={mark} />
+                  <span style={LEGEND_TEXT_STYLE}>
+                    {RACI_WORD[mark]} · {description}
+                  </span>
+                </span>
               ))}
             </div>
 
             <div style={ROLE_LEGEND_STYLE}>
               {ROLES.map(([code, title, name]) => (
-                <Label key={code} text={`${code} · ${title} (${name})`} variant="body-secondary" />
+                <span key={code} style={LEGEND_TEXT_STYLE}>
+                  {code} · {title} ({name})
+                </span>
               ))}
             </div>
           </section>
