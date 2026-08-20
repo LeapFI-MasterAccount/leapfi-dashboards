@@ -249,6 +249,29 @@ describe('CS-08 — restored affordances (base doclinks with live twin targets)'
     expect(within(detail).getByRole('button', { name: 'Open the document →' })).toBeInTheDocument();
   });
 
+  it("PI2-D5 — 'Open the document →' fires a 'document'-kind deep link carrying the case's doc id (ONS-CASE-18: the pre-existing plain nav dropped it)", () => {
+    const target = caseById('CASE-2026-001');
+    target.stage = 'closed';
+    const onNavigate = vi.fn();
+    const onDeepLink = vi.fn();
+    render(<Cases topbar={topbarFixture()} onNavigate={onNavigate} currentUser={ANALYST} onDeepLink={onDeepLink} />);
+    const detail = openCaseDetail('CASE-2026-001');
+    fireEvent.click(within(detail).getByRole('button', { name: 'Open the document →' }));
+
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.documents', kind: 'document', id: target.doc });
+    expect(onNavigate).not.toHaveBeenCalledWith('onside.documents');
+  });
+
+  it("PI2-D5 — 'Open the document →' still falls back to plain onNavigate when the shell has not wired onDeepLink (never a dead click)", () => {
+    caseById('CASE-2026-001').stage = 'closed';
+    const onNavigate = vi.fn();
+    render(<Cases topbar={topbarFixture()} onNavigate={onNavigate} currentUser={ANALYST} />);
+    const detail = openCaseDetail('CASE-2026-001');
+    fireEvent.click(within(detail).getByRole('button', { name: 'Open the document →' }));
+
+    expect(onNavigate).toHaveBeenCalledWith('onside.documents');
+  });
+
   it('the CRO action row offers "View the email you were sent," opening the base openEmail preview (2846, 2650-2664)', () => {
     caseById('CASE-2026-001').stage = 'cro';
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={CRO} />);
@@ -359,5 +382,60 @@ describe('CS-13 — conditional approval shows in-flight state', () => {
     // Commit resolved: the picker is gone and the committee stage renders.
     expect(within(detail).queryByRole('button', { name: APPROVAL.conditions[0] as string })).not.toBeInTheDocument();
     expect(within(detail).getByRole('button', { name: 'Attach committee minutes' })).toBeInTheDocument();
+  });
+});
+
+describe("PI2-D5 — 'case'-kind deep link (App.tsx KIND VOCABULARY: id = the Case id; r10 acceptance — dispatch a 'case'-kind DeepLinkRequest and assert it lands on the correct case record)", () => {
+  it('opens the exact matching case detail directly, and consumes the nonce', () => {
+    const onDeepLinkConsumed = vi.fn();
+    render(
+      <Cases
+        topbar={topbarFixture()}
+        onNavigate={() => {}}
+        currentUser={ANALYST}
+        deepLink={{ screen: 'cases', kind: 'case', id: 'CASE-2026-002', nonce: 1 }}
+        onDeepLinkConsumed={onDeepLinkConsumed}
+      />,
+    );
+
+    const detail = document.querySelector('[data-lf-view="case-detail"]');
+    expect(detail).not.toBeNull();
+    expect((detail as HTMLElement).textContent).toContain('CASE-2026-002');
+    // Never the list view a plain nav would show.
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(1);
+  });
+
+  it('a deepLink of a different kind is ignored — the list still renders, never a mistaken case open', () => {
+    const onDeepLinkConsumed = vi.fn();
+    render(
+      <Cases
+        topbar={topbarFixture()}
+        onNavigate={() => {}}
+        currentUser={ANALYST}
+        deepLink={{ screen: 'cases', kind: 'domain', id: 'mrm', nonce: 1 }}
+        onDeepLinkConsumed={onDeepLinkConsumed}
+      />,
+    );
+
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(document.querySelector('[data-lf-view="case-detail"]')).toBeNull();
+    expect(onDeepLinkConsumed).not.toHaveBeenCalled();
+  });
+
+  it('an unresolvable case id still consumes the nonce and opens nothing (never a fabricated case)', () => {
+    const onDeepLinkConsumed = vi.fn();
+    render(
+      <Cases
+        topbar={topbarFixture()}
+        onNavigate={() => {}}
+        currentUser={ANALYST}
+        deepLink={{ screen: 'cases', kind: 'case', id: 'NO-SUCH-CASE', nonce: 3 }}
+        onDeepLinkConsumed={onDeepLinkConsumed}
+      />,
+    );
+
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(3);
   });
 });

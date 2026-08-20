@@ -126,3 +126,37 @@ describe("OnSide overview · 'domain' deep-link consumption (B3 dispatch — mig
     expect(screen.queryByRole('button', { name: /Model Risk Management/, expanded: true })).not.toBeInTheDocument()
   })
 })
+
+describe("PI2-D5 — 'control'-kind deep link (App.tsx KIND VOCABULARY: bare control id, e.g. 'MRM-09', no domKey prefix — the r16 QuickFind 'type MRM-09 anywhere' shape; resolved via data/onside.ts OBL)", () => {
+  it('resolves the owning domain from the bare control id, force-expands that domain row, and opens the obligation drawer for that exact control', async () => {
+    const onDeepLinkConsumed = vi.fn()
+    const deepLink: DeepLinkTarget = { screen: 'onside.overview', kind: 'control', id: 'MRM-09', nonce: 1 }
+    render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} deepLink={deepLink} onDeepLinkConsumed={onDeepLinkConsumed} />)
+
+    const rowButton = screen.getByRole('button', { name: /Model Risk Management/, expanded: true })
+    expect(rowButton).toHaveAttribute('aria-expanded', 'true')
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(1)
+
+    const dialog = await screen.findByRole('dialog', { name: 'MRM-09 · Obligation' })
+    const fieldValues = within(dialog)
+      .getAllByRole('definition')
+      .map((dd) => dd.textContent)
+    expect(fieldValues).toEqual([
+      'Model Risk Management',
+      'Gate model changes through a formal approval workflow before deployment.',
+      '2026-13 §V.B',
+      'Required: a formal approval gate before model changes deploy. Current: changes deploy on developer sign-off alone.',
+      'Adopt the Model Change Approval Workflow (draft 0.8, in the HITL queue).',
+      'Model Change Approval Workflow',
+    ])
+  })
+
+  it('an unresolvable bare control id still consumes the nonce and opens nothing (never a fabricated domain guess)', () => {
+    const onDeepLinkConsumed = vi.fn()
+    const deepLink: DeepLinkTarget = { screen: 'onside.overview', kind: 'control', id: 'NO-SUCH-CONTROL', nonce: 2 }
+    render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} deepLink={deepLink} onDeepLinkConsumed={onDeepLinkConsumed} />)
+
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(2)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+})

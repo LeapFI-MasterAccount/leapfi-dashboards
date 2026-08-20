@@ -153,6 +153,7 @@ import type { DocEntry } from '../data/doclib';
 import type { StudioUser } from '../data/studio';
 import { DOMAINS } from '../data/onside';
 import { PANEL_STYLE } from '../theme/panelStyle';
+import type { DeepLinkRequest } from '../App';
 
 export type CaseActionKind =
   | 'accept'
@@ -188,6 +189,17 @@ export interface CaseDetailProps {
    * openReport('gapboard') — see file header CS-08). Omit and the link
    * affordances simply do not render. */
   onNavigate?: (screenId: string) => void;
+  /** PI2-D5 (Sprint 1 DeepLinkKind union extension, ONS-CASE-18) — the
+   * FIRE half of App.tsx's NAVIGATION-WITH-PAYLOAD contract, threaded down
+   * from `Cases.tsx`. When wired, "Open the document →" fires a
+   * `'document'`-kind deep link carrying this case's own doc id, landing
+   * on the exact document instead of the plain, unfiltered Documents
+   * table (the pre-existing `onNavigate('onside.documents')` call dropped
+   * the id — the ONS-CASE-18 defect). Falls back to plain `onNavigate`
+   * when absent, so a caller that has not wired it (every pre-existing
+   * base-anchor test) keeps its exact previous behavior — never a dead
+   * click. */
+  onDeepLink?: (request: DeepLinkRequest) => void;
   /** In-context persona switch (base `switchUser(...)` doclinks, source
    * 2835/2849/2855). Omit (e.g. no persona rows available) and the
    * "Sign in as X …" links do not render. */
@@ -294,7 +306,7 @@ const CONDITION_LIST_STYLE: CSSProperties = { display: 'flex', flexDirection: 'c
 const HISTORY_LIST_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const HISTORY_ROW_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.15rem', borderLeft: '2px solid var(--border)', paddingLeft: '0.75rem' };
 
-export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendingAction, onNavigate, onSwitchUser }: CaseDetailProps) {
+export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendingAction, onNavigate, onDeepLink, onSwitchUser }: CaseDetailProps) {
   const [editing, setEditing] = useState(false);
   const [draftLang, setDraftLang] = useState(caseItem.lang);
   const [pickingCondition, setPickingCondition] = useState(false);
@@ -666,8 +678,20 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
             <p style={INFO_NOTE_STYLE}>
               Adopted{doc ? ` as ${doc.v}` : ''}. The prior text is archived, the fingerprint re-sealed, connected systems notified, and the obligation behind it marked met.
             </p>
-            {/* Base closed-state "Open the document →" doclink (2870 — CS-08). */}
-            {doc && onNavigate ? <Button variant="ghost" label="Open the document →" onPress={() => onNavigate('onside.documents')} /> : null}
+            {/* Base closed-state "Open the document →" doclink (2870 — CS-08).
+                PI2-D5/ONS-CASE-18 — fires the 'document'-kind deep link
+                (case's own doc id) when the shell has wired onDeepLink;
+                falls back to the pre-existing plain nav otherwise. */}
+            {doc && (onDeepLink || onNavigate) ? (
+              <Button
+                variant="ghost"
+                label="Open the document →"
+                onPress={() => {
+                  if (onDeepLink) onDeepLink({ screen: 'onside.documents', kind: 'document', id: caseItem.doc });
+                  else onNavigate?.('onside.documents');
+                }}
+              />
+            ) : null}
           </div>
         ) : null}
         {caseItem.stage === 'rejected' ? (

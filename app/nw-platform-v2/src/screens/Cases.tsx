@@ -135,8 +135,9 @@
  * implementer judgment call for visual consistency across screens, not
  * re-derived independently.
  */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import type { DeepLinkRequest, DeepLinkTarget } from '../App';
 import { Topbar } from '../components/Topbar';
 import type { TopbarProps } from '../components/Topbar';
 import { Sidebar } from '../components/Sidebar';
@@ -260,10 +261,39 @@ export interface CasesProps {
   currentUser?: StudioUser;
   /** Deep-entry hook for the three named entry points — opens straight to a case's detail state instead of the list. App.tsx passes the bell row's case id here (see file header ENTRY POINTS). */
   initialCaseId?: string;
+  /** PI2-D5 (Sprint 1 DeepLinkKind union extension) — the CONSUME half of
+   * App.tsx's NAVIGATION-WITH-PAYLOAD contract: `App.tsx` already spreads
+   * `{...deepLinkProps}` onto every routed screen including this one (its
+   * own header, "PLUMBED EVERYWHERE NOW"), but this screen previously
+   * declared none of the three props and silently ignored them (JSX
+   * spread performs no excess-property check). A `'case'`-kind `deepLink`
+   * opens that exact case's detail directly, same nonce-keyed CONSUME
+   * pattern every other deep-link-consuming screen uses. */
+  deepLink?: DeepLinkTarget | null;
+  /** FIRE half — threaded into `CaseDetail`'s own `onDeepLink` (ONS-CASE-18: "Open the document →"). */
+  onDeepLink?: (request: DeepLinkRequest) => void;
+  onDeepLinkConsumed?: (nonce: number) => void;
 }
 
-export function Cases({ topbar, onNavigate, sidebarVersionLabel, currentUser = CURRENT, initialCaseId }: CasesProps) {
+export function Cases({ topbar, onNavigate, sidebarVersionLabel, currentUser = CURRENT, initialCaseId, deepLink, onDeepLink, onDeepLinkConsumed }: CasesProps) {
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(initialCaseId ?? null);
+
+  // PI2-D5 — 'case'-kind deep-link consumption: standard nonce-keyed
+  // effect (App.tsx's documented CONSUME contract), same pattern
+  // `OnSideOverview.tsx`'s 'domain'-kind and `OnSideFeed.tsx`'s
+  // 'feed-source'/'signal'-kind consumption already use. An id with no
+  // matching case (never expected on a real, contract-typed press, but a
+  // defensive guard rather than a crash on a malformed one) still
+  // consumes the nonce — never leaves a payload permanently pending — but
+  // opens nothing (never a fabricated case).
+  useEffect(() => {
+    if (!deepLink || deepLink.kind !== 'case') return;
+    if (CASES.some((c) => c.id === deepLink.id)) {
+      setSelectedCaseId(deepLink.id);
+    }
+    onDeepLinkConsumed?.(deepLink.nonce);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed read fresh from closure, not tracked as a re-trigger dep
+  }, [deepLink?.nonce]);
   const [pendingAction, setPendingAction] = useState<{ caseId: string; kind: CaseActionKind } | null>(null);
   const [renderTick, setRenderTick] = useState(0);
   // `key` (CS-09): a fresh value per committed action, used as the Toast's
@@ -524,6 +554,7 @@ export function Cases({ topbar, onNavigate, sidebarVersionLabel, currentUser = C
               onAction={handleAction}
               pendingAction={pendingAction && pendingAction.caseId === selectedCase.id ? pendingAction.kind : null}
               onNavigate={onNavigate}
+              {...(onDeepLink !== undefined ? { onDeepLink } : {})}
               // Base switchUser doclinks (CS-08): the persona rows this
               // screen already owns via the Topbar bundle are the twin's
               // switch-user mechanism — only offered when the shell
