@@ -84,6 +84,7 @@ import { StatCard } from './StatCard';
 import { PosturePillBar } from './PosturePillBar';
 import { deriveRecomputeView } from '../engine/plan';
 import type { PlanOpportunity, SliderState } from '../engine/plan';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 export interface SliderControlRowProps {
   sliders: SliderState;
@@ -98,8 +99,18 @@ const rootStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap
 
 const sectionHeadingStyle: CSSProperties = { font: 'inherit', fontSize: '1rem', fontWeight: 700, color: 'var(--ink)', margin: 0 };
 
+// r13 A.2 hostile-review fix (finding D2) — this box matches the panel
+// sweep's shape criteria (background var(--panel) + 1px solid border +
+// borderRadius) at rest, the same way DomainsAccordion's `cardStyle`
+// spreads PANEL_STYLE and then overrides `borderColor` for its own boolean
+// state (`open`). Converted here on the same precedent: spread PANEL_STYLE
+// for the shared background/border/radius base, then override `border`
+// (full shorthand, since the color itself is conditional on `tension`) and
+// `borderRadius` (this site's own `radius-sm` value) exactly as before —
+// the rendered output is unchanged in both the `tension` and
+// non-`tension` states.
 const stanceBoxStyle = (tension: boolean): CSSProperties => ({
-  background: 'var(--panel)',
+  ...PANEL_STYLE,
   border: `1px solid ${tension ? 'var(--sem-caution)' : 'var(--border)'}`,
   borderRadius: 'var(--radius-sm, 12px)',
   padding: '0.75rem 0.875rem',
