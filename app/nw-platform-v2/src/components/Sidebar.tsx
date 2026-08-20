@@ -7,6 +7,24 @@
  * through visible items (roving arrow-key focus is explicitly optional,
  * not implemented here).
  *
+ * HIDDEN COMPOSITE STATE (amendment A13, design_system_spec.md §3.0
+ * addendum, §2.2 C3): a new `hidden` prop (default `false`) is this
+ * component's own render-output switch for the Board Deck exemption
+ * (§5.7, "not a Sidebar item"). Sprint 1 shipped that exemption as a real
+ * unmount/remount in App.tsx (`showSidebar ? <Sidebar/> : null`), which
+ * silently discarded this component's own `overrides` state (manual
+ * collapse/expand memory) on every Board Deck round trip — reproduced,
+ * ruled BEHAVIOUR-IS-WRONG, and closed by this amendment (§8 R-4(k)).
+ * `hidden` is a state THIS instance renders through, not a condition on
+ * whether the instance exists: App.tsx now mounts `<Sidebar>`
+ * unconditionally and only toggles `hidden`, so the same fiber (and the
+ * `overrides` state it owns) persists across a Board Deck visit. See the
+ * `hidden` prop's own doc comment and the early return near the bottom of
+ * this function for the mechanism, which matches C21 PresenterRail's own
+ * `Hidden`-state baseline exactly (reused, not invented — Core Principle
+ * 4): render nothing at all, so there are no stray tab stops and no
+ * separate aria-hidden bookkeeping to maintain.
+ *
  * Static nav structure — §3.1's restructure table, as amended by PI2-D39
  * (settled user decision, below): not invented:
  *
@@ -344,6 +362,22 @@ export interface SidebarProps {
   onNavigate: (id: string) => void;
   /** Footer version string (§3.1 "Footer: version string only"). Defaults to the existing engine's value (survey_map.md 762–821). */
   versionLabel?: string;
+  /**
+   * A13 (design_system_spec.md §3.0 addendum, §2.2 C3 `hidden` composite
+   * state): the Board Deck exemption's ONLY render path. Default `false`
+   * (unchanged, visible behavior). When `true`, this same component
+   * instance renders nothing — matching C21 PresenterRail's own `Hidden`
+   * baseline exactly ("aria-hidden and removed from tab order... not
+   * merely visually hidden," implemented there by returning `null` for the
+   * hidden-state render, reused here rather than inventing a second
+   * mechanism). The caller (App.tsx) must keep mounting `<Sidebar>`
+   * unconditionally and toggle only this prop — conditionally omitting the
+   * `<Sidebar>` element itself is a real unmount and defeats the point:
+   * this component's own `overrides` state (manual collapse/expand memory,
+   * `useState` below) lives in the same fiber and is untouched by entering
+   * or leaving `hidden`, but only if the instance is never destroyed.
+   */
+  hidden?: boolean;
 }
 
 const NAV_STYLE: CSSProperties = {
@@ -385,11 +419,18 @@ const FOOTER_STYLE: CSSProperties = {
   borderTop: '1px solid var(--border)',
 };
 
-export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071' }: SidebarProps) {
+export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071', hidden = false }: SidebarProps) {
   // Manual collapse/expand overrides, keyed by top-level item id. Absent
   // entries fall back to child-active auto-expand, then `defaultExpanded`.
   // See file header DESIGN NOTE: an override always wins — the base's
   // toggles collapse a group even while it owns the active screen.
+  //
+  // A13: this state is declared before any conditional return (the `hidden`
+  // early-return below) so it survives entering/leaving `hidden` exactly
+  // the same way it survives any other re-render — React preserves a
+  // function component's hook state across renders regardless of what that
+  // render returns, as long as the calling element (`<Sidebar>` in App.tsx)
+  // stays mounted at the same position in the tree.
   const [overrides, setOverrides] = useState<Record<string, boolean>>({});
 
   // Base `go()` (source 3813–3816) force-opens the destination's group on
@@ -413,6 +454,17 @@ export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071' }: Side
   const handleToggle = (itemId: string, currentlyExpanded: boolean) => {
     setOverrides((prev) => ({ ...prev, [itemId]: !currentlyExpanded }));
   };
+
+  // A13 (§3.0 addendum, §2.2 C3 `hidden`): the Board Deck exemption's ONLY
+  // render path. This is a render-output decision only, made after every
+  // hook above has already run — the component instance itself, and the
+  // `overrides` state it closes over, are untouched. Matches C21
+  // PresenterRail's own `Hidden`-state baseline exactly (that file's own
+  // header: "nothing in the DOM means no tab stops and no aria-hidden
+  // bookkeeping needed"), reused rather than invented (Core Principle 4).
+  if (hidden) {
+    return null;
+  }
 
   return (
     // SIDEBAR DARK-LOCK: <style> is metadata content, not valid inside

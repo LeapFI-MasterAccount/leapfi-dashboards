@@ -469,10 +469,14 @@ export interface TopbarProps {
    * happened) and duplicated the native `role="switch"`/`aria-checked`
    * state-change announcement Switch (P8) already provides, differently
    * worded. See the file header "THEME LIVE REGION — REMOVED (B2/B3)"
-   * section. Kept accepted-but-ignored, never rendered, only so any
-   * existing caller (e.g. `App.tsx`) that still constructs a `theme` value
-   * for this prop keeps type-checking without this dispatch touching that
-   * file (same `backTarget` precedent above). */
+   * section. Kept accepted-but-ignored, never rendered. `App.tsx` stopped
+   * constructing a value for this field (S3, Sprint-1 hostile-review
+   * remediation wave 2 — the field had gone fully dead there once this
+   * component itself stopped reading it), but the field itself stays
+   * declared: `topbar.test.tsx`'s B2/B3 regression suite still constructs
+   * real `theme` values against this exact prop to prove a legacy caller's
+   * value is silently tolerated (no stray live-region announcement) — the
+   * same reason `backTarget` above stays declared. */
   theme?: 'dark' | 'light';
 }
 
