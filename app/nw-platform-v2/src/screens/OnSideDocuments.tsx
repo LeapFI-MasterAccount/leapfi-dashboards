@@ -242,6 +242,32 @@ function decodeDocText(input: string): string {
     .replace(/&[a-z#0-9]+;/gi, (match) => HTML_ENTITY_MAP[match] ?? match);
 }
 
+/** Link-styled real `<button>` for an in-cell cross-navigation link — same
+ * chrome-less, `--accent`-colored, underlined, icon-less treatment already
+ * shipped as `DocLink`/`docLinkStyle` in `views/ReportView.tsx:425-444`,
+ * reused verbatim here per S1.1-01 (sprint-overview.md) rather than
+ * inventing a second inline-link treatment. */
+const docLinkStyle: CSSProperties = {
+  background: 'transparent',
+  border: 'none',
+  padding: 0,
+  margin: 0,
+  font: 'inherit',
+  fontWeight: 700,
+  color: 'var(--accent)',
+  textDecoration: 'underline',
+  cursor: 'pointer',
+  textAlign: 'left',
+};
+
+function DocLink({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <button type="button" style={docLinkStyle} onClick={onPress}>
+      {label}
+    </button>
+  );
+}
+
 const DOMAIN_LABEL: Record<string, string> = Object.fromEntries(DOMAINS.map((d) => [d.key, d.name]));
 
 const STATUS_TAG_VARIANT: Record<DocStatus, NonRaciTagVariant> = {
@@ -813,7 +839,40 @@ export function OnSideDocuments({ deepLink, onDeepLinkConsumed }: OnSideDocument
     { id: 'item', header: 'Open item', render: (g) => <span>{decodeDocText(g.t)}</span> },
     { id: 'domain', header: 'Domain', render: (g) => <span>{g.dom}</span> },
     { id: 'owner', header: 'Owner', render: (g) => <span>{decodeDocText(g.owner)}</span> },
-    { id: 'action', header: 'Action', render: (g) => <span style={{ color: 'var(--ink2)' }}>{decodeDocText(g.act)}</span> },
+    {
+      id: 'action',
+      header: 'Action',
+      // S1.1-01 (sprint-overview.md): restores reachability for gaps that
+      // carry BOTH `obl` and `doc` (e.g. seeded TPRM-08), where the row's
+      // own `gapRowAction` only reaches `obl`'s destination. The inline
+      // link opens the doc drawer directly via the same
+      // `setOpenObligation(null); setOpenDocId(gap.doc)` path
+      // `gapRowAction`'s doc-only branch already uses (line ~651-652),
+      // independent of whether `obl` is also set.
+      render: (g) => (
+        <span style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', alignItems: 'flex-start' }}>
+          <span style={{ color: 'var(--ink2)' }}>{decodeDocText(g.act)}</span>
+          {g.doc ? (
+            <DocLink
+              label="Open document"
+              onPress={() => {
+                setOpenObligation(null);
+                setOpenDocId(g.doc);
+              }}
+            />
+          ) : null}
+        </span>
+      ),
+    },
+    {
+      id: 'review',
+      header: 'Review',
+      // S1.1-02 (sprint-overview.md): renders the already-seeded
+      // `GapItem.rev` field, currently computed but never rendered — same
+      // Tag (P4) variant vocabulary `STATUS_TAG_VARIANT` already uses
+      // elsewhere on this screen.
+      render: (g) => (g.rev === 'ok' ? <Tag text="Approved" variant="status-positive" /> : <Tag text="HITL queue" variant="hitl" />),
+    },
   ];
 
   function obligationColumns(): DataTableColumn<ObligationRow>[] {
