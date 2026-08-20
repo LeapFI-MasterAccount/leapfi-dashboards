@@ -563,7 +563,7 @@ function GapboardReport({ onOpenCases }: { onOpenCases?: () => void }) {
             {onOpenCases ? <Button variant="ghost" label="Open cases →" onPress={onOpenCases} /> : null}
           </div>
         ) : (
-          <DataTable caption="Board approval cases" columns={columns} rows={cases} getRowId={(c) => c.id} />
+          <DataTable caption="Board approval cases" columns={columns} rows={cases} getRowId={(c) => c.id} surface="panel" />
         )}
       </TableSection>
       {/* RPT-07: per-case language blocks — base source 1493-1502 renders,
@@ -652,7 +652,17 @@ function boardDeckSlides(view: RecomputeView): DeckViewSlide[] {
   const waiting = plan.gated.concat(plan.bench).reduce((sum, o) => sum + o.val * L.eff, 0);
   const moneyNet = Math.max(0, Math.round(4500000 * 0.12) + plan.annual - 180000);
 
-  return [
+  // A14-residual wave: `DeckView` (`../components/DeckView.tsx`) spreads each
+  // slide object directly onto `DeckSlide` (`<DeckSlide {...current} .../>`)
+  // — there is no container-level surface seam here, only per-slide props.
+  // This deck renders only inside `BoardReport`'s `TableSection`, itself only
+  // reachable through `Reporting.tsx`'s shared reporting Drawer (root
+  // background `var(--panel)`, traced in this file's own `bodyTextStyle`
+  // header note) — panel-seated for every slide, unconditionally. `surface:
+  // 'panel'` is applied once here, after the literal array, rather than on
+  // each of the 12 slide objects individually, so a future added/removed
+  // slide cannot silently regress to the page-seated default.
+  const slides: DeckViewSlide[] = [
     // Title slide — source 2400.
     {
       id: 'board-deck-title',
@@ -799,6 +809,7 @@ function boardDeckSlides(view: RecomputeView): DeckViewSlide[] {
       ],
     },
   ];
+  return slides.map((slide) => ({ ...slide, surface: 'panel' }));
 }
 
 function BoardReport() {
@@ -925,7 +936,7 @@ function ComplianceReport({ onOpenDomain, onOpenPlay }: { onOpenDomain?: (domain
         <StatCard label="Already green" value={allKeys.length - view.plan.toClose.length} />
       </div>
       <TableSection heading={`${view.plan.toClose.length} of ${allKeys.length} control families open`}>
-        <DataTable caption="Control-family coverage" columns={columns} rows={rows} getRowId={(r) => r.key} />
+        <DataTable caption="Control-family coverage" columns={columns} rows={rows} getRowId={(r) => r.key} surface="panel" />
       </TableSection>
     </div>
   );
@@ -942,18 +953,18 @@ function PlanReport() {
         <StatCard label="Payback" value={view.economics.paybackText} />
       </div>
       <TableSection heading={`Funded now (${view.plan.funded.length})`}>
-        <DataTable caption="Funded plays" columns={fundedColumns(view.L.eff)} rows={view.plan.funded} getRowId={(o) => o.n} />
+        <DataTable caption="Funded plays" columns={fundedColumns(view.L.eff)} rows={view.plan.funded} getRowId={(o) => o.n} surface="panel" />
       </TableSection>
       <TableSection heading={`Ready, not yet funded (${view.plan.bench.length})`}>
         {view.plan.bench.length ? (
-          <DataTable caption="Ready, not yet funded plays" columns={benchColumns(view.L.eff)} rows={view.plan.bench} getRowId={(o) => o.n} />
+          <DataTable caption="Ready, not yet funded plays" columns={benchColumns(view.L.eff)} rows={view.plan.bench} getRowId={(o) => o.n} surface="panel" />
         ) : (
           <p style={bodyTextStyle}>Everything ready is funded.</p>
         )}
       </TableSection>
       <TableSection heading={`Gated by controls (${view.plan.gated.length})`}>
         {view.plan.gated.length ? (
-          <DataTable caption="Gated plays" columns={GATED_COLUMNS} rows={view.plan.gated} getRowId={(o) => o.n} />
+          <DataTable caption="Gated plays" columns={GATED_COLUMNS} rows={view.plan.gated} getRowId={(o) => o.n} surface="panel" />
         ) : (
           <p style={bodyTextStyle}>Nothing gated at this tolerance.</p>
         )}
@@ -991,7 +1002,7 @@ function RoadmapReport() {
   const bucket = (heading: string, rows: RoadmapRow[], emptyText: string) => (
     <TableSection heading={heading} key={heading}>
       {rows.length ? (
-        <DataTable caption={heading} columns={columns} rows={rows} getRowId={(r) => r.play} />
+        <DataTable caption={heading} columns={columns} rows={rows} getRowId={(r) => r.play} surface="panel" />
       ) : (
         <p style={bodyTextStyle}>{emptyText}</p>
       )}
@@ -1092,7 +1103,7 @@ function RegchangeReport({ onLogUpdate }: { onLogUpdate?: (id: string) => void }
         <StatCard label="Closed" value={closedCount} />
       </div>
       <TableSection heading={`The standing view · ${BOARD_STANDING_ROWS.length} instruments`}>
-        <DataTable caption="Regulatory change standing view" columns={columns} rows={BOARD_STANDING_ROWS} getRowId={(r) => r.id} />
+        <DataTable caption="Regulatory change standing view" columns={columns} rows={BOARD_STANDING_ROWS} getRowId={(r) => r.id} surface="panel" />
       </TableSection>
       <p style={bodyTextStyle}>
         <strong>Tracking</strong> = watching an item that has not become relevant yet · <strong>Open</strong> = it
@@ -1168,6 +1179,7 @@ function PostureReport() {
           getRowId={(d) => d.key}
           defaultSortColumnId="to-close"
           defaultSortDirection="descending"
+          surface="panel"
         />
       </TableSection>
       <p style={bodyTextStyle}>
@@ -1219,6 +1231,7 @@ function MrmReport({ onOpenObligation }: { onOpenObligation?: (domainKey: string
           columns={OBLIGATION_COLUMNS}
           rows={openItems}
           getRowId={(o) => o.id}
+          surface="panel"
           {...(rowAction ? { rowAction } : {})}
         />
       </TableSection>
@@ -1268,6 +1281,7 @@ function TprmReport({ onOpenObligation }: { onOpenObligation?: (domainKey: strin
           columns={OBLIGATION_COLUMNS}
           rows={openItems}
           getRowId={(o) => o.id}
+          surface="panel"
           {...(rowAction ? { rowAction } : {})}
         />
       </TableSection>
@@ -1318,7 +1332,7 @@ function InfosecReport() {
         awaiting {domain.owner.split(' · ')[0] ?? domain.owner}.
       </p>
       <TableSection heading={`Open items (${openItems.length})`}>
-        <DataTable caption="InfoSec open items" columns={itemColumns} rows={openItems} getRowId={(r) => r.id} />
+        <DataTable caption="InfoSec open items" columns={itemColumns} rows={openItems} getRowId={(r) => r.id} surface="panel" />
       </TableSection>
       <TableSection heading="Program status">
         {/* RPT-11c: base hand-written docLink text (source 1653-1656), not
@@ -1392,7 +1406,7 @@ function RoiReport() {
         </ul>
       </TableSection>
       <TableSection heading="The funded portfolio behind the number">
-        <DataTable caption="Funded portfolio" columns={fundedColumns(view.L.eff)} rows={view.plan.funded} getRowId={(o) => o.n} />
+        <DataTable caption="Funded portfolio" columns={fundedColumns(view.L.eff)} rows={view.plan.funded} getRowId={(o) => o.n} surface="panel" />
       </TableSection>
       <p style={bodyTextStyle}>
         The platform pays for itself on compliance capacity alone. The funded portfolio return ({view.economics.roiText}{' '}

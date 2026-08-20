@@ -25,6 +25,25 @@
  * accessible heading (`<h2>`); `headingId` lets the owning DeckView
  * (C18) point its `aria-live` pagination announcement and/or
  * `aria-labelledby` at the same node instead of duplicating the text.
+ *
+ * `surface` prop (A14-residual wave, mirrors amendment A14's Label/
+ * StatValue shape exactly — design_system_spec.md §2.7): this composite
+ * has TWO defects of the same class. (1) The `eyebrow` Label call routed
+ * through Label correctly but never passed a `surface`, so it always
+ * resolved to `--ink2`. (2) The `body` paragraphs never routed through
+ * Label at all — their color was hand-authored inline, unconditionally
+ * `--ink2`. Both fail the 4.5:1 AA floor in light theme wherever this
+ * DeckSlide's immediate rendering context is a `--panel` surface. DeckSlide
+ * is reused in TWO different contexts via DeckView (C18): the real Board
+ * Deck screen (page-seated) and Reporting's "Board Pack" report (rendered
+ * inside the shared reporting Drawer, panel-seated) — an ambiguous,
+ * caller-determined seating exactly like Label/StatValue's own, so this
+ * takes the SAME threaded-prop shape, not a composite-local hardcode
+ * (contrast StatCard/SliderControlRow's `stanceBoxStyle`, which hardcode
+ * `--chart-axis` because THEY have exactly one, always-panel-seated
+ * context). `surface="page"` (default) is byte-identical to pre-fix
+ * behavior for both defects; `surface="panel"` resolves both the eyebrow
+ * Label and the body paragraphs to `--chart-axis`.
  */
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from './primitives/Icon';
@@ -33,6 +52,7 @@ import { Label } from './primitives/Label';
 import { StatCard } from './StatCard';
 
 export type DeckSlideKind = 'economics' | 'generic';
+export type DeckSlideSurface = 'page' | 'panel';
 
 export interface DeckSlideStat {
   value: string | number;
@@ -54,6 +74,11 @@ export interface DeckSlideProps {
   icon?: IconName;
   /** Extra slide-specific content (e.g. a future DeckCTASlide's primary Button) composed below the standard content. Outside this dispatch's scope to populate. */
   children?: ReactNode;
+  /** A14-residual wave — `'page'` (default, `--ink2`, byte-identical to
+   * pre-fix behavior) or `'panel'` (`--chart-axis`, REQUIRED when this
+   * DeckSlide's immediate rendering context is a `--panel` surface). Applies
+   * to both the `eyebrow` Label and the `body` paragraphs. */
+  surface?: DeckSlideSurface;
 }
 
 const SLIDE_STYLE: CSSProperties = {
@@ -77,10 +102,15 @@ const STATS_ROW_STYLE: CSSProperties = {
   gap: '1rem',
 };
 
-export function DeckSlide({ kind, heading, headingId, eyebrow, body, stats, icon, children }: DeckSlideProps) {
+const SURFACE_COLOR: Record<DeckSlideSurface, string> = {
+  page: 'var(--ink2)',
+  panel: 'var(--chart-axis)',
+};
+
+export function DeckSlide({ kind, heading, headingId, eyebrow, body, stats, icon, children, surface = 'page' }: DeckSlideProps) {
   return (
-    <div data-lf-composite="deck-slide" data-kind={kind} style={SLIDE_STYLE}>
-      {eyebrow ? <Label text={eyebrow} variant="eyebrow" /> : null}
+    <div data-lf-composite="deck-slide" data-kind={kind} data-surface={surface} style={SLIDE_STYLE}>
+      {eyebrow ? <Label text={eyebrow} variant="eyebrow" surface={surface} /> : null}
 
       <div style={HEADING_ROW_STYLE}>
         {icon ? (
@@ -95,7 +125,7 @@ export function DeckSlide({ kind, heading, headingId, eyebrow, body, stats, icon
 
       {body?.map((paragraph, index) => (
         // eslint-disable-next-line react/no-array-index-key -- static per-slide paragraph sequence, never reordered
-        <p key={index} style={{ font: 'inherit', fontSize: '1.0625rem', lineHeight: 1.6, color: 'var(--ink2)', margin: 0 }}>
+        <p key={index} style={{ font: 'inherit', fontSize: '1.0625rem', lineHeight: 1.6, color: SURFACE_COLOR[surface], margin: 0 }}>
           {paragraph}
         </p>
       ))}

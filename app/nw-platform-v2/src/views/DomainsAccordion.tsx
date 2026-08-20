@@ -414,6 +414,7 @@ export function DomainsAccordion({ domains, expandedKeys, onToggle, pendingScrol
                         rows={obligations.filter((o) => o.st !== 'met')}
                         getRowId={(row) => row.id}
                         emptyMessage="No open gaps or partials in this domain."
+                        surface="panel"
                         {...(obligationRowAction ? { rowAction: obligationRowAction } : {})}
                       />
                     </div>
@@ -434,6 +435,7 @@ export function DomainsAccordion({ domains, expandedKeys, onToggle, pendingScrol
                         rows={openItems.map((item, index) => ({ ...item, id: `${domain.key}-${index}` }))}
                         getRowId={(row) => row.id}
                         emptyMessage="Nothing open in this domain."
+                        surface="panel"
                       />
                     </div>
                   </div>
