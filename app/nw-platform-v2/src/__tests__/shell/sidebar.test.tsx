@@ -431,3 +431,59 @@ describe('Board Deck sidebar exemption survives the persistent Shell (A11, desig
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
   })
 })
+
+describe('BoardDeck exemption — mount semantics (amendment A13, design_system_spec.md §3.0 addendum / §2.2 C3 `hidden`): the persistent Sidebar instance HIDES for a Board Deck visit, it never unmounts', () => {
+  // The falsifiable test the amendment itself names (§3.0 addendum): a
+  // manual override made BEFORE a Board Deck visit must survive the round
+  // trip unchanged, because the same long-lived Sidebar instance (and its
+  // `overrides` state) persists through `hidden`, rather than being
+  // destroyed and replaced by a fresh instance (`overrides={}`) the way the
+  // pre-fix `showSidebar` ternary did. This is the COMPOSED scenario the
+  // pre-existing suite never exercised: the cross-screen-override tests
+  // above and the Board-Deck-exemption test above were two separate,
+  // never-composed `describe` blocks — the coverage gap that let the A13
+  // defect ship (confirmed reproduced, cold-verifier pin `c510cd0`).
+  it('a manual COLLAPSE of a default-EXPANDED group (OnSide) survives a Board Deck round trip — aria-expanded stays "false", not reset to the group default', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const nav = () => screen.getByRole('navigation', { name: 'Primary' })
+
+    // OnSide ships expanded by default (PI2-D33) — collapse it: a manual
+    // override, false, diverging from the group's own default (true).
+    await user.click(within(nav()).getByRole('button', { name: 'OnSide' }))
+    expect(within(nav()).getByRole('button', { name: 'OnSide' })).toHaveAttribute('aria-expanded', 'false')
+
+    // Navigate to Board Deck via the Topbar control (the exemption path).
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Open board deck' }))
+    expect(within(screen.getByRole('banner')).getByText('Board deck')).toBeInTheDocument()
+    // Exemption still holds while on Board Deck: no Primary nav landmark
+    // reachable — unaffected by hide replacing unmount (§3.0 addendum).
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).not.toBeInTheDocument()
+
+    // Navigate back to a Sidebar-bearing screen (the logo Home control).
+    await user.click(screen.getByRole('button', { name: 'LeapFI — Home' }))
+    expect(within(screen.getByRole('banner')).getByText('Home')).toBeInTheDocument()
+
+    // The override survives the round trip — still false, not reset to
+    // OnSide's own `true` default the way a fresh (`overrides={}`) Sidebar
+    // instance would show.
+    expect(within(nav()).getByRole('button', { name: 'OnSide' })).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('a manual EXPAND of a default-COLLAPSED group (Studio) survives a Board Deck round trip — aria-expanded stays "true", not reset to the group default', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const nav = () => screen.getByRole('navigation', { name: 'Primary' })
+
+    const studio = within(nav()).getByRole('button', { name: 'Studio' })
+    expect(studio).toHaveAttribute('aria-expanded', 'false')
+    await user.click(studio)
+    expect(within(nav()).getByRole('button', { name: 'Studio' })).toHaveAttribute('aria-expanded', 'true')
+
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Open board deck' }))
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'LeapFI — Home' }))
+    expect(within(nav()).getByRole('button', { name: 'Studio' })).toHaveAttribute('aria-expanded', 'true')
+  })
+})

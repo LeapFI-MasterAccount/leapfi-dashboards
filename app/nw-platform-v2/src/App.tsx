@@ -243,6 +243,20 @@
  * deliberately leaves it untouched (§4: resetDemo "mutates demo data only,
  * never rail state" — theme is neither).
  *
+ * DEAD PROP RETIRED (S3, Sprint-1 hostile-review remediation wave 2):
+ * `topbarProps` no longer threads a `theme` field to `Topbar` — that prop
+ * stopped being consumed there once `themeToggleSlot` (above) became the
+ * real toggle mechanism, leaving only an `@deprecated` type declaration on
+ * `TopbarProps.theme` with no live reader. This shell's own `theme` STATE
+ * is unaffected: the effect below and `themeToggleSlot`'s `checked`/
+ * `onChange` still read/write it directly, same as before. Topbar's
+ * `@deprecated theme?` field itself stays declared, not retired: it is
+ * still exercised as a real prop by `topbar.test.tsx`'s B2/B3 regression
+ * suite (Sprint-1 hostile-review findings — proving Topbar tolerates a
+ * legacy `theme` value with no stray "theme changed" live-region
+ * announcement), so removing the field from `TopbarProps` would break that
+ * caller and weaken a pinned regression test — out of scope here.
+ *
  * DESIGN-PARTNER REQUEST (BoardDeck's `onDesignPartnerRequest`, G12): no
  * backend exists to submit a real lead to in this worktree/program (D14
  * ports the base page's existing engines; no CRM/lead-capture engine is
@@ -339,13 +353,22 @@
  * search), so this is a strictly more precise debug label, not a behavior
  * change.
  *
- * SIDEBAR EXEMPTION PRESERVED: Board Deck (`'board-deck'`) is the one
- * screen anatomy (§5.7) that deliberately renders no Sidebar — "not a
- * Sidebar item; this is a flow-level presentation surface" — while still
- * rendering Topbar. `showSidebar` below is the single boolean gate that
- * carries that exemption forward into the shared Shell; Board Deck keeps
- * its Topbar (rendered by the Shell, same as every other screen) and loses
- * only the Sidebar column.
+ * SIDEBAR EXEMPTION — HIDE, NOT UNMOUNT (amendment A13, design_system_spec.md
+ * §3.0 addendum; closes the Sprint-1 hostile-review remediation-wave-2
+ * finding, §8 R-4(k)): Board Deck (`'board-deck'`) is the one screen
+ * anatomy (§5.7) that deliberately renders no Sidebar — "not a Sidebar
+ * item; this is a flow-level presentation surface" — while still rendering
+ * Topbar. `showSidebar` below still names that fact, but it no longer
+ * gates whether `<Sidebar>` is mounted (it did, pre-fix: `showSidebar ?
+ * <Sidebar/> : null`, which unmounted and remounted a fresh instance —
+ * `overrides={}` — on every Board Deck round trip, silently discarding a
+ * presenter's manual collapse/expand exactly the way A11's per-screen-mount
+ * defect did, narrowed to one screen transition). `<Sidebar>` is now always
+ * mounted here; `showSidebar` instead derives the new `hidden` prop
+ * (Sidebar.tsx §2.2 C3), which is the same long-lived instance's own
+ * render-output switch — its `overrides` state is untouched by entering or
+ * leaving `hidden`. Board Deck keeps its Topbar (rendered by the Shell,
+ * same as every other screen) and loses only the Sidebar's visible output.
  *
  * `topbar: TopbarProps` IS NO LONGER PASSED to any routed screen except
  * `Cases`: no screen renders its own `<Topbar>` anymore, so the full prop
@@ -696,7 +719,13 @@ function App() {
     date: DEMO_DATE_LABEL,
     profile: { name: currentUser.name, initials: currentUser.ini },
     profileMenuItems,
-    theme,
+    // No `theme` field here (S3, Sprint-1 hostile-review remediation wave 2):
+    // Topbar.tsx no longer consumes its own `theme` prop (only an
+    // `@deprecated` type declaration remains, kept for a different caller —
+    // see that file's own comment on the field). This shell's `theme`
+    // STATE stays; it drives the effect above (`data-theme` attribute +
+    // localStorage) and the toggle below directly, same as before — only
+    // the now-inert pass-through into `topbarProps` is removed.
     themeToggleSlot: <Switch checked={theme === 'light'} label="Light theme" onChange={(checked) => setTheme(checked ? 'light' : 'dark')} />,
     // See file header "NOTIFICATION BELL" — raw NOTIFS singleton passed
     // through; NotificationBellPanel does its own role filtering (matches
@@ -820,11 +849,21 @@ function App() {
       <div data-lf-screen={screenId} style={SHELL_STYLE}>
         <Topbar {...topbarProps} />
         <div style={SHELL_BODY_STYLE}>
-          {showSidebar ? (
-            <div style={SIDEBAR_REGION_STYLE}>
-              <Sidebar {...sidebarProps} />
-            </div>
-          ) : null}
+          {/* A13 (design_system_spec.md §3.0 addendum, §2.2 C3 `hidden`):
+              the Shell's single Sidebar instance is always mounted here —
+              never behind a ternary that would omit the element and destroy
+              the instance (that was the pre-fix defect: a fresh instance on
+              return discarded `overrides`, Sidebar.tsx's own collapse/expand
+              memory). `hidden` toggles Sidebar's OWN render output instead;
+              the wrapping region's width collapses to nothing only as a
+              layout consequence of that empty render (§5.7 "full-viewport
+              DeckView" — a layout detail, not a second mount decision, per
+              the amendment's own "What this does not decide" note), so
+              Board Deck still reclaims the full content width exactly as
+              before. */}
+          <div style={showSidebar ? SIDEBAR_REGION_STYLE : undefined}>
+            <Sidebar {...sidebarProps} hidden={!showSidebar} />
+          </div>
           {renderActiveScreen()}
         </div>
       </div>
