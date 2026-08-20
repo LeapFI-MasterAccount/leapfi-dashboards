@@ -96,6 +96,26 @@ function extractTokens(block: string): Record<string, string> {
   return tokens;
 }
 
+// ---------------------------------------------------------------------
+// C3 support: `--cat-outline` / `--sem-outline` are NOT plain hex tokens
+// (extractTokens above only captures `#hexhex` values) — their value is a
+// composite (`none`, or an inset box-shadow embedding a hex). Extract the
+// raw value string per token, independent of shape, so this suite reads
+// tokens.css directly rather than hand-copying the fix's numbers.
+// ---------------------------------------------------------------------
+function extractRawTokenValue(block: string, tokenName: string): string {
+  const re = new RegExp(`--${tokenName}:\\s*([^;]+);`);
+  const m = re.exec(block);
+  if (!m || m[1] === undefined) throw new Error(`token --${tokenName} not found in block`);
+  return m[1].trim();
+}
+
+function extractEmbeddedHex(value: string): string {
+  const m = /#[0-9a-fA-F]{6}/.exec(value);
+  if (!m) throw new Error(`no hex color embedded in value: "${value}"`);
+  return m[0].toLowerCase();
+}
+
 const tokensCss = readFileSync(TOKENS_CSS_PATH, 'utf8');
 const darkBlock = extractBlock(tokensCss, /:root,\s*\[data-theme=['"]dark['"]\]\s*\{/);
 const lightBlock = extractBlock(tokensCss, /\[data-theme=['"]light['"]\]\s*\{/);
@@ -252,5 +272,79 @@ describe('C1 regression sweep — src/ (real files, "cannot silently return")', 
       }
     }
     expect(allViolations).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------
+// C3: lightmode_amendment_proposal.md §6.2 (categorical Aqua/Glacier) and
+// §6.3 (semantic Positive/Caution/Alert) — flat-fill non-text (3:1) floor
+// on light surfaces. Unlike C1/C2 (4.5:1 text floor), this is the 3:1
+// non-text-UI-component floor (WCAG 1.4.11), computed with the SAME
+// relativeLuminance/contrastRatio helpers above (the math is identical;
+// only the pass threshold differs).
+// ---------------------------------------------------------------------
+const NON_TEXT_FLOOR = 3.0;
+
+describe('token contrast (WCAG 2.1, 3:1 non-text floor) — C3 §6.2: categorical Aqua/Glacier bare fills', () => {
+  it('FORBIDDEN PAIR — light theme: --cat-3 (Aqua) bare fill on --panel fails 3:1 (2.33:1, the bug C3 exists to fix)', () => {
+    const ratio = contrastRatio(light['cat-3']!, light['panel']!);
+    expect(ratio).toBeLessThan(NON_TEXT_FLOOR);
+    expect(ratio).toBeCloseTo(2.33, 1);
+  });
+
+  it('FORBIDDEN PAIR — light theme: --cat-5 (Glacier) bare fill on --panel fails 3:1 (1.75:1, the bug C3 exists to fix)', () => {
+    const ratio = contrastRatio(light['cat-5']!, light['panel']!);
+    expect(ratio).toBeLessThan(NON_TEXT_FLOOR);
+    expect(ratio).toBeCloseTo(1.75, 1);
+  });
+
+  it('the other four categorical hues already clear 3:1 bare (§6.2 table PASS rows — unaffected, no outline needed)', () => {
+    for (const token of ['cat-1', 'cat-2', 'cat-4', 'cat-6']) {
+      const ratio = contrastRatio(light[token]!, light['panel']!);
+      expect(ratio).toBeGreaterThanOrEqual(NON_TEXT_FLOOR);
+    }
+  });
+
+  it('PRESCRIBED FIX — --cat-outline embeds a Midnight (#0a2342) stroke that clears 3:1 on --panel and --bg in light theme', () => {
+    const rawLight = extractRawTokenValue(lightBlock, 'cat-outline');
+    const hex = extractEmbeddedHex(rawLight);
+    expect(hex).toBe('#0a2342');
+    expect(contrastRatio(hex, light['panel']!)).toBeGreaterThanOrEqual(NON_TEXT_FLOOR);
+    expect(contrastRatio(hex, light['bg']!)).toBeGreaterThanOrEqual(NON_TEXT_FLOOR);
+  });
+
+  it('dark theme: --cat-outline is a no-op ("none") — the fix is light-surface-only, dark fills were never the problem', () => {
+    const rawDark = extractRawTokenValue(darkBlock, 'cat-outline');
+    expect(rawDark).toBe('none');
+  });
+});
+
+describe('token contrast (WCAG 2.1, 3:1 non-text floor) — C3 §6.3: semantic Positive/Caution/Alert bare fills', () => {
+  it('FORBIDDEN PAIR — light theme: --sem-positive bare fill on --panel fails 3:1 (2.08:1)', () => {
+    const ratio = contrastRatio(light['sem-positive']!, light['panel']!);
+    expect(ratio).toBeLessThan(NON_TEXT_FLOOR);
+  });
+
+  it('FORBIDDEN PAIR — light theme: --sem-caution bare fill on --panel fails 3:1 (1.96:1)', () => {
+    const ratio = contrastRatio(light['sem-caution']!, light['panel']!);
+    expect(ratio).toBeLessThan(NON_TEXT_FLOOR);
+  });
+
+  it('--sem-alert bare fill on --panel already clears 3:1 (3.44:1) — outline still applied for visual consistency per §6.3', () => {
+    const ratio = contrastRatio(light['sem-alert']!, light['panel']!);
+    expect(ratio).toBeGreaterThanOrEqual(NON_TEXT_FLOOR);
+  });
+
+  it('PRESCRIBED FIX — --sem-outline embeds a Midnight (#0a2342) stroke that clears 3:1 on --panel and --bg in light theme', () => {
+    const rawLight = extractRawTokenValue(lightBlock, 'sem-outline');
+    const hex = extractEmbeddedHex(rawLight);
+    expect(hex).toBe('#0a2342');
+    expect(contrastRatio(hex, light['panel']!)).toBeGreaterThanOrEqual(NON_TEXT_FLOOR);
+    expect(contrastRatio(hex, light['bg']!)).toBeGreaterThanOrEqual(NON_TEXT_FLOOR);
+  });
+
+  it('dark theme: --sem-outline is a no-op ("none") — the fix is light-surface-only, dark fills were never the problem', () => {
+    const rawDark = extractRawTokenValue(darkBlock, 'sem-outline');
+    expect(rawDark).toBe('none');
   });
 });
