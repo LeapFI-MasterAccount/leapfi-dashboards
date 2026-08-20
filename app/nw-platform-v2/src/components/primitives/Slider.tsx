@@ -14,9 +14,20 @@
  * never on intermediate drag frames — and this component owns the
  * aria-live announcement of the committed value so callers cannot
  * accidentally wire it to onChange and violate the per-pixel rule.
+ *
+ * `surface` prop (A14-residual wave, mirrors amendment A14's Label/
+ * StatValue shape exactly — design_system_spec.md §2.7): this primitive's
+ * `labelRowStyle` hardcoded `--ink2` unconditionally, which fails the
+ * 4.5:1 AA floor in light theme wherever this Slider's immediate rendering
+ * context is a `--panel` surface. `surface="page"` (default) is
+ * byte-identical to pre-fix behavior; `surface="panel"` resolves the label
+ * row's color to `--chart-axis` instead — REQUIRED wherever this Slider's
+ * immediate rendering context is a `--panel` surface.
  */
 import { useId, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent, PointerEvent } from 'react';
+
+export type SliderSurface = 'page' | 'panel';
 
 export interface SliderProps {
   min: number;
@@ -30,6 +41,10 @@ export interface SliderProps {
   onChange: (value: number) => void;
   /** Fired once per commit: drag-end (pointer up) or a single arrow-key press. Never fired per drag frame. */
   onCommit?: (value: number) => void;
+  /** A14-residual wave — `'page'` (default, `--ink2`, byte-identical to
+   * pre-fix behavior) or `'panel'` (`--chart-axis`, REQUIRED when this
+   * Slider's immediate rendering context is a `--panel` surface). */
+  surface?: SliderSurface;
 }
 
 const wrapStyle: CSSProperties = {
@@ -42,7 +57,11 @@ const labelRowStyle: CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
   fontSize: '0.8125rem',
-  color: 'var(--ink2)',
+};
+
+const SURFACE_COLOR: Record<SliderSurface, string> = {
+  page: 'var(--ink2)',
+  panel: 'var(--chart-axis)',
 };
 
 // Visually-hidden recipe — `top`/`left` pinned to 0 is load-bearing;
@@ -85,6 +104,7 @@ export function Slider({
   disabled = false,
   onChange,
   onCommit,
+  surface = 'page',
 }: SliderProps) {
   const generatedId = useId();
   const [dragging, setDragging] = useState(false);
@@ -99,7 +119,7 @@ export function Slider({
 
   return (
     <div style={wrapStyle}>
-      <div style={labelRowStyle}>
+      <div style={{ ...labelRowStyle, color: SURFACE_COLOR[surface] }} data-surface={surface}>
         <label htmlFor={generatedId}>{label}</label>
         <span aria-hidden="true">{valueText ?? value}</span>
       </div>

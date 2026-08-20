@@ -175,12 +175,17 @@ export function BoardLogForm({
       <Label text="Board reporting · open item" variant="eyebrow" surface="panel" />
 
       <div style={FORM_STYLE}>
+        {/* A14-residual wave: Input (P6) now carries the same `surface`
+            prop A14 established for Label/StatValue — rendered inside the
+            shared reporting Drawer (var(--panel) root, see this file's own
+            header note above), so panel-seated. */}
         <Input
           label="Expected compliance date"
           placeholder="e.g. Q1 2027"
           value={date}
           onChange={onDateChange}
           disabled={saving}
+          surface="panel"
         />
         <div>
           <label htmlFor={textareaId} style={TEXTAREA_LABEL_STYLE}>

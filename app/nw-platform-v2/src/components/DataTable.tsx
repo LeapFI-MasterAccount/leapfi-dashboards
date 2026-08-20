@@ -111,6 +111,7 @@ import { Button } from './primitives/Button';
 
 export type DataTableState = 'empty' | 'loading' | 'loaded';
 export type DataTableSortDirection = 'ascending' | 'descending';
+export type DataTableSurface = 'page' | 'panel';
 
 export interface DataTableColumn<T> {
   id: string;
@@ -171,6 +172,25 @@ export interface DataTableProps<T> {
      * label. */
     renderHeader: (groupKey: string, groupRows: readonly T[]) => ReactNode;
   };
+  /** A14-residual wave (design_system_spec.md §2.7 pattern, mirrored — not
+   * a spec amendment of its own): the header-cell Label(s) (sortable via
+   * `SortHeaderButton`, non-sortable directly) hardcoded `--ink2`
+   * unconditionally, which fails the 4.5:1 AA floor in light theme
+   * wherever this DataTable's immediate rendering context is a `--panel`
+   * surface. Unlike StatCard/SliderControlRow (always-panel-seated by
+   * construction), DataTable's own header row carries no background of
+   * its own (`theadRowStyle`/`tableStyle` — no `background`) — seating is
+   * entirely inherited from whichever ancestor a consuming screen nests it
+   * in, and that population is NOT uniform: page-seated at most traced
+   * consumers (OnSideDocuments/OnSideFeed/OnSideOwnership/Cases/StudioAsk/
+   * HomePanels/RegulatoryFeed*), panel-seated at exactly two
+   * (DomainsAccordion.tsx's cardStyle; every DataTable inside
+   * ReportView.tsx's shared reporting Drawer). `surface="page"` (default)
+   * is therefore byte-identical to pre-fix behavior — required, since
+   * hardcoding `"panel"` unconditionally would regress the page-seated
+   * majority; `surface="panel"` resolves both header-cell Label forms to
+   * `--chart-axis`. */
+  surface?: DataTableSurface;
 }
 
 /** Visually-hidden (sr-only) recipe — INVARIANT: `top`/`left` MUST be
@@ -277,13 +297,14 @@ interface SortHeaderButtonProps {
   active: boolean;
   direction: DataTableSortDirection | null;
   onPress: () => void;
+  surface: DataTableSurface;
 }
 
 /** Local subcomponent (not exported) purely so its own focus-visible state
  * can live in a real hook instance per header cell — inline styles can't
  * express a `:focus-visible` pseudo-class, so the focus ring is driven by
  * React state instead, same technique Button/Chip already use. */
-function SortHeaderButton({ label, active, direction, onPress }: SortHeaderButtonProps) {
+function SortHeaderButton({ label, active, direction, onPress, surface }: SortHeaderButtonProps) {
   const [focused, setFocused] = useState(false);
 
   return (
@@ -298,7 +319,7 @@ function SortHeaderButton({ label, active, direction, onPress }: SortHeaderButto
         boxShadow: focused ? 'var(--focus-ring)' : 'none',
       }}
     >
-      <Label text={label} variant="body-secondary" />
+      <Label text={label} variant="body-secondary" surface={surface} />
       <Icon
         name="chevron-down"
         size={16}
@@ -434,6 +455,7 @@ export function DataTable<T>({
   onRowClick,
   isRowClickable: isRowClickablePredicate,
   grouping,
+  surface = 'page',
 }: DataTableProps<T>) {
   const [sort, setSort] = useState<ActiveSort | null>(() =>
     defaultSortColumnId
@@ -516,9 +538,10 @@ export function DataTable<T>({
                     active={activeSort !== null}
                     direction={activeSort ? activeSort.direction : null}
                     onPress={() => handleSortClick(column)}
+                    surface={surface}
                   />
                 ) : (
-                  <Label text={column.header} variant="body-secondary" />
+                  <Label text={column.header} variant="body-secondary" surface={surface} />
                 )}
               </th>
             );

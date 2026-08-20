@@ -31,12 +31,18 @@ import { Drawer } from '../../components/Drawer';
 import { Tag } from '../../components/primitives/Tag';
 import { Label } from '../../components/primitives/Label';
 import { StatValue } from '../../components/primitives/StatValue';
+import { Input } from '../../components/primitives/Input';
+import { Slider } from '../../components/primitives/Slider';
+import { DeckSlide } from '../../components/DeckSlide';
+import { DataTable } from '../../components/DataTable';
+import type { DataTableColumn } from '../../components/DataTable';
 import type { PostureSegment } from '../../engine/plan';
 import App from '../../App';
 import { Roadmap } from '../../screens/Roadmap';
 import { OnSideOverview } from '../../screens/OnSideOverview';
 import { InvestmentDesign } from '../../screens/InvestmentDesign';
 import { Reporting } from '../../screens/Reporting';
+import { StudioAsk } from '../../screens/StudioAsk';
 import { Cases } from '../../screens/Cases';
 import { SettingsToggles } from '../../screens/SettingsToggles';
 import { SettingsAbout } from '../../screens/SettingsAbout';
@@ -238,6 +244,93 @@ describe('CLASS SWEEP — Label (P3) / StatValue (P11) primitive, surface prop (
   });
 });
 
+/**
+ * A14-RESIDUAL WAVE (this dispatch): the prior lane's STOP items disclosed
+ * four C1-class residual sites its own allowlist excluded — Input (P6),
+ * Slider (P7), DeckSlide (composite C19), and DataTable's (C6) header-cell
+ * Labels. Each primitive/composite below gains the identical `surface`
+ * prop shape A14 established for Label/StatValue (`'page'` default,
+ * byte-identical / `'panel'`, `--chart-axis`) — mirrored, not reinvented.
+ */
+describe('CLASS SWEEP — Input (P6) primitive, surface prop (A14-residual wave)', () => {
+  it('surface="page" (default) is byte-identical to pre-fix behavior: var(--ink2), regardless of ancestor', () => {
+    const { container } = render(
+      <div style={{ background: 'var(--panel)' }}>
+        <Input label="default surface" value="" onChange={() => {}} />
+      </div>,
+    );
+    expect(screen.getByText('default surface').style.color).toBe('var(--ink2)');
+    expect(findPanelSeatedInk2(container)).toHaveLength(1); // proves the primitive itself does NOT self-remediate
+  });
+
+  it('surface="panel" resolves the visible label color to var(--chart-axis)', () => {
+    render(<Input label="panel surface" value="" onChange={() => {}} surface="panel" />);
+    expect(screen.getByText('panel surface').style.color).toBe('var(--chart-axis)');
+  });
+
+  it('hideLabel (sr-only) path is unaffected by surface (no visual color to regress)', () => {
+    render(<Input label="hidden label" hideLabel value="" onChange={() => {}} surface="panel" />);
+    // sr-only recipe has no `color` declaration at all — confirm it stays that way.
+    expect(screen.getByText('hidden label').style.color).toBe('');
+  });
+});
+
+describe('CLASS SWEEP — Slider (P7) primitive, surface prop (A14-residual wave)', () => {
+  it('surface="page" (default) is byte-identical: the label row stays var(--ink2), regardless of ancestor', () => {
+    const { container } = render(
+      <div style={{ background: 'var(--panel)' }}>
+        <Slider min={0} max={10} value={5} label="default surface" onChange={() => {}} />
+      </div>,
+    );
+    const labelRow = screen.getByText('default surface').parentElement;
+    expect(labelRow?.style.color).toBe('var(--ink2)');
+    expect(findPanelSeatedInk2(container)).toHaveLength(1); // proves the primitive itself does NOT self-remediate
+  });
+
+  it('surface="panel" resolves the label row color to var(--chart-axis)', () => {
+    render(<Slider min={0} max={10} value={5} label="panel surface" onChange={() => {}} surface="panel" />);
+    expect(screen.getByText('panel surface').parentElement?.style.color).toBe('var(--chart-axis)');
+  });
+});
+
+describe('CLASS SWEEP — DeckSlide (composite C19) primitive, surface prop (A14-residual wave)', () => {
+  it('surface="page" (default): eyebrow Label AND the previously-unrouted body paragraph both stay var(--ink2)', () => {
+    render(<DeckSlide kind="generic" heading="Heading" eyebrow="EYEBROW TEXT" body={['Body paragraph text.']} />);
+    expect(screen.getByText('EYEBROW TEXT').style.color).toBe('var(--ink2)');
+    expect(screen.getByText('Body paragraph text.').style.color).toBe('var(--ink2)');
+  });
+
+  it('surface="panel": both the eyebrow Label and the body paragraph resolve to var(--chart-axis)', () => {
+    render(<DeckSlide kind="generic" heading="Heading" eyebrow="EYEBROW TEXT" body={['Body paragraph text.']} surface="panel" />);
+    expect(screen.getByText('EYEBROW TEXT').style.color).toBe('var(--chart-axis)');
+    expect(screen.getByText('Body paragraph text.').style.color).toBe('var(--chart-axis)');
+  });
+});
+
+describe('CLASS SWEEP — DataTable (C6) header-cell Labels, surface prop (A14-residual wave)', () => {
+  interface Row {
+    id: string;
+    name: string;
+  }
+  const columns: DataTableColumn<Row>[] = [
+    { id: 'name', header: 'Name', sortable: true, sortValue: (row) => row.name, render: (row) => <span>{row.name}</span> },
+    { id: 'note', header: 'Note', render: () => <span>—</span> },
+  ];
+  const rows: Row[] = [{ id: '1', name: 'Alpha' }];
+
+  it('surface="page" (default): the sortable (SortHeaderButton) AND non-sortable header Labels both stay var(--ink2)', () => {
+    render(<DataTable caption="Test table" columns={columns} rows={rows} getRowId={(row) => row.id} />);
+    expect(screen.getByText('Name').style.color).toBe('var(--ink2)');
+    expect(screen.getByText('Note').style.color).toBe('var(--ink2)');
+  });
+
+  it('surface="panel": both header Labels resolve to var(--chart-axis)', () => {
+    render(<DataTable caption="Test table" columns={columns} rows={rows} getRowId={(row) => row.id} surface="panel" />);
+    expect(screen.getByText('Name').style.color).toBe('var(--chart-axis)');
+    expect(screen.getByText('Note').style.color).toBe('var(--chart-axis)');
+  });
+});
+
 describe('CLASS SWEEP — StatCard (C1) unconditional panel wiring', () => {
   it('loaded, non-interactive: Label + StatValue never carry var(--ink2)', () => {
     const { container } = render(<StatCard label="Expected 3-year ROI" value="4.2x" />);
@@ -287,7 +380,7 @@ describe('CLASS SWEEP — OnSideOverview screen (DomainPostureCard, CARD_STYLE) 
     expectNoPanelSeatedInk2(container, 'OnSideOverview (posture grid)');
   });
 
-  it('an expanded DomainsAccordion row: its own "Target · N · band" Label is fixed; the disclosed residual is DataTable\'s (C6) header-cell Label, which inherits page/panel seating from whatever ancestor a consuming screen nests it in — panel-seated here (the accordion row\'s own cardStyle), page-seated at every OTHER DataTable consumer traced for this dispatch (OnSideDocuments/OnSideFeed/OnSideOwnership/Cases/RegulatoryFeed*) — STOP item, no ratified fix (DataTable has no surface-aware prop, and unconditionally setting its header to surface="panel" would violate Camille\'s ruling for its page-seated majority)', async () => {
+  it('an expanded DomainsAccordion row: its own "Target · N · band" Label is fixed; the disclosed residual is DataTable\'s (C6) header-cell Label — the MECHANISM is now built (DataTable gains the same `surface` prop A14 established, see the "DataTable (C6) header-cell Labels" CLASS SWEEP above), but WIRING `surface="panel"` at this call site requires editing `views/DomainsAccordion.tsx`, which is outside this dispatch\'s ALLOWLIST (components/** [primitives + DataTable + DeckSlide] + BoardLogForm.tsx + ShowTheWorkingPanel.tsx + __tests__/** only) — STOP item, disclosed not silently dropped. DataTable is panel-seated here (the accordion row\'s own cardStyle) and, separately, at every DataTable inside ReportView.tsx\'s shared reporting Drawer (see the "ReportView (Investment Plan report...)" CLASS SWEEP below); it stays page-seated at every OTHER traced consumer (OnSideDocuments/OnSideFeed/OnSideOwnership/Cases/StudioAsk/HomePanels/RegulatoryFeed*), which is exactly why DataTable.tsx\'s default stays `surface="page"` (byte-identical, no regression) rather than hardcoding `"panel"` unconditionally', async () => {
     const user = userEvent.setup();
     render(<OnSideOverview onNavigate={() => {}} />);
     const firstDomain = DOMAINS[0]!;
@@ -308,22 +401,40 @@ describe('CLASS SWEEP — OnSideOverview screen (DomainPostureCard, CARD_STYLE) 
   });
 });
 
+describe('CLASS SWEEP — ReportView (Investment Plan report), DataTable header cells inside the shared Drawer (var(--panel) root)', () => {
+  it('SortHeaderButton ("Play") + non-sortable ("Category") header Labels remain the disclosed DataTable residual — mechanism built, wiring blocked by this dispatch\'s ALLOWLIST (views/ReportView.tsx is not in it)', () => {
+    render(<Reporting onNavigate={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: /Investment Plan/ }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    // Multiple DataTables share the "Play" (sortable) / "Category"
+    // (non-sortable) column shape (Funded/Ready/Gated sections) — every
+    // instance is checked, not just the first.
+    const playHeaders = screen.getAllByText('Play');
+    expect(playHeaders.length).toBeGreaterThan(0);
+    for (const header of playHeaders) expect(header.style.color).toBe('var(--ink2)');
+    const categoryHeaders = screen.getAllByText('Category');
+    expect(categoryHeaders.length).toBeGreaterThan(0);
+    for (const header of categoryHeaders) expect(header.style.color).toBe('var(--ink2)');
+  });
+});
+
 describe('CLASS SWEEP — ShowTheWorkingPanel (Drawer/C7 root is var(--panel))', () => {
-  it('both StatValue captions (ROI, Annual value) are fixed; the panel carries exactly the ONE disclosed residual (Slider/P7 labelRowStyle — STOP item, outside this dispatch\'s ratified Label/StatValue-only fix mechanism, see evidence return)', () => {
-    render(<ShowTheWorkingPanel open onClose={() => {}} baseline={DEFAULT_SLIDERS} />);
+  it('both StatValue captions (ROI, Annual value) AND the Slider (P7) label row are all fixed — Slider now carries the same `surface` prop A14 established, wired here (A14-residual wave closes this site)', () => {
+    const { container } = render(<ShowTheWorkingPanel open onClose={() => {}} baseline={DEFAULT_SLIDERS} />);
     // The fix: neither StatValue caption ("Expected 3-year ROI"/"Annual
     // value" labels, or their unit text) carries var(--ink2) any more.
     expect(screen.getByText('Expected 3-year ROI').style.color).not.toBe('var(--ink2)');
     expect(screen.getByText('Annual value').style.color).not.toBe('var(--ink2)');
-    // The disclosed residual: Slider.tsx's own labelRowStyle (P7, not
-    // ratified for a `surface` prop by either persona ruling) — pinned
-    // here, not silently dropped, so it cannot regress un-noticed and
-    // cannot be mistaken for "closed." (Drawer's own <h2> title carries
-    // the same text, "Adoption / efficacy" — disambiguate by tag: the
-    // Slider's own <label> is the one whose parent row carries the color.)
+    // The fix: Slider.tsx's own labelRowStyle (P7) now resolves via
+    // `surface="panel"`, wired at this call site (ShowTheWorkingPanel.tsx).
+    // (Drawer's own <h2> title carries the same text, "Adoption /
+    // efficacy" — disambiguate by tag: the Slider's own <label> is the one
+    // whose parent row carries the color.)
     const sliderFieldLabel = screen.getAllByText('Adoption / efficacy').find((el) => el.tagName === 'LABEL');
     expect(sliderFieldLabel).toBeDefined();
-    expect(sliderFieldLabel?.parentElement?.style.color).toBe('var(--ink2)');
+    expect(sliderFieldLabel?.parentElement?.style.color).toBe('var(--chart-axis)');
+    // Whole-panel sweep: zero remaining var(--ink2) on var(--panel) anywhere.
+    expectNoPanelSeatedInk2(container, 'ShowTheWorkingPanel');
   });
 });
 
@@ -421,8 +532,8 @@ describe('CLASS SWEEP — ChatIntakeWizard (reviewPanelStyle, PANEL_STYLE)', () 
 });
 
 describe('CLASS SWEEP — BoardLogForm (rendered only inside the shared reporting Drawer, var(--panel) root)', () => {
-  it('the eyebrow header + history-row Labels are fixed; the ONE disclosed residual is Input\'s (P6) own labelStyle ("Expected compliance date" — STOP item, outside this dispatch\'s ratified Label/StatValue-only fix mechanism)', () => {
-    render(
+  it('the eyebrow header + history-row Labels AND Input\'s (P6) own labelStyle ("Expected compliance date") are all fixed — Input now carries the same `surface` prop A14 established, wired here (A14-residual wave closes this site)', () => {
+    const { container } = render(
       <Drawer open title="Log an update · 2026-13" onClose={() => {}}>
         <BoardLogForm
           entries={[{ txt: 'Draft circulated to counsel.', when: 'Aug 15, 2026', who: 'Rachel Fischer', date: 'Sep 1, 2026' }]}
@@ -439,9 +550,23 @@ describe('CLASS SWEEP — BoardLogForm (rendered only inside the shared reportin
     expect(screen.getByText('Board reporting · open item').style.color).not.toBe('var(--ink2)');
     expect(screen.getByText('Logged Aug 15, 2026').style.color).not.toBe('var(--ink2)');
     expect(screen.getByText('Draft circulated to counsel.').style.color).not.toBe('var(--ink2)');
-    // The disclosed residual: Input.tsx's own labelStyle (P6, not ratified
-    // for a `surface` prop) — pinned, not silently dropped.
-    expect(screen.getByText('Expected compliance date').style.color).toBe('var(--ink2)');
+    // The fix: Input.tsx's own labelStyle (P6) now resolves via
+    // `surface="panel"`, wired at this call site (BoardLogForm.tsx).
+    expect(screen.getByText('Expected compliance date').style.color).toBe('var(--chart-axis)');
+    // Whole-form sweep: zero remaining var(--ink2) on var(--panel) anywhere
+    // (the textarea's own hand-authored label already read --chart-axis
+    // pre-dispatch — see BoardLogForm.tsx's TEXTAREA_LABEL_STYLE).
+    expectNoPanelSeatedInk2(container, 'BoardLogForm (inside Drawer)');
+  });
+});
+
+describe('CLASS SWEEP — ChatHero (composite C10), rendered only via StudioAsk\'s CHAT_PANEL_STYLE (spreads PANEL_STYLE — panel-seated, single deterministic call site)', () => {
+  beforeEach(resetDemo);
+
+  it('the "Ask a policy question" Input label is fixed — ChatHero hardcodes surface="panel" on its own Input call, same precedent as SliderControlRow\'s stanceBoxStyle Label (always-panel-seated composite, no threading needed)', () => {
+    render(<StudioAsk onNavigate={() => {}} />);
+    expect(screen.getByText('Ask a policy question').style.color).toBe('var(--chart-axis)');
+    expect(screen.getByText('Ask a policy question').style.color).not.toBe('var(--ink2)');
   });
 });
 
@@ -479,7 +604,7 @@ describe('CLASS SWEEP — SliderControlRow ("Your stance" eyebrow, stanceBoxStyl
 });
 
 describe('CLASS SWEEP — ReportView (rendered only inside Reporting\'s shared Drawer, var(--panel) root)', () => {
-  it('the chrome eyebrows + TableSection heading + appendix eyebrow Labels are fixed; the ONE disclosed residual is DeckSlide\'s (composite, reused both page-seated on the real Board Deck screen and panel-seated here) own hardcoded body-paragraph color — STOP item, outside this dispatch\'s ratified Label/StatValue-only fix mechanism', () => {
+  it('the chrome eyebrows + TableSection heading + appendix eyebrow Labels are fixed; the disclosed residual is DeckSlide\'s (composite, reused both page-seated on the real Board Deck screen and panel-seated here) own body-paragraph + eyebrow color — the MECHANISM is now built (DeckSlide gains the same `surface` prop A14 established, fixing BOTH defects at once — see the "DeckSlide (composite C19)" CLASS SWEEP above), but WIRING `surface="panel"` at this reuse site requires editing `views/ReportView.tsx` (its `boardDeckSlides()` slide data), which is outside this dispatch\'s ALLOWLIST — STOP item, disclosed not silently dropped', () => {
     render(<Reporting onNavigate={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: /Board Pack/ }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -487,14 +612,11 @@ describe('CLASS SWEEP — ReportView (rendered only inside Reporting\'s shared D
     // longer carry var(--ink2).
     expect(screen.getByText('LEAPFI · Reporting · generated from the live record').style.color).not.toBe('var(--ink2)');
     expect(screen.getByText('The appendix · the one-page read behind the deck').style.color).not.toBe('var(--ink2)');
-    // The disclosed residual: DeckSlide.tsx's own body-paragraph style
-    // (hardcoded var(--ink2), never routed through Label) — pinned, not
-    // silently dropped. DeckSlide's own `eyebrow` prop DOES route through
-    // Label, and inherits the SAME seating ambiguity (page-seated on the
-    // real Board Deck screen, panel-seated here) that Camille's ruling
-    // flags for Label generally — also left as `surface="page"` (default)
-    // pending design authority, so it is a SECOND residual on the same
-    // composite, not double-counted here as a different site.
+    // The disclosed residual: DeckSlide.tsx's body-paragraph and eyebrow
+    // both still resolve to var(--ink2) here — ReportView.tsx never passes
+    // `surface="panel"` (it is outside this dispatch's ALLOWLIST), so
+    // DeckSlide's own default (`surface="page"`, byte-identical to
+    // pre-fix behavior) applies. Pinned, not silently dropped.
     const bodyParagraph = screen.getByText(/Prepared for the Board Risk Committee/);
     expect(bodyParagraph.style.color).toBe('var(--ink2)');
     const eyebrow = screen.getByText('LEAPFI PLATFORM · BOARD REVIEW · AUG 2026');

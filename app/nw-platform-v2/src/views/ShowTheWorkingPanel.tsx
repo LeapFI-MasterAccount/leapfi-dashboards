@@ -78,6 +78,10 @@ export function ShowTheWorkingPanel({ open, onClose, baseline }: ShowTheWorkingP
 
   return (
     <Drawer open={open} onClose={onClose} title={ADOPTION_LABEL} size="wide">
+      {/* A14-residual wave: Slider (P7) now carries the same `surface`
+          prop A14 established for Label/StatValue — rendered inside the
+          Drawer (C7) body, whose root background is var(--panel) —
+          panel-seated (see the StatValue calls below, already wired). */}
       <Slider
         min={ADOPTION_MIN}
         max={ADOPTION_MAX}
@@ -86,6 +90,7 @@ export function ShowTheWorkingPanel({ open, onClose, baseline }: ShowTheWorkingP
         label={ADOPTION_LABEL}
         valueText={`${eff}%`}
         onChange={setEff}
+        surface="panel"
       />
       {/* A14 (design_system_spec.md §2.7): rendered inside the Drawer (C7)
           body, whose root background is var(--panel) — panel-seated. */}

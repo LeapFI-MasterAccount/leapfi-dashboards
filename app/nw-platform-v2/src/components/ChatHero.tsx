@@ -183,6 +183,14 @@ export function ChatHero({ counters, messages, suggestions, inputValue, onInputC
 
       <div style={askRowStyle}>
         <div style={{ flex: 1 }}>
+          {/* A14-residual wave: Input (P6) now carries the same `surface`
+              prop A14 established for Label/StatValue. ChatHero has
+              exactly one real call site (StudioAsk.tsx), whose
+              CHAT_PANEL_STYLE spreads PANEL_STYLE — always panel-seated,
+              so this is hardcoded here (same precedent as
+              SliderControlRow.tsx's `stanceBoxStyle` Label / StatCard's
+              own unconditional wiring), not threaded as a prop this
+              composite doesn't otherwise need. */}
           <Input
             label="Ask a policy question"
             value={inputValue}
@@ -190,6 +198,7 @@ export function ChatHero({ counters, messages, suggestions, inputValue, onInputC
             onChange={onInputChange}
             onSubmit={handleAsk}
             disabled={state === 'submitting'}
+            surface="panel"
           />
         </div>
         <Button label="Ask" variant="primary" onPress={handleAsk} loading={state === 'submitting'} disabled={inputValue.trim().length === 0} />
