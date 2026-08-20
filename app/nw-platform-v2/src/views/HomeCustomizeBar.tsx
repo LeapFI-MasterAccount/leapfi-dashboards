@@ -1,8 +1,13 @@
 /**
  * HomeCustomizeBar — view (parity_ia_addendum.md §1.7 "Home customization",
- * Batch 7), composed below `Home.tsx`'s existing, untouched StatCard row +
- * "Start the demo" primary CTA by a future wiring dispatch — see "WIRING
- * RECIPE" below (`Home.tsx` is outside this dispatch's ALLOWLIST).
+ * Batch 7). PI2-D40 (user directive 2026-08-20) reseats this bar's
+ * placement in `Home.tsx`: no longer composed below the StatCard row +
+ * primary CTA (that row is removed entirely, and the CTA keeps its own
+ * unrelated slot) — it now renders in the page's top-right utility corner,
+ * sharing a header row with the page title, compact. This file's own
+ * disclosure/trigger/panel shape and the D22 commit contract below are
+ * UNCHANGED by that move; see `Home.tsx`'s file header "HOME CUSTOMIZATION"
+ * for the current wiring and placement.
  *
  * Ports `toggleHomeCust`/`renderCustBar`/`homePanelToggle`/
  * `homePanelsClear`/`homePanelsReset`/`homeOrder` (leapfi-platform.html
@@ -40,13 +45,16 @@
  * would resolve against the full content-column width instead, silently
  * recreating the tower defect on a different axis.
  *
- * "kpis" (`HP`'s first entry, "Top metrics") IS `Home.tsx`'s existing,
- * byte-identical StatCard row — the hard constraint this whole batch is
- * built under ("never touch that existing top-of-page region... demo-flow
- * primacy") rules out ever hiding or reordering it, so it is deliberately
- * excluded from `HOME_PANEL_DEFS`/every toggle/Chip below. This file only
- * ever manages the 5 keys this dispatch actually owns: posture, legis,
- * invest, queue, qa.
+ * "kpis" (`HP`'s first entry, "Top metrics") was `Home.tsx`'s former
+ * StatCard row — PI2-D40 removes that row from Home entirely, so there is
+ * no longer any Home-side render "kpis" could ever have toggled even if it
+ * were included. This file continues to exclude "kpis" from
+ * `HOME_PANEL_DEFS`/every toggle/Chip below regardless: it never had a
+ * customization surface of its own in this file (the removed StatCard row
+ * was not one of this file's 5 managed panels before D40 either), and this
+ * dispatch's ALLOWLIST scopes only the presentation/placement move, not
+ * this component's managed-key set. This file only ever manages the 5 keys
+ * it has always owned: posture, legis, invest, queue, qa.
  *
  * STATE OWNERSHIP / A DEFECT AVOIDED (STOP-item, flagged rather than
  * propagated): `data/misc.ts` exports `HOME_ORDER: Record<string,
@@ -76,15 +84,14 @@
  * force a render" shape `screens/Cases.tsx`'s `performAction`/`renderTick`
  * already establishes for the same category of cross-screen shared state.
  *
- * WIRING RECIPE for the future `Home.tsx` dispatch
- * (parity_ia_addendum.md Batch 7's own wiring note: "Home.tsx composes the
- * new bar + panels below its existing, untouched StatCard row and primary
- * CTA" — follow-up integration work, outside every batch's file allowlist
- * per the addendum's own stated convention, not a gap in this file):
+ * WIRING RECIPE (as landed in `Home.tsx`; PI2-D40 moved only the JSX
+ * position of the `<HomeCustomizeBar>` element into a header row beside the
+ * page title — the state shape and prop wiring below are unchanged):
  *
  *   const [visibleKeys, setVisibleKeys] = useState(() => resolveVisibleKeys(currentUser.roleKey));
- *   // ...unchanged StatCard row / "Start the demo" Button block above...
+ *   // ...page-title header row, HomeCustomizeBar seated top-right...
  *   <HomeCustomizeBar roleKey={currentUser.roleKey} roleFirstName={currentUser.first} visibleKeys={visibleKeys} onChange={setVisibleKeys} />
+ *   // ...primary CTA row...
  *   <HomePanels visibleKeys={visibleKeys} roleKey={currentUser.roleKey} onNavigate={onNavigate} onOpenCase={onOpenCase} />
  *
  * `visibleKeys` is intentionally lifted to the integrating screen (owned by

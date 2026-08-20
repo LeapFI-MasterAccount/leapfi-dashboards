@@ -2,8 +2,11 @@
  * HomePanels — view (parity_ia_addendum.md §1.7 "Home customization",
  * Batch 7): the 5 gated panels — Risk posture, Strategic signal,
  * Investment and return, Your queue, Quick actions — composed below
- * `Home.tsx`'s StatCard row (wired: `Home.tsx` renders this component per
- * `HomeCustomizeBar.tsx`'s "WIRING RECIPE").
+ * `Home.tsx`'s primary CTA row (wired: `Home.tsx` renders this component
+ * per `HomeCustomizeBar.tsx`'s "WIRING RECIPE"). PI2-D40 (user directive
+ * 2026-08-20) removed Home's former StatCard row entirely — this file's
+ * own panels (including their own, unrelated `StatCard` instances further
+ * down, e.g. the Investment-and-return panel) are unaffected.
  *
  * Ports the non-`kpis` sections of `renderHome()` (leapfi-platform.html
  * 4197-4285) as five independently-gated `<section>`s, rendered in

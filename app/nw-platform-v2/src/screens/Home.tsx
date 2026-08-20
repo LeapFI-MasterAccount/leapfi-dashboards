@@ -3,11 +3,25 @@
  * fed by demo_script_draft.md Step 1 ("Day one") and its G1/G11 gap-register
  * entries.
  *
- * Region map (§5.1): Topbar (shell) → page title → StatCard row (C1, 2
- * cards: the freed-capacity figure and the FTE figure — survey_map.md
- * 4197–4296) → utility corner (optional "Customize tiles" ghost Button,
- * conditional) → primary CTA. Components used per spec: Topbar (C4),
- * Sidebar (C3), StatCard (C1), Button (P2).
+ * PI2-D40 (user directive 2026-08-20 — supersedes this header's prior
+ * region map and the W2/addendum placement note below): (1) the static
+ * "Home" h1 is now a randomized greeting (see `HOME_GREETINGS`) + the
+ * active persona's first name; (2) the two base-anchored KPI StatCards
+ * ("Cost capacity already freed" $540,000/yr, "Capacity freed" 3.5 FTE —
+ * survey_map.md 4197–4296, G11's label requirement) are REMOVED entirely —
+ * the page's purpose is the user configuring the KPIs/flash updates they
+ * want to see, not two fixed figures; (3) `HomeCustomizeBar` moves into the
+ * top-right utility corner (§5.1's originally-named placement), sharing a
+ * header row with the page title, compact — no longer the block stacked
+ * below the CTA row that the W2/addendum note below describes. The D22
+ * customization contract (lifted `panelState`, per-role show/hide +
+ * reorder over `HOME_ORDER`'s visible sequence) is UNCHANGED; only
+ * presentation/placement moved.
+ *
+ * Region map (§5.1, pre-D40, retained for CTA/component sourcing):
+ * Topbar (shell) → page title → utility corner (Customize, now always
+ * present here per D40) → primary CTA. Components used per spec: Topbar
+ * (C4), Sidebar (C3), Button (P2).
  *
  * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
  * design_system_spec.md §3.0): both composites now mount exactly once, in
@@ -20,20 +34,18 @@
  *
  * HOME CUSTOMIZATION (W2, parity_ia_addendum.md §1.7 + Batch 7 line 403 —
  * resolves this header's original "STOP-item if a future dispatch surfaces
- * real customization data"): that dispatch is this one. `HomeCustomizeBar`
- * + `HomePanels` (both already landed, previously unwired) are composed
- * below the existing CTA row, following `HomeCustomizeBar.tsx`'s own
+ * real customization data"): `HomeCustomizeBar` + `HomePanels` (both
+ * already landed) are composed following `HomeCustomizeBar.tsx`'s own
  * documented WIRING RECIPE verbatim: `visibleKeys` is lifted here (one
  * piece of state, two consumers — bar toggles and panel render set can
- * never drift). Placement is the addendum §1.7's own instruction ("**below**
- * the existing, unchanged StatCard row + 'Start the demo' primary CTA, see
- * §4 primacy audit" — quoted as written pre-D18; the CTA slot itself now
- * carries the D18 label/action, see "D18 — PRIMARY CTA" below) — NOT
- * §5.1's "utility corner": the StatCard row and CTA slot position/weight
- * are unchanged from the pre-W2 file, the customize trigger
- * is a ghost Button, and every panel surface is secondary (DataTable/
- * StatCard/SetupCard), so the primary CTA — now "Open today's regulatory
- * feed" (D18, see below) — remains the single obvious primary action (R3).
+ * never drift). Placement (PI2-D40, superseding the addendum §1.7 "below
+ * the StatCard row + CTA" instruction quoted in this header's prior
+ * revision): the bar now sits in §5.1's own originally-named "utility
+ * corner", sharing a header row with the page title, compact — a SETTING,
+ * not a peer of the primary CTA. `HomePanels` (the secondary
+ * DataTable/StatCard/SetupCard surfaces) still renders below the CTA row,
+ * so the primary CTA — "Open today's regulatory feed" (D18, see below) —
+ * remains the single obvious primary action (R3).
  *
  * AMBIGUITY RESOLVED / STOP-item — persona props: the WIRING RECIPE needs
  * the active persona's `roleKey`/`first`, which this screen has never
@@ -60,14 +72,13 @@
  * prop-shape symmetry"); forwarding a handler this screen would also have
  * to invent a prop for would widen this screen's API for a no-op.
  *
- * G11 label requirement (§5.1, cross-referenced from §5.7): "both the Home
- * StatCard ('cost capacity already freed') and the deck's economics
- * DeckSlide ('value at adoption') carry explicit measure labels... this is
- * a Label (P3) addition on each StatValue (P11), not a new component." The
- * first StatCard's `label` prop below is set to the exact phrase G11 names
- * ("Cost capacity already freed") so this figure can never render next to
- * the deck's differently-measured $4.5M/yr figure and read as a
- * contradiction to a numerate board member.
+ * G11 label requirement (§5.1, cross-referenced from §5.7) SUPERSEDED by
+ * PI2-D40: it required an explicit measure label on the Home StatCard
+ * ("cost capacity already freed") so it could never be misread against the
+ * deck's differently-measured $4.5M/yr figure. PI2-D40 removes that
+ * StatCard from Home entirely, so the label-collision it guarded against
+ * no longer has a Home-side render to occur on; the deck's own DeckSlide
+ * label is unaffected (out of this screen).
  *
  * D18 — PRIMARY CTA (presenter_entry_redesign.md §1; supersedes the
  * design_system_spec.md §5.1/§6 "Start the demo" reading and closes §10
@@ -122,7 +133,6 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { DeepLinkScreenProps } from '../App';
 import type { SidebarProps } from '../components/Sidebar';
-import { StatCard } from '../components/StatCard';
 import { Button } from '../components/primitives/Button';
 import { HomeCustomizeBar, resolveVisibleKeys } from '../views/HomeCustomizeBar';
 import type { HomePanelKey } from '../views/HomeCustomizeBar';
@@ -154,15 +164,28 @@ const TITLE_STYLE: CSSProperties = {
   color: 'var(--ink)',
 };
 
-const STAT_ROW_STYLE: CSSProperties = {
+// PI2-D40: header row seats the page title and the (now top-right,
+// compact) HomeCustomizeBar side by side — the "utility corner" §5.1
+// originally named. `alignItems: 'flex-start'` keeps the trigger pinned to
+// the title's top line rather than centering against the disclosure panel
+// height once open.
+const HEADER_ROW_STYLE: CSSProperties = {
   display: 'flex',
-  flexWrap: 'wrap',
+  alignItems: 'flex-start',
+  justifyContent: 'space-between',
   gap: '1rem',
 };
 
 const CTA_ROW_STYLE: CSSProperties = {
   display: 'flex',
 };
+
+// PI2-D40: the greeting set the page-title heading is drawn from — one
+// entry is picked at random per mount so the heading varies across visits
+// (and across a persona switch's remount) rather than reading a single
+// fixed literal. Tests assert membership in this set + the active
+// persona's first name, never one hardcoded greeting.
+export const HOME_GREETINGS = ['Good morning', 'Good afternoon', 'Good evening', 'Welcome back'] as const;
 
 export interface HomeProps extends DeepLinkScreenProps {
   /** Navigation hook for this screen's own in-content links (the primary CTA, HomePanels' go-links) — unrelated to Sidebar, which this screen no longer renders (App.tsx's Shell owns it; see file header). */
@@ -190,17 +213,25 @@ export function Home({ onNavigate, roleKey = CURRENT.roleKey, roleFirstName = CU
   if (panelState.roleKey !== roleKey) {
     setPanelState({ roleKey, visibleKeys: resolveVisibleKeys(roleKey) });
   }
+  // PI2-D40: one greeting picked per mount (see HOME_GREETINGS) — a fresh
+  // mount (initial boot, persona switch remount, or nav away/back) can
+  // land on a different greeting; never a single fixed literal.
+  const [greeting] = useState(() => HOME_GREETINGS[Math.floor(Math.random() * HOME_GREETINGS.length)]);
   return (
     <main id="home-main" style={MAIN_STYLE} aria-labelledby="home-page-title">
-      <h1 id="home-page-title" style={TITLE_STYLE}>
-        Home
-      </h1>
-      <div style={STAT_ROW_STYLE}>
-        {/* survey_map.md 4197–4296: "$540,000/yr freed". G11: label carries
-            the exact "cost capacity already freed" measure distinction. */}
-        <StatCard label="Cost capacity already freed" value="$540,000" unit="/yr" />
-        {/* survey_map.md 4197–4296: "3.5 FTE". */}
-        <StatCard label="Capacity freed" value="3.5" unit="FTE" />
+      {/* PI2-D40: header row — page title + HomeCustomizeBar seated in the
+          top-right utility corner, compact (§5.1's originally-named
+          placement; see file header "HOME CUSTOMIZATION"). */}
+      <div style={HEADER_ROW_STYLE}>
+        <h1 id="home-page-title" style={TITLE_STYLE}>
+          {greeting}, {roleFirstName}
+        </h1>
+        <HomeCustomizeBar
+          roleKey={roleKey}
+          roleFirstName={roleFirstName}
+          visibleKeys={panelState.visibleKeys}
+          onChange={(nextVisibleKeys) => setPanelState({ roleKey, visibleKeys: nextVisibleKeys })}
+        />
       </div>
       <div style={CTA_ROW_STYLE}>
         {/* D18 (presenter_entry_redesign.md §1): product-native primary
@@ -208,15 +239,6 @@ export function Home({ onNavigate, roleKey = CURRENT.roleKey, roleFirstName = CU
             destination is script step 2's own `do` action. */}
         <Button variant="primary" label="Open today's regulatory feed" onPress={() => onNavigate('onside.feed')} />
       </div>
-      {/* W2 (addendum §1.7 / Batch 7): customization surfaces, strictly
-          below the unchanged StatCard row + primary CTA — see file
-          header "HOME CUSTOMIZATION." */}
-      <HomeCustomizeBar
-        roleKey={roleKey}
-        roleFirstName={roleFirstName}
-        visibleKeys={panelState.visibleKeys}
-        onChange={(nextVisibleKeys) => setPanelState({ roleKey, visibleKeys: nextVisibleKeys })}
-      />
       <HomePanels
         visibleKeys={panelState.visibleKeys}
         currentRoleKey={roleKey}
