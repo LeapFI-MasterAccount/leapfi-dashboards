@@ -200,6 +200,205 @@ export const CLOCK: { t: ClockTick[]; i: number; next: () => string } = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// PI2-D2 case-type union widening (PI2-D44 front-load; lane-1: data-case-
+// -union-origin-resolution). `seedCases()` below is UNCHANGED (its
+// drafted-redline-only gate, `if (!d || !d.redline) return;`, stays
+// verbatim per r17b_case_boundary.md's "gate preserved" AC) — the two legs
+// below are additive exports, never routed through `seedCases()`/`CASES`.
+// Data only: no rendering, no import of views/CaseDetail.tsx or
+// screens/Cases.tsx.
+
+/**
+ * Human-contributed-edit leg (PI2-D2 leg (c); design_system_spec.md
+ * §2.10.1, amendment A17). This leg is deliberately the SAME `Case` shape
+ * as the drafted-redline leg above — A17's own reuse-rationale states "no
+ * new primitive, composite, screen, or field" is introduced for it,
+ * because `CaseDetail.tsx`'s `renderActions()` is already a pure function
+ * of `caseItem.stage` with no branch on where the language originated.
+ * What distinguishes this leg is purely the SEED: it enters at `'cro'`,
+ * never `'analyst'` (§2.10.1 rule 1 — there is no OnSide draft to accept,
+ * edit-in-place, or revert to), and its first history entry names the
+ * human author instead of `'OnSide'` (§2.10.1 rule 4). `edited` is always
+ * `false` for this leg (not applicable — nothing was edited FROM an
+ * OnSide draft) and `base === lang` (no prior OnSide text to diff
+ * against, per rule 3's "absent, not disabled" discipline extended to the
+ * data layer).
+ */
+export interface HumanContributedEditSeed {
+  id: string;
+  doc: string;
+  title: string;
+  dom: string;
+  owner: string;
+  detected: string;
+  /** Any stage from `'cro'` onward (`CASE_STAGES`/`CASE_STAGES_B`); never `'analyst'` — enforced below. */
+  stage: string;
+  /** The human author's display name — becomes `history[0].who`. */
+  author: string;
+  /** The human author's role at authoring time — becomes `history[0].role`, and names the role in `history[0].what`. */
+  authorRole: string;
+  /** The rationale the author supplied at authoring time — becomes `history[0].note`. */
+  note: string;
+  /** The author's own submitted language — becomes both `base` and `lang` (no OnSide draft exists to diff against). */
+  lang: string;
+  tier?: string;
+  cond?: string | null;
+  condMet?: boolean;
+  minutes?: string | null;
+  opinion?: string | null;
+}
+
+/**
+ * Builds a human-contributed-edit `Case` fixture per §2.10.1 (amendment
+ * A17). Throws if `seed.stage === 'analyst'` — that stage exists only to
+ * let a human accept/edit/revert an OnSide draft, which this leg never
+ * has (rule 1); the throw makes the "never `'analyst'`" invariant a
+ * data-layer guarantee, not only a documentation claim (AC-A17-1's
+ * grep-verified requirement, enforced here at runtime too).
+ */
+export function buildHumanContributedEditCase(seed: HumanContributedEditSeed): Case {
+  if (seed.stage === 'analyst') {
+    throw new Error(
+      "buildHumanContributedEditCase: stage must never be 'analyst' — a human-contributed-edit case has no OnSide draft to accept/edit/revert (design_system_spec.md §2.10.1 amendment A17, rule 1)."
+    );
+  }
+  return {
+    id: seed.id,
+    doc: seed.doc,
+    title: seed.title,
+    dom: seed.dom,
+    owner: seed.owner,
+    detected: seed.detected,
+    // No OnSide-detected trigger exists for this leg (§2.10.1 rule 5 —
+    // "no originating regulatory signal to resolve"); this leg's origin
+    // renders via `resolveOriginSignal(caseItem.doc)`
+    // (data/originSignal.ts), which returns its unresolved result for a
+    // doc id no SIGNAL entry touches. `trigger` is carried only for
+    // back-compat with `Case`'s existing shape and kept equal to the same
+    // rationale text as `history[0].note`, never left fabricated.
+    trigger: seed.note,
+    stage: seed.stage,
+    edited: false,
+    tier: seed.tier ?? CASE_TIER[seed.doc] ?? 'exec',
+    cond: seed.cond ?? null,
+    condMet: seed.condMet ?? false,
+    minutes: seed.minutes ?? null,
+    opinion: seed.opinion ?? null,
+    base: seed.lang,
+    lang: seed.lang,
+    history: [
+      {
+        when: stamp(),
+        who: seed.author,
+        role: seed.authorRole,
+        what: `Language drafted directly by the ${seed.authorRole}`,
+        note: seed.note,
+      },
+    ],
+  };
+}
+
+/**
+ * A ready-made human-contributed-edit fixture (Lane 2's tests,
+ * AC-A17-1..4): seeded at `'cro'`, doc `'rege-proc'` (Regulation E Error
+ * Resolution Procedure) — deliberately a document id no `SIGNAL` entry's
+ * `touch` list carries (`data/originSignal.ts`), exercising
+ * AC-r02-2's/§2.10.1 item 5's unresolvable-origin empty state. Author
+ * role `'cro'` at stage `'cro'` deliberately exercises the sanctioned
+ * self-review simplification §2.10.1 rule 6 (OQ-9) flags, not an
+ * oversight.
+ */
+export const HUMAN_CONTRIBUTED_EDIT_CASE_FIXTURE: Case = buildHumanContributedEditCase({
+  id: 'CASE-2026-101',
+  doc: 'rege-proc',
+  title: 'Regulation E Error Resolution Procedure',
+  dom: 'consumer',
+  owner: 'M. Okafor · CCO',
+  detected: 'Aug 15, 2026',
+  stage: 'cro',
+  author: 'M. Okafor',
+  authorRole: 'cro',
+  note: 'Provisional-credit timing tightened to the 10-business-day standard directly, ahead of the scheduled OnSide sweep.',
+  lang: 'Provisional credit is extended no later than the 10th business day following notice of a claimed error, consistent with Regulation E §1005.11(c)(2).',
+  tier: CASE_TIER['rege-proc'] ?? 'proc',
+});
+
+/**
+ * Deadline-driven case (PI2-D2 leg (b): comment positions, expiries).
+ * Carries `track`/`complete` actions, never adopt/reject — there is no
+ * drafted redline language to approve (`r02_one_case_page.md`
+ * §"PI2-D2 scope rework"). This leg's rendering/action-set anatomy is
+ * explicitly OUT OF SCOPE for the A17-A19 spec pass
+ * (design_system_spec.md §2.10 preamble: "its anatomy is not asked for by
+ * this pass and is not built anywhere yet, so there is nothing to cite
+ * beyond the two verb names"). The fields below (`deadline`, `status`)
+ * are this lane's minimal data-layer implementation for a seedable
+ * fixture — no acceptance criterion found in scope specifies them beyond
+ * the two verb names; flagged in the dispatch return as a
+ * minimal-necessary implementation choice, not a design ruling.
+ * Deliberately NOT `Case`-shaped (no `stage`/`tier`/`cond`/`base`/`lang`
+ * — none of the drafted-redline stage machine applies to this leg) —
+ * r17b_case_boundary.md's "Signal ... Case ... remain separate types
+ * with no field merge" discipline applied to the case-type boundary
+ * itself: a new, distinct type, never a `Case` extension.
+ */
+export interface DeadlineDrivenCase {
+  kind: 'deadline-driven';
+  id: string;
+  /** Document id this deadline pertains to, resolvable via
+   * `resolveOriginSignal` (data/originSignal.ts) exactly like a
+   * drafted-redline case's `doc` — every case type has an origin
+   * (`r02_one_case_page.md`: "not only the ones an examiner asks
+   * about"). */
+  doc: string;
+  title: string;
+  dom: string;
+  owner: string;
+  detected: string;
+  deadline: string;
+  status: 'tracking' | 'completed';
+  history: CaseHistoryEntry[];
+}
+
+/**
+ * A ready-made deadline-driven fixture (Lane 2's tests): tracks RFI
+ * 2026-04's comment-position deadline (`SIGNAL[0]`, `data/misc.ts` —
+ * "position due Sep 30"), against the same `'gov-charter'` document a
+ * drafted-redline case (CASE-2026-007) already tracks for its OWN,
+ * separate redline leg — one external filing legitimately produces more
+ * than one case type. Resolvable via
+ * `resolveOriginSignal('gov-charter')`.
+ */
+export const DEADLINE_DRIVEN_CASE_FIXTURE: DeadlineDrivenCase = {
+  kind: 'deadline-driven',
+  id: 'CASE-2026-102',
+  doc: 'gov-charter',
+  title: 'RFI 2026-04 comment position',
+  dom: 'aigov',
+  owner: 'R. Fischer · CRO',
+  detected: 'Jul 31, 2026',
+  deadline: 'Comment position due Sep 30',
+  status: 'tracking',
+  history: [
+    {
+      when: 'Jul 31, 2026 · 6:12 AM ET',
+      who: 'OnSide',
+      role: 'System',
+      what: 'Comment deadline detected and tracked',
+      note: 'Interagency RFI 2026-04 · generative and agentic AI in model risk',
+    },
+  ],
+};
+
+/**
+ * Widened case-type union (PI2-D2) — additive only. `Case` (drafted-
+ * redline leg, unchanged — including the human-contributed-edit leg,
+ * which reuses its exact shape) and `DeadlineDrivenCase` stay fully
+ * distinct types, never merged. No existing export's shape changes.
+ */
+export type CaseUnion = Case | DeadlineDrivenCase;
+
 /**
  * Seeds CASES/NOTIFS from DOCLIB (owned by another module, see the import
  * note above). Ported verbatim from `seedCases()`.
