@@ -428,6 +428,8 @@ export interface TopbarProps {
   profileMenuItems: TopbarProfileMenuItem[];
   /** See file header "DISPATCH-LEVEL ADDITION — theme toggle slot." */
   themeToggleSlot?: ReactNode;
+  /** Current theme ('dark' or 'light') — used to announce theme changes via aria-live region. */
+  theme?: 'dark' | 'light';
 }
 
 // D21 (file header "D21 — DARK CHROME BAND, SINGLE-MASTER LOGO" — full
@@ -794,6 +796,7 @@ export function Topbar({
   profile,
   profileMenuItems,
   themeToggleSlot,
+  theme,
 }: TopbarProps) {
   return (
     // D21: <style> is metadata content, not valid inside <header>'s
@@ -833,6 +836,13 @@ export function Topbar({
         <span style={LABEL_STYLE}>{date}</span>
 
         {themeToggleSlot ? <span data-lf-slot="theme-toggle">{themeToggleSlot}</span> : null}
+
+        {/* aria-live announcement for theme changes — announced when theme prop updates */}
+        {theme ? (
+          <span aria-live="polite" aria-atomic="true" style={{ position: 'absolute', left: '-10000px', width: '1px', height: '1px', overflow: 'hidden' }}>
+            Theme changed to {theme} mode
+          </span>
+        ) : null}
 
         <ProfileMenu profile={profile} items={profileMenuItems} />
       </header>
