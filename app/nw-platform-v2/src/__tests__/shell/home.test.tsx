@@ -32,7 +32,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../../App'
 import { HOME_ORDER } from '../../data/misc'
-import { HOME_GREETINGS } from '../../screens/Home'
+import { resolveHomeGreetings } from '../../screens/Home'
 
 beforeEach(() => {
   for (const key of Object.keys(HOME_ORDER)) {
@@ -52,7 +52,12 @@ describe('Home greeting heading (PI2-D40 — replaces the static "Home" h1)', ()
 
     const heading = screen.getByRole('heading', { level: 1 })
     expect(heading).toHaveAttribute('id', 'home-page-title')
-    const possible = HOME_GREETINGS.map((g) => `${g}, Rachel`)
+    // Bucket-aware membership (viewer-local-clock fix, see
+    // home-greeting-clock.test.tsx): compute the expected set from the
+    // real system clock at test-run time via the same resolver Home.tsx
+    // uses, so this assertion is correct at any hour the suite runs,
+    // never a flaky bet on a fixed phrase list.
+    const possible = resolveHomeGreetings(new Date()).map((g) => `${g}, Rachel`)
     expect(possible).toContain(heading.textContent)
   })
 

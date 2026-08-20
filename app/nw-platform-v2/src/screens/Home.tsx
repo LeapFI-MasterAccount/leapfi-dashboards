@@ -5,7 +5,9 @@
  *
  * PI2-D40 (user directive 2026-08-20 — supersedes this header's prior
  * region map and the W2/addendum placement note below): (1) the static
- * "Home" h1 is now a randomized greeting (see `HOME_GREETINGS`) + the
+ * "Home" h1 is now a randomized greeting, picked within a viewer-local-
+ * clock-correct time-of-day bucket (see `resolveHomeGreetings` and the
+ * "Viewer-local-clock fix" comment above `HOME_GREETINGS_MORNING`) + the
  * active persona's first name; (2) the two base-anchored KPI StatCards
  * ("Cost capacity already freed" $540,000/yr, "Capacity freed" 3.5 FTE —
  * survey_map.md 4197–4296, G11's label requirement) are REMOVED entirely —
@@ -180,12 +182,46 @@ const CTA_ROW_STYLE: CSSProperties = {
   display: 'flex',
 };
 
-// PI2-D40: the greeting set the page-title heading is drawn from — one
-// entry is picked at random per mount so the heading varies across visits
-// (and across a persona switch's remount) rather than reading a single
-// fixed literal. Tests assert membership in this set + the active
-// persona's first name, never one hardcoded greeting.
-export const HOME_GREETINGS = ['Good morning', 'Good afternoon', 'Good evening', 'Welcome back'] as const;
+// Viewer-local-clock fix (user-reported defect on rev-76, PI2-D40
+// follow-up): PI2-D40's original single flat `HOME_GREETINGS` array picked
+// a phrase uniformly at random regardless of the viewer's clock, so a
+// viewer in their local afternoon could see "Good morning" — a copy claim
+// that contradicts the viewer's own clock (this program's "no lying
+// controls" class, PI2-D24, applied to copy). The greeting is now chosen
+// at random WITHIN a time-of-day bucket derived from the viewer's LOCAL
+// clock (`Date#getHours()`) at mount, keeping PI2-D40's randomized-variety
+// intent inside a bucket that can never contradict the clock. "Welcome
+// back" is time-neutral (true at any hour) and is included in every
+// bucket so the persona-name pairing still has more than one option
+// outside the "Good <time>" phrases.
+//
+// Bucket boundaries (implementer judgment call — no doctrine source
+// specifies clock cutoffs; same category as this file's other px/timing
+// constants, see file header "Layout constants"):
+//   morning:   05:00–11:59 local
+//   afternoon: 12:00–16:59 local
+//   evening:   17:00–04:59 local (covers evening through late night —
+//              no separate "night" phrase exists in this set, and
+//              "Good evening" reads correctly through the night hours
+//              a demo is unlikely to run in; not a copy decision this
+//              implementer is authorized to expand).
+// Tests (`home-greeting-clock.test.tsx`) pin every boundary edge above.
+export const HOME_GREETINGS_MORNING = ['Good morning', 'Welcome back'] as const;
+export const HOME_GREETINGS_AFTERNOON = ['Good afternoon', 'Welcome back'] as const;
+export const HOME_GREETINGS_EVENING = ['Good evening', 'Welcome back'] as const;
+
+/**
+ * Resolves the time-of-day-correct greeting set for `date` (defaults to
+ * "now"), using the viewer's LOCAL clock via `Date#getHours()`. Exported
+ * so tests assert bucket membership and boundary edges against this same
+ * source of truth rather than hardcoding phrases a second time.
+ */
+export function resolveHomeGreetings(date: Date = new Date()): readonly string[] {
+  const hour = date.getHours();
+  if (hour >= 5 && hour < 12) return HOME_GREETINGS_MORNING;
+  if (hour >= 12 && hour < 17) return HOME_GREETINGS_AFTERNOON;
+  return HOME_GREETINGS_EVENING;
+}
 
 export interface HomeProps extends DeepLinkScreenProps {
   /** Navigation hook for this screen's own in-content links (the primary CTA, HomePanels' go-links) — unrelated to Sidebar, which this screen no longer renders (App.tsx's Shell owns it; see file header). */
@@ -213,10 +249,15 @@ export function Home({ onNavigate, roleKey = CURRENT.roleKey, roleFirstName = CU
   if (panelState.roleKey !== roleKey) {
     setPanelState({ roleKey, visibleKeys: resolveVisibleKeys(roleKey) });
   }
-  // PI2-D40: one greeting picked per mount (see HOME_GREETINGS) — a fresh
-  // mount (initial boot, persona switch remount, or nav away/back) can
-  // land on a different greeting; never a single fixed literal.
-  const [greeting] = useState(() => HOME_GREETINGS[Math.floor(Math.random() * HOME_GREETINGS.length)]);
+  // PI2-D40 + viewer-local-clock fix: one greeting picked per mount from
+  // the viewer-local-clock-correct bucket (see `resolveHomeGreetings`) —
+  // a fresh mount (initial boot, persona switch remount, or nav away/back)
+  // can land on a different greeting within that bucket; never a single
+  // fixed literal, and never a bucket that contradicts the viewer's clock.
+  const [greeting] = useState(() => {
+    const bucket = resolveHomeGreetings();
+    return bucket[Math.floor(Math.random() * bucket.length)];
+  });
   return (
     <main id="home-main" style={MAIN_STYLE} aria-labelledby="home-page-title">
       {/* PI2-D40: header row — page title + HomeCustomizeBar seated in the
