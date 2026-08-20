@@ -54,13 +54,7 @@ describe('theme toggle (dispatch pin; scaffold port per App.tsx "THEME TOGGLE")'
     expect(document.documentElement.getAttribute('data-theme')).toBe('light')
   })
 
-  // STOP-ITEM (kept correct-to-dispatch, marked failing — D17: never bend
-  // the assertion to the code): the dispatch pins "announces via aria-live",
-  // but the shipped toggle (Switch P8 rendered in Topbar's themeToggleSlot,
-  // App.tsx line ~381) announces only via role="switch"/aria-checked plus an
-  // aria-hidden "On/Off" text — NO aria-live region anywhere in the shell
-  // carries a theme-change announcement. Deviation, not a test defect.
-  it.fails('STOP-ITEM: theme change is announced via an aria-live region (dispatch pin — current code has no such region)', async () => {
+  it('theme change is announced via an aria-live region', async () => {
     const user = userEvent.setup()
     render(<App />)
     await user.click(screen.getByRole('switch', { name: 'Light theme' }))

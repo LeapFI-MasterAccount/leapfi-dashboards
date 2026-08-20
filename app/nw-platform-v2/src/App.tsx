@@ -573,6 +573,7 @@ function App() {
     date: DEMO_DATE_LABEL,
     profile: { name: currentUser.name, initials: currentUser.ini },
     profileMenuItems,
+    theme,
     themeToggleSlot: <Switch checked={theme === 'light'} label="Light theme" onChange={(checked) => setTheme(checked ? 'light' : 'dark')} />,
     // See file header "NOTIFICATION BELL" — raw NOTIFS singleton passed
     // through; NotificationBellPanel does its own role filtering (matches

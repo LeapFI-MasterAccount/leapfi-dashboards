@@ -45,22 +45,18 @@
  * "20+" as unverified against its own citation — not silently inventing
  * ~14 additional tiles to hit the stated count.
  *
- * AMBIGUITY RESOLVED (StatCard row): same reasoning as ChatHero.tsx —
- * StatCard (C1) has no file in this worktree, so the 6 tiles are
- * composed from a local `StatTile` helper rather than an unbuilt
- * import. `StatTile` renders only StatValue (P11), not StatValue+Label
- * (C1's full stated composition): StatValue's own a11y contract already
- * bundles "value + its label" into one accessible unit (P11's own doc:
- * "not two separately-announced fragments"), so `StatValue`'s `label`
- * prop carries each tile's primary name ("Payback", "Plays funded", …)
- * directly — adding a second, separate Label (C1's heading half) above
- * it would either duplicate that name in the accessible tree or, if
- * marked `aria-hidden`, contribute nothing accessibility-wise while
- * still risking a Label-vs-StatValue naming mismatch. The small
- * qualifier text under each number ("blended", "of 14", "one-time" —
- * source's `.sub`, lines 962-967) is genuinely supplementary framing on
- * top of an already-complete accessible name, so it renders as a plain
- * `aria-hidden` caption instead of going through Label.
+ * StatCard swap-in (amendment A8, design_system_spec.md §2.6, §8 R-4(f)):
+ * the 6 economics tiles were originally composed from a local `StatTile`
+ * stand-in because real StatCard (C1) had no slot for the qualifying
+ * caption text each tile carries ("blended", "of 14", "one-time" —
+ * source's `.sub`, lines 962-967) — swapping to real StatCard as directed
+ * by r13-A.1, unamended, would have silently dropped that text, so the
+ * implementer correctly stopped rather than guess (see the amendment log,
+ * design_system_spec.md §0 A8). The design authority ratified extending
+ * C1's own contract with an optional `qualifier` prop (§2.6) instead of
+ * keeping a bespoke tile; the 6 tiles below are now composed from real
+ * StatCard with that prop, and the local `StatTile` helper plus its
+ * bespoke qualifier style constant are retired in this same pass.
  *
  * NEW A11Y BEHAVIOR (not a source port — the source's `recompute()` has
  * no live-region announcement at all; this is design_system_spec.md's
@@ -83,8 +79,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Slider } from './primitives/Slider';
-import { StatValue } from './primitives/StatValue';
 import { Label } from './primitives/Label';
+import { StatCard } from './StatCard';
 import { PosturePillBar } from './PosturePillBar';
 import { deriveRecomputeView } from '../engine/plan';
 import type { PlanOpportunity, SliderState } from '../engine/plan';
@@ -124,8 +120,6 @@ const tickRowStyle: CSSProperties = { display: 'flex', justifyContent: 'space-be
 
 const statGridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(7.5rem, 1fr))', gap: '1rem', transition: 'opacity 150ms ease' };
 
-const qualifierStyle: CSSProperties = { display: 'block', fontSize: '0.6875rem', color: 'var(--ink2)', marginTop: '0.125rem' };
-
 const warnBannerStyle: CSSProperties = {
   marginTop: '0.6875rem',
   fontSize: '0.78125rem',
@@ -164,23 +158,6 @@ interface LeverSpec {
   valueText: string;
   ticks?: { labels: string[]; activeIndex: number };
   endLabels?: [string, string, string];
-}
-
-/**
- * Local stand-in for StatCard (C1 = StatValue + Label) — see file header.
- * Duplicated intentionally with ChatHero.tsx's identical helper. No
- * `unit` prop: none of this screen's 6 tiles carry one (every value
- * string below already embeds its own suffix, e.g. "14 mo", "$430k").
- */
-function StatTile({ value, label, qualifier }: { value: string | number; label: string; qualifier: string }) {
-  return (
-    <div>
-      <StatValue value={value} label={label} />
-      <span aria-hidden="true" style={qualifierStyle}>
-        {qualifier}
-      </span>
-    </div>
-  );
 }
 
 function TickRow({ labels, activeIndex }: { labels: string[]; activeIndex?: number }) {
@@ -294,12 +271,12 @@ export function SliderControlRow({ sliders, onSlidersChange, onCommit, opportuni
         <h3 style={sectionHeadingStyle}>What that gets you</h3>
         <p style={{ ...stanceTextStyle, margin: '0.25rem 0 0.875rem', color: 'var(--ink2)' }}>A funded portfolio, weighed against your posture.</p>
         <div style={{ ...statGridStyle, opacity: updating ? 0.75 : 1 }} data-state={updating ? 'updating' : 'default'}>
-          <StatTile value={economics.roiText} label="Expected 3-year ROI" qualifier={economics.roiNote} />
-          <StatTile value={economics.paybackText} label="Payback" qualifier="blended" />
-          <StatTile value={economics.fundedCount} label="Plays funded" qualifier={`of ${economics.totalOpportunities}`} />
-          <StatTile value={economics.buildCostText} label="Build cost" qualifier="one-time" />
-          <StatTile value={economics.annualValueText} label="Annual value" qualifier="at adoption" />
-          <StatTile value={economics.controlsToCloseCount} label="Controls to close" qualifier={economics.controlsToCloseGoalLabel} />
+          <StatCard value={economics.roiText} label="Expected 3-year ROI" qualifier={economics.roiNote} />
+          <StatCard value={economics.paybackText} label="Payback" qualifier="blended" />
+          <StatCard value={economics.fundedCount} label="Plays funded" qualifier={`of ${economics.totalOpportunities}`} />
+          <StatCard value={economics.buildCostText} label="Build cost" qualifier="one-time" />
+          <StatCard value={economics.annualValueText} label="Annual value" qualifier="at adoption" />
+          <StatCard value={economics.controlsToCloseCount} label="Controls to close" qualifier={economics.controlsToCloseGoalLabel} />
         </div>
 
         <div style={{ marginTop: '1.125rem' }}>

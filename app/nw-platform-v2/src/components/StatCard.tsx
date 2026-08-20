@@ -45,6 +45,22 @@
  * Omitting `onPress` renders exactly as before this change: `role="group"`
  * div, no cursor/hover/chevron (§2.2's "honest" non-clickable contrast,
  * the tile-level twin of DataTable's §1.3 rule) — backward compatible.
+ *
+ * QUALIFIER CAPTION (amendment A8, §2.6, binding detail): optional
+ * `qualifier` prop renders a supplementary caption immediately after
+ * StatValue, inside the card body — the same position SliderControlRow's
+ * retired bespoke `StatTile` helper used. It is `aria-hidden="true"` and
+ * carries no accessible name of its own: StatValue's own baseline (P11)
+ * already makes "value + label" one complete accessible unit, and the
+ * card's accessible name comes from Label (unchanged) — the qualifier is
+ * supplementary visual framing, not a second piece of content requiring
+ * its own announcement. It sits outside the `aria-live="polite"` wrapper,
+ * which stays scoped to StatValue only. Sized/weighted like Label's
+ * `body-secondary` variant (§2.1 P3) and colored via the closed-list
+ * `--ink2` role — not authored through Label itself, since R-1's
+ * exception-free rule binds only the `eyebrow` treatment, which this
+ * caption is not. Omitting `qualifier` renders exactly as C1 did before
+ * this prop existed (backward compatible).
  */
 import { useId, useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -67,6 +83,11 @@ export interface StatCardProps {
   /** Clickable variant (§2.2, §5 item 4). Omit for the non-clickable
    * `role="group"` tile (today's only shape). */
   onPress?: () => void;
+  /** Supplementary qualifying caption (amendment A8, §2.6) — e.g.
+   * "blended", "of 14", "one-time". Renders immediately after StatValue,
+   * `aria-hidden`, outside the aria-live wrapper. Independent of `onPress`
+   * and `state`; omitting it renders exactly as C1 does today. */
+  qualifier?: string;
 }
 
 const STATE_TO_STATVALUE: Record<StatCardState, StatValueState> = {
@@ -102,7 +123,19 @@ const labelRowStyle: CSSProperties = {
   width: '100%',
 };
 
-export function StatCard({ label, value, unit, state = 'loaded', onPress }: StatCardProps) {
+// Sized/weighted like Label's `body-secondary` variant (§2.1 P3) per §2.6 —
+// not authored through Label itself (R-1 binds only the `eyebrow`
+// treatment). See LabelVariant's VARIANT_STYLE['body-secondary'] in
+// primitives/Label.tsx for the source values this mirrors.
+const qualifierStyle: CSSProperties = {
+  display: 'block',
+  font: 'inherit',
+  fontSize: '0.875rem',
+  fontWeight: 500,
+  color: 'var(--ink2)',
+};
+
+export function StatCard({ label, value, unit, state = 'loaded', onPress, qualifier }: StatCardProps) {
   const labelId = useId();
   const [hover, setHover] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -144,6 +177,11 @@ export function StatCard({ label, value, unit, state = 'loaded', onPress }: Stat
       <div aria-live="polite" aria-atomic="true">
         <StatValue {...statValueProps} />
       </div>
+      {qualifier !== undefined ? (
+        <span aria-hidden="true" style={qualifierStyle}>
+          {qualifier}
+        </span>
+      ) : null}
     </>
   );
 
