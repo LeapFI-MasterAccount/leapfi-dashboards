@@ -323,8 +323,31 @@ interface QueueBucket {
 /** Ports `renderHome()`'s 5-way role branch (source 4243-4270) — see file
  * header "'YOUR QUEUE' DATA SCOPE" for exactly which source subtitles were
  * trimmed to honest, non-fabricated copy and why. */
-function buildQueueBucket(roleKey: string, gapsTotal: number, below: OnsideDomain[], gatedCount: number, gatedFirstName: string | null, onNavigate: (id: string) => void): QueueBucket {
+function buildQueueBucket(
+  roleKey: string,
+  gapsTotal: number,
+  below: OnsideDomain[],
+  gatedCount: number,
+  gatedFirstName: string | null,
+  onNavigate: (id: string) => void,
+  onDeepLink?: (request: DeepLinkRequest) => void,
+): QueueBucket {
   const myCases = CASES.filter((c) => waitingOnRoleKey(c.stage) === roleKey);
+  // PI2-D5 (Sprint 1 DeepLinkKind union extension) — the q-cases row's own
+  // subtitle already names a SPECIFIC case ("Oldest: {myCases[0].title}"),
+  // but the pre-existing `onOpen` fired a plain `onNavigate('cases')`,
+  // dropping that id (the exact "call site drops the id" shape). Fires the
+  // 'case'-kind deep link carrying the oldest waiting case's id when a
+  // caller has wired `onDeepLink`; falls back to the identical plain nav
+  // otherwise (`fireOrDeepLink`'s own established contract, matching every
+  // other row's dispatch pattern in this file). Never dispatches with no
+  // case to open — an empty queue keeps the plain screen-level nav (there
+  // is no id to carry).
+  const openCases = () => {
+    const oldest = myCases[0];
+    if (oldest) fireOrDeepLink(onDeepLink, onNavigate, { screen: 'cases', kind: 'case', id: oldest.id });
+    else onNavigate('cases');
+  };
 
   if (roleKey === 'analyst') {
     return {
@@ -336,7 +359,7 @@ function buildQueueBucket(roleKey: string, gapsTotal: number, below: OnsideDomai
           title: `${myCases.length} case${myCases.length === 1 ? '' : 's'} waiting on you`,
           subtitle: myCases.length > 0 ? `Oldest: ${myCases[0]?.title ?? ''}` : 'Nothing in your queue',
           actionLabel: 'Open',
-          onOpen: () => onNavigate('cases'),
+          onOpen: openCases,
         },
         {
           id: 'q-gaps',
@@ -364,7 +387,7 @@ function buildQueueBucket(roleKey: string, gapsTotal: number, below: OnsideDomai
         title: `${myCases.length} case${myCases.length === 1 ? '' : 's'} awaiting your approval`,
         subtitle: myCases[0]?.title ?? '',
         actionLabel: 'Approve',
-        onOpen: () => onNavigate('cases'),
+        onOpen: openCases,
       });
     }
     rows.push(
@@ -671,12 +694,24 @@ function InvestmentReturnPanel({
   );
 }
 
-function YourQueuePanel({ roleKey, onNavigate, sliders, opportunities }: { roleKey: string; onNavigate: (id: string) => void; sliders: SliderState; opportunities: PlanOpportunity[] }) {
+function YourQueuePanel({
+  roleKey,
+  onNavigate,
+  onDeepLink,
+  sliders,
+  opportunities,
+}: {
+  roleKey: string;
+  onNavigate: (id: string) => void;
+  onDeepLink?: (request: DeepLinkRequest) => void;
+  sliders: SliderState;
+  opportunities: PlanOpportunity[];
+}) {
   const gapsTotal = DOMAINS.reduce((sum, d) => sum + oblToClose(d), 0);
   const below = DOMAINS.filter((d) => statusOf(d) === 'below');
   const view = deriveRecomputeView(sliders, opportunities);
   const gatedFirst = view.plan.gated[0] ?? null;
-  const bucket = buildQueueBucket(roleKey, gapsTotal, below, view.plan.gated.length, gatedFirst ? gatedFirst.n : null, onNavigate);
+  const bucket = buildQueueBucket(roleKey, gapsTotal, below, view.plan.gated.length, gatedFirst ? gatedFirst.n : null, onNavigate, onDeepLink);
 
   const columns: DataTableColumn<QueueRow>[] = [
     {
@@ -738,7 +773,15 @@ export function HomePanels({ visibleKeys, currentRoleKey, onNavigate, onDeepLink
       case 'invest':
         return <InvestmentReturnPanel sliders={liveSliders} opportunities={liveOpportunities} onNavigate={onNavigate} onDeepLink={onDeepLink} />;
       case 'queue':
-        return <YourQueuePanel roleKey={currentRoleKey} onNavigate={onNavigate} sliders={liveSliders} opportunities={liveOpportunities} />;
+        return (
+          <YourQueuePanel
+            roleKey={currentRoleKey}
+            onNavigate={onNavigate}
+            sliders={liveSliders}
+            opportunities={liveOpportunities}
+            {...(onDeepLink !== undefined ? { onDeepLink } : {})}
+          />
+        );
       case 'qa':
         return <QuickActionsPanel onNavigate={onNavigate} />;
       default:

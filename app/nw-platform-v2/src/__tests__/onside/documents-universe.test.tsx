@@ -14,7 +14,7 @@
  * data itself, so these tests pin "the rendered universe counts match the
  * base document universe" — not any in-component tally.
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OnSideDocuments } from '../../screens/OnSideDocuments'
@@ -98,5 +98,62 @@ describe('OnSide documents · universe counts (base 1930–2303 DOCLIB, §5.3, �
       within(filterBar).getByRole('button', { name: `Pending (${REDLINE_COUNT})` }),
     ).toBeInTheDocument()
     expect(within(filterBar).getByRole('button', { name: 'Adopted (0)' })).toBeInTheDocument()
+  })
+})
+
+describe("PI2-D5 — 'document'-kind deep link (App.tsx KIND VOCABULARY: id = DOCLIB doc id; ONS-CASE-18/r10 acceptance — lands on the specific document, not the generic table, with full text + redline)", () => {
+  it('opens the exact matching document directly with full section text and its redline, and consumes the nonce', async () => {
+    const onDeepLinkConsumed = vi.fn()
+    render(
+      <OnSideDocuments
+        topbar={makeTopbarProps()}
+        onNavigate={() => {}}
+        deepLink={{ screen: 'onside.documents', kind: 'document', id: 'irp', nonce: 1 }}
+        onDeepLinkConsumed={onDeepLinkConsumed}
+      />,
+    )
+
+    const dialog = await screen.findByRole('dialog', { name: 'Incident Response Plan' })
+    // Full document text (every `secs` heading/body), never a snippet.
+    expect(within(dialog).getByText('1. Purpose')).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(
+        'Defines detection, escalation, containment, and reporting procedures for operational and security incidents, including automated-system incidents.',
+      ),
+    ).toBeInTheDocument()
+    expect(within(dialog).getByText('3. Escalation')).toBeInTheDocument()
+    // The redline diff, rendered alongside the full text — never just a snippet.
+    expect(dialog.textContent).toContain('HITL review')
+    expect(within(dialog).getByRole('button', { name: 'Adopt' })).toBeInTheDocument()
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(1)
+  })
+
+  it('a deepLink of a different kind is ignored — never mistaken for a document open', () => {
+    const onDeepLinkConsumed = vi.fn()
+    render(
+      <OnSideDocuments
+        topbar={makeTopbarProps()}
+        onNavigate={() => {}}
+        deepLink={{ screen: 'onside.documents', kind: 'doc-redline', id: 'irp', nonce: 1 }}
+        onDeepLinkConsumed={onDeepLinkConsumed}
+      />,
+    )
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(onDeepLinkConsumed).not.toHaveBeenCalled()
+  })
+
+  it('an unknown doc id still consumes the nonce and opens nothing (never a fabricated document)', () => {
+    const onDeepLinkConsumed = vi.fn()
+    render(
+      <OnSideDocuments
+        topbar={makeTopbarProps()}
+        onNavigate={() => {}}
+        deepLink={{ screen: 'onside.documents', kind: 'document', id: 'no-such-doc', nonce: 2 }}
+        onDeepLinkConsumed={onDeepLinkConsumed}
+      />,
+    )
+    expect(onDeepLinkConsumed).toHaveBeenCalledWith(2)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

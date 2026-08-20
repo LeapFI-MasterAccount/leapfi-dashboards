@@ -169,8 +169,9 @@
  * from `Home.tsx`'s own documented implementer judgment call for visual
  * consistency across screens, not re-derived independently.
  */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
+import type { DeepLinkScreenProps } from '../App';
 import { Topbar } from '../components/Topbar';
 import type { TopbarProps } from '../components/Topbar';
 import { Sidebar } from '../components/Sidebar';
@@ -426,7 +427,7 @@ const SR_ONLY_STYLE: CSSProperties = {
   border: 0,
 };
 
-export interface OnSideDocumentsProps {
+export interface OnSideDocumentsProps extends DeepLinkScreenProps {
   /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as `Home.tsx`). */
   topbar: TopbarProps;
   /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('onside.documents') and is not accepted as a prop. */
@@ -434,7 +435,7 @@ export interface OnSideDocumentsProps {
   sidebarVersionLabel?: string;
 }
 
-export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnSideDocumentsProps) {
+export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel, deepLink, onDeepLinkConsumed }: OnSideDocumentsProps) {
   // Re-renders this screen on every demo-store write (its own adopt
   // cascade included) — see the ONSIDE-02 file-header note.
   useDemoStore();
@@ -464,6 +465,26 @@ export function OnSideDocuments({ topbar, onNavigate, sidebarVersionLabel }: OnS
   // Rebuilt per render from the LIVE DOCLIB singleton — adoption mutates
   // doc status/version in place (ONSIDE-02/ONSIDE-12).
   const allDocs: DocRow[] = Object.entries(LIVE_DOCLIB).map(([id, doc]) => ({ id, ...doc }));
+
+  // PI2-D5 (Sprint 1 DeepLinkKind union extension, ONS-CASE-18/r10) —
+  // 'document'-kind deep-link consumption: lands on the SPECIFIC document
+  // (full `secs` text + redline, this screen's own existing doc Drawer —
+  // never the generic, unfiltered Documents table a plain nav would show).
+  // Same nonce-keyed CONSUME pattern every other deep-link-consuming
+  // screen uses; `setOpenObligation(null)` matches this file's own
+  // mutual-exclusivity precedent (row-click doc opens clear it too, see
+  // e.g. the row-open handler below). An id with no matching document
+  // still consumes the nonce but opens nothing (never a fabricated doc).
+  useEffect(() => {
+    if (!deepLink || deepLink.kind !== 'document') return;
+    const match = allDocs.find((doc) => doc.id === deepLink.id);
+    if (match) {
+      setOpenObligation(null);
+      setOpenDocId(match.id);
+    }
+    onDeepLinkConsumed?.(deepLink.nonce);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed/allDocs read fresh from closure, not tracked as a re-trigger dep
+  }, [deepLink?.nonce]);
 
   // ONSIDE-12 — live counts from the same status the filter matches.
   const docStatusCounts: Record<DocStatus, number> = { good: 0, warn: 0, crit: 0 };
