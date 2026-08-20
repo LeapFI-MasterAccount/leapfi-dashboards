@@ -111,7 +111,7 @@ const stanceBoxStyle = (tension: boolean): CSSProperties => ({
   gap: '0.3125rem',
 });
 
-const eyebrowStyle: CSSProperties = { fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink2)' };
+const eyebrowStyle: CSSProperties = { fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' /* T7 F11: was 0.06em, doctrine TYP-4 is 0.05em */, color: 'var(--ink2)' };
 
 const stanceTextStyle: CSSProperties = { fontSize: '0.8125rem', lineHeight: 1.45, color: 'var(--ink)' };
 
