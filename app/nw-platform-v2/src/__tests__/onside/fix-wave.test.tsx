@@ -272,12 +272,17 @@ describe('ONSIDE-06 · deep-domain accordion body (base domBody 3684-3687)', () 
 
 describe('ONSIDE-10 · RACI authored order (base osRaci 3552-3562)', () => {
   it('renders the Model Risk group in authored M order — policy first, not alphabetical', () => {
-    render(<OnSideOwnership topbar={makeTopbarProps()} onNavigate={() => {}} />)
-    // Caption uses the authored M group label 'Model Risk Management'
-    // (data/onside.ts:668; base osRaci renders g[1] as the heading).
-    const mrmTable = screen.getByRole('table', { name: 'Model Risk Management RACI matrix' })
-    const firstBodyRow = within(mrmTable).getAllByRole('row')[1]
-    expect(firstBodyRow).toHaveTextContent('Model Risk Management Policy')
+    // FIX WAVE (RACI DENSITY REGRESSION): the matrix is now ONE table with
+    // in-table domain group rows (DataTable's `groupKey`/`renderGroupHeader`,
+    // OnSideOwnership.tsx header), not one table per domain — the 'Model
+    // Risk Management' group row's very next sibling row is that domain's
+    // first authored document row.
+    const { container } = render(<OnSideOwnership topbar={makeTopbarProps()} onNavigate={() => {}} />)
+    const mrmGroupRow = Array.from(container.querySelectorAll('tr[data-lf-group-row="true"]')).find((row) =>
+      row.textContent?.includes('Model Risk Management'),
+    )
+    expect(mrmGroupRow).toBeDefined()
+    expect(mrmGroupRow?.nextElementSibling).toHaveTextContent('Model Risk Management Policy')
   })
 })
 

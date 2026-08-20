@@ -1,20 +1,25 @@
 /**
- * OnSide · Ownership — RACI matrix rows regression (D17: pins the PORTED
- * V1 BASE BEHAVIOR).
+ * OnSide · Ownership — RACI matrix regression (D17: pins the PORTED V1
+ * BASE BEHAVIOR).
  *
  * Base anchors (leapfi-platform.html @ 1c230fe, via survey_map.md):
  *  - 3498–3573  osRaci — the RACI matrix view
  *  - 3499–3508  ROLES — the 8 named roles (columns)
  *  - 3510–3549  M — per-domain [docId, A, R, C[], I[]] rows (ported
  *               verbatim in data/onside.ts)
+ *  - 3552       tr.dgroup — the domain-divider row, colspan across every
+ *               column, deep-linking to that domain
+ *  - 3558       raci-badge raci-R/A/C/I — the single-letter badges
  *  - 1930–2303  DOCLIB — document titles the doc column resolves ids
  *               through
  *
- * The v2 port renders one table per M domain (grouped, per the screen
- * header's documented resolution of the base's single-table `dgroup`
- * divider rows — DataTable C6 has no spanning group row) and RACI cells
- * as the full words Responsible/Accountable/Consulted/Informed (dispatch
- * TASK line), with a muted "—" for empty cells.
+ * FIX WAVE (RACI DENSITY REGRESSION) — this suite now pins v1's actual
+ * shape (ONE table, in-table domain group rows, letter badges), not the
+ * earlier per-domain-table/full-word port this file used to pin. See
+ * OnSideOwnership.tsx's own header for the full defect writeup: the
+ * per-domain-table shape broke the one property a RACI matrix exists
+ * for — scanning a single role DOWN the page — because every table sized
+ * its own columns independently.
  */
 import { describe, expect, it } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
@@ -26,56 +31,105 @@ function renderOwnership() {
   return render(<OnSideOwnership topbar={makeTopbarProps()} onNavigate={() => {}} />)
 }
 
+const TOTAL_DOCS = M.reduce((sum, [, , docs]) => sum + docs.length, 0)
+const TOTAL_COLUMNS = 1 + ROLES.length + 1 // doc + 8 roles + trailing row-affordance column
+
 describe('OnSide ownership · RACI matrix (base 3498–3573 osRaci)', () => {
-  it('renders one RACI table per base M domain, with one row per governance document (base 3510–3549)', () => {
+  it('renders exactly ONE table for the whole matrix — not one table per domain', () => {
     renderOwnership()
+    expect(screen.getAllByRole('table')).toHaveLength(1)
+    const table = screen.getByRole('table', { name: 'RACI · policy ownership matrix' })
+    expect(table).toBeInTheDocument()
+  })
+
+  it('carries one spanning group row per base M domain, in authored order, each spanning every column (base 3552 tr.dgroup)', () => {
+    const { container } = renderOwnership()
     expect(M).toHaveLength(8)
-    for (const [, domainLabel, docs] of M) {
-      const table = screen.getByRole('table', { name: `${domainLabel} RACI matrix` })
-      expect(within(table).getAllByRole('row')).toHaveLength(docs.length + 1) // + header
-    }
+    const groupRows = container.querySelectorAll('tr[data-lf-group-row="true"]')
+    expect(groupRows).toHaveLength(M.length)
+    groupRows.forEach((groupRow, index) => {
+      const [, domainLabel] = M[index] as (typeof M)[number]
+      expect(groupRow.textContent).toContain(domainLabel)
+      const cell = groupRow.querySelector('td')
+      expect(cell).not.toBeNull()
+      expect(cell?.getAttribute('colspan')).toBe(String(TOTAL_COLUMNS))
+    })
+  })
+
+  it('has one data row per governance document, plus the header and 8 group rows, and a uniform column count throughout', () => {
+    const { container } = renderOwnership()
+    const table = screen.getByRole('table', { name: 'RACI · policy ownership matrix' })
+    expect(within(table).getAllByRole('row')).toHaveLength(1 + M.length + TOTAL_DOCS)
+
+    const headerCells = within(table).getAllByRole('columnheader')
+    expect(headerCells).toHaveLength(TOTAL_COLUMNS)
+
+    const dataRows = container.querySelectorAll('tbody tr:not([data-lf-group-row="true"])')
+    expect(dataRows).toHaveLength(TOTAL_DOCS)
+    dataRows.forEach((row) => {
+      expect(row.querySelectorAll('td')).toHaveLength(TOTAL_COLUMNS)
+    })
   })
 
   it('column headers are the document column plus the 8 base ROLES codes in order (base 3499–3508)', () => {
     renderOwnership()
-    const table = screen.getByRole('table', { name: 'Model Risk Management RACI matrix' })
+    const table = screen.getByRole('table', { name: 'RACI · policy ownership matrix' })
     const headers = within(table)
       .getAllByRole('columnheader')
       .map((th) => th.textContent)
-    expect(ROLES.map(([code]) => code)).toEqual([
-      'CRO',
-      'CCO',
-      'BSA',
-      'MRM',
-      'ISD',
-      'BRO',
-      'GC',
-      'BOARD',
-    ])
+    expect(ROLES.map(([code]) => code)).toEqual(['CRO', 'CCO', 'BSA', 'MRM', 'ISD', 'BRO', 'GC', 'BOARD'])
     expect(headers.slice(0, 9)).toEqual(['Governance document', ...ROLES.map(([code]) => code)])
   })
 
-  it('mrm-policy row states the base A/R/C/I assignment as full words per role column (base 3520: [mrm-policy, CRO, MRM, [GC], [BOARD, CCO]])', () => {
+  it('mrm-policy row states the base A/R/C/I assignment as R/A/C/I badges, each with an accessible full-word name (base 3520: [mrm-policy, CRO, MRM, [GC], [BOARD, CCO]])', () => {
     renderOwnership()
-    const table = screen.getByRole('table', { name: 'Model Risk Management RACI matrix' })
+    const table = screen.getByRole('table', { name: 'RACI · policy ownership matrix' })
     const row = within(table)
       .getAllByRole('row')
       .find((candidate) => within(candidate).queryByText('Model Risk Management Policy'))
     expect(row).toBeDefined()
+    const scope = within(row as HTMLElement)
+    const cells = scope.getAllByRole('cell')
 
-    const cells = within(row as HTMLElement)
-      .getAllByRole('cell')
-      .map((cell) => cell.textContent)
-    // Columns: doc, CRO, CCO, BSA, MRM, ISD, BRO, GC, BOARD, (row action)
-    expect(cells[0]).toBe('Model Risk Management Policy')
-    expect(cells[1]).toBe('Accountable') // CRO = A
-    expect(cells[2]).toBe('Informed') // CCO ∈ I
-    expect(cells[3]).toBe('—') // BSA — no assignment
-    expect(cells[4]).toBe('Responsible') // MRM = R
-    expect(cells[5]).toBe('—') // ISD — no assignment
-    expect(cells[6]).toBe('—') // BRO — no assignment
-    expect(cells[7]).toBe('Consulted') // GC ∈ C
-    expect(cells[8]).toBe('Informed') // BOARD ∈ I
+    // Columns: doc, CRO, CCO, BSA, MRM, ISD, BRO, GC, BOARD, (row-affordance)
+    expect(cells[0]?.textContent).toBe('Model Risk Management Policy')
+
+    // CRO = Accountable — visible letter "A", accessible name "Accountable"
+    const cro = within(cells[1] as HTMLElement).getByRole('img', { name: 'Accountable' })
+    expect(cro.textContent).toBe('A')
+
+    // CCO ∈ Informed
+    const cco = within(cells[2] as HTMLElement).getByRole('img', { name: 'Informed' })
+    expect(cco.textContent).toBe('I')
+
+    // BSA — no assignment: v1's quiet middot, not a heavy em-dash, and no badge role
+    expect(within(cells[3] as HTMLElement).queryByRole('img')).toBeNull()
+    expect(cells[3]?.textContent).toBe('·')
+    expect(cells[3]?.textContent).not.toBe('—')
+
+    // MRM = Responsible
+    const mrm = within(cells[4] as HTMLElement).getByRole('img', { name: 'Responsible' })
+    expect(mrm.textContent).toBe('R')
+
+    // ISD, BRO — no assignment
+    expect(cells[5]?.textContent).toBe('·')
+    expect(cells[6]?.textContent).toBe('·')
+
+    // GC ∈ Consulted
+    const gc = within(cells[7] as HTMLElement).getByRole('img', { name: 'Consulted' })
+    expect(gc.textContent).toBe('C')
+
+    // BOARD ∈ Informed
+    const board = within(cells[8] as HTMLElement).getByRole('img', { name: 'Informed' })
+    expect(board.textContent).toBe('I')
+  })
+
+  it('renders the R/A/C/I legend with each mark, its full-word name, and its meaning (base 3569 raci-legend)', () => {
+    renderOwnership()
+    expect(screen.getByText('Responsible · does the work')).toBeInTheDocument()
+    expect(screen.getByText('Accountable · owns the outcome')).toBeInTheDocument()
+    expect(screen.getByText('Consulted · input before decisions')).toBeInTheDocument()
+    expect(screen.getByText('Informed · kept current')).toBeInTheDocument()
   })
 
   it('renders the 8-role legend with code, title, and named owner (base 3499–3508 ROLES)', () => {
