@@ -187,6 +187,7 @@ import { DrawerContent } from '../components/DrawerContent';
 import type { DrawerContentAction, DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
 import { Tag } from '../components/primitives/Tag';
 import { Button } from '../components/primitives/Button';
+import { Label } from '../components/primitives/Label';
 import { deriveRecomputeView, fmt, riskLabel } from '../engine/plan';
 import type { SliderState, PlanOpportunity, PlanTableRow, GatedRow, BenchRow, Levers } from '../engine/plan';
 import { OPPS, DETAIL, CTRL, CTRLDOM, GREEN, GOV, REGMAP } from '../data/studio';
@@ -241,9 +242,11 @@ const h1Style: CSSProperties = { font: 'inherit', fontSize: '1.625rem', fontWeig
 const sectionStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.75rem' };
 const sectionHeadingStyle: CSSProperties = { font: 'inherit', fontSize: '1rem', fontWeight: 700, color: 'var(--ink)', margin: 0 };
 const sideListsGridStyle: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(20rem, 1fr))', gap: '1.25rem' };
-const miniTableWrapStyle: CSSProperties = { width: '100%', overflowX: 'auto' };
+const miniTableWrapStyle: CSSProperties = { width: '100%', overflowX: 'auto', flexShrink: 0 };
 const miniTableStyle: CSSProperties = { width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.375rem' };
-const miniThStyle: CSSProperties = { fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.05em' /* T7 F11: was 0.06em, doctrine TYP-4 is 0.05em */, color: 'var(--ink2)', textAlign: 'left', fontWeight: 700, padding: '0 0.625rem 0.25rem' };
+// Layout only — the eyebrow treatment itself (uppercase/tracking/weight/
+// color) lives in Label (P3) `eyebrow`, §8 R-1.
+const miniThStyle: CSSProperties = { textAlign: 'left', padding: '0 0.625rem 0.25rem' };
 const miniTdStyle: CSSProperties = { background: 'var(--panel)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '0.5625rem 0.625rem', fontSize: '0.75rem', color: 'var(--ink)', verticalAlign: 'middle' };
 const miniTdNameStyle: CSSProperties = { ...miniTdStyle, borderLeft: '1px solid var(--border)', borderRadius: '0.625rem 0 0 0.625rem', fontWeight: 700 };
 const miniTdLastStyle: CSSProperties = { ...miniTdStyle, borderRight: '1px solid var(--border)', borderRadius: '0 0.625rem 0.625rem 0' };
@@ -469,13 +472,13 @@ function GatedTable({ rows, onOpenPlay }: { rows: GatedRow[]; onOpenPlay: (name:
         <thead>
           <tr>
             <th scope="col" style={miniThStyle}>
-              Play
+              <Label text="Play" variant="eyebrow" />
             </th>
             <th scope="col" style={miniThStyle}>
-              Annual value
+              <Label text="Annual value" variant="eyebrow" />
             </th>
             <th scope="col" style={miniThStyle}>
-              Unlocks after
+              <Label text="Unlocks after" variant="eyebrow" />
             </th>
             <th scope="col" style={miniThActionStyle}>
               {/* top/left pinned to 0 is load-bearing — see the invariant note on DataTable.tsx's `srOnlyStyle` */}
@@ -514,16 +517,16 @@ function BenchTable({ rows, onOpenPlay }: { rows: BenchRow[]; onOpenPlay: (name:
         <thead>
           <tr>
             <th scope="col" style={miniThStyle}>
-              Play
+              <Label text="Play" variant="eyebrow" />
             </th>
             <th scope="col" style={miniThStyle}>
-              Annual value
+              <Label text="Annual value" variant="eyebrow" />
             </th>
             <th scope="col" style={miniThStyle}>
-              Build cost
+              <Label text="Build cost" variant="eyebrow" />
             </th>
             <th scope="col" style={miniThStyle}>
-              To add
+              <Label text="To add" variant="eyebrow" />
             </th>
             <th scope="col" style={miniThActionStyle}>
               {/* top/left pinned to 0 is load-bearing — see the invariant note on DataTable.tsx's `srOnlyStyle` */}

@@ -110,6 +110,7 @@ import type { SidebarProps } from '../components/Sidebar';
 import { RoadmapGantt } from '../components/RoadmapGantt';
 import type { RoadmapPhase, RoadmapSegment } from '../components/RoadmapGantt';
 import { SetupCard } from '../components/SetupCard';
+import { Label } from '../components/primitives/Label';
 import { SOON } from '../data/misc';
 import type { SoonEntry } from '../data/misc';
 import { DETAIL } from '../data/studio';
@@ -347,7 +348,10 @@ const kpiCardStyle: CSSProperties = {
   flexDirection: 'column',
   gap: '0.25rem',
 };
-const kpiLabelStyle: CSSProperties = { fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.05em' /* T7 F11: was 0.06em, doctrine TYP-4 is 0.05em */, color: 'var(--ink2)', fontWeight: 700 };
+// §8 R-1 — the ALL-CAPS tracked eyebrow treatment (uppercase, tracking,
+// weight, color) is authored only by Label (P3) `eyebrow`; this site no
+// longer hand-declares it (see the `<Label variant="eyebrow">` call
+// sites below).
 const kpiValueStyle: CSSProperties = { fontSize: '1.25rem', fontWeight: 700, color: 'var(--ink)' };
 const kpiSubStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
 
@@ -365,7 +369,9 @@ const quarterColStyle: CSSProperties = {
   flexDirection: 'column',
   gap: '0.5rem',
 };
-const quarterHeadStyle: CSSProperties = { display: 'flex', justifyContent: 'space-between', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '0.05em' /* T7 F11: was 0.06em, doctrine TYP-4 is 0.05em */, color: 'var(--ink2)', fontWeight: 700 };
+// Layout only — the eyebrow treatment itself (uppercase/tracking/weight/
+// color) lives in Label (P3) `eyebrow`, see §8 R-1 note above.
+const quarterHeadStyle: CSSProperties = { display: 'flex', justifyContent: 'space-between' };
 const chipStyle: CSSProperties = {
   border: '1px solid var(--border)',
   borderRadius: 'var(--radius-sm, 6px)',
@@ -450,7 +456,7 @@ export function Roadmap({ topbar, onNavigate, onDeepLink, sidebarVersionLabel }:
           <div style={kpiRowStyle} role="group" aria-label="Roadmap economics">
             {roadmap.kpis.map((kpi) => (
               <div key={kpi.label} style={kpiCardStyle}>
-                <span style={kpiLabelStyle}>{kpi.label}</span>
+                <Label text={kpi.label} variant="eyebrow" />
                 <span style={kpiValueStyle}>{kpi.value}</span>
                 <span style={kpiSubStyle}>{kpi.sub}</span>
               </div>
@@ -475,8 +481,8 @@ export function Roadmap({ topbar, onNavigate, onDeepLink, sidebarVersionLabel }:
                   {year.quarters.map((quarter) => (
                     <div key={quarter.label} style={quarterColStyle}>
                       <div style={quarterHeadStyle}>
-                        <span>{quarter.label}</span>
-                        <span>{quarter.spendText}</span>
+                        <Label text={quarter.label} variant="eyebrow" />
+                        <Label text={quarter.spendText} variant="eyebrow" />
                       </div>
                       {quarter.chips.map((chip) => (
                         <PlayChipCard key={chip.play.n} chip={chip} onOpenPlay={handleOpenPlay} />

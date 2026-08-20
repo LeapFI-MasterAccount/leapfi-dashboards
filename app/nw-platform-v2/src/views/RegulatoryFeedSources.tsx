@@ -119,7 +119,7 @@ import { Toast } from '../components/Toast';
 import { Chip } from '../components/primitives/Chip';
 import { Switch } from '../components/primitives/Switch';
 import { Tag } from '../components/primitives/Tag';
-import type { TagVariant } from '../components/primitives/Tag';
+import type { NonRaciTagVariant } from '../components/primitives/Tag';
 import { DIGEST, FREQ, INSTR, SRC_ITEMS, SRC_LAYERS, SRC_ROWS } from '../data/onside';
 import type { SrcRow } from '../data/onside';
 
@@ -163,8 +163,8 @@ function activity30dFor(sourceName: string): number {
   return entry ? entry.items.filter((item) => item[0] <= 30).length : 0;
 }
 
-const PHASE_TAG_VARIANT: TagVariant = 'status-positive';
-const PHASE_TAG_VARIANT_PENDING: TagVariant = 'count';
+const PHASE_TAG_VARIANT: NonRaciTagVariant = 'status-positive';
+const PHASE_TAG_VARIANT_PENDING: NonRaciTagVariant = 'count';
 
 /** Ports `freqDays()`'s `||1` quirk verbatim — see file header. */
 function freqDaysFor(label: string): number {
@@ -194,7 +194,7 @@ function computeDigestCount(frequency: string, bindingOnly: boolean): number {
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
 const LAYER_HEADING_STYLE: CSSProperties = { margin: '0 0 0.25rem', font: 'inherit', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--ink)' };
-const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
+const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 const LAYER_BLOCK_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
 
 const CARD_STYLE: CSSProperties = {

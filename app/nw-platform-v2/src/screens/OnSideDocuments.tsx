@@ -186,7 +186,7 @@ import { RedlineDiffView } from '../components/RedlineDiffView';
 import { Toast } from '../components/Toast';
 import { Button } from '../components/primitives/Button';
 import { Tag } from '../components/primitives/Tag';
-import type { TagVariant } from '../components/primitives/Tag';
+import type { NonRaciTagVariant } from '../components/primitives/Tag';
 import { DOCLIB } from '../data/doclib';
 import type { DocEntry, DocStatus } from '../data/doclib';
 import { DOMAINS, GAPS, OBL } from '../data/onside';
@@ -244,7 +244,7 @@ function decodeDocText(input: string): string {
 
 const DOMAIN_LABEL: Record<string, string> = Object.fromEntries(DOMAINS.map((d) => [d.key, d.name]));
 
-const STATUS_TAG_VARIANT: Record<DocStatus, TagVariant> = {
+const STATUS_TAG_VARIANT: Record<DocStatus, NonRaciTagVariant> = {
   good: 'status-positive',
   warn: 'status-caution',
   crit: 'status-alert',
@@ -257,7 +257,7 @@ const STATUS_LABEL: Record<DocStatus, string> = {
 };
 
 const OBL_STATUS_LABEL: Record<ObligationRow['st'], string> = { met: 'Met', partial: 'Partial', gap: 'Gap' };
-const OBL_STATUS_VARIANT: Record<ObligationRow['st'], TagVariant> = {
+const OBL_STATUS_VARIANT: Record<ObligationRow['st'], NonRaciTagVariant> = {
   met: 'status-positive',
   partial: 'status-caution',
   gap: 'status-alert',

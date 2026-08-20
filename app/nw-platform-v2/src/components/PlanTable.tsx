@@ -46,6 +46,7 @@
 import type { CSSProperties } from 'react';
 import { Button } from './primitives/Button';
 import { Tag } from './primitives/Tag';
+import { Label } from './primitives/Label';
 import type { PlanTableRow } from '../engine/plan';
 
 /** Mirrors DataTable's (C6) states — derived, not a prop: `loading` comes from the `loading` prop below, `empty` from `rows.length === 0`, `loaded` otherwise. */
@@ -64,6 +65,7 @@ const COLUMN_COUNT = 8;
 const tableWrapStyle: CSSProperties = {
   width: '100%',
   overflowX: 'auto',
+  flexShrink: 0,
 };
 
 const tableStyle: CSSProperties = {
@@ -72,13 +74,10 @@ const tableStyle: CSSProperties = {
   borderSpacing: '0 0.4375rem',
 };
 
+// Layout only — the eyebrow treatment itself (uppercase/tracking/weight/
+// color) lives in Label (P3) `eyebrow`, §8 R-1.
 const thStyle: CSSProperties = {
-  fontSize: '0.6875rem',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em', /* T7 F11: was 0.07em, doctrine TYP-4 is 0.05em */
-  color: 'var(--ink2)',
   textAlign: 'left',
-  fontWeight: 700,
   padding: '0 0.8125rem 0.25rem',
 };
 
@@ -104,25 +103,25 @@ export function PlanTable({ rows, onOpenPlay, loading = false }: PlanTableProps)
         <thead>
           <tr>
             <th scope="col" style={{ ...thStyle, width: '28%' }}>
-              Play
+              <Label text="Play" variant="eyebrow" />
             </th>
             <th scope="col" style={thStyle}>
-              Category
+              <Label text="Category" variant="eyebrow" />
             </th>
             <th scope="col" style={thStyle}>
-              Build
+              <Label text="Build" variant="eyebrow" />
             </th>
             <th scope="col" style={thStyle}>
-              Annual value
+              <Label text="Annual value" variant="eyebrow" />
             </th>
             <th scope="col" style={thStyle}>
-              Payback
+              <Label text="Payback" variant="eyebrow" />
             </th>
             <th scope="col" style={thStyle}>
-              Risk
+              <Label text="Risk" variant="eyebrow" />
             </th>
             <th scope="col" style={thStyle}>
-              Gate
+              <Label text="Gate" variant="eyebrow" />
             </th>
             <th scope="col" style={thStyle}>
               {/* top/left pinned to 0 is load-bearing — see the invariant note on DataTable.tsx's `srOnlyStyle` */}

@@ -74,7 +74,7 @@ import { PosturePillBar } from '../components/PosturePillBar';
 import { Icon } from '../components/primitives/Icon';
 import { Label } from '../components/primitives/Label';
 import { Tag } from '../components/primitives/Tag';
-import type { TagVariant } from '../components/primitives/Tag';
+import type { NonRaciTagVariant } from '../components/primitives/Tag';
 import { BANDS } from '../data/studio';
 import { DOM_OPEN, GAPS, OBL } from '../data/onside';
 import type { DomOpenItem, ObligationRow, OnsideDomain } from '../data/onside';
@@ -120,7 +120,7 @@ export const DOMAIN_STATUS_LABEL: Record<DomainStatus, string> = {
  * set"); the visible text ("At target" vs. "Above target") is what
  * actually carries the distinction, per Tag's own a11y baseline ("never
  * the sole carrier of meaning"). */
-export const DOMAIN_STATUS_VARIANT: Record<DomainStatus, TagVariant> = {
+export const DOMAIN_STATUS_VARIANT: Record<DomainStatus, NonRaciTagVariant> = {
   below: 'status-caution',
   at: 'status-positive',
   above: 'status-positive',
@@ -164,13 +164,13 @@ export function domainPostureSegments(current: number, target: number): PostureS
 }
 
 const OBL_STATUS_LABEL: Record<ObligationRow['st'], string> = { met: 'Met', partial: 'Partial', gap: 'Gap' };
-const OBL_STATUS_VARIANT: Record<ObligationRow['st'], TagVariant> = {
+const OBL_STATUS_VARIANT: Record<ObligationRow['st'], NonRaciTagVariant> = {
   met: 'status-positive',
   partial: 'status-caution',
   gap: 'status-alert',
 };
 const REVIEW_LABEL: Record<ObligationRow['rev'], string> = { ok: 'Approved', q: 'HITL queue' };
-const REVIEW_VARIANT: Record<ObligationRow['rev'], TagVariant> = { ok: 'status-positive', q: 'hitl' };
+const REVIEW_VARIANT: Record<ObligationRow['rev'], NonRaciTagVariant> = { ok: 'status-positive', q: 'hitl' };
 
 function obligationColumns(): DataTableColumn<ObligationRow>[] {
   return [
@@ -261,7 +261,7 @@ const scoreSubStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)'
 const targetLineStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
 const sectionHeadingStyle: CSSProperties = { margin: '0 0 0.5rem', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--ink)' };
 const footStyle: CSSProperties = { fontSize: '0.75rem', color: 'var(--ink2)' };
-const scrollWrapStyle: CSSProperties = { overflowX: 'auto' };
+const scrollWrapStyle: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 /** Base `.pill-soft` (met-obligations summary, source 3687). */
 const pillSoftStyle: CSSProperties = {
   display: 'inline-block',

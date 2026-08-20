@@ -52,7 +52,7 @@ import type { IconName } from './primitives/Icon';
 import { Button } from './primitives/Button';
 import type { ButtonVariant } from './primitives/Button';
 import { Tag } from './primitives/Tag';
-import type { TagVariant } from './primitives/Tag';
+import type { NonRaciTagVariant } from './primitives/Tag';
 import { Label } from './primitives/Label';
 
 /** `'source'` added by the T6.3 follow-up (OnSideFeed.tsx's own W1
@@ -77,7 +77,7 @@ export interface DrawerContentField {
 
 export interface DrawerContentTag {
   text: string;
-  variant: TagVariant;
+  variant: NonRaciTagVariant;
   icon?: IconName;
 }
 

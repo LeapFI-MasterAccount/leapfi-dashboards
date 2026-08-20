@@ -134,6 +134,7 @@ import type { ChatCounter, ChatMessage, ChatHeroState } from '../components/Chat
 import { DataTable } from '../components/DataTable';
 import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
 import { Tag } from '../components/primitives/Tag';
+import { Label } from '../components/primitives/Label';
 import { Chip } from '../components/primitives/Chip';
 import { Button } from '../components/primitives/Button';
 import { ChatIntakeWizard } from '../views/ChatIntakeWizard';
@@ -326,7 +327,9 @@ const CHAT_PANEL_STYLE: CSSProperties = {
 const SCOPE_CHIP_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' };
 const INTAKE_SLOT_STYLE: CSSProperties = { marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' };
 const SOURCES_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
-const SOURCES_HEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--ink2)', textTransform: 'uppercase', letterSpacing: '0.05em' /* T7 F11: was 0.06em, doctrine TYP-4 is 0.05em */ };
+// Layout/reset only — the eyebrow treatment itself (uppercase/tracking/
+// weight/color) lives in Label (P3) `eyebrow`, §8 R-1.
+const SOURCES_HEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit' };
 const SOURCES_LIST_STYLE: CSSProperties = { margin: 0, padding: '0 0 0 1.1rem', fontSize: '0.875rem', color: 'var(--ink)', lineHeight: 1.6 };
 /** Fix B-dead-interactions-10: base `.doclink` styling (underlined, accent-colored, inline) rendered as a real `<button>` so each source is keyboard-operable. */
 const CITATION_LINK_STYLE: CSSProperties = {
@@ -343,7 +346,7 @@ const CITATION_LINK_STYLE: CSSProperties = {
 };
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.125rem', fontWeight: 700, color: 'var(--ink)' };
-const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
+const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 const SR_ONLY_STYLE: CSSProperties = {
   // Visually-hidden recipe — `top`/`left` pinned to 0 is load-bearing;
   // see the invariant note on `DataTable.tsx`'s `srOnlyStyle`. Without
@@ -769,7 +772,9 @@ export function StudioAsk({ topbar, onNavigate, onDeepLink, sidebarVersionLabel 
 
           {showSources ? (
             <div style={SOURCES_STYLE} aria-label="Answer sources">
-              <h2 style={SOURCES_HEADING_STYLE}>Sources</h2>
+              <h2 style={SOURCES_HEADING_STYLE}>
+                <Label text="Sources" variant="eyebrow" />
+              </h2>
               <ul style={SOURCES_LIST_STYLE}>
                 {citations.map((citation) => (
                   <li key={citation}>

@@ -145,7 +145,7 @@ import { RedlineDiffView } from '../components/RedlineDiffView';
 import { Button } from '../components/primitives/Button';
 import type { ButtonVariant } from '../components/primitives/Button';
 import { Tag } from '../components/primitives/Tag';
-import type { TagVariant } from '../components/primitives/Tag';
+import type { NonRaciTagVariant } from '../components/primitives/Tag';
 import { Label } from '../components/primitives/Label';
 import { APPROVAL, CASE_STAGES, CASE_STAGES_B, tierOf } from '../data/cases';
 import type { Case } from '../data/cases';
@@ -221,7 +221,7 @@ function isUntouched(c: Case): boolean {
   return c.stage === 'analyst' && !c.edited && c.history.length <= 1;
 }
 
-function stagePill(c: Case): { text: string; variant: TagVariant } {
+function stagePill(c: Case): { text: string; variant: NonRaciTagVariant } {
   if (c.stage === 'closed') return { text: 'Adopted', variant: 'status-positive' };
   if (c.stage === 'rejected') return { text: 'Returned', variant: 'status-alert' };
   if (c.stage === 'cro') return { text: 'With the CRO', variant: 'status-caution' };
@@ -543,7 +543,7 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
 
         <div style={STEPS_ROW_STYLE} aria-label="Case stage progress">
           {stageSet.map(([key, label], index) => {
-            let variant: TagVariant = 'count';
+            let variant: NonRaciTagVariant = 'count';
             if (caseItem.stage === 'rejected' && index === stageSet.length - 1) variant = 'status-alert';
             else if (caseItem.stage === 'closed' || index < stageIndex) variant = 'status-positive';
             else if (index === stageIndex) variant = 'status-caution';

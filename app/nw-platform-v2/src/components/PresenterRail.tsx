@@ -160,7 +160,7 @@ import type { CSSProperties } from 'react';
 import { Button } from './primitives/Button';
 import { Label } from './primitives/Label';
 import { Tag } from './primitives/Tag';
-import type { TagVariant } from './primitives/Tag';
+import type { NonRaciTagVariant } from './primitives/Tag';
 import type { ScriptDef } from '../data/script';
 
 export interface PresenterRailHandle {
@@ -179,7 +179,7 @@ export interface PresenterRailProps {
 
 interface StandingRule {
   tagText: string;
-  tagVariant: TagVariant;
+  tagVariant: NonRaciTagVariant;
 }
 
 /** demo_script_draft.md "Presenter standing rules (bind every step)", T6.7-amended — see file header "STANDING RULES BANNER content." */
@@ -256,14 +256,11 @@ const RULES_SECTION_STYLE: CSSProperties = {
   paddingTop: '0.75rem',
 };
 
+// Layout/reset only — the eyebrow treatment itself (uppercase/tracking/
+// weight/color) lives in Label (P3) `eyebrow`, §8 R-1.
 const RULES_HEADING_STYLE: CSSProperties = {
   margin: 0,
   font: 'inherit',
-  fontSize: '0.75rem',
-  fontWeight: 700,
-  color: 'var(--ink2)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em', /* T7 F11: was 0.06em, doctrine TYP-4 is 0.05em */
 };
 
 const RULES_TAG_ROW_STYLE: CSSProperties = {
@@ -475,7 +472,9 @@ export const PresenterRail = forwardRef<PresenterRailHandle, PresenterRailProps>
       ) : null}
 
       <div style={RULES_SECTION_STYLE}>
-        <h3 style={RULES_HEADING_STYLE}>Standing rules</h3>
+        <h3 style={RULES_HEADING_STYLE}>
+          <Label text="Standing rules" variant="eyebrow" />
+        </h3>
         <div style={RULES_TAG_ROW_STYLE}>
           {STANDING_RULES.map((rule) => (
             <Tag key={rule.tagText} text={rule.tagText} variant={rule.tagVariant} />
