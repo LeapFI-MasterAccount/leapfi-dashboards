@@ -127,7 +127,7 @@ describe('B-dead-interactions-11 — Connect group header navigates AND expands;
     // Connect ships expanded (§3.1) — collapse it first via the chevron so
     // the label press can demonstrate navigate-AND-expand.
     await user.click(within(nav()).getByRole('button', { name: 'Connect sections' }))
-    expect(within(nav()).queryByRole('button', { name: 'AllRailz' })).not.toBeInTheDocument()
+    expect(within(nav()).queryByRole('button', { name: 'Vantage' })).not.toBeInTheDocument()
 
     await user.click(within(nav()).getByRole('button', { name: 'Connect' }))
 
@@ -136,7 +136,7 @@ describe('B-dead-interactions-11 — Connect group header navigates AND expands;
     expect(within(shellTopbar()).getByText('Connect')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'LeapFI · Connect' })).toBeInTheDocument()
     // Expanded: the children are revealed by the same press.
-    expect(within(nav()).getByRole('button', { name: 'AllRailz' })).toBeInTheDocument()
+    expect(within(nav()).getByRole('button', { name: 'Vantage' })).toBeInTheDocument()
     // The routed group header is itself the current item.
     expect(within(nav()).getByRole('button', { name: 'Connect' })).toHaveAttribute('aria-current', 'page')
   })

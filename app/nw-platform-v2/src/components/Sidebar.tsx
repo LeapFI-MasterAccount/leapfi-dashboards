@@ -249,7 +249,6 @@ const NAV: NavTopItem[] = [
     // the base's group label navigated (`go('connect')`, source 803).
     navigable: true,
     children: [
-      { id: 'connect.allrailz', label: 'AllRailz' },
       { id: 'connect.vantage', label: 'Vantage' },
     ],
   },

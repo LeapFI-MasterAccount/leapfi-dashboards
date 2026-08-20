@@ -44,6 +44,12 @@ describe('sidebar structure (base L762–821)', () => {
     const nav = screen.getByRole('navigation', { name: 'Primary' })
     expect(within(nav).getByRole('button', { name: 'Home' })).toHaveAttribute('aria-current', 'page')
   })
+
+  it('AllRailz is absent from the sidebar navigation', () => {
+    render(<App />)
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    expect(within(nav).queryByRole('button', { name: 'AllRailz' })).not.toBeInTheDocument()
+  })
 })
 
 describe('OnSide nested default-expanded (PI2-D33: OnSide is defaultExpanded:true; header stays, children stay nested, no top-level promotion)', () => {

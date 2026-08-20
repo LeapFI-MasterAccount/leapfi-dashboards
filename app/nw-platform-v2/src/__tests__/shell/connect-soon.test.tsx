@@ -35,30 +35,26 @@ function topbar(): HTMLElement {
 }
 
 describe('SH-4 — sidebar Connect children route to the §5.6 Soon splash, not placeholder meta copy', () => {
-  it('clicking AllRailz in the sidebar lands on the LeapFI · AllRailz splash (base go("allrailz") → renderSoon)', async () => {
+  it('clicking Vantage in the sidebar lands on the LeapFI · Vantage splash (base go("vantage") → renderSoon)', async () => {
     const user = userEvent.setup()
     render(<App />)
     // Connect ships expanded by default (§3.1), so the child is clickable
     // from first paint — the exact audience-reachable click SH-4 names.
-    await user.click(screen.getByRole('button', { name: 'AllRailz' }))
+    await user.click(screen.getByRole('button', { name: 'Vantage' }))
 
-    expect(within(topbar()).getByText('Connect · AllRailz')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'LeapFI · AllRailz' })).toBeInTheDocument()
-    // SOON.allrailz.tag, base 3735-3769 verbatim (data/misc.ts).
-    expect(screen.getByText('The agentic runtime')).toBeInTheDocument()
+    expect(within(topbar()).getByText('Connect · Vantage')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'LeapFI · Vantage' })).toBeInTheDocument()
+    // SOON.vantage.tag, base 3735-3769 verbatim (data/misc.ts).
+    expect(screen.getByText('Agentic third-party oversight')).toBeInTheDocument()
   })
 
   it('renders no build-program meta copy anywhere (the deleted OutOfScopeScreen text)', async () => {
     const user = userEvent.setup()
     render(<App />)
-    await user.click(screen.getByRole('button', { name: 'AllRailz' }))
+    await user.click(screen.getByRole('button', { name: 'Vantage' }))
     expect(screen.queryByText(/seven screens this build implements/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/nothing is wired here/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/full-sidebar gesture/i)).not.toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Vantage' }))
-    expect(screen.queryByText(/seven screens this build implements/i)).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'LeapFI · Vantage' })).toBeInTheDocument()
   })
 })
 
