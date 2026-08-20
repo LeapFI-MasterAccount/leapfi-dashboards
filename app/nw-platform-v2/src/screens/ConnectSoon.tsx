@@ -53,12 +53,16 @@
  * C16 row, so SoonSplash renders neither — that STOP-item remains with
  * the design authority; this routing fix neither widens nor resolves it.
  *
- * AMBIGUITY RESOLVED — Sidebar `activeId`: intrinsic to `moduleKey`
- * (`'connect'` / `'connect.allrailz'` / `'connect.vantage'`), hardcoded
- * per the same rationale as every sibling screen. For `'connect'` no
- * sidebar row highlights (the Connect group header is a toggle, not a
- * leaf); the group ships `defaultExpanded`, so AllRailz and Vantage stay
- * visible in the sidebar per §3.1's Step-1-gesture rationale.
+ * SUPERSEDED — Topbar/Sidebar ownership (amendment A11, design_system_spec.md
+ * §3.0): both now mount exactly once, in App.tsx's persistent Shell —
+ * this screen no longer renders either, and no longer builds a local
+ * `SidebarProps`/`activeId`. App.tsx's Shell passes `screenId` itself
+ * (`'connect'` / `'connect.allrailz'` / `'connect.vantage'`) as Sidebar's
+ * `activeId` directly — identical values to this file's former
+ * `MODULE_META.activeId` map, which is removed as redundant. For
+ * `'connect'` no sidebar row highlights (the Connect group header is a
+ * toggle, not a leaf); the group ships `defaultExpanded`, so AllRailz and
+ * Vantage stay visible in the sidebar per §3.1's Step-1-gesture rationale.
  *
  * Layout constants: same implementer-judgment category as `Home.tsx`'s /
  * `Roadmap.tsx`'s identical header note (design_system_spec.md §1.4
@@ -69,10 +73,6 @@
  * sibling-modules row.
  */
 import type { CSSProperties } from 'react';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
-import type { SidebarProps } from '../components/Sidebar';
 import { SoonSplash } from '../components/SoonSplash';
 import type { SoonSplashProps } from '../components/SoonSplash';
 import { SetupCard } from '../components/SetupCard';
@@ -83,11 +83,11 @@ import type { SoonEntry } from '../data/misc';
 const MODULE_ORDER = ['connect', 'allrailz', 'vantage'] as const;
 export type ConnectModuleKey = (typeof MODULE_ORDER)[number];
 
-/** Sidebar `activeId` + short page title per module (SCREEN_LABEL's own last segment; the branded full name lives in the SoonSplash heading). */
-const MODULE_META: Record<ConnectModuleKey, { activeId: string; title: string }> = {
-  connect: { activeId: 'connect', title: 'Connect' },
-  allrailz: { activeId: 'connect.allrailz', title: 'AllRailz' },
-  vantage: { activeId: 'connect.vantage', title: 'Vantage' },
+/** Short page title per module (SCREEN_LABEL's own last segment; the branded full name lives in the SoonSplash heading). `activeId` is no longer derived here — App.tsx's Shell passes `screenId` itself to Sidebar (see file header). */
+const MODULE_META: Record<ConnectModuleKey, { title: string }> = {
+  connect: { title: 'Connect' },
+  allrailz: { title: 'AllRailz' },
+  vantage: { title: 'Vantage' },
 };
 
 const MODULE_ENTRIES: Array<{ key: ConnectModuleKey; entry: SoonEntry }> = MODULE_ORDER.flatMap((key) => {
@@ -107,16 +107,6 @@ function toSoonSplashProps(entry: SoonEntry): SoonSplashProps {
   };
 }
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
-const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
 // third-party overlays tomorrow) so an unpinned absolute box resolves
@@ -140,56 +130,35 @@ const SIBLING_HEADING_STYLE: CSSProperties = { font: 'inherit', fontSize: '1rem'
 const SIBLING_ROW_STYLE: CSSProperties = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))', gap: '1rem' };
 
 export interface ConnectSoonProps {
-  /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as every sibling screen). */
-  topbar: TopbarProps;
-  /** Sidebar navigation hook. `activeId` is intrinsic to `moduleKey` and is not accepted as a prop. */
-  onNavigate: SidebarProps['onNavigate'];
   /** Which locked module this render shows — the remaining two render beneath it (see file header "SIBLING MODULES ROW"). */
   moduleKey: ConnectModuleKey;
-  sidebarVersionLabel?: string;
 }
 
-export function ConnectSoon({ topbar, onNavigate, moduleKey, sidebarVersionLabel }: ConnectSoonProps) {
+export function ConnectSoon({ moduleKey }: ConnectSoonProps) {
   const active = MODULE_ENTRIES.find((candidate) => candidate.key === moduleKey) ?? null;
   const siblings = MODULE_ENTRIES.filter((candidate) => candidate.key !== moduleKey);
   const meta = MODULE_META[moduleKey];
 
-  // Built conditionally — `exactOptionalPropertyTypes`; same pattern as
-  // `Home.tsx`/`Roadmap.tsx` document.
-  const sidebarProps: SidebarProps = {
-    activeId: meta.activeId,
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
-
   return (
-    <div data-lf-screen="connect-soon" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="connect-soon-main" style={MAIN_STYLE} aria-labelledby="connect-soon-title">
-          <h1 id="connect-soon-title" style={TITLE_STYLE}>
-            {meta.title}
-          </h1>
-          {active ? <SoonSplash {...toSoonSplashProps(active.entry)} /> : null}
-          {siblings.length > 0 ? (
-            // Script Step 6: "the remaining locked modules beneath it" —
-            // see file header "SIBLING MODULES ROW."
-            <section style={SIBLING_SECTION_STYLE} aria-labelledby="connect-soon-siblings">
-              <h2 id="connect-soon-siblings" style={SIBLING_HEADING_STYLE}>
-                More of the platform
-              </h2>
-              <div style={SIBLING_ROW_STYLE}>
-                {siblings.map(({ key, entry }) => (
-                  <SetupCard key={key} title={entry.name} description={entry.tag} variant="locked" />
-                ))}
-              </div>
-            </section>
-          ) : null}
-        </main>
-      </div>
-    </div>
+    <main id="connect-soon-main" style={MAIN_STYLE} aria-labelledby="connect-soon-title">
+      <h1 id="connect-soon-title" style={TITLE_STYLE}>
+        {meta.title}
+      </h1>
+      {active ? <SoonSplash {...toSoonSplashProps(active.entry)} /> : null}
+      {siblings.length > 0 ? (
+        // Script Step 6: "the remaining locked modules beneath it" —
+        // see file header "SIBLING MODULES ROW."
+        <section style={SIBLING_SECTION_STYLE} aria-labelledby="connect-soon-siblings">
+          <h2 id="connect-soon-siblings" style={SIBLING_HEADING_STYLE}>
+            More of the platform
+          </h2>
+          <div style={SIBLING_ROW_STYLE}>
+            {siblings.map(({ key, entry }) => (
+              <SetupCard key={key} title={entry.name} description={entry.tag} variant="locked" />
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </main>
   );
 }

@@ -28,7 +28,6 @@ import { render, screen, within } from '@testing-library/react'
 import { DomainsAccordion } from '../../views/DomainsAccordion'
 import { OnSideOverview } from '../../screens/OnSideOverview'
 import { DOMAINS } from '../../data/onside'
-import { makeTopbarProps } from './helpers'
 
 // Real seed data — 'consumer' domain has bodies 'CFPB · NCUA', matching
 // the bug report's "...NCUA" concatenation shape exactly.
@@ -72,7 +71,7 @@ describe('DomainsAccordion — header title vs. meta line separation', () => {
 
 describe("OnSideOverview's domain-posture-card — title button vs. meta Label separation", () => {
   it('renders each domain-posture card\'s name button and its "bodies · N obligations in scope" Label as stacked, gapped elements — never concatenated', () => {
-    render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} />)
+    render(<OnSideOverview onNavigate={() => {}} />)
 
     const cards = document.querySelectorAll('[data-lf-composite="domain-posture-card"]')
     expect(cards.length).toBe(DOMAINS.length)

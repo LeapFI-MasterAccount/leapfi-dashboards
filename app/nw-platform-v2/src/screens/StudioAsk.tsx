@@ -11,6 +11,13 @@
  * (C10), StatCard (C1, via ChatHero's own counter row), Input (P6), Button
  * (`primary` — the screen's ONE primary CTA), Chip (`suggestion`).
  *
+ * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
+ * design_system_spec.md §3.0): both composites now mount exactly once, in
+ * App.tsx's persistent Shell — this screen no longer accepts a `topbar`
+ * prop or builds a local `SidebarProps`; it keeps only `onNavigate` for its
+ * own in-content links (source citation links → OnSide · Documents),
+ * unrelated to rendering Sidebar itself.
+ *
  * Matching engine (STU-03) — ported from the base, no longer authored:
  *   - `matchCopilotQA` keeps an exact-question / full-chip-phrase fast
  *     path (the suggestion Chips fill the Input with the short chip
@@ -125,9 +132,6 @@
  */
 import { useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
 import type { SidebarProps } from '../components/Sidebar';
 import { ChatHero } from '../components/ChatHero';
 import type { ChatCounter, ChatMessage, ChatHeroState } from '../components/ChatHero';
@@ -292,16 +296,6 @@ const ASK_SUBMIT_DELAY_MS = 350;
 const ASK_RENDER_DELAY_MS = 450;
 const REGISTER_HIGHLIGHT_MS = 1800;
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
-const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
 // third-party overlays tomorrow) so an unpinned absolute box resolves
@@ -375,14 +369,11 @@ const COUNTERS: ChatCounter[] = [
 const SUGGESTIONS: string[] = [...COPILOT_QA.map((item) => item.chips), SEEDED_AUTO_LOAN_QUESTION];
 
 export interface StudioAskProps extends DeepLinkScreenProps {
-  /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (same passthrough pattern as `Home.tsx`). */
-  topbar: TopbarProps;
-  /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('studio.ask') and is not accepted as a prop. */
+  /** Navigation hook for this screen's own in-content links (source citation links → OnSide · Documents) — unrelated to Sidebar, which App.tsx's Shell owns (see file header). */
   onNavigate: SidebarProps['onNavigate'];
-  sidebarVersionLabel?: string;
 }
 
-export function StudioAsk({ topbar, onNavigate, onDeepLink, sidebarVersionLabel }: StudioAskProps) {
+export function StudioAsk({ onNavigate, onDeepLink }: StudioAskProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   /** The intake wizard's own transcript, mirrored up via
    * `onTranscriptChange` (fix C-unbounded-growth-01) — merged into
@@ -698,20 +689,8 @@ export function StudioAsk({ topbar, onNavigate, onDeepLink, sidebarVersionLabel 
       }
     : undefined;
 
-  const sidebarProps: SidebarProps = {
-    activeId: 'studio.ask',
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
-
   return (
-    <div data-lf-screen="studio-ask" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="studio-ask-main" style={MAIN_STYLE} aria-labelledby="studio-ask-title">
+    <main id="studio-ask-main" style={MAIN_STYLE} aria-labelledby="studio-ask-title">
           <h1 id="studio-ask-title" style={TITLE_STYLE}>
             Studio · Ask
           </h1>
@@ -807,8 +786,6 @@ export function StudioAsk({ topbar, onNavigate, onDeepLink, sidebarVersionLabel 
               />
             </div>
           </section>
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }

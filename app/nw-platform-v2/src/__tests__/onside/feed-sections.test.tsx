@@ -23,10 +23,9 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OnSideFeed } from '../../screens/OnSideFeed'
 import { SRC_ITEMS } from '../../data/onside'
-import { makeTopbarProps } from './helpers'
 
 function renderFeed() {
-  return render(<OnSideFeed topbar={makeTopbarProps()} onNavigate={() => {}} />)
+  return render(<OnSideFeed />)
 }
 
 /** Counts base tuples within a day window — the digestCard count rule

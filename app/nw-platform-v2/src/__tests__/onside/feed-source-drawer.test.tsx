@@ -25,7 +25,6 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OnSideFeed } from '../../screens/OnSideFeed'
 import type { DeepLinkTarget } from '../../App'
-import { makeTopbarProps } from './helpers'
 
 beforeAll(() => {
   // jsdom has no scrollIntoView; the "Open in Sources & connectors →" deep-
@@ -34,7 +33,7 @@ beforeAll(() => {
 })
 
 function renderFeed() {
-  return render(<OnSideFeed topbar={makeTopbarProps()} onNavigate={() => {}} />)
+  return render(<OnSideFeed />)
 }
 
 /** Opens the OCC row's source detail from the Financial layer table
@@ -145,8 +144,6 @@ describe("B3 SEAM 2 — 'feed-source' deep-link consumption (App.tsx KIND VOCABU
     const onDeepLinkConsumed = vi.fn()
     render(
       <OnSideFeed
-        topbar={makeTopbarProps()}
-        onNavigate={() => {}}
         deepLink={makeDeepLink('OCC · 12 CFR Ch. I', 1)}
         onDeepLinkConsumed={onDeepLinkConsumed}
       />,
@@ -172,8 +169,6 @@ describe("B3 SEAM 2 — 'feed-source' deep-link consumption (App.tsx KIND VOCABU
     const user = userEvent.setup()
     render(
       <OnSideFeed
-        topbar={makeTopbarProps()}
-        onNavigate={() => {}}
         deepLink={makeDeepLink('OCC · 12 CFR Ch. I', 1)}
         onDeepLinkConsumed={() => {}}
       />,
@@ -192,8 +187,6 @@ describe("B3 SEAM 2 — 'feed-source' deep-link consumption (App.tsx KIND VOCABU
     const onDeepLinkConsumed = vi.fn()
     render(
       <OnSideFeed
-        topbar={makeTopbarProps()}
-        onNavigate={() => {}}
         deepLink={makeDeepLink('Not A Real Source', 7)}
         onDeepLinkConsumed={onDeepLinkConsumed}
       />,
@@ -208,8 +201,6 @@ describe("B3 SEAM 2 — 'feed-source' deep-link consumption (App.tsx KIND VOCABU
     const onDeepLinkConsumed = vi.fn()
     const { rerender } = render(
       <OnSideFeed
-        topbar={makeTopbarProps()}
-        onNavigate={() => {}}
         deepLink={makeDeepLink('OCC · 12 CFR Ch. I', 1)}
         onDeepLinkConsumed={onDeepLinkConsumed}
       />,
@@ -223,8 +214,6 @@ describe("B3 SEAM 2 — 'feed-source' deep-link consumption (App.tsx KIND VOCABU
 
     rerender(
       <OnSideFeed
-        topbar={makeTopbarProps()}
-        onNavigate={() => {}}
         deepLink={makeDeepLink('OCC · 12 CFR Ch. I', 2)}
         onDeepLinkConsumed={onDeepLinkConsumed}
       />,

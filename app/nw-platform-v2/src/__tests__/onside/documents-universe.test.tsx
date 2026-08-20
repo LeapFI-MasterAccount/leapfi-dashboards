@@ -21,7 +21,6 @@ import { OnSideDocuments } from '../../screens/OnSideDocuments'
 import { DOCLIB } from '../../data/doclib'
 import type { DocStatus } from '../../data/doclib'
 import { DOMAINS } from '../../data/onside'
-import { makeTopbarProps } from './helpers'
 
 const ALL_DOCS = Object.values(DOCLIB)
 const STATUS_LABEL: Record<DocStatus, string> = {
@@ -32,7 +31,7 @@ const STATUS_LABEL: Record<DocStatus, string> = {
 const REDLINE_COUNT = ALL_DOCS.filter((doc) => doc.redline).length
 
 function renderDocuments() {
-  return render(<OnSideDocuments topbar={makeTopbarProps()} onNavigate={() => {}} />)
+  return render(<OnSideDocuments />)
 }
 
 function getFilterBar(container: HTMLElement): HTMLElement {
@@ -106,8 +105,6 @@ describe("PI2-D5 — 'document'-kind deep link (App.tsx KIND VOCABULARY: id = DO
     const onDeepLinkConsumed = vi.fn()
     render(
       <OnSideDocuments
-        topbar={makeTopbarProps()}
-        onNavigate={() => {}}
         deepLink={{ screen: 'onside.documents', kind: 'document', id: 'irp', nonce: 1 }}
         onDeepLinkConsumed={onDeepLinkConsumed}
       />,
@@ -133,8 +130,6 @@ describe("PI2-D5 — 'document'-kind deep link (App.tsx KIND VOCABULARY: id = DO
     const onDeepLinkConsumed = vi.fn()
     render(
       <OnSideDocuments
-        topbar={makeTopbarProps()}
-        onNavigate={() => {}}
         deepLink={{ screen: 'onside.documents', kind: 'domain', id: 'irp', nonce: 1 }}
         onDeepLinkConsumed={onDeepLinkConsumed}
       />,
@@ -147,8 +142,6 @@ describe("PI2-D5 — 'document'-kind deep link (App.tsx KIND VOCABULARY: id = DO
     const onDeepLinkConsumed = vi.fn()
     render(
       <OnSideDocuments
-        topbar={makeTopbarProps()}
-        onNavigate={() => {}}
         deepLink={{ screen: 'onside.documents', kind: 'document', id: 'no-such-doc', nonce: 2 }}
         onDeepLinkConsumed={onDeepLinkConsumed}
       />,

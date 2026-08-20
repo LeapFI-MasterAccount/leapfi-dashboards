@@ -22,14 +22,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Reporting } from '../../screens/Reporting';
-import { topbarFixture } from './fixtures';
 import { CTRLDOM, OPPS } from '../../data/studio';
 import { OBL } from '../../data/onside';
 
 describe('Report head-bar "Open full governance detail · OnSide →" link (base head() 1481-1482)', () => {
   it('renders on a report and issues a plain nav to onside.overview', () => {
     const onNavigate = vi.fn();
-    render(<Reporting topbar={topbarFixture()} onNavigate={onNavigate} />);
+    render(<Reporting onNavigate={onNavigate} />);
 
     fireEvent.click(screen.getByRole('button', { name: /Risk Posture & Targets/ }));
     const dialog = screen.getByRole('dialog');
@@ -43,7 +42,7 @@ describe('Compliance report control doclink (base ~1542 doclink -> goOnside(dom-
   it('a control with a resolvable domain routing key opens that domain via a nav-payload deep link', () => {
     const onNavigate = vi.fn();
     const onDeepLink = vi.fn();
-    render(<Reporting topbar={topbarFixture()} onNavigate={onNavigate} onDeepLink={onDeepLink} />);
+    render(<Reporting onNavigate={onNavigate} onDeepLink={onDeepLink} />);
 
     fireEvent.click(screen.getByRole('button', { name: /Compliance · Open Items/ }));
     const dialog = screen.getByRole('dialog');
@@ -59,7 +58,7 @@ describe('Compliance report control doclink (base ~1542 doclink -> goOnside(dom-
 describe('Compliance report "Plays it blocks" cell (base ~1542 playLink -> openPlay(n))', () => {
   it('a gated play listed in the cell opens the play detail via a nav-payload deep link', () => {
     const onDeepLink = vi.fn();
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} onDeepLink={onDeepLink} />);
+    render(<Reporting onNavigate={() => {}} onDeepLink={onDeepLink} />);
 
     fireEvent.click(screen.getByRole('button', { name: /Compliance · Open Items/ }));
     const dialog = screen.getByRole('dialog');
@@ -82,7 +81,7 @@ describe('Compliance report "Plays it blocks" cell (base ~1542 playLink -> openP
 describe('mrm/tprm "Open register items" row -> obligation (base 1590/1612 openObl(domKey,id))', () => {
   it('the Model Risk register row action opens the obligation via a nav-payload deep link', () => {
     const onDeepLink = vi.fn();
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} onDeepLink={onDeepLink} />);
+    render(<Reporting onNavigate={() => {}} onDeepLink={onDeepLink} />);
 
     fireEvent.click(screen.getByRole('button', { name: /Model Risk Report/ }));
     screen.getByRole('dialog');
@@ -98,7 +97,7 @@ describe('mrm/tprm "Open register items" row -> obligation (base 1590/1612 openO
 
   it('the Third-Party Risk register row action opens the obligation via a nav-payload deep link', () => {
     const onDeepLink = vi.fn();
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} onDeepLink={onDeepLink} />);
+    render(<Reporting onNavigate={() => {}} onDeepLink={onDeepLink} />);
 
     fireEvent.click(screen.getByRole('button', { name: /Third-Party & Vendor Risk/ }));
     const dialog = screen.getByRole('dialog');
@@ -119,7 +118,6 @@ describe('Reporting consumes an inbound "report" deep link (App.tsx NAV-PAYLOAD 
     const onDeepLinkConsumed = vi.fn();
     render(
       <Reporting
-        topbar={topbarFixture()}
         onNavigate={() => {}}
         deepLink={{ screen: 'reporting', kind: 'report', id: 'roi', nonce: 7 }}
         onDeepLinkConsumed={onDeepLinkConsumed}
@@ -135,7 +133,6 @@ describe('Reporting consumes an inbound "report" deep link (App.tsx NAV-PAYLOAD 
     const onDeepLinkConsumed = vi.fn();
     render(
       <Reporting
-        topbar={topbarFixture()}
         onNavigate={() => {}}
         deepLink={{ screen: 'reporting', kind: 'report', id: 'not-a-real-kind', nonce: 3 }}
         onDeepLinkConsumed={onDeepLinkConsumed}

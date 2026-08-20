@@ -27,11 +27,14 @@
  * wording, count, or ordering was altered — this is copy, ported whole per
  * the addendum's own instruction, not summarized.
  *
- * AMBIGUITY RESOLVED — Topbar/Sidebar data ownership: identical
- * passthrough pattern already landed by every sibling screen in this
- * worktree — full `topbar: TopbarProps` bundle, `onNavigate:
- * SidebarProps['onNavigate']`, `activeId` hardcoded to `'settings.about'`
- * (intrinsic to this screen).
+ * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
+ * design_system_spec.md §3.0): both composites now mount exactly once, in
+ * App.tsx's persistent Shell — this screen no longer accepts a `topbar`
+ * prop or builds a local `SidebarProps`. It also no longer accepts
+ * `onNavigate`: this screen never called it directly (a pure read-only
+ * informational surface, no cross-screen action), so that plumbing was
+ * dead the moment its only consumer (the local `sidebarProps`
+ * construction) was removed.
  *
  * AMBIGUITY RESOLVED — About-card figures are literal copy, not derived:
  * base engine anchor 1132–1137 hardcodes "v 1.071" / "3 + 3" /
@@ -66,10 +69,6 @@
  * `Sidebar`/`Label`/`Tag` shapes it consumes.
  */
 import type { CSSProperties } from 'react';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
-import type { SidebarProps } from '../components/Sidebar';
 import { Label } from '../components/primitives/Label';
 import { Tag } from '../components/primitives/Tag';
 import { PANEL_STYLE } from '../theme/panelStyle';
@@ -91,16 +90,6 @@ const ABOUT_ROWS: AboutRow[] = [
   { label: 'Environment', value: 'Demo · illustrative customer data · NorthWinds Credit Union', pill: 'Demo' },
 ];
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
-const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
 // third-party overlays tomorrow) so an unpinned absolute box resolves
@@ -140,32 +129,12 @@ const ABOUT_ROW_STYLE: CSSProperties = {
 const ABOUT_ROW_FIRST_STYLE: CSSProperties = { ...ABOUT_ROW_STYLE, borderTop: 'none', paddingTop: 0 };
 const ABOUT_ROW_MAIN_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: 0 };
 
-export interface SettingsAboutProps {
-  /** Full Topbar prop bundle — same passthrough pattern as every sibling screen. */
-  topbar: TopbarProps;
-  /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('settings.about') and is not accepted as a prop. */
-  onNavigate: SidebarProps['onNavigate'];
-  sidebarVersionLabel?: string;
-}
+/** No props — `topbar`/`onNavigate` were removed as dead once Sidebar/Topbar mount moved to App.tsx's Shell (see file header); this screen never called `onNavigate` directly, only fed it to the Sidebar it no longer renders. */
+export type SettingsAboutProps = object;
 
-export function SettingsAbout({ topbar, onNavigate, sidebarVersionLabel }: SettingsAboutProps) {
-  // See `Home.tsx`'s identical note: built conditionally because this
-  // project's `exactOptionalPropertyTypes` setting treats an optional prop
-  // as exactly its declared type, not `T | undefined`.
-  const sidebarProps: SidebarProps = {
-    activeId: 'settings.about',
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
-
+export function SettingsAbout() {
   return (
-    <div data-lf-screen="settings-about" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="settings-about-main" style={MAIN_STYLE} aria-labelledby="settings-about-title">
+    <main id="settings-about-main" style={MAIN_STYLE} aria-labelledby="settings-about-title">
           <div style={HEADER_STYLE}>
             <Label text="Platform" variant="eyebrow" />
             <h1 id="settings-about-title" style={TITLE_STYLE}>
@@ -187,8 +156,6 @@ export function SettingsAbout({ topbar, onNavigate, sidebarVersionLabel }: Setti
               </div>
             ))}
           </div>
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }

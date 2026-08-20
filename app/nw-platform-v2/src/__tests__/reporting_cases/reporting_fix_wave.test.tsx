@@ -34,7 +34,6 @@ import { APPROVAL, CASES, seedCases } from '../../data/cases';
 import { BOARD_LOG } from '../../data/boardLog';
 import { DOCLIB } from '../../data/doclib';
 import { DEFAULT_SLIDERS, setDemoSliders } from '../../state/demoStore';
-import { topbarFixture } from './fixtures';
 
 function resetSingletons(): void {
   for (const key of Object.keys(BOARD_LOG)) delete BOARD_LOG[key];
@@ -56,7 +55,7 @@ afterEach(resetSingletons);
 
 describe('RPT-03 — wide drawer variant (base 1679 / 326 / 3577)', () => {
   it('reports render in the wide drawer; the board-log form drawer is default width (base showDrawer(html,false))', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Regulatory Change Briefing/);
     expect(dialog).toHaveAttribute('data-size', 'wide');
     expect(dialog.style.width).toBe('min(920px, 97vw)');
@@ -68,7 +67,7 @@ describe('RPT-03 — wide drawer variant (base 1679 / 326 / 3577)', () => {
 
 describe('RPT-01 — ported drawer print stylesheet (base 758)', () => {
   it('mounts the @media print block with the drawer/scrim/close/footer selectors while a report is open', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     openReportDrawer(/Board Pack/);
 
     const styles = Array.from(document.querySelectorAll('style'))
@@ -100,7 +99,7 @@ describe('RPT-05 / RPT-06 — board-log sub-flow focus + timer safety', () => {
   }
 
   it('RPT-05: each in-drawer content swap re-places focus on the drawer heading (C7 trap boundary)', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Regulatory Change Briefing/);
 
     // Swap 1: report → form (the pressed button unmounts).
@@ -120,7 +119,7 @@ describe('RPT-05 / RPT-06 — board-log sub-flow focus + timer safety', () => {
   });
 
   it('RPT-06: closing the drawer inside the 900ms window cancels the pending swap — the drawer stays closed', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Regulatory Change Briefing/);
     openFormAndSave(dialog);
 
@@ -132,7 +131,7 @@ describe('RPT-05 / RPT-06 — board-log sub-flow focus + timer safety', () => {
   });
 
   it('RPT-06: opening a different report inside the window is not hijacked back to regchange', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Regulatory Change Briefing/);
     openFormAndSave(dialog);
 
@@ -146,7 +145,7 @@ describe('RPT-05 / RPT-06 — board-log sub-flow focus + timer safety', () => {
   });
 
   it('RPT-06: a fresh form opened inside the window is not destroyed mid-typing', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Regulatory Change Briefing/);
     openFormAndSave(dialog);
 
@@ -166,7 +165,7 @@ describe('RPT-05 / RPT-06 — board-log sub-flow focus + timer safety', () => {
   });
 
   it('base-parity path unchanged: undisturbed save still swaps back to the regchange report at 900ms (base 3592)', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Regulatory Change Briefing/);
     openFormAndSave(dialog);
     act(() => {
@@ -178,7 +177,7 @@ describe('RPT-05 / RPT-06 — board-log sub-flow focus + timer safety', () => {
 
 describe('RPT-04 — reports recompute from the LIVE levers (base 1477)', () => {
   it('a lever change re-renders the open Investment Plan from the new position', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Investment Plan/);
 
     // Boot position funds a non-empty portfolio…
@@ -204,7 +203,7 @@ describe('RPT-07 — gapboard per-case language blocks (base 1493-1502)', () => 
     boardCase.stage = 'committee';
     boardCase.cond = APPROVAL.conditions[0] ?? null;
 
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Gap Closure Board Approval Report/);
 
     expect(within(dialog).getByText('Before · in force until this is adopted')).toBeInTheDocument();
@@ -224,7 +223,7 @@ describe('RPT-07 — gapboard per-case language blocks (base 1493-1502)', () => 
 
 describe('RPT-08 — regchange dropped content restored (base 3596/3605/3608/3609/3715)', () => {
   it('renders the examiner pill, Export board pack, Determination provenance, the base intro close, and the row-1 status literal', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Regulatory Change Briefing/);
 
     expect(
@@ -240,7 +239,7 @@ describe('RPT-08 — regchange dropped content restored (base 3596/3605/3608/360
   });
 
   it('index card title renders without the base description narration (base 3715 cut per D26 copy pass)', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const card = screen.getByRole('button', { name: /Regulatory Change Briefing/ });
     expect(card.textContent).not.toContain('Updates logged in place.');
   });
@@ -248,7 +247,7 @@ describe('RPT-08 — regchange dropped content restored (base 3596/3605/3608/360
 
 describe('RPT-09 — board report: real presentation deck + simultaneously visible appendix (base 1507-1532, 2393-2447)', () => {
   it('renders the deck-nav line, the title slide, and the flat appendix at the same time', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Board Pack/);
 
     // Base 1521: 'The board presentation · N slides · risk then opportunity'
@@ -267,7 +266,7 @@ describe('RPT-09 — board report: real presentation deck + simultaneously visib
 
 describe('RPT-11 — report chrome fidelity (base 1479-1482 head(), tile subs, docLink text)', () => {
   it('renders the base category line and the per-report mrm subtitle with the owner attribution (base 1591)', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Model Risk Report/);
 
     expect(within(dialog).getByText('LEAPFI · Reporting · generated from the live record')).toBeInTheDocument();
@@ -279,7 +278,7 @@ describe('RPT-11 — report chrome fidelity (base 1479-1482 head(), tile subs, d
   });
 
   it("mrm validation calendar reads the base's hand-written text — no duplicated 'pre-staged' (base 1613)", () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Model Risk Report/);
 
     expect(
@@ -289,7 +288,7 @@ describe('RPT-11 — report chrome fidelity (base 1479-1482 head(), tile subs, d
   });
 
   it('roi tiles carry the base sub-captions that scope the numbers (base 1672)', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openReportDrawer(/Investment & ROI/);
 
     expect(within(dialog).getByText('est. 10% of NIE')).toBeInTheDocument();

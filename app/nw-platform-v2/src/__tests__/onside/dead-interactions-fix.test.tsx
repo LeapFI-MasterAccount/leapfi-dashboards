@@ -31,7 +31,6 @@ import { OnSideOverview } from '../../screens/OnSideOverview'
 import { OnSideFeed } from '../../screens/OnSideFeed'
 import { resetDemo } from '../../state/demoStore'
 import { OBL } from '../../data/onside'
-import { makeTopbarProps } from './helpers'
 
 beforeAll(() => {
   // jsdom has no scrollIntoView; this suite's nav-card/accordion/section
@@ -45,15 +44,15 @@ afterEach(() => {
 })
 
 function renderDocuments() {
-  return render(<OnSideDocuments topbar={makeTopbarProps()} onNavigate={() => {}} />)
+  return render(<OnSideDocuments />)
 }
 
 function renderOverview(onNavigate: (id: string) => void = () => {}) {
-  return render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={onNavigate} />)
+  return render(<OnSideOverview onNavigate={onNavigate} />)
 }
 
 function renderFeed() {
-  return render(<OnSideFeed topbar={makeTopbarProps()} onNavigate={() => {}} />)
+  return render(<OnSideFeed />)
 }
 
 describe('B-dead-interactions-01/-02 · OnSideDocuments gap board + obligation registers open the obligation drawer', () => {

@@ -50,13 +50,14 @@
  * general, and on this particular screen only the Topbar instance of that
  * general rule is actually rendered.
  *
- * AMBIGUITY RESOLVED — Topbar data ownership: `Topbar` (C4) requires
- * persona/profile/notification/date data this screen does not own (see
- * `Topbar.tsx`'s own `TopbarProps`). Rather than inventing placeholder
- * identity data, `BoardDeckProps.topbar` accepts a full `TopbarProps`
- * passthrough supplied by whatever integrates this screen — the same
- * "defer data ownership to the integrator" pattern already used by
- * `DeckSlide`/`StatCard` in this codebase.
+ * SUPERSEDED — Topbar data ownership (amendment A11, design_system_spec.md
+ * §3.0): Topbar is no longer owned by any screen module, this one included
+ * — App.tsx mounts Topbar exactly once, in a persistent Shell, wrapping
+ * every routed screen's content region. This screen no longer accepts or
+ * renders a `topbar: TopbarProps` prop at all; the "Sidebar exemption"
+ * described below is unaffected (Board Deck still renders no Sidebar column
+ * — see App.tsx's own `showSidebar` gate) but the Topbar half of the old
+ * per-screen passthrough is now dead, and removed.
  *
  * G11 label requirement (§5.7): "both the Home StatCard... and the deck's
  * economics DeckSlide ('value at adoption') carry explicit measure
@@ -89,8 +90,6 @@ import { DeckView } from '../components/DeckView';
 import type { DeckViewProps, DeckViewSlide } from '../components/DeckView';
 import type { DeckSlideStat } from '../components/DeckSlide';
 import { Button } from '../components/primitives/Button';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
 
 /** Exact tagline casing required by the design-partner ask (G12, brand_doctrine.md tagline casing). */
 const CTA_TAGLINE = 'AI Impact, Hand Delivered.';
@@ -119,17 +118,8 @@ const ECONOMICS_SLIDE: DeckViewSlide = {
   stats: ECONOMICS_STATS,
 };
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-
 // "full-viewport DeckView" (§5.7 region map): the deck fills every pixel
-// of the screen below the Topbar's shell bar.
+// of the content region below the Shell's Topbar (App.tsx).
 const DECK_REGION_STYLE: CSSProperties = {
   flex: '1 1 auto',
   minHeight: 0,
@@ -142,8 +132,6 @@ const CTA_BUTTON_ROW_STYLE: CSSProperties = {
 };
 
 export interface BoardDeckProps {
-  /** Full Topbar prop bundle — this screen does not own persona/profile/notification/date data (see file header). */
-  topbar: TopbarProps;
   /**
    * The DeckCTASlide's (C20) single primary action — "the design-partner
    * ask" (§5.7, G12). Fired only from that Button; never invoked
@@ -158,7 +146,7 @@ export interface BoardDeckProps {
   onIndexChange?: (index: number) => void;
 }
 
-export function BoardDeck({ topbar, onDesignPartnerRequest, initialIndex, onIndexChange }: BoardDeckProps) {
+export function BoardDeck({ onDesignPartnerRequest, initialIndex, onIndexChange }: BoardDeckProps) {
   const ctaSlideChildren: ReactNode = useMemo(
     () => (
       <div style={CTA_BUTTON_ROW_STYLE}>
@@ -198,11 +186,8 @@ export function BoardDeck({ topbar, onDesignPartnerRequest, initialIndex, onInde
   };
 
   return (
-    <div data-lf-screen="board-deck" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div data-lf-screen-region="deck" style={DECK_REGION_STYLE}>
-        <DeckView {...deckViewProps} />
-      </div>
+    <div data-lf-screen-region="deck" style={DECK_REGION_STYLE}>
+      <DeckView {...deckViewProps} />
     </div>
   );
 }

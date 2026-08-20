@@ -14,10 +14,14 @@
  * Components used per spec: Topbar, Sidebar, FilterBar (C5), DataTable
  * (C6), Drawer (C7), DrawerContent (C8, `kind: signal`), Tag, Button (`row`).
  *
- * AMBIGUITY RESOLVED — Topbar/Sidebar data ownership: identical passthrough
- * pattern to `Home.tsx`/`BoardDeck.tsx` (`topbar: TopbarProps` bundle;
- * Sidebar's `activeId` hardcoded here to `'onside.feed'`, only `onNavigate`
- * + optional `sidebarVersionLabel` accepted).
+ * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
+ * design_system_spec.md §3.0): both composites now mount exactly once, in
+ * App.tsx's persistent Shell — this screen no longer accepts a `topbar`
+ * prop or builds a local `SidebarProps`. It also no longer accepts
+ * `onNavigate`: this screen never called it directly (every internal
+ * action here is a Drawer open/close or a deep-link), so that plumbing was
+ * dead the moment its only consumer (the local `sidebarProps`
+ * construction) was removed.
  *
  * AMBIGUITY RESOLVED — "source/severity filters" (§5.2 region map): the
  * ported `data/onside.ts` dataset has no severity field anywhere in
@@ -272,10 +276,6 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
-import type { SidebarProps } from '../components/Sidebar';
 import { FilterBar } from '../components/FilterBar';
 import type { FilterGroup, FilterOption } from '../components/FilterBar';
 import { DataTable } from '../components/DataTable';
@@ -432,25 +432,6 @@ const SOURCE_LOOKUP_BY_NAME = new Map<string, FeedSourceLookup>(
  * press. */
 const SIGNAL_ROW_BY_ID = new Map<string, SignalRow>(ALL_SIGNAL_ROWS.map((row) => [row.id, row]));
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-
-const BODY_ROW_STYLE: CSSProperties = {
-  display: 'flex',
-  flex: '1 1 auto',
-  minHeight: 0,
-};
-
-const SIDEBAR_REGION_STYLE: CSSProperties = {
-  flex: '0 0 240px',
-};
-
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
 // third-party overlays tomorrow) so an unpinned absolute box resolves
@@ -558,15 +539,10 @@ const COLUMNS: DataTableColumn<SignalRow>[] = [
   },
 ];
 
-export interface OnSideFeedProps extends DeepLinkScreenProps {
-  /** Full Topbar prop bundle — same passthrough pattern as `Home.tsx`/`BoardDeck.tsx`. */
-  topbar: TopbarProps;
-  /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('onside.feed') and is not accepted as a prop. */
-  onNavigate: SidebarProps['onNavigate'];
-  sidebarVersionLabel?: string;
-}
+/** No screen-specific members beyond deep-link consumption — `topbar`/`onNavigate` were removed as dead once Sidebar/Topbar mount moved to App.tsx's Shell (see file header); this screen never called `onNavigate` directly, only fed it to the Sidebar it no longer renders. */
+export type OnSideFeedProps = DeepLinkScreenProps;
 
-export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel, deepLink, onDeepLink, onDeepLinkConsumed }: OnSideFeedProps) {
+export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideFeedProps) {
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
   const [selection, setSelection] = useState<DrawerSelection | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -829,22 +805,9 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel, deepLink, 
     setSelection({ kind: 'source', row: { ...selection.row, alertOn: !selection.row.alertOn } });
   };
 
-  // Built conditionally (rather than `versionLabel={sidebarVersionLabel}`
-  // directly) — see `Home.tsx`'s identical note on `exactOptionalPropertyTypes`.
-  const sidebarProps: SidebarProps = {
-    activeId: 'onside.feed',
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
-
   return (
-    <div data-lf-screen="onside-feed" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="onside-feed-main" style={MAIN_STYLE} aria-labelledby="onside-feed-title">
+    <>
+      <main id="onside-feed-main" style={MAIN_STYLE} aria-labelledby="onside-feed-title">
           <h1 id="onside-feed-title" style={TITLE_STYLE}>
             Regulatory feed
           </h1>
@@ -870,8 +833,7 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel, deepLink, 
             <RegulatoryFeedLifecycle onOpenInstrument={handleOpenInstrument} onOpenSources={handleOpenSources} />
           </div>
           <RegulatoryFeedInforce onOpenInstrument={handleOpenInstrument} />
-        </main>
-      </div>
+      </main>
       <Drawer open={drawerOpen} title={drawerTitle} onClose={handleDrawerClose}>
         {/* kind="source" for the source-connector detail (gate dispatch —
             see W1 RESOLVED in the file header) — SEAM 2's 'feed-source'
@@ -895,6 +857,6 @@ export function OnSideFeed({ topbar, onNavigate, sidebarVersionLabel, deepLink, 
           </div>
         ) : null}
       </Drawer>
-    </div>
+    </>
   );
 }

@@ -39,20 +39,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { StudioAsk } from '../../screens/StudioAsk';
 import type { StudioAskProps } from '../../screens/StudioAsk';
-import type { TopbarProps } from '../../components/Topbar';
 import { INTAKE } from '../../data/misc';
 import { resetDemo } from '../../state/demoStore';
 
-const topbar: TopbarProps = {
-  breadcrumb: 'Studio · Ask',
-  onOpenBoardDeck: () => {},
-  date: 'Aug 19, 2026',
-  profile: { name: 'Rachel Fischer', initials: 'RF' },
-  profileMenuItems: [],
-};
-
 function renderStudioAsk(overrides?: Partial<StudioAskProps>) {
-  return render(<StudioAsk topbar={topbar} onNavigate={() => {}} {...overrides} />);
+  return render(<StudioAsk onNavigate={() => {}} {...overrides} />);
 }
 
 /** Types `question` into the Ask Input and presses the Ask primary Button,

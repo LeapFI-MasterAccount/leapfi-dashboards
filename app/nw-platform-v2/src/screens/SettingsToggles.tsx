@@ -20,11 +20,14 @@
  * cards specifically — see the B-15 header note below on why the matrix's
  * own controls are additional, not counted against that figure).
  *
- * AMBIGUITY RESOLVED — Topbar/Sidebar data ownership: identical
- * passthrough pattern already landed by every sibling screen in this
- * worktree (`Home.tsx`, `OnSideDocuments.tsx`, …) — full `topbar:
- * TopbarProps` bundle, `onNavigate: SidebarProps['onNavigate']`, `activeId`
- * hardcoded to `'settings.toggles'` (intrinsic to this screen).
+ * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
+ * design_system_spec.md §3.0): both composites now mount exactly once, in
+ * App.tsx's persistent Shell — this screen no longer accepts a `topbar`
+ * prop or builds a local `SidebarProps`. It also no longer accepts
+ * `onNavigate`: this screen never called it directly (every control here
+ * is a local Switch/input, no cross-screen action), so that plumbing was
+ * dead the moment its only consumer (the local `sidebarProps`
+ * construction) was removed.
  *
  * AMBIGUITY RESOLVED — toggle persistence/backend: the base engine's own
  * toggle handler is `onclick="this.classList.toggle('on')"` — a pure
@@ -100,10 +103,6 @@
  */
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
-import { Topbar } from '../components/Topbar';
-import type { TopbarProps } from '../components/Topbar';
-import { Sidebar } from '../components/Sidebar';
-import type { SidebarProps } from '../components/Sidebar';
 import { Switch } from '../components/primitives/Switch';
 import { Label } from '../components/primitives/Label';
 import { APPROVAL, CASES } from '../data/cases';
@@ -173,16 +172,6 @@ const NOTIFICATION_TOGGLES: ToggleRow[] = [
   },
 ];
 
-const SCREEN_STYLE: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  height: '100vh',
-  background: 'var(--bg)',
-  boxSizing: 'border-box',
-};
-const BODY_ROW_STYLE: CSSProperties = { display: 'flex', flex: '1 1 auto', minHeight: 0 };
-const SIDEBAR_REGION_STYLE: CSSProperties = { flex: '0 0 240px' };
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
 // third-party overlays tomorrow) so an unpinned absolute box resolves
@@ -262,13 +251,8 @@ const COMMITTEE_NAME_INPUT_STYLE: CSSProperties = {
   boxSizing: 'border-box',
 };
 
-export interface SettingsTogglesProps {
-  /** Full Topbar prop bundle — same passthrough pattern as every sibling screen. */
-  topbar: TopbarProps;
-  /** Sidebar navigation hook. `activeId` is intrinsic to this screen ('settings.toggles') and is not accepted as a prop. */
-  onNavigate: SidebarProps['onNavigate'];
-  sidebarVersionLabel?: string;
-}
+/** No props — `topbar`/`onNavigate` were removed as dead once Sidebar/Topbar mount moved to App.tsx's Shell (see file header); this screen never called `onNavigate` directly, only fed it to the Sidebar it no longer renders. */
+export type SettingsTogglesProps = object;
 
 function initialToggleState(rows: ToggleRow[]): Record<string, boolean> {
   const state: Record<string, boolean> = {};
@@ -286,7 +270,7 @@ function initialCommitteeState(): Record<string, boolean> {
   return state;
 }
 
-export function SettingsToggles({ topbar, onNavigate, sidebarVersionLabel }: SettingsTogglesProps) {
+export function SettingsToggles() {
   const [identityState, setIdentityState] = useState<Record<string, boolean>>(() => initialToggleState(IDENTITY_TOGGLES));
   const [notificationState, setNotificationState] = useState<Record<string, boolean>>(() => initialToggleState(NOTIFICATION_TOGGLES));
   // B-15: base `toggleTierCommittee`/`setCommitteeName` (source 3968-3983) —
@@ -295,15 +279,6 @@ export function SettingsToggles({ topbar, onNavigate, sidebarVersionLabel }: Set
   // singleton, never written back to it.
   const [committeeState, setCommitteeState] = useState<Record<string, boolean>>(initialCommitteeState);
   const [committeeName, setCommitteeName] = useState<string>(APPROVAL.committee);
-
-  // See `Home.tsx`'s identical note: built conditionally because this
-  // project's `exactOptionalPropertyTypes` setting treats an optional prop
-  // as exactly its declared type, not `T | undefined`.
-  const sidebarProps: SidebarProps = {
-    activeId: 'settings.toggles',
-    onNavigate,
-    ...(sidebarVersionLabel !== undefined ? { versionLabel: sidebarVersionLabel } : {}),
-  };
 
   function renderToggleCard(title: string, rows: ToggleRow[], state: Record<string, boolean>, setState: (next: Record<string, boolean>) => void, headingId: string) {
     return (
@@ -328,13 +303,7 @@ export function SettingsToggles({ topbar, onNavigate, sidebarVersionLabel }: Set
   const conditionsText = APPROVAL.conditions.join(' · ');
 
   return (
-    <div data-lf-screen="settings-toggles" style={SCREEN_STYLE}>
-      <Topbar {...topbar} />
-      <div style={BODY_ROW_STYLE}>
-        <div style={SIDEBAR_REGION_STYLE}>
-          <Sidebar {...sidebarProps} />
-        </div>
-        <main id="settings-toggles-main" style={MAIN_STYLE} aria-labelledby="settings-toggles-title">
+    <main id="settings-toggles-main" style={MAIN_STYLE} aria-labelledby="settings-toggles-title">
           <div style={HEADER_STYLE}>
             <Label text="Platform" variant="eyebrow" />
             <h1 id="settings-toggles-title" style={TITLE_STYLE}>
@@ -390,8 +359,6 @@ export function SettingsToggles({ topbar, onNavigate, sidebarVersionLabel }: Set
             {renderToggleCard('Identity & access', IDENTITY_TOGGLES, identityState, setIdentityState, 'identity-access-heading')}
             {renderToggleCard('Notifications', NOTIFICATION_TOGGLES, notificationState, setNotificationState, 'notifications-heading')}
           </div>
-        </main>
-      </div>
-    </div>
+    </main>
   );
 }

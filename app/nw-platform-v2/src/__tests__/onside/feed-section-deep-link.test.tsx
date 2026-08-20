@@ -33,7 +33,6 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, waitFor } from '@testing-library/react'
 import { OnSideFeed } from '../../screens/OnSideFeed'
 import type { DeepLinkTarget } from '../../App'
-import { makeTopbarProps } from './helpers'
 
 beforeAll(() => {
   // jsdom has no scrollIntoView — see feed-source-drawer.test.tsx's
@@ -51,8 +50,6 @@ beforeEach(() => {
 function renderFeed(deepLink?: DeepLinkTarget, onDeepLinkConsumed?: (nonce: number) => void) {
   return render(
     <OnSideFeed
-      topbar={makeTopbarProps()}
-      onNavigate={() => {}}
       {...(deepLink !== undefined ? { deepLink } : {})}
       {...(onDeepLinkConsumed !== undefined ? { onDeepLinkConsumed } : {})}
     />,

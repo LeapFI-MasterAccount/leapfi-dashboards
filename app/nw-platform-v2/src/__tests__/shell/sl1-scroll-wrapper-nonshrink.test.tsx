@@ -38,16 +38,7 @@ import { Reporting } from '../../screens/Reporting';
 import { HomePanels } from '../../views/HomePanels';
 import { DomainsAccordion } from '../../views/DomainsAccordion';
 import { DOMAINS } from '../../data/onside';
-import type { TopbarProps } from '../../components/Topbar';
 import { makeTopbarProps } from '../onside/helpers';
-
-const topbar: TopbarProps = {
-  breadcrumb: 'Studio',
-  onOpenBoardDeck: () => {},
-  date: 'Aug 19, 2026',
-  profile: { name: 'Rachel Fischer', initials: 'RF' },
-  profileMenuItems: [],
-};
 
 /** Every DOM node the rendered tree itself styled `overflowX: 'auto'` —
  * the actual horizontal-scroll wrappers, found the same way a real
@@ -67,22 +58,22 @@ function expectAllNonShrinking(container: HTMLElement, minCount = 1) {
 
 describe('SL-1 — horizontal-scroll wrappers declare flexShrink: 0 unconditionally', () => {
   it('OnSideOwnership.tsx:514 — RACI matrix wrapper', () => {
-    const { container } = render(<OnSideOwnership topbar={makeTopbarProps()} onNavigate={() => {}} />);
+    const { container } = render(<OnSideOwnership />);
     expectAllNonShrinking(container);
   });
 
   it('StudioAsk.tsx:346 — Opportunity register wrapper', () => {
-    const { container } = render(<StudioAsk topbar={topbar} onNavigate={() => {}} />);
+    const { container } = render(<StudioAsk onNavigate={() => {}} />);
     expectAllNonShrinking(container);
   });
 
   it('Cases.tsx:250 — Open/Closed cases table wrapper(s)', () => {
-    const { container } = render(<Cases topbar={topbar} onNavigate={() => {}} />);
+    const { container } = render(<Cases topbar={makeTopbarProps()} onNavigate={() => {}} />);
     expectAllNonShrinking(container);
   });
 
   it('InvestmentDesign.tsx:244 and components/PlanTable.tsx:66 — mini-table and plan-table wrappers', () => {
-    const { container } = render(<InvestmentDesign topbar={topbar} onNavigate={() => {}} />);
+    const { container } = render(<InvestmentDesign />);
     // Both InvestmentDesign's own miniTableWrapStyle sites and PlanTable's
     // own tableWrapStyle render in this one default view.
     expectAllNonShrinking(container, 2);
@@ -96,7 +87,7 @@ describe('SL-1 — horizontal-scroll wrappers declare flexShrink: 0 unconditiona
   });
 
   it('views/RegulatoryFeedLifecycle.tsx:110, RegulatoryFeedInforce.tsx:50, RegulatoryFeedSources.tsx:197 — OnSide feed sub-sections', () => {
-    const { container } = render(<OnSideFeed topbar={makeTopbarProps()} onNavigate={() => {}} />);
+    const { container } = render(<OnSideFeed />);
     // "Newly proposed" + "Pending & tracked" (Lifecycle, same const twice),
     // In force (Inforce), and each source layer (Sources) all render by
     // default on this screen.
@@ -119,7 +110,7 @@ describe('SL-1 — horizontal-scroll wrappers declare flexShrink: 0 unconditiona
   });
 
   it('views/ReportView.tsx:406 — report TableSection wrapper (reached via Reporting’s shared Drawer)', () => {
-    render(<Reporting topbar={topbar} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Gap Closure Board Approval Report' }));
     const dialog = screen.getByRole('dialog');
     expectAllNonShrinking(dialog, 1);

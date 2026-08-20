@@ -43,7 +43,6 @@ import { resetDemo } from '../../state/demoStore'
 import { DOCLIB } from '../../data/doclib'
 import type { DocStatus } from '../../data/doclib'
 import { DOMAINS, OBL } from '../../data/onside'
-import { makeTopbarProps } from './helpers'
 
 beforeAll(() => {
   // jsdom has no scrollIntoView; the accordion/impact views call it.
@@ -56,15 +55,15 @@ afterEach(() => {
 })
 
 function renderFeed(extra: Partial<OnSideFeedProps> = {}) {
-  return render(<OnSideFeed topbar={makeTopbarProps()} onNavigate={() => {}} {...extra} />)
+  return render(<OnSideFeed {...extra} />)
 }
 
 function renderDocuments() {
-  return render(<OnSideDocuments topbar={makeTopbarProps()} onNavigate={() => {}} />)
+  return render(<OnSideDocuments />)
 }
 
 function renderOverview() {
-  return render(<OnSideOverview topbar={makeTopbarProps()} onNavigate={() => {}} />)
+  return render(<OnSideOverview onNavigate={() => {}} />)
 }
 
 function getSignalsTable() {
@@ -277,7 +276,7 @@ describe('ONSIDE-10 · RACI authored order (base osRaci 3552-3562)', () => {
     // OnSideOwnership.tsx header), not one table per domain — the 'Model
     // Risk Management' group row's very next sibling row is that domain's
     // first authored document row.
-    const { container } = render(<OnSideOwnership topbar={makeTopbarProps()} onNavigate={() => {}} />)
+    const { container } = render(<OnSideOwnership />)
     const mrmGroupRow = Array.from(container.querySelectorAll('tr[data-lf-group-row="true"]')).find((row) =>
       row.textContent?.includes('Model Risk Management'),
     )

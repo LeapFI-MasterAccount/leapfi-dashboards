@@ -26,7 +26,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { Reporting } from '../../screens/Reporting';
 import { BOARD_LOG } from '../../data/boardLog';
-import { topbarFixture } from './fixtures';
 
 /** Pinned expectation data (hardcoded from the base rows literal, source
  * 3596-3602): title → whether the row carries the log-an-update affordance. */
@@ -58,7 +57,7 @@ describe('regchange standing table (base boardStandingHTML 3595-3603)', () => {
   afterEach(resetBoardLog);
 
   it("renders the 7 standing rows with 'Log an update' on exactly the two open rows (base 3596-3597)", () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openRegchangeDrawer();
 
     const table = within(dialog).getByRole('table', { name: 'Regulatory change standing view' });
@@ -91,7 +90,7 @@ describe('board-log save (base boardUpdate 3577-3587 / boardSave 3589-3593)', ()
   });
 
   it('trim-guard: whitespace-only text saves nothing, shows no pill, and focuses the textarea (base 3590)', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openRegchangeDrawer();
 
     fireEvent.click(within(dialog).getAllByRole('button', { name: 'Log an update →' })[0] as HTMLElement);
@@ -112,7 +111,7 @@ describe('board-log save (base boardUpdate 3577-3587 / boardSave 3589-3593)', ()
   });
 
   it('save appends {txt, when, who, date}, reveals the pill, and swaps back to the regchange report after 900ms showing the entry (base 3591-3592)', () => {
-    render(<Reporting topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Reporting onNavigate={() => {}} />);
     const dialog = openRegchangeDrawer();
 
     fireEvent.click(within(dialog).getAllByRole('button', { name: 'Log an update →' })[0] as HTMLElement);

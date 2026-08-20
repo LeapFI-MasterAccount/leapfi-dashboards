@@ -13,22 +13,10 @@ import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { SettingsToggles } from '../../screens/SettingsToggles';
 import { APPROVAL } from '../../data/cases';
-import type { TopbarProps } from '../../components/Topbar';
-import { CURRENT } from '../../data/studio';
-
-function topbarFixture(): TopbarProps {
-  return {
-    breadcrumb: 'Northwinds Credit Union',
-    onOpenBoardDeck: () => {},
-    date: 'Aug 15, 2026',
-    profile: { name: CURRENT.name, initials: CURRENT.ini },
-    profileMenuItems: [],
-  };
-}
 
 describe('Approval matrix per-tier committee-vote toggle (base toggleTierCommittee, 3975)', () => {
   it('renders one Switch per tier, seeded from APPROVAL.tiers[].committee', () => {
-    render(<SettingsToggles topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<SettingsToggles />);
 
     const switches = screen.getAllByRole('switch', { name: 'Committee vote required before final approval' });
     expect(switches).toHaveLength(APPROVAL.tiers.length);
@@ -38,7 +26,7 @@ describe('Approval matrix per-tier committee-vote toggle (base toggleTierCommitt
   });
 
   it('flipping one tier\'s toggle changes only that tier\'s state', () => {
-    render(<SettingsToggles topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<SettingsToggles />);
 
     const switches = screen.getAllByRole('switch', { name: 'Committee vote required before final approval' });
     const firstTier = APPROVAL.tiers[0];
@@ -57,7 +45,7 @@ describe('Approval matrix per-tier committee-vote toggle (base toggleTierCommitt
 
 describe('Approval matrix editable committee name (base setCommitteeName, 3968-3983)', () => {
   it('renders an editable text input seeded from APPROVAL.committee', () => {
-    render(<SettingsToggles topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<SettingsToggles />);
 
     const input = screen.getByRole('textbox', { name: 'Approving committee name' }) as HTMLInputElement;
     expect(input.value).toBe(APPROVAL.committee);

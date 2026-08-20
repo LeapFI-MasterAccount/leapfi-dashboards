@@ -132,53 +132,89 @@ describe('group toggle while a child is active (SH-11; base toggleOnsideNav @383
     expect(within(nav()).getByRole('button', { name: 'Regulatory feed' })).toHaveAttribute('aria-current', 'page')
   })
 
-  // FINDING (surfaced by PI2-D33, pre-existing and out of this dispatch's
-  // scope — see r07 evidence return spec_questions): every screen module
-  // (`Home`, `OnSideFeed`, ...) mounts its OWN `<Sidebar>` instance
-  // (App.tsx `renderActiveScreen`'s per-case `<Home .../>` /
-  // `<OnSideFeed .../>` etc., each importing and rendering `Sidebar`
-  // itself — grep `<Sidebar` across `src/screens/*.tsx`). React unmounts
-  // the outgoing screen (and its `Sidebar`) and mounts a fresh one on
-  // every CROSS-SCREEN navigation, so `overrides` (Sidebar.tsx's manual
-  // collapse/expand state, module-local `useState`) never survives a
-  // real navigation between screens — it always resets to `{}`, and the
-  // group's expand state falls back to `childActive || defaultExpanded`
-  // on arrival. Before PI2-D33, OnSide's old `defaultExpanded: false`
-  // made that reset LOOK like override persistence by coincidence (both
-  // landed on `false`); flipping OnSide to `true` breaks that coincidence
-  // and shows the override never actually survived cross-screen
-  // navigation. The render-phase "clear stale override" block this test
-  // targets only fires when the SAME Sidebar instance sees two different
-  // `activeId` values, which cross-screen navigation never allows — verified
-  // empirically (see r07 evidence return). This test is corrected to pin
-  // that verified reality; whether cross-screen collapse-state persistence
-  // is desired product behavior is a design/scope question, not decided here.
-  it('navigating away and back resets the group to its default-expand state — the collapse override does not survive a real cross-screen navigation (Sidebar remounts per screen; see FINDING above)', async () => {
+  // RESOLVED (A11, design_system_spec.md §3.0 — Sprint-1 hostile-review E1
+  // finding, ruled BEHAVIOUR-IS-WRONG, not a narrowed claim): Sidebar (C3)
+  // and Topbar (C4) now mount exactly once, in App's persistent Shell —
+  // App.tsx's `renderActiveScreen()` returns each screen's CONTENT only;
+  // no screen module owns, imports, or remounts its own copy of Sidebar or
+  // Topbar (grep `<Sidebar` / `<Topbar` across `src/screens/*.tsx` — zero
+  // matches; both are rendered exactly once, in `App.tsx`). One long-lived
+  // `Sidebar` instance now backs the whole session, so `overrides` (its
+  // manual collapse/expand state) survives every navigation — cross-screen,
+  // cross-group, or between two children of the very same group — exactly
+  // matching this file's own header claim once more. The three tests below
+  // replace the prior "resets on cross-screen nav" pin, which had pinned
+  // the per-screen-remount defect A11 fixed as if it were correct/expected
+  // behavior. Every assertion below is against a value that genuinely
+  // DIVERGES from the group's own default-expand state, so a silent reset
+  // back to default could never be mistaken for real persistence.
+  it('a manual collapse of an ACTIVE, default-expanded group (OnSide) survives a real cross-screen navigation to an unrelated screen (Home)', async () => {
     const user = userEvent.setup()
     render(<App />)
     const nav = () => screen.getByRole('navigation', { name: 'Primary' })
 
     // OnSide is already expanded on load (PI2-D33) — land on Regulatory
-    // feed, then collapse the group while it is active (allowed, per the
-    // test above).
+    // feed, then collapse the group while it owns the active screen
+    // (allowed, per the test above) — an explicit override, false,
+    // diverging from OnSide's own default (true).
     await user.click(within(nav()).getByRole('button', { name: 'Regulatory feed' }))
     await user.click(within(nav()).getByRole('button', { name: 'OnSide' }))
     expect(within(nav()).getByRole('button', { name: 'OnSide' })).toHaveAttribute('aria-expanded', 'false')
 
-    // Leave for Home: a DIFFERENT screen module, which mounts its own
-    // fresh Sidebar — the collapse override does not travel with it, so
-    // the group reverts to its default-expand state (true, PI2-D33).
+    // Navigate to Home — unrelated to the OnSide group, so nothing here
+    // should force the group back open on arrival (only navigating INTO
+    // the group does that; §3.0 "What this does not decide").
     await user.click(within(nav()).getByRole('button', { name: 'Home' }))
-    expect(within(nav()).getByRole('button', { name: 'OnSide' })).toHaveAttribute('aria-expanded', 'true')
+    expect(within(screen.getByRole('banner')).getByText('Home')).toBeInTheDocument()
 
-    // Navigate back INTO the group from outside the sidebar — Home's D18
-    // primary CTA deep-links to OnSide · Regulatory feed. The destination
-    // is reached with the group already expanded (its default), and the
-    // current row is visible on arrival either way.
-    await user.click(screen.getByRole('button', { name: "Open today's regulatory feed" }))
-    const onSide = within(nav()).getByRole('button', { name: 'OnSide' })
-    expect(onSide).toHaveAttribute('aria-expanded', 'true')
-    expect(within(nav()).getByRole('button', { name: 'Regulatory feed' })).toHaveAttribute('aria-current', 'page')
+    // The manual collapse survives — still false, not back to the true
+    // default a fresh Sidebar mount would have shown.
+    expect(within(nav()).getByRole('button', { name: 'OnSide' })).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('a manual expand of a default-COLLAPSED group (Studio) survives a real cross-screen navigation to an unrelated screen (Reporting)', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const nav = () => screen.getByRole('navigation', { name: 'Primary' })
+
+    // Studio ships collapsed by default (PI2-D33 Q2 = NO). One press is an
+    // explicit override, true, diverging from Studio's own default (false).
+    const studio = within(nav()).getByRole('button', { name: 'Studio' })
+    expect(studio).toHaveAttribute('aria-expanded', 'false')
+    await user.click(studio)
+    expect(within(nav()).getByRole('button', { name: 'Studio' })).toHaveAttribute('aria-expanded', 'true')
+
+    // Navigate to Reporting — unrelated to Studio.
+    await user.click(within(nav()).getByRole('button', { name: 'Reporting' }))
+    expect(within(screen.getByRole('banner')).getByText('Reporting')).toBeInTheDocument()
+
+    // The manual expand survives — still true, not back to the false
+    // default a fresh Sidebar mount would have shown.
+    expect(within(nav()).getByRole('button', { name: 'Studio' })).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('a manual override on one group (Studio) survives navigating between two DIFFERENT children of ANOTHER group (OnSide) — A11\'s own emphasized case: those hops fully remounted Sidebar pre-fix, since each screen is a distinct top-level React component, not a re-render of one', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const nav = () => screen.getByRole('navigation', { name: 'Primary' })
+
+    // Manually expand Studio (unrelated to OnSide) — override true,
+    // diverging from its own default (false).
+    const studio = within(nav()).getByRole('button', { name: 'Studio' })
+    await user.click(studio)
+    expect(within(nav()).getByRole('button', { name: 'Studio' })).toHaveAttribute('aria-expanded', 'true')
+
+    // Hop between two different children of the OnSide group — OnSide's
+    // own already-expanded children, unrelated to Studio's override.
+    await user.click(within(nav()).getByRole('button', { name: 'Regulatory feed' }))
+    expect(within(screen.getByRole('banner')).getByText('OnSide · Regulatory feed')).toBeInTheDocument()
+    expect(within(nav()).getByRole('button', { name: 'Studio' })).toHaveAttribute('aria-expanded', 'true')
+
+    await user.click(within(nav()).getByRole('button', { name: 'Documents' }))
+    expect(within(screen.getByRole('banner')).getByText('OnSide · Documents')).toBeInTheDocument()
+
+    // Studio's manual expand survived both cross-screen hops.
+    expect(within(nav()).getByRole('button', { name: 'Studio' })).toHaveAttribute('aria-expanded', 'true')
   })
 })
 
@@ -286,5 +322,27 @@ describe('sidebar dark-lock (decisions.md D21; Sidebar.tsx header "SIDEBAR DARK-
     // directly and still exercises SidebarItem's real onFocus handler.
     fireEvent.focus(homeInLight)
     expect(homeInLight.style.boxShadow).toContain('var(--focus-ring)')
+  })
+})
+
+describe('Board Deck sidebar exemption survives the persistent Shell (A11, design_system_spec.md §3.0/§5.7: "not a Sidebar item... deliberately renders no Sidebar")', () => {
+  it('renders Topbar but no Sidebar on Board Deck, and the Sidebar reappears on navigating back to a Sidebar-bearing screen', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    // Home: Sidebar present.
+    expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
+
+    await user.click(within(screen.getByRole('banner')).getByRole('button', { name: 'Open board deck' }))
+
+    // Board Deck: Topbar (the Shell's persistent chrome) still renders,
+    // Sidebar does not — App.tsx's `showSidebar` gate, not a screen-owned
+    // decision (BoardDeck.tsx itself no longer renders either composite).
+    expect(within(screen.getByRole('banner')).getByText('Board deck')).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).not.toBeInTheDocument()
+
+    // Navigating away from Board Deck (the logo Home control) restores it.
+    await user.click(screen.getByRole('button', { name: 'LeapFI — Home' }))
+    expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
   })
 })

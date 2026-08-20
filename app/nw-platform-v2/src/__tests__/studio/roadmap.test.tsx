@@ -35,19 +35,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Roadmap } from '../../screens/Roadmap';
 import type { RoadmapProps } from '../../screens/Roadmap';
-import type { TopbarProps } from '../../components/Topbar';
 import { resetDemo } from '../../state/demoStore';
 
-const topbar: TopbarProps = {
-  breadcrumb: 'Studio · Roadmap',
-  onOpenBoardDeck: () => {},
-  date: 'Aug 19, 2026',
-  profile: { name: 'Rachel Fischer', initials: 'RF' },
-  profileMenuItems: [],
-};
-
 function renderScreen(overrides?: Partial<RoadmapProps>) {
-  return render(<Roadmap topbar={topbar} onNavigate={() => {}} {...overrides} />);
+  return render(<Roadmap onNavigate={() => {}} {...overrides} />);
 }
 
 beforeEach(() => {

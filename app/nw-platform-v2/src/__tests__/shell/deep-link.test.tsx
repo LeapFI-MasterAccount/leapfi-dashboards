@@ -16,7 +16,15 @@
  * probes that surface the three spread props (`deepLink`, `onDeepLink`,
  * `onDeepLinkConsumed`) as DOM — real layout is out of jsdom's reach, but
  * the handler/prop contract is exactly what these tests pin (D17:
- * observe, never adapt the app). `OnSideOverview` stays REAL: the
+ * observe, never adapt the app). Sidebar is NOT mocked — it is the real
+ * `App.tsx` Shell composite (amendment A11, design_system_spec.md §3.0:
+ * Sidebar/Topbar mount once, in the Shell, wrapping whichever probe is
+ * active) — so the "generic navigation clears a payload" test below
+ * drives its hops through the real Sidebar, the actual generic-nav
+ * surface every screen shares, rather than a bespoke per-probe nav prop
+ * (`OnSideDocuments` no longer accepts `onNavigate` at all post-A11: it
+ * never called it directly, only fed it to the Sidebar it no longer
+ * renders — see that file's own header). `OnSideOverview` stays REAL: the
  * 'domain' kind is asserted end to end through the REAL `deepLink`/
  * `onDeepLinkConsumed` contract (accordion row expands + focuses — the
  * base onsideShow domKey branch, source 3021–3054). B3 dispatch: this
@@ -30,7 +38,7 @@
  * lives in `src/__tests__/onside/overview.test.tsx`.
  */
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../../App'
 import type { DeepLinkScreenProps } from '../../App'
@@ -64,7 +72,6 @@ vi.mock('../../screens/OnSideDocuments', () => ({
       </button>
       <button onClick={() => props.deepLink && props.onDeepLinkConsumed?.(props.deepLink.nonce)}>probe-consume</button>
       <button onClick={() => props.onDeepLinkConsumed?.(1)}>probe-consume-nonce-1</button>
-      <button onClick={() => props.onNavigate?.('home')}>probe-nav-home</button>
     </div>
   ),
 }))
@@ -121,11 +128,18 @@ describe('generic navigation clears an unconsumed payload', () => {
   it('after a plain nav away, a plain nav back shows the screen with no payload', async () => {
     const user = userEvent.setup()
     render(<App />)
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
     await user.click(screen.getByRole('button', { name: 'probe-deeplink-doc' })) // payload pending, unconsumed
-    await user.click(screen.getByRole('button', { name: 'probe-nav-home' })) // generic nav — drops it
+
+    // Generic nav away — drops it. Driven through the real Sidebar (the
+    // Shell's persistent generic-nav surface, amendment A11) rather than a
+    // per-probe nav prop: `OnSideDocuments` no longer accepts `onNavigate`
+    // at all post-A11 (see file header).
+    await user.click(within(nav).getByRole('button', { name: 'Home' }))
     expect(screen.getByRole('heading', { name: 'home-probe' })).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'probe-nav-documents' })) // generic nav back
+    // Generic nav back — same real Sidebar surface.
+    await user.click(within(nav).getByRole('button', { name: 'Documents' }))
     expect(screen.getByTestId('deep-link-view')).toHaveTextContent(/^none$/)
   })
 })
