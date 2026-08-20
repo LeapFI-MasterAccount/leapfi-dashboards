@@ -40,8 +40,8 @@
  * union (built by a concurrent, non-allowlisted dispatch) is a deliberately
  * closed set scoped to bell / chevrons / close / arrow-right / check /
  * lock / calendar — it contains no glyph for Home, OnSide, Studio,
- * Connect, Reporting, or Settings (the six top-level nav destinations
- * §3.1 requires). `icon` is left optional here (typed against the
+ * Connect, Reporting, or Settings (the seven top-level nav destinations
+ * §3.1 / PI2-D39 require). `icon` is left optional here (typed against the
  * existing closed `IconName` union) so this component is forward-
  * compatible the moment nav glyphs are added there, but
  * `Sidebar.tsx`'s static nav table in this dispatch does not pass an
@@ -49,6 +49,53 @@
  * would mean writing into `primitives/Icon.tsx`, which is outside this
  * dispatch's allowlist. Flagging for the Icon-primitive owner or a spec
  * update, not silently inventing glyph shapes.
+ *
+ * DISABLED ROW + COMING SOON MARKER (PI2-D39, settled user decision —
+ * Connect and Vantage promoted to disabled top-level nav items): new
+ * `disabled?: boolean` prop, implemented with the SAME mechanism P2
+ * Button already uses for its own `disabled` state (`Button.tsx` —
+ * native `disabled` attribute + a `handleClick` early-return guard +
+ * `cursor: not-allowed`), not an invented one:
+ *   - Native `disabled` on the row's own `<button>`: the browser (1)
+ *     never fires a click/activation for it — the only mechanism this
+ *     file needs to guarantee "does not navigate when clicked" — (2)
+ *     removes it from the sequential Tab order (`tabIndex` reads -1 on a
+ *     disabled form control, no explicit `tabindex` needed), satisfying
+ *     "not reachable by keyboard as an actionable control," and (3) is
+ *     exposed to assistive tech as an unavailable control by the
+ *     platform accessibility tree — the same guarantee `toBeDisabled()`
+ *     (jest-dom) checks, and the same reason the spec's own P2 Button row
+ *     lists `disabled` as a first-class state rather than a CSS-only one.
+ *     `handleClick`'s own early-return is defense-in-depth (matches
+ *     Button.tsx's `isDisabled` guard) — the persona's "a disabled
+ *     button is UX courtesy, not the guarantee" principle is about
+ *     irreversible-action idempotency (a request-key concern); a nav
+ *     item that cannot navigate at all has no such request to
+ *     deduplicate, so native `disabled` here fully carries the
+ *     guarantee, not merely assists it.
+ *   - Text/icon color dims to `--ink3` when disabled — reusing the exact
+ *     token `Icon.tsx`'s own `disabled` tone already resolves to, and
+ *     the same token P4 Tag's `locked` variant already uses for its own
+ *     "Soon" styling (`Tag.tsx` `VARIANT_STYLE.locked`) — not a new
+ *     dimming mechanism.
+ *   - "Coming Soon" marker: rendered as a `Tag` (P4) `locked`-variant
+ *     pill inside the row, alongside the existing optional `count` Tag
+ *     slot — the same primitive/variant SetupCard (C15) and SoonSplash
+ *     (C16) already use for "Soon splash entries" (design_system_spec.md
+ *     §2.2 C15/C16), not an invented visual. Text is "Coming Soon" (no
+ *     literal parens) — the pill's own visual separation from the label
+ *     already carries the "this is a qualifier, not the item's name"
+ *     meaning parens would otherwise supply, matching how the `count`
+ *     Tag beside it never wraps its number in parens either. Because the
+ *     Tag is un-suppressed content inside the row's own `<button>`, its
+ *     text becomes part of that button's accessible NAME (e.g. "Connect
+ *     Coming Soon"), which is a feature, not a leak: it hands an
+ *     assistive-tech user the "why" in the same announcement as the
+ *     disabled state — never a color-only cue. Rendering only when
+ *     `disabled` is true (no separate `comingSoon` prop): every call
+ *     site in this dispatch needs the two together, and no call site
+ *     needs one without the other; decoupling them into two independent
+ *     props would be an unused knob nobody asked for.
  */
 import { useState } from 'react';
 import type { CSSProperties, MouseEvent } from 'react';
@@ -70,7 +117,7 @@ export interface SidebarItemProps {
   current?: boolean;
   /** Optional count Tag (spec C2 "optional count Tag") — e.g. an unread/pending count for this section. */
   count?: number;
-  /** True for a top-level parent row that owns a nested list (Home/Reporting have none; OnSide/Studio/Connect/Settings do). */
+  /** True for a top-level parent row that owns a nested list (Home/Reporting have none; OnSide/Studio/Settings do). */
   expandable?: boolean;
   /** Required (and only meaningful) when `expandable` — current expand/collapse state. */
   expanded?: boolean;
@@ -83,6 +130,12 @@ export interface SidebarItemProps {
    * `onPress`, and carries the `aria-expanded`/`aria-controls` disclosure
    * semantics. Only meaningful with `expandable`. */
   onChevronPress?: () => void;
+  /** PI2-D39 (see file header "DISABLED ROW + COMING SOON MARKER"): renders
+   * this row as unavailable — native `disabled` on the row's own button,
+   * dimmed `--ink3` text/icon color, and an in-row "Coming Soon" Tag
+   * (`locked` variant). Defaults to false; every existing call site is
+   * unchanged. */
+  disabled?: boolean;
 }
 
 /** Shared id-derivation so Sidebar.tsx's nested <ul id=...> and this row's aria-controls never drift apart. */
@@ -131,6 +184,7 @@ export function SidebarItem({
   expanded = false,
   onPress,
   onChevronPress,
+  disabled = false,
 }: SidebarItemProps) {
   const [hover, setHover] = useState(false);
   const [pressed, setPressed] = useState(false);
@@ -140,11 +194,18 @@ export function SidebarItem({
   const [chevronFocused, setChevronFocused] = useState(false);
 
   const background = pressed ? 'var(--border)' : hover || current ? 'var(--panel)' : 'transparent';
-  const color = current ? 'var(--accent)' : 'var(--ink)';
-  const iconTone = current ? 'interactive' : 'default';
+  // PI2-D39: disabled dims to `--ink3` — same token Icon.tsx's own
+  // `disabled` tone and Tag's `locked` variant already resolve to (file
+  // header "DISABLED ROW + COMING SOON MARKER").
+  const color = disabled ? 'var(--ink3)' : current ? 'var(--accent)' : 'var(--ink)';
+  const iconTone = disabled ? 'disabled' : current ? 'interactive' : 'default';
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
+    // Defense-in-depth, matches Button.tsx's own `isDisabled` guard — the
+    // native `disabled` attribute below is the actual guarantee (file
+    // header "DISABLED ROW + COMING SOON MARKER").
+    if (disabled) return;
     onPress();
   };
 
@@ -157,6 +218,8 @@ export function SidebarItem({
     color,
     borderLeft: current && level === 'top' ? '3px solid var(--accent)' : '3px solid transparent',
     boxShadow: focused ? 'var(--focus-ring)' : 'none',
+    // PI2-D39 — same `not-allowed`/`pointer` split Button.tsx already uses.
+    cursor: disabled ? 'not-allowed' : 'pointer',
   };
 
   const mainButton = (
@@ -171,6 +234,7 @@ export function SidebarItem({
       // main button is a plain navigation press (see file header).
       aria-expanded={expandable && !splitMode ? expanded : undefined}
       aria-controls={expandable && !splitMode ? sidebarNestedListId(id) : undefined}
+      disabled={disabled}
       onClick={handleClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => {
@@ -186,6 +250,7 @@ export function SidebarItem({
       {icon ? <Icon name={icon} size={16} tone={iconTone} /> : null}
       <span style={{ flex: '1 1 auto', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
       {typeof count === 'number' ? <Tag text={String(count)} variant="count" /> : null}
+      {disabled ? <Tag text="Coming Soon" variant="locked" /> : null}
       {expandable && !splitMode ? <Icon name={expanded ? 'chevron-down' : 'chevron-right'} size={16} tone={iconTone} /> : null}
     </button>
   );

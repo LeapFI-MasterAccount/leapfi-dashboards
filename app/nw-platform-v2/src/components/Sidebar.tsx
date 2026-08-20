@@ -7,18 +7,21 @@
  * through visible items (roving arrow-key focus is explicitly optional,
  * not implemented here).
  *
- * Static nav structure — copied verbatim from §3.1's restructure table,
- * not invented:
+ * Static nav structure — §3.1's restructure table, as amended by PI2-D39
+ * (settled user decision, below): not invented:
  *
  *   1. Home                          (no children)
  *   2. OnSide    -> Overview, Regulatory feed, Documents, Ownership
  *                   (expanded by default, PI2-D33)
  *   3. Studio    -> Ask, Investment Design, Roadmap
- *   4. Connect   -> AllRailz, Vantage        (expanded by default)
- *   5. Reporting                     (no children)
- *   6. Settings  -> Toggles, About
+ *   4. Connect                       (no children — disabled, PI2-D39)
+ *   5. Vantage                       (no children — disabled, PI2-D39)
+ *   6. Reporting                     (no children)
+ *   7. Settings  -> Toggles, About
  *
- * 6 top-level items, within the ≤7 budget §3.1 states with headroom.
+ * 7 top-level items — at the ≤7 budget §3.1 states, not over it. See
+ * "PI2-D39" section below for the Connect/Vantage restructure this count
+ * reflects.
  *
  * PARITY-ASSEMBLY ADDITION — OnSide · Overview 4th nested child
  * (parity_ia_addendum.md §0, resolved conservatively there and ratified
@@ -40,13 +43,50 @@
  * Connect's stated exception, since the spec only carves the exception
  * out for Connect and gives no basis to extend it to Settings.
  *
+ * SUPERSEDED — PI2-D39 (settled user decision, not re-litigated here):
+ * the "default expand state" note directly above, and the "C3 CONTRACT
+ * CHANGE — navigable group header" section further down (B-dead-
+ * interactions-11), both describe a Connect that no longer exists in the
+ * NAV table below. Connect and Vantage are promoted to two flat, sibling,
+ * top-level entries — Connect loses its `children`/`defaultExpanded`/
+ * `navigable` entirely, and Vantage (formerly its sole nested child)
+ * becomes its own top-level row beside it. Both ship `disabled: true`
+ * (`SidebarItem`'s new `disabled` prop — see that file's header) and
+ * render a "Coming Soon" `Tag` (P4, `locked` variant — the same
+ * primitive/variant SetupCard/SoonSplash "Soon" cards already use, C15/
+ * C16). Net top-level count: 7 (was 6) — see "Static nav structure"
+ * above and §3.1's ≤7 budget, still honored, now at the limit rather
+ * than with headroom.
+ *
+ * ROUTING left unchanged (implementer call, not a design decision — the
+ * design decision was PI2-D39 itself): the routed ScreenIds `connect`
+ * and `connect.vantage` (App.tsx `SCREEN_IDS`) are reused verbatim as
+ * these two NAV entries' own `id`s, so App.tsx needs no edit. Both stay
+ * fully routable exactly as before, via Roadmap's "What's next"
+ * SetupCards (`Roadmap.tsx` `MODULE_ENTRIES`, `variant="interactive"`,
+ * untouched by this dispatch) — "leave routable," never a broken
+ * reference. Only the *sidebar* entries stop being clickable, matching
+ * the `disabled` contract they now carry; every other path to these two
+ * screens is unaffected.
+ *
+ * B-11's split-control mechanism itself (SidebarItem.tsx's
+ * `onChevronPress` prop / `splitMode` render branch) is NOT removed by
+ * this change — it stays implemented, reusable the moment a future group
+ * header needs "navigate AND expand" again. It simply has no live NAV
+ * caller today, since Connect was its only one; the "C3 CONTRACT CHANGE"
+ * section below is left as the historical record of why it was built,
+ * with its one now-inaccurate claim ("today only `connect`") corrected
+ * in place rather than deleted.
+ *
  * SUPERSEDED IN PART — PI2-D33 (r07 OQ-5): the §3.1 "OnSide collapsed by
  * default" premise this note relied on is overruled for OnSide only.
  * OnSide's group header stays, its children stay nested (no top-level
  * promotion — see NAV below), and it now ships `defaultExpanded: true`,
- * via the same mechanism Connect already uses. Studio keeps the original
- * collapsed-by-default reading (PI2-D33 Q2 = NO); Settings keeps this
- * note's own collapsed default, unchanged.
+ * the same `NavTopItem.defaultExpanded` mechanism below (originally
+ * proven by Connect, before PI2-D39 removed Connect's own use of it —
+ * see "SUPERSEDED — PI2-D39" above; the mechanism itself is unchanged).
+ * Studio keeps the original collapsed-by-default reading (PI2-D33 Q2 =
+ * NO); Settings keeps this note's own collapsed default, unchanged.
  *
  * DESIGN NOTE — group toggle while a child is active (base-faithful per
  * leapfi-platform.html @1c230fe): the base's group toggles collapse an
@@ -85,12 +125,15 @@
  * contract here ("top-level items with children never call onNavigate")
  * made that directed click a toggle-only dead end. NEW CONTRACT, flagged
  * for design_system reconciliation: a group header whose id is itself a
- * routed ScreenId (`navigable: true` in the NAV table below — today only
- * `connect`, matching App.tsx's SCREEN_IDS) NAVIGATES AND EXPANDS on
- * label press, while a separate chevron control toggles expansion only
- * (SidebarItem's split-control mode). Non-navigable group headers
- * (OnSide/Studio/Settings — no routed screen of their own) keep the
- * original toggle-on-press contract unchanged.
+ * routed ScreenId (`navigable: true` in the NAV table below) NAVIGATES
+ * AND EXPANDS on label press, while a separate chevron control toggles
+ * expansion only (SidebarItem's split-control mode). Non-navigable group
+ * headers (OnSide/Studio/Settings — no routed screen of their own) keep
+ * the original toggle-on-press contract unchanged. CORRECTED (PI2-D39,
+ * see that section above): Connect was this mechanism's only caller and
+ * no longer uses it (Connect has no `children` at all now) — no NAV
+ * entry sets `navigable: true` today. The mechanism itself is unchanged
+ * and stays available for a future group header that needs it.
  *
  * DESIGN NOTE — footer version string (§3.1 "Footer: version string
  * only"): rendered as a plain token-styled span, not through the `Label`
@@ -211,10 +254,14 @@ interface NavTopItem {
    * label press navigates AND expands; a split chevron control toggles only.
    * See file header "C3 CONTRACT CHANGE" (B-11; base source 803). */
   navigable?: boolean;
+  /** PI2-D39: renders this top-level row disabled (native `disabled`,
+   * "Coming Soon" Tag) — see file header "SUPERSEDED — PI2-D39" and
+   * SidebarItem.tsx's own "DISABLED ROW + COMING SOON MARKER". */
+  disabled?: boolean;
 }
 
 // See file header: icons intentionally omitted (STOP-item — closed
-// IconName vocabulary has no matching nav glyphs for these six items).
+// IconName vocabulary has no matching nav glyphs for these seven items).
 const NAV: NavTopItem[] = [
   { id: 'home', label: 'Home' },
   {
@@ -222,8 +269,8 @@ const NAV: NavTopItem[] = [
     label: 'OnSide',
     defaultExpanded: true,
     // PI2-D33: OnSide's group header stays, its children stay nested (not
-    // promoted to top level), and the group ships default-expanded — the
-    // mechanism Connect already proves below. Studio and Settings stay
+    // promoted to top level), and the group ships default-expanded, via
+    // the `defaultExpanded` mechanism below. Studio and Settings stay
     // collapsed by default (PI2-D33 Q2 = NO).
     children: [
       { id: 'onside.overview', label: 'Overview' },
@@ -241,17 +288,15 @@ const NAV: NavTopItem[] = [
       { id: 'studio.roadmap', label: 'Roadmap' },
     ],
   },
-  {
-    id: 'connect',
-    label: 'Connect',
-    defaultExpanded: true,
-    // B-11: 'connect' is a routed ScreenId (the Connect module splash) —
-    // the base's group label navigated (`go('connect')`, source 803).
-    navigable: true,
-    children: [
-      { id: 'connect.vantage', label: 'Vantage' },
-    ],
-  },
+  // PI2-D39 (settled user decision — see file header "SUPERSEDED —
+  // PI2-D39"): Connect and Vantage are two flat, sibling, top-level,
+  // disabled entries — no group, no children, no `navigable`/
+  // `defaultExpanded`. `id`s are unchanged from the routed ScreenIds
+  // App.tsx already declares (`connect`, `connect.vantage`) — reused
+  // verbatim, not renamed, so both stay routable via Roadmap's "What's
+  // next" SetupCards without any App.tsx edit.
+  { id: 'connect', label: 'Connect', disabled: true },
+  { id: 'connect.vantage', label: 'Vantage', disabled: true },
   { id: 'reporting', label: 'Reporting' },
   {
     id: 'settings',
@@ -399,6 +444,7 @@ export function Sidebar({ activeId, onNavigate, versionLabel = 'v 1.071' }: Side
                   current={isCurrentTop}
                   expandable={hasChildren}
                   expanded={expanded}
+                  disabled={item.disabled ?? false}
                   onPress={() => {
                     if (!hasChildren) {
                       onNavigate(item.id);
