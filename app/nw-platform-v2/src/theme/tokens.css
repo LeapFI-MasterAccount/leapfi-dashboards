@@ -89,6 +89,18 @@
   --cat-5: #6fc8d8; /* Glacier */
   --cat-6: #0a2342; /* Midnight */
 
+  /* Hostile-review fix wave, Class C finding C3 (lightmode_amendment_proposal.md
+     §6.2/§6.3): the categorical/semantic outline-fix is a light-surface-only
+     concern — dark-mode flat fills were never the problem (§6.2/§6.3 both
+     compute contrast only against the light-theme panel/bg values). This
+     token is a no-op here, same "single swap-point, no-op in the theme
+     that doesn't need it" pattern design_system_spec.md §1.3 already uses
+     for --focus-ring (whose rendered form also differs by theme, glow vs.
+     ring, without branching component structure). See the light block's
+     identical token for the real value and full derivation. */
+  --cat-outline: none;
+  --sem-outline: none;
+
   /* Sequential (low -> high) — brand_doctrine.md */
   --seq-1: #002bff;
   --seq-2: #006bff;
@@ -131,7 +143,7 @@
 
   /* Semantic (status ONLY) — hexes unchanged (S6.3); flat-fill use on light
      surfaces requires the 1.5px Midnight outline-ring treatment described in
-     amendment S6.3 (component-level concern, out of scope for token file). */
+     amendment S6.3 — implemented below as --sem-outline (Class C finding C3). */
   --sem-positive: #22c55e;
   --sem-caution: #f59e0b;
   --sem-alert: #ef4444;
@@ -144,14 +156,39 @@
   --sem-ink: #000000;
 
   /* Categorical identities unchanged (S9); Aqua/Glacier require the 1px
-     Midnight outline-stroke treatment on light fills per amendment S6.2
-     (component-level concern, out of scope for token file). */
+     Midnight outline-stroke treatment on light fills per amendment S6.2 —
+     implemented below as --cat-outline (Class C finding C3). */
   --cat-1: #3a6eac; /* Steel Blue */
   --cat-2: #2d5bff; /* Cobalt */
   --cat-3: #00b2cc; /* Aqua — outline-stroke required on light fills, S6.2 */
   --cat-4: #006d75; /* Deep Teal */
   --cat-5: #6fc8d8; /* Glacier — outline-stroke required on light fills, S6.2 */
   --cat-6: #0a2342; /* Midnight */
+
+  /* Hostile-review fix wave, Class C finding C3 (lightmode_amendment_proposal.md
+     §6.2): "Aqua and Glacier fills carry a mandatory 1px Midnight #0A2342
+     outline stroke so the series boundary itself clears 3:1 against the
+     panel" — light-theme-only fix (bare Aqua/Glacier fills measure 2.33:1 /
+     1.75:1 against Frost Panel, both under the 3:1 non-text floor; the other
+     four categorical hues already clear it bare and are untouched). Inset
+     box-shadow (not `border`/`outline`) so it composes independently of
+     RoadmapGantt's own `outline` use for the in-progress-segment marker, and
+     independently of the `opacity` fade on `complete` segments (verified:
+     Midnight at the complete-state's 0.55 opacity over Frost Panel still
+     clears 3:1, ~3.59:1). Applied at every §6.2-listed site by the token's
+     own consumer (RoadmapGantt.tsx), not universally to all six categorical
+     tokens — this token, not `--cat-3`/`--cat-5` themselves, carries the
+     theme conditionality so the two hues stay theme-invariant per S9. */
+  --cat-outline: inset 0 0 0 1px #0a2342;
+  /* Hostile-review fix wave, Class C finding C3 (lightmode_amendment_proposal.md
+     §6.3): "every semantic dot/chip carries a mandatory 1.5px Midnight
+     outline ring" on light surfaces (Positive/Caution required — bare fills
+     measure 2.08:1 / 1.96:1 against Frost Panel, under the 3:1 floor; Alert
+     already clears 3:1 bare at 3.44:1 but the amendment recommends the same
+     ring "for visual consistency across the three-color set" — applied to
+     all three per that instruction). Inset box-shadow, independent of
+     Tag.tsx's own 1px transparent border reserved for other variants. */
+  --sem-outline: inset 0 0 0 1.5px #0a2342;
 
   /* Sequential ramp — unchanged (amendment S2.1 reserves it for data encoding, both themes) */
   --seq-1: #002bff;

@@ -30,6 +30,19 @@
  * fill alone (brand_doctrine.md Accessibility: "never rely on color
  * alone" — cited throughout §2.1/§2.2 for every status-bearing
  * primitive/composite).
+ *
+ * LIGHT-THEME OUTLINE-STROKE FIX (Class C finding C3):
+ * lightmode_amendment_proposal.md §6.2 disqualifies two of the six
+ * categorical hues — Aqua (`--cat-3`) and Glacier (`--cat-5`) — as bare
+ * flat fills on light surfaces (2.33:1 / 1.75:1 against Frost Panel,
+ * under the 3:1 non-text floor; the other four hues already clear it).
+ * Fix, not deletion: those two hues stay in the cycling palette, but
+ * carry a mandatory 1px Midnight (`#0A2342`) outline stroke on light
+ * surfaces only — `--cat-outline` (tokens.css), a no-op in dark theme,
+ * applied here via `boxShadow` (independent of the `outline` property
+ * already used for the in-progress marker, and independent of the
+ * `opacity` fade on `complete` segments — the fade still clears 3:1 at
+ * its 0.55 opacity, ~3.59:1, independently verified).
  */
 import type { CSSProperties } from 'react';
 
@@ -103,6 +116,10 @@ const BAR_TRACK_STYLE: CSSProperties = {
   border: '1px solid var(--chart-grid)',
 };
 
+// §6.2 — the two categorical hues disqualified as bare flat fills on
+// light surfaces (2.33:1 / 1.75:1 against Frost Panel, under 3:1).
+const OUTLINE_FIX_CAT_TOKENS = new Set(['--cat-3', '--cat-5']);
+
 function segmentStyle(status: RoadmapSegmentStatus, catToken: string): CSSProperties {
   if (status === 'upcoming') {
     return { flex: '1 1 0', background: 'var(--chart-grid)' };
@@ -113,6 +130,9 @@ function segmentStyle(status: RoadmapSegmentStatus, catToken: string): CSSProper
     opacity: status === 'complete' ? 0.55 : 1,
     outline: status === 'in-progress' ? '2px solid var(--accent)' : 'none',
     outlineOffset: status === 'in-progress' ? -2 : undefined,
+    // Class C finding C3 (§6.2 outline-stroke fix, see file header) — only
+    // the two disqualified hues carry it; no-op in dark theme.
+    boxShadow: OUTLINE_FIX_CAT_TOKENS.has(catToken) ? 'var(--cat-outline)' : undefined,
   };
 }
 

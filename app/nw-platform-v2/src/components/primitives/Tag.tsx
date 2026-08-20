@@ -92,25 +92,30 @@
  * P4's a11y baseline ("never rely on color alone... always paired with the
  * status word in text") the same way.
  *
- * AMBIGUITY / STOP-ITEM (light-theme outline-ring treatment):
- * lightmode_amendment_proposal.md §6.3, referenced by this spec's P4 row
- * ("on light theme, status variants carry the outline-ring treatment"),
- * requires a 1.5px "Midnight" (i.e. `--ink` in light theme) outline
- * around flat-fill status tags on light surfaces. tokens.css's own
- * comment marks this "component-level concern, out of scope for token
- * file" — but no token in §1.1's named-role list represents "outline,
- * present in light theme only, absent in dark theme": every named role
- * is a single color that both themes define, and §1.2 forbids branching
- * component *structure* per theme (an outline is a structural
- * addition, not a pure color swap under the current token set). I could
- * not implement the theme-conditional outline without either adding a
- * new token to tokens.css (outside this dispatch's allowlist) or
- * branching this component's rendering on the theme attribute (forbidden
- * by spec §1.2). Rendering it unconditionally in both themes would
- * itself violate the spec (outline-ring is described as a light-theme-
- * only fix). Status tags below render as flat semantic fills only, with
- * no outline-ring in either theme — reporting this gap rather than
- * guessing a token name.
+ * LIGHT-THEME OUTLINE-RING TREATMENT (Class C finding C3, resolved):
+ * lightmode_amendment_proposal.md §6.3 requires a mandatory 1.5px
+ * Midnight (`#0A2342`) outline ring around the three flat-fill status
+ * variants on light surfaces — a no-op on dark (dark-mode fills were
+ * never the problem; bare `--sem-positive`/`--sem-caution` measure
+ * 2.08:1 / 1.96:1 against Frost Panel, under the 3:1 non-text floor;
+ * `--sem-alert` already clears 3:1 bare at 3.44:1 but the amendment
+ * recommends the same ring on it too, "for visual consistency across
+ * the three-color set" — applied to all three per that instruction).
+ *
+ * A prior fix-wave pass flagged this as a STOP-item, reasoning that no
+ * token in design_system_spec.md §1.1's named-role list represents
+ * "outline, present in light theme only, absent in dark theme," and that
+ * adding one would require either an allowlist-violating new token or
+ * branching this component's structure per theme (forbidden, §1.2). That
+ * concern is resolved, not overridden: §1.3 already establishes the
+ * precedent this fix follows — `--focus-ring`'s *rendered form* differs
+ * by theme (glow vs. solid ring) as a single swap-point token, "not a
+ * per-component branch." `--sem-outline` (tokens.css) is the same
+ * mechanism: `none` in dark, an inset Midnight box-shadow in light: this
+ * component's JSX is byte-identical in both themes, only the CSS custom
+ * property's resolved value differs. Box-shadow (not `border`) so it
+ * composes independently of the 1px transparent `border` slot other
+ * variants (hitl/count/locked) already use.
  */
 import type { CSSProperties } from 'react';
 import { Icon } from './Icon';
@@ -180,9 +185,11 @@ const baseStyle: CSSProperties = {
 // fills in both themes (9.22:1 / 9.78:1 / 5.58:1) — see that token's own
 // comment for the full derivation.
 const VARIANT_STYLE: Record<NonRaciTagVariant, CSSProperties> = {
-  'status-positive': { background: 'var(--sem-positive)', color: 'var(--sem-ink)' },
-  'status-caution': { background: 'var(--sem-caution)', color: 'var(--sem-ink)' },
-  'status-alert': { background: 'var(--sem-alert)', color: 'var(--sem-ink)' },
+  // boxShadow: 'var(--sem-outline)' — Class C finding C3 (§6.3 outline-ring
+  // fix, see file header). No-op in dark theme, Midnight inset ring in light.
+  'status-positive': { background: 'var(--sem-positive)', color: 'var(--sem-ink)', boxShadow: 'var(--sem-outline)' },
+  'status-caution': { background: 'var(--sem-caution)', color: 'var(--sem-ink)', boxShadow: 'var(--sem-outline)' },
+  'status-alert': { background: 'var(--sem-alert)', color: 'var(--sem-ink)', boxShadow: 'var(--sem-outline)' },
   // hitl (human-in-the-loop marker): accent is reserved as "THE ONLY
   // primary accent" per tokens.css — used here as an outline+text tint
   // (not a competing solid fill) so it stays a secondary, informational
