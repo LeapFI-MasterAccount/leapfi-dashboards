@@ -166,12 +166,18 @@ describe('B-dead-interactions-11 — Connect group header navigates AND expands;
     const nav = () => screen.getByRole('navigation', { name: 'Primary' })
     const onSide = () => within(nav()).getByRole('button', { name: 'OnSide' })
 
-    expect(onSide()).toHaveAttribute('aria-expanded', 'false')
-    await user.click(onSide())
+    // OnSide ships expanded by default (PI2-D33) — press toggles it closed,
+    // then open again, purely a toggle (no navigation either press).
     expect(onSide()).toHaveAttribute('aria-expanded', 'true')
+    await user.click(onSide())
+    expect(onSide()).toHaveAttribute('aria-expanded', 'false')
     // Press toggled only — still at Home, no OnSide chevron split control.
     expect(within(screen.getByRole('banner')).getByText('Home')).toBeInTheDocument()
     expect(within(nav()).queryByRole('button', { name: 'OnSide sections' })).not.toBeInTheDocument()
+
+    await user.click(onSide())
+    expect(onSide()).toHaveAttribute('aria-expanded', 'true')
+    expect(within(screen.getByRole('banner')).getByText('Home')).toBeInTheDocument()
   })
 })
 
