@@ -52,6 +52,7 @@ import { StatValue } from './primitives/StatValue';
 import type { StatValueProps, StatValueState } from './primitives/StatValue';
 import { Label } from './primitives/Label';
 import { Icon } from './primitives/Icon';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 export type StatCardState = 'loading' | 'loaded' | 'updating';
 
@@ -74,14 +75,12 @@ const STATE_TO_STATVALUE: Record<StatCardState, StatValueState> = {
   updating: 'updating',
 };
 
-const cardStyle: CSSProperties = {
+export const cardStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: '0.6rem',
   padding: '1.1rem 1.25rem',
-  borderRadius: 'var(--radius-md, 10px)',
-  border: '1px solid var(--border)',
-  background: 'var(--panel)',
+  ...PANEL_STYLE,
   minWidth: 0,
   boxSizing: 'border-box',
 };

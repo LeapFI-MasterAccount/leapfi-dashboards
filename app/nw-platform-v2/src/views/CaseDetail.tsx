@@ -152,6 +152,7 @@ import type { Case } from '../data/cases';
 import type { DocEntry } from '../data/doclib';
 import type { StudioUser } from '../data/studio';
 import { DOMAINS } from '../data/onside';
+import { PANEL_STYLE } from '../theme/panelStyle';
 
 export type CaseActionKind =
   | 'accept'
@@ -254,10 +255,9 @@ function stageOwnerLabel(c: Case): string {
 
 const SCREEN_TEXT: CSSProperties = { color: 'var(--ink)' };
 const SECTION_GAP: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '1.5rem' };
-const CARD_STYLE: CSSProperties = {
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-sm, 6px)',
-  background: 'var(--panel)',
+export const CARD_STYLE: CSSProperties = {
+  ...PANEL_STYLE,
+  borderRadius: 'var(--radius-sm, 6px)', // differs from the shared default (var(--radius-md, 10px)) — preserved, not flattened
   padding: '1.25rem 1.5rem',
   display: 'flex',
   flexDirection: 'column',
