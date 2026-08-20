@@ -133,8 +133,19 @@ describe('F6 — Button primary-variant pressed-state contrast (A11Y-1, doctrine
 })
 
 describe('F11 — ALL-CAPS letter-spacing at doctrine TYP-4 (+0.05em), every known site', () => {
-  const SITES: Array<{ file: string; label: string }> = [
-    { file: 'components/primitives/Label.tsx', label: 'Label eyebrow variant' },
+  // §8 R-1 (amendment A4, design_system_spec.md; delta §8 R-4(e)) closed
+  // the STRUCTURAL half of F11 after this suite was first written: the
+  // eyebrow treatment (this value included) is now authored only by
+  // Label (P3) `eyebrow` — these 8 sites no longer hand-declare
+  // `letterSpacing` inline at all (they nest `<Label variant="eyebrow">`
+  // instead), so a future TYP-4 revision is a one-line change in
+  // Label.tsx, not a 9-site sweep. See `__tests__/shell/
+  // r1-eyebrow-via-label.test.tsx` for the behavioral (rendered-DOM)
+  // proof that each site's visible text now actually routes through
+  // Label; this file stays what its own header says — a STYLE-CONTRACT
+  // (source-text) check, now asserting absence at these 8 sites rather
+  // than a hand-authored value.
+  const CLOSED_SITES: Array<{ file: string; label: string }> = [
     { file: 'components/PlanTable.tsx', label: 'PlanTable thStyle' },
     { file: 'components/PresenterRail.tsx', label: 'PresenterRail RULES_HEADING_STYLE' },
     { file: 'components/SliderControlRow.tsx', label: 'SliderControlRow eyebrowStyle' },
@@ -144,13 +155,22 @@ describe('F11 — ALL-CAPS letter-spacing at doctrine TYP-4 (+0.05em), every kno
     { file: 'views/NotificationBellPanel.tsx', label: 'NotificationBellPanel headerStyle' },
   ]
 
-  it.each(SITES)('$label ($file): every letterSpacing declaration is exactly 0.05em', ({ file }) => {
+  it.each(CLOSED_SITES)('$label ($file): no longer hand-declares its own letterSpacing — closed against §8 R-1', ({ file }) => {
     const src = readSrc(file)
+    const matches = [...src.matchAll(/letterSpacing:\s*'([^']+)'/g)]
+    expect(matches).toHaveLength(0)
+  })
+
+  it('Label.tsx — the one sanctioned eyebrow-tracking site — still declares exactly 0.05em', () => {
+    const src = readSrc('components/primitives/Label.tsx')
     const matches = [...src.matchAll(/letterSpacing:\s*'([^']+)'/g)].map((m) => m[1])
-    expect(matches.length).toBeGreaterThan(0)
-    for (const value of matches) {
-      expect(value).toBe('0.05em')
-    }
+    expect(matches).toEqual(['0.05em'])
+  })
+
+  it('DataTable.tsx groupCellStyle — the one site R-1 leaves open (spec_questions) — is unchanged: still hand-declared at 0.05em, not silently fixed or silently regressed', () => {
+    const src = readSrc('components/DataTable.tsx')
+    const matches = [...src.matchAll(/letterSpacing:\s*'([^']+)'/g)].map((m) => m[1])
+    expect(matches).toEqual(['0.05em'])
   })
 
   it('project-wide sweep: no inline letterSpacing value anywhere in src/ (outside __tests__) is 0.06em/0.07em/0.08em or anything other than 0.05em', () => {
@@ -175,7 +195,7 @@ describe('F11 — ALL-CAPS letter-spacing at doctrine TYP-4 (+0.05em), every kno
     expect(offenders).toEqual([])
   })
 
-  it('project-wide sweep: exactly 10 inline letterSpacing declarations exist in src/ — the full F11 site count (9 original + DataTable.tsx groupCellStyle, brought into TYP-4 compliance at 0.05em rather than exempted); a silent 11th site (compliant or not) fails this canary', () => {
+  it('project-wide sweep: exactly 2 inline letterSpacing declarations exist in src/ — Label.tsx (the sanctioned P3 eyebrow site) and DataTable.tsx groupCellStyle (the one site §8 R-1 leaves open, see spec_questions); a silent 3rd site (compliant or not) fails this canary, and so does a regression of either of these two back below zero', () => {
     let count = 0
     const walk = (dir: string) => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -190,6 +210,6 @@ describe('F11 — ALL-CAPS letter-spacing at doctrine TYP-4 (+0.05em), every kno
       }
     }
     walk(srcRoot)
-    expect(count).toBe(10)
+    expect(count).toBe(2)
   })
 })

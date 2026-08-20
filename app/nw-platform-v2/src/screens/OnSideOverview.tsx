@@ -182,7 +182,7 @@ import { Button } from '../components/primitives/Button';
 import { Chip } from '../components/primitives/Chip';
 import { Label } from '../components/primitives/Label';
 import { Tag } from '../components/primitives/Tag';
-import type { TagVariant } from '../components/primitives/Tag';
+import type { NonRaciTagVariant } from '../components/primitives/Tag';
 import {
   DomainsAccordion,
   DOMAIN_STATUS_LABEL,
@@ -231,7 +231,7 @@ function isDocAdopted(docId: string): boolean {
 }
 
 const OBL_STATUS_LABEL: Record<ObligationRow['st'], string> = { met: 'Met', partial: 'Partial', gap: 'Gap' };
-const OBL_STATUS_VARIANT: Record<ObligationRow['st'], TagVariant> = {
+const OBL_STATUS_VARIANT: Record<ObligationRow['st'], NonRaciTagVariant> = {
   met: 'status-positive',
   partial: 'status-caution',
   gap: 'status-alert',

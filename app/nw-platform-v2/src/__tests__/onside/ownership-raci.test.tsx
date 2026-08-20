@@ -42,7 +42,7 @@ describe('OnSide ownership · RACI matrix (base 3498–3573 osRaci)', () => {
     expect(table).toBeInTheDocument()
   })
 
-  it('carries one spanning group row per base M domain, in authored order, each spanning every column (base 3552 tr.dgroup)', () => {
+  it('carries one spanning group row per base M domain, in authored order, each spanning every column as a header cell scoped to its rows (base 3552 tr.dgroup; design_system_spec.md §2.4 G4)', () => {
     const { container } = renderOwnership()
     expect(M).toHaveLength(8)
     const groupRows = container.querySelectorAll('tr[data-lf-group-row="true"]')
@@ -50,9 +50,13 @@ describe('OnSide ownership · RACI matrix (base 3498–3573 osRaci)', () => {
     groupRows.forEach((groupRow, index) => {
       const [, domainLabel] = M[index] as (typeof M)[number]
       expect(groupRow.textContent).toContain(domainLabel)
-      const cell = groupRow.querySelector('td')
+      // §2.4 G4 — the spanning cell is a header cell scoped to the rows
+      // it introduces, never a data cell.
+      const cell = groupRow.querySelector('th')
       expect(cell).not.toBeNull()
+      expect(cell?.getAttribute('scope')).toBe('rowgroup')
       expect(cell?.getAttribute('colspan')).toBe(String(TOTAL_COLUMNS))
+      expect(groupRow.querySelector('td')).toBeNull()
     })
   })
 

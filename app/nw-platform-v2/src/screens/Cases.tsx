@@ -145,7 +145,7 @@ import { DataTable } from '../components/DataTable';
 import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
 import { Toast } from '../components/Toast';
 import { Tag } from '../components/primitives/Tag';
-import type { TagVariant } from '../components/primitives/Tag';
+import type { NonRaciTagVariant } from '../components/primitives/Tag';
 import { CaseDetail } from '../views/CaseDetail';
 import type { CaseActionKind } from '../views/CaseDetail';
 import { APPROVAL, CASES, seedCases, stamp, tierOf } from '../data/cases';
@@ -191,7 +191,7 @@ function isUntouched(c: Case): boolean {
   return c.stage === 'analyst' && !c.edited && c.history.length <= 1;
 }
 
-function stagePill(c: Case): { text: string; variant: TagVariant } {
+function stagePill(c: Case): { text: string; variant: NonRaciTagVariant } {
   if (c.stage === 'closed') return { text: 'Adopted', variant: 'status-positive' };
   if (c.stage === 'rejected') return { text: 'Returned', variant: 'status-alert' };
   if (c.stage === 'cro') return { text: 'With the CRO', variant: 'status-caution' };
@@ -247,7 +247,7 @@ const TITLE_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5r
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--ink)' };
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.75rem' };
 const NOTE_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', color: 'var(--ink2)', maxWidth: '52rem' };
-const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
+const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 const CITE_STYLE: CSSProperties = { margin: '0.15rem 0 0', fontSize: '0.8125rem', color: 'var(--ink2)' };
 
 export interface CasesProps {

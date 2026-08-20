@@ -47,7 +47,7 @@ function decodeEntities(text: string): string {
 
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
-const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
+const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 
 interface InforceTableRow {
   id: string;

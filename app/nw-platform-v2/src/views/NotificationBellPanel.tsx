@@ -181,13 +181,10 @@ const panelStyle: CSSProperties = {
   zIndex: 50,
 };
 
+// Layout only — the eyebrow treatment itself (uppercase/tracking/weight/
+// color) lives in Label (P3) `eyebrow`, §8 R-1.
 const headerStyle: CSSProperties = {
   padding: '0.5rem 0.625rem',
-  fontSize: '0.75rem',
-  fontWeight: 700,
-  color: 'var(--ink2)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em', /* T7 F11: was 0.06em, doctrine TYP-4 is 0.05em */
 };
 const listStyle: CSSProperties = { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.125rem' };
 const rowStyle: CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', padding: '0.5rem 0.625rem', borderRadius: 'var(--radius-xs, 4px)' };
@@ -285,7 +282,9 @@ export function NotificationBellPanel({ notifs, currentRoleKey, currentRoleLabel
 
       {open ? (
         <div ref={panelRef} role="group" aria-label={`Notifications · ${currentRoleLabel}`} data-lf-composite="notification-bell-panel-list" style={panelStyle}>
-          <div style={headerStyle}>Notifications · {currentRoleLabel}</div>
+          <div style={headerStyle}>
+            <Label text={`Notifications · ${currentRoleLabel}`} variant="eyebrow" />
+          </div>
           {myNotifs.length === 0 ? (
             <p style={emptyStyle}>Nothing waiting on you. Cases you are asked to action land here, and by email if the case says so.</p>
           ) : (

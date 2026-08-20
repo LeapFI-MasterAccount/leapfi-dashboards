@@ -74,7 +74,7 @@
  * `<tr class="dgroup">` domain-divider rows spanning all columns (source
  * 3552, 3562) inside it. Per D24 (reuse over invention; retire drift),
  * the fix is not an Ownership-specific special case: `DataTable.tsx` gains
- * a general `groupKey`/`renderGroupHeader` capability (its own file header,
+ * a general `grouping` (`key`/`renderHeader`) capability (its own file header,
  * "GROUP-ROW CAPABILITY") — this screen is that capability's first call
  * site, not a fork of DataTable. `RACI_ROWS` below flattens `M` into one
  * ordered row list (still M's authored domain order, still each domain's
@@ -240,7 +240,8 @@ import { RedlineDiffView } from '../components/RedlineDiffView';
 import { SetupCard } from '../components/SetupCard';
 import { StatCard } from '../components/StatCard';
 import { Icon } from '../components/primitives/Icon';
-import type { TagVariant } from '../components/primitives/Tag';
+import { Tag } from '../components/primitives/Tag';
+import type { NonRaciTagVariant, RaciMark } from '../components/primitives/Tag';
 import type { DeepLinkScreenProps } from '../App';
 import { ROLES, M } from '../data/onside';
 import type { DocRaci } from '../data/onside';
@@ -336,8 +337,6 @@ const ROLE_DESCRIPTOR: Record<string, string> = Object.fromEntries(ROLES.map(([c
 
 const RACI_BY_DOC_ID: Record<string, DocRaci> = Object.fromEntries(M.flatMap(([, , docs]) => docs.map((doc) => [doc[0], doc] as const)));
 
-type RaciMark = 'A' | 'R' | 'C' | 'I';
-
 const RACI_WORD: Record<RaciMark, string> = {
   A: 'Accountable',
   R: 'Responsible',
@@ -354,53 +353,15 @@ function raciMarkFor(doc: DocRaci, roleCode: string): RaciMark | null {
   return null;
 }
 
-/* ============ RACI badges — see file header "THEME-SAFE BADGE COLORS" ============ */
-
-/** Text (and, for R/C/I, border) color per mark, plus a separate border
- * override for "A" — see file header for why `--accent2` is decorative-
- * border-only rather than badge text. */
-const RACI_BADGE_TEXT: Record<RaciMark, string> = {
-  R: 'var(--accent)',
-  A: 'var(--ink)',
-  C: 'var(--chart-axis)',
-  I: 'var(--ink3)',
-};
-const RACI_BADGE_BORDER: Record<RaciMark, string> = {
-  ...RACI_BADGE_TEXT,
-  A: 'var(--accent2)',
-};
-
-const RACI_BADGE_STYLE: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minWidth: '1.5rem',
-  height: '1.5rem',
-  padding: '0 0.3rem',
-  borderRadius: 'var(--radius-xs, 4px)',
-  border: '1px solid',
-  background: 'var(--panel)',
-  fontSize: '0.75rem',
-  fontWeight: 800,
-  lineHeight: 1,
-};
-
-/** `role="img"` + `aria-label` makes the full word (e.g. "Responsible")
- * the badge's ONLY accessible name — the visible letter is replaced
- * content for assistive tech, not additionally announced (same
- * name-replaces-content technique `Icon.tsx`'s labelled/`role="img"`
- * mode already uses). See file header "RACI cells as R/A/C/I badges". */
-function RaciBadge({ mark }: { mark: RaciMark }) {
-  return (
-    <span
-      role="img"
-      aria-label={RACI_WORD[mark]}
-      style={{ ...RACI_BADGE_STYLE, color: RACI_BADGE_TEXT[mark], borderColor: RACI_BADGE_BORDER[mark] }}
-    >
-      {mark}
-    </span>
-  );
-}
+/* ============ RACI badges ============ */
+/* Relocated into Tag.tsx as the P4 `raci-mark` variant (design_system_
+ * spec.md §2.5, delta §8 R-4(c)) — this screen is that variant's first
+ * and only call site (both usages below). The `role="img"` +
+ * `accessibleText` mechanism and the theme-safe per-mark colors (the
+ * former `RaciBadge`/`RACI_BADGE_TEXT`/`RACI_BADGE_BORDER` that used to
+ * live here) now live in `Tag.tsx`'s own header, unchanged — see that
+ * file for "THEME-SAFE MARK COLORS", including the "A" pairing HELD at
+ * §10 OQ-6. */
 
 /** v1's quiet middot for "no assignment" (source 3558 `&middot;`) — see
  * file header. `aria-hidden`: absence of a badge already is the signal. */
@@ -420,7 +381,7 @@ const RACI_LEGEND_ITEMS: readonly { mark: RaciMark; description: string }[] = [
 ];
 
 /** One row per governance document, carrying its domain key — the flat
- * shape `DataTable`'s new `groupKey`/`renderGroupHeader` capability
+ * shape `DataTable`'s new `grouping` (`key`/`renderHeader`) capability
  * groups by (file header "FIX WAVE (RACI DENSITY REGRESSION)"). Order is
  * `M`'s own authored order, domain-major then document-minor — identical
  * traversal order to the pre-fix per-domain tables, just one array now. */
@@ -445,7 +406,7 @@ const RACI_COLUMNS: DataTableColumn<RaciRow>[] = [
       header: code,
       render: (row) => {
         const mark = raciMarkFor(row.doc, code);
-        return mark ? <RaciBadge mark={mark} /> : <RaciEmptyCell />;
+        return mark ? <Tag variant="raci-mark" text={mark} accessibleText={RACI_WORD[mark]} /> : <RaciEmptyCell />;
       },
     }),
   ),
@@ -472,7 +433,7 @@ const STATUS_LABEL: Record<DocStatus, string> = {
   crit: 'Critical',
 };
 
-const STATUS_TAG_VARIANT: Record<DocStatus, TagVariant> = {
+const STATUS_TAG_VARIANT: Record<DocStatus, NonRaciTagVariant> = {
   good: 'status-positive',
   warn: 'status-caution',
   crit: 'status-alert',
@@ -511,7 +472,7 @@ const TITLE_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5r
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.125rem', fontWeight: 700, color: 'var(--ink)' };
 const DOMAIN_HEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1rem', fontWeight: 700, color: 'var(--ink)' };
-const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
+const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 /** Shared by the R/A/C/I mark legend and the 8-role legend below it — both
  * are "legend on a panel" boxes, kept visually paired. Label text in both
  * uses `--chart-axis`, not `--ink2` — see file header "Adjacent fix". */
@@ -634,24 +595,26 @@ export function OnSideOwnership({ topbar, onNavigate, sidebarVersionLabel, onDee
                 getRowId={(row) => `${row.domainKey}:${row.doc[0]}`}
                 onRowClick={handleOpenRaciRow}
                 emptyMessage="No governance documents mapped."
-                groupKey={(row) => row.domainKey}
-                renderGroupHeader={(domainKey) => (
-                  <button
-                    type="button"
-                    onClick={() => onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: domainKey })}
-                    style={GROUP_LINK_STYLE}
-                  >
-                    {DOMAIN_LABEL_BY_KEY[domainKey] ?? domainKey}
-                    <Icon name="arrow-right" size={16} tone="interactive" />
-                  </button>
-                )}
+                grouping={{
+                  key: (row) => row.domainKey,
+                  renderHeader: (domainKey) => (
+                    <button
+                      type="button"
+                      onClick={() => onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: domainKey })}
+                      style={GROUP_LINK_STYLE}
+                    >
+                      {DOMAIN_LABEL_BY_KEY[domainKey] ?? domainKey}
+                      <Icon name="arrow-right" size={16} tone="interactive" />
+                    </button>
+                  ),
+                }}
               />
             </div>
 
             <div style={RACI_MARK_LEGEND_STYLE}>
               {RACI_LEGEND_ITEMS.map(({ mark, description }) => (
                 <span key={mark} style={RACI_MARK_LEGEND_ITEM_STYLE}>
-                  <RaciBadge mark={mark} />
+                  <Tag variant="raci-mark" text={mark} accessibleText={RACI_WORD[mark]} />
                   <span style={LEGEND_TEXT_STYLE}>
                     {RACI_WORD[mark]} · {description}
                   </span>

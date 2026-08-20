@@ -70,7 +70,7 @@
  * here. Omitting `onRowClick` renders exactly as before this change
  * (backward compatible, zero visual change until a screen wires it).
  *
- * GROUP-ROW CAPABILITY (`groupKey` / `renderGroupHeader`): DataTable now
+ * GROUP-ROW CAPABILITY (`grouping: { key, renderHeader }`): DataTable now
  * has a spanning group-row primitive — v1's `<tr class="dgroup">` divider
  * (leapfi-platform.html osRaci, source 3552: one domain-label row,
  * `colspan` across every column, before that domain's document rows).
@@ -79,19 +79,29 @@
  * around it by rendering one table per group instead of one table with
  * group rows — that workaround, and the claim behind it, are retired by
  * this addition; see OnSideOwnership.tsx for the call site this closes).
- * `groupKey(row)` partitions `rows` into groups by first-seen key order
- * (rows need not be pre-sorted/contiguous by group — the partition is
- * built from a `Map`, so any interleaving of the input still groups
- * correctly); `renderGroupHeader(key, groupRows)` renders that group's
- * one spanning `<tr><td colSpan={columnCount}>` — general-purpose (any
- * screen, any grouping), not RACI- or Ownership-specific. Column sorting,
- * when active, sorts WITHIN each group only — group membership and group
- * order never change under sort, only the row order inside each group —
- * otherwise a flat sort would interleave every group's rows together and
- * defeat the reason to group at all. Both props are optional and
- * independent of `rowAction`/`onRowClick`; omitting `groupKey` renders
- * exactly as before this capability was added — zero behavior change for
- * every existing call site.
+ * `grouping.key(row)` partitions `rows` into groups by first-seen key
+ * order (rows need not be pre-sorted/contiguous by group — the partition
+ * is built from a `Map`, so any interleaving of the input still groups
+ * correctly); `grouping.renderHeader(key, groupRows)` renders that
+ * group's one spanning `<tr><th scope="rowgroup" colSpan={columnCount}>`
+ * — a header cell scoped to the rows it introduces (design_system_spec.md
+ * §2.4 G4: a group row labels the rows beneath it; as a data cell it
+ * would announce to assistive tech as an orphan value in a one-cell row)
+ * — general-purpose (any screen, any grouping), not RACI- or
+ * Ownership-specific. Column sorting, when active, sorts WITHIN each
+ * group only — group membership and group order never change under sort,
+ * only the row order inside each group — otherwise a flat sort would
+ * interleave every group's rows together and defeat the reason to group
+ * at all. `grouping` is optional and independent of `rowAction`/
+ * `onRowClick`; omitting it renders exactly as before this capability was
+ * added — zero behavior change for every existing call site. `key` and
+ * `renderHeader` are carried as one required-together config object
+ * (design_system_spec.md §2.4 G1, amendment A6) rather than two
+ * independent optional props specifically so the pair is unrepresentable
+ * apart: a `grouping` object missing either member is a compile-time
+ * error, never a runtime default (the old shape let `groupKey` alone
+ * render blank spanning rows, and let `renderGroupHeader` alone go
+ * silently unread).
  */
 import { useMemo, useState } from 'react';
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
@@ -144,14 +154,23 @@ export interface DataTableProps<T> {
    * consulted when `onRowClick` is present. */
   isRowClickable?: (row: T) => boolean;
   /** Spanning group-row capability — see file header "GROUP-ROW
-   * CAPABILITY". Derives which group a row belongs to; rows sharing a
-   * key are grouped together (first-seen key order) regardless of their
-   * position in `rows`. Required together with `renderGroupHeader`. */
-  groupKey?: (row: T) => string;
-  /** Renders one group's spanning divider row, given its key and the
-   * (authored-order) rows in that group — e.g. to build a deep-link
-   * label. Required together with `groupKey`. */
-  renderGroupHeader?: (groupKey: string, groupRows: readonly T[]) => ReactNode;
+   * CAPABILITY". `key`/`renderHeader` are carried as one grouping-config
+   * object (not two independent optional props) precisely so the pair is
+   * unrepresentable apart: supplying a `grouping` object with only one
+   * member is a compile-time error (missing required property), never a
+   * runtime no-op (design_system_spec.md §2.4 G1, amendment A6). A table
+   * with no `grouping` at all renders exactly as it did before this
+   * capability existed. */
+  grouping?: {
+    /** Derives which group a row belongs to; rows sharing a key are
+     * grouped together (first-seen key order) regardless of their
+     * position in `rows`. */
+    key: (row: T) => string;
+    /** Renders one group's spanning divider row, given its key and the
+     * (authored-order) rows in that group — e.g. to build a deep-link
+     * label. */
+    renderHeader: (groupKey: string, groupRows: readonly T[]) => ReactNode;
+  };
 }
 
 /** Visually-hidden (sr-only) recipe — INVARIANT: `top`/`left` MUST be
@@ -401,8 +420,7 @@ export function DataTable<T>({
   defaultSortDirection,
   onRowClick,
   isRowClickable: isRowClickablePredicate,
-  groupKey,
-  renderGroupHeader,
+  grouping,
 }: DataTableProps<T>) {
   const [sort, setSort] = useState<ActiveSort | null>(() =>
     defaultSortColumnId
@@ -420,7 +438,8 @@ export function DataTable<T>({
   // table at once — see file header "GROUP-ROW CAPABILITY"), and flatten
   // to a single ordered list of group-header/row display items.
   const displayItems = useMemo<readonly DataTableDisplayItem<T>[]>(() => {
-    if (!groupKey) return sortedRows.map((row) => ({ kind: 'row', row }) as const);
+    if (!grouping) return sortedRows.map((row) => ({ kind: 'row', row }) as const);
+    const { key: groupKey, renderHeader } = grouping;
     const order: string[] = [];
     const buckets = new Map<string, T[]>();
     for (const row of rows) {
@@ -436,11 +455,11 @@ export function DataTable<T>({
     const items: DataTableDisplayItem<T>[] = [];
     for (const key of order) {
       const groupRows = buckets.get(key) ?? [];
-      items.push({ kind: 'group', groupKey: key, header: renderGroupHeader ? renderGroupHeader(key, groupRows) : null });
+      items.push({ kind: 'group', groupKey: key, header: renderHeader(key, groupRows) });
       for (const row of applySort(groupRows, sort, columns)) items.push({ kind: 'row', row });
     }
     return items;
-  }, [rows, sort, columns, groupKey, renderGroupHeader, sortedRows]);
+  }, [rows, sort, columns, grouping, sortedRows]);
 
   const handleSortClick = (column: DataTableColumn<T>) => {
     if (!column.sortable) return;
@@ -522,9 +541,9 @@ export function DataTable<T>({
                 // — this only disambiguates the divider rows themselves.
                 // eslint-disable-next-line react/no-array-index-key -- combined with the stable groupKey below, not the sole key input
                 <tr key={`group:${item.groupKey}:${index}`} data-lf-group-row="true" style={groupRowStyle}>
-                  <td colSpan={columnCount} style={groupCellStyle}>
+                  <th scope="rowgroup" colSpan={columnCount} style={groupCellStyle}>
                     {item.header}
-                  </td>
+                  </th>
                 </tr>
               );
             }

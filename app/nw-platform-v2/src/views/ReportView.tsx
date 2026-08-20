@@ -139,7 +139,7 @@ import { DeckView } from '../components/DeckView';
 import type { DeckViewSlide } from '../components/DeckView';
 import { Label } from '../components/primitives/Label';
 import { Tag } from '../components/primitives/Tag';
-import type { TagVariant } from '../components/primitives/Tag';
+import type { NonRaciTagVariant } from '../components/primitives/Tag';
 import { Button } from '../components/primitives/Button';
 import { fmt, riskLabel } from '../engine/plan';
 import type { RecomputeView, PlanOpportunity } from '../engine/plan';
@@ -191,7 +191,7 @@ const STATUS_LABEL: Record<DomainStatus, string> = {
   above: 'Above target',
 };
 
-const STATUS_TAG_VARIANT: Record<DomainStatus, TagVariant> = {
+const STATUS_TAG_VARIANT: Record<DomainStatus, NonRaciTagVariant> = {
   below: 'status-alert',
   at: 'status-caution',
   above: 'status-positive',
@@ -230,7 +230,7 @@ function toleranceWord(tol: number): string {
 const CASE_STAGE_LABEL = new Map<string, string>(CASE_STAGES_B.map(([key, label]) => [key, label]));
 
 /** Source: `stage==='closed'?'Adopted':stage==='final'?'Voted · awaiting final approval':'For a vote'`. */
-function caseStageMeta(stage: string): { label: string; variant: TagVariant } {
+function caseStageMeta(stage: string): { label: string; variant: NonRaciTagVariant } {
   if (stage === 'closed') return { label: 'Adopted', variant: 'status-positive' };
   if (stage === 'final') return { label: 'Voted · awaiting final approval', variant: 'status-caution' };
   if (stage === 'committee') return { label: 'For a vote', variant: 'hitl' };
@@ -403,7 +403,7 @@ export function reportSub(kind: ReportKind): string {
 
 const sectionStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.85rem' };
 const statRowStyle: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.75rem' };
-const tableScrollStyle: CSSProperties = { overflowX: 'auto' };
+const tableScrollStyle: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 const bodyTextStyle: CSSProperties = { font: 'inherit', fontSize: '0.9375rem', lineHeight: 1.6, color: 'var(--ink2)', margin: 0 };
 const warnTextStyle: CSSProperties = { ...bodyTextStyle, color: 'var(--sem-alert)' };
 const listStyle: CSSProperties = { margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' };
@@ -1000,7 +1000,7 @@ function RoadmapReport() {
 }
 
 /** Rows + row ids now come from `data/boardLog.ts` — see file header "STANDING_ROWS SUPERSEDED." */
-const STANDING_STATUS_META: Record<BoardStandingStatus, { label: string; variant: TagVariant }> = {
+const STANDING_STATUS_META: Record<BoardStandingStatus, { label: string; variant: NonRaciTagVariant }> = {
   open: { label: 'Open', variant: 'status-caution' },
   tracking: { label: 'Tracking', variant: 'count' },
   closed: { label: 'Closed', variant: 'status-positive' },

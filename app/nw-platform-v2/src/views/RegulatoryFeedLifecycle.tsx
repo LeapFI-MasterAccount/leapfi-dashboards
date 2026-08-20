@@ -107,7 +107,7 @@ function parseInlineStatus(raw: string): { text: string; emphasized: boolean } {
 const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
 const CARD_HEADING_STYLE: CSSProperties = { margin: '0 0 0.25rem', font: 'inherit', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--ink)' };
-const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto' };
+const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 const CARD_BLOCK_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem' };
 const PROPOSAL_CELL_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.25rem', maxWidth: '28rem' };
 const PROPOSAL_TITLE_STYLE: CSSProperties = { color: 'var(--ink)', fontSize: '0.9375rem', fontWeight: 600 };

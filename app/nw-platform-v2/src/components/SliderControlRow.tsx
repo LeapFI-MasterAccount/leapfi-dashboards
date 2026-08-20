@@ -84,6 +84,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Slider } from './primitives/Slider';
 import { StatValue } from './primitives/StatValue';
+import { Label } from './primitives/Label';
 import { PosturePillBar } from './PosturePillBar';
 import { deriveRecomputeView } from '../engine/plan';
 import type { PlanOpportunity, SliderState } from '../engine/plan';
@@ -111,7 +112,9 @@ const stanceBoxStyle = (tension: boolean): CSSProperties => ({
   gap: '0.3125rem',
 });
 
-const eyebrowStyle: CSSProperties = { fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' /* T7 F11: was 0.06em, doctrine TYP-4 is 0.05em */, color: 'var(--ink2)' };
+// §8 R-1 — the ALL-CAPS tracked eyebrow treatment is authored only by
+// Label (P3) `eyebrow`; see the `<Label variant="eyebrow">` call sites
+// below (no local style constant needed — nothing here is layout).
 
 const stanceTextStyle: CSSProperties = { fontSize: '0.8125rem', lineHeight: 1.45, color: 'var(--ink)' };
 
@@ -261,7 +264,7 @@ export function SliderControlRow({ sliders, onSlidersChange, onCommit, opportuni
       <div>
         <h3 style={sectionHeadingStyle}>Your levers</h3>
         <div style={stanceBoxStyle(stance.tension)}>
-          <span style={eyebrowStyle}>Your stance</span>
+          <Label text="Your stance" variant="eyebrow" />
           <p style={{ ...stanceTextStyle, margin: 0 }}>
             <strong style={{ color: 'var(--accent)' }}>{stance.lead}</strong> {stance.body}
           </p>
@@ -300,7 +303,7 @@ export function SliderControlRow({ sliders, onSlidersChange, onCommit, opportuni
         </div>
 
         <div style={{ marginTop: '1.125rem' }}>
-          <span style={eyebrowStyle}>Where you are vs where you want to be</span>
+          <Label text="Where you are vs where you want to be" variant="eyebrow" />
           <div style={{ marginTop: '0.5rem' }}>
             <PosturePillBar segments={posture.segments} state={updating ? 'updating' : 'default'} />
           </div>
