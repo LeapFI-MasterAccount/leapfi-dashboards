@@ -89,9 +89,10 @@ export function Switch({ checked, label, onChange, disabled = false }: SwitchPro
           chrome; --ink2 fails AA on var(--panel) in light theme, so
           --chart-axis (which clears AA on both --panel and the dark
           chrome band, in both themes) is used unconditionally here —
-          unlike Label.tsx/Input.tsx/StatValue.tsx (see spec_questions),
-          Switch has no currently-compliant page-background call site this
-          swap would needlessly touch. */}
+          unlike Label.tsx/Input.tsx/StatValue.tsx (design_system_spec.md
+          Ruling B, §2.1/§2.7/§2.2/§2.6/§2.4/§8 R-1/§8 R-4/§11), Switch
+          has no currently-compliant page-background call site this swap
+          would needlessly touch. */}
       <span aria-hidden="true" style={{ color: 'var(--chart-axis)', fontSize: '0.8125rem' }}>
         {checked ? 'On' : 'Off'}
       </span>
