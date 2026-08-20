@@ -239,9 +239,8 @@ import type { CSSProperties } from 'react';
 import { DataTable } from '../components/DataTable';
 import type { DataTableColumn } from '../components/DataTable';
 import { Drawer } from '../components/Drawer';
-import { DrawerContent } from '../components/DrawerContent';
 import type { DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
-import { RedlineDiffView } from '../components/RedlineDiffView';
+import { DocumentBody } from '../components/DocumentBody';
 import { SetupCard } from '../components/SetupCard';
 import { StatCard } from '../components/StatCard';
 import { Icon } from '../components/primitives/Icon';
@@ -526,6 +525,10 @@ export function OnSideOwnership({ onDeepLink }: OnSideOwnershipProps) {
 
   const raciRow = displayDoc ? RACI_BY_DOC_ID[displayDoc.id] : undefined;
 
+  // Screen-owned metadata rows only — the document's own full `secs` text
+  // is appended by the shared `DocumentBody` (design_system_spec.md
+  // §2.11/A18 export side; see that component's own file header), same
+  // change as `OnSideDocuments.tsx`'s identical `drawerFields`.
   const drawerFields: DrawerContentField[] = displayDoc
     ? [
         { label: 'Domain', value: DOMAIN_LABEL_BY_KEY[displayDoc.dom] ?? displayDoc.dom },
@@ -542,7 +545,6 @@ export function OnSideOwnership({ onDeepLink }: OnSideOwnershipProps) {
           ? [{ label: 'Informed', value: raciRow[4].map((code) => ROLE_DESCRIPTOR[code] ?? code).join('; ') }]
           : []),
         ...(displayDoc.obl.length > 0 ? [{ label: 'Obligations evidenced', value: displayDoc.obl.join(', ') }] : []),
-        ...displayDoc.secs.map(([heading, body]) => ({ label: heading, value: decodeText(body) })),
       ]
     : [];
 
@@ -633,19 +635,7 @@ export function OnSideOwnership({ onDeepLink }: OnSideOwnershipProps) {
 
       <Drawer open={openDocId !== null} title={displayDoc ? decodeText(displayDoc.t) : ''} onClose={() => setOpenDocId(null)}>
         {displayDoc ? (
-          <>
-            <DrawerContent kind="doc" fields={drawerFields} tags={drawerTags} />
-            {displayDoc.redline ? (
-              <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
-                <RedlineDiffView before={decodeText(displayDoc.redline.old)} after={decodeText(displayDoc.redline.nw)} hitl hitlText="HITL review" />
-                {/* FIX WAVE (Class C, C1): rendered inside the shared
-                    Drawer, whose root background is var(--panel) —
-                    --ink2 fails AA there in light theme; --chart-axis is
-                    the prescribed panel-seated substitute. */}
-                <p style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: 'var(--chart-axis)' }}>{decodeText(displayDoc.redline.note)}</p>
-              </div>
-            ) : null}
-          </>
+          <DocumentBody docId={displayDoc.id} metadataFields={drawerFields} tags={drawerTags} decodeText={decodeText} />
         ) : null}
       </Drawer>
     </>
