@@ -227,6 +227,13 @@ export interface CaseDetailProps {
    * 2835/2849/2855). Omit (e.g. no persona rows available) and the
    * "Sign in as X …" links do not render. */
   onSwitchUser?: (userId: string) => void;
+  /** §2.11 (amendment A18) — the "View full document" trigger. Fires the
+   * composing screen's (`Cases.tsx`) in-drawer swap to the full document
+   * body + inline redline. Rendered only when `doc` resolves (§2.11's own
+   * "available whenever doc resolves, at every stage") AND this callback
+   * is supplied — omit and the Button does not render, never a dead
+   * click, matching this file's other optional-callback props. */
+  onViewFullDocument?: () => void;
 }
 
 const DOMAIN_LABEL: Record<string, string> = Object.fromEntries(DOMAINS.map((d) => [d.key, d.name]));
@@ -334,7 +341,7 @@ const CONDITION_LIST_STYLE: CSSProperties = { display: 'flex', flexDirection: 'c
 const HISTORY_LIST_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const HISTORY_ROW_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.15rem', borderLeft: '2px solid var(--border)', paddingLeft: '0.75rem' };
 
-export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendingAction, onNavigate, onDeepLink, onSwitchUser }: CaseDetailProps) {
+export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendingAction, onNavigate, onDeepLink, onSwitchUser, onViewFullDocument }: CaseDetailProps) {
   const [editing, setEditing] = useState(false);
   const [draftLang, setDraftLang] = useState(caseItem.lang);
   const [pickingCondition, setPickingCondition] = useState(false);
@@ -708,6 +715,19 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
         <h3 id="case-language-heading" style={SUBHEADING_STYLE}>Proposed language</h3>
 
         {missingDocNote}
+
+        {/* §2.11 (amendment A18) — "View full document": available
+            whenever `doc` resolves, at every stage (never gated on
+            `editing`/`doc.redline`, unlike the block below) — placed
+            adjacent to this section's own RedlineDiffView (C9). No
+            trailing arrow glyph (this control does not leave the current
+            Drawer, unlike the closed-state "Open the document →" link
+            below), never `variant="primary"` (AC-A18-6). */}
+        {doc && onViewFullDocument ? (
+          <div style={ACTIONS_ROW_STYLE}>
+            <Button variant="ghost" label="View full document" onPress={onViewFullDocument} />
+          </div>
+        ) : null}
 
         {!editing ? (
           doc?.redline ? (

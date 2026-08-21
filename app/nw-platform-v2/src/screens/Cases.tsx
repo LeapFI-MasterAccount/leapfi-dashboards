@@ -146,7 +146,9 @@ import type { SidebarProps } from '../components/Sidebar';
 import { DataTable } from '../components/DataTable';
 import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
 import { Drawer } from '../components/Drawer';
+import { DocumentBody } from '../components/DocumentBody';
 import { Toast } from '../components/Toast';
+import { Button } from '../components/primitives/Button';
 import { Tag } from '../components/primitives/Tag';
 import type { NonRaciTagVariant } from '../components/primitives/Tag';
 import { CaseDetail } from '../views/CaseDetail';
@@ -282,6 +284,15 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed read fresh from closure, not tracked as a re-trigger dep
   }, [deepLink?.nonce]);
   const [pendingAction, setPendingAction] = useState<{ caseId: string; kind: CaseActionKind } | null>(null);
+  // §2.11 (amendment A18) — "View full document" in-drawer swap: which of
+  // the two Drawer content states (case detail vs. full document) is
+  // showing. Reset whenever the open case changes (a fresh case never
+  // inherits the previous case's swap state), mirroring `CaseDetail.tsx`'s
+  // own "different case swapped in" reset effect for its local UI state.
+  const [viewingFullDocument, setViewingFullDocument] = useState(false);
+  useEffect(() => {
+    setViewingFullDocument(false);
+  }, [selectedCaseId]);
   const [renderTick, setRenderTick] = useState(0);
   // `key` (CS-09): a fresh value per committed action, used as the Toast's
   // React key so a replacement message REMOUNTS the Toast and re-arms its
@@ -497,6 +508,7 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
   // in that phase), so this never resurrects a case after the Drawer is
   // actually gone.
   const displayCase = liveSelectedCase ?? lastSelectedCaseRef.current;
+  const displayDoc = displayCase ? DOCLIB[displayCase.doc] : undefined;
   const openCases = CASES.filter((c) => c.stage !== 'closed' && c.stage !== 'rejected');
   const doneCases = CASES.filter((c) => c.stage === 'closed' || c.stage === 'rejected');
   const undecidedCount = CASES.filter(isUntouched).length;
@@ -589,32 +601,63 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
           out of this lane's allowlist) — no new focus machinery here. */}
       <Drawer
         open={selectedCaseId !== null}
-        title={displayCase ? `${displayCase.id} · ${decodeText(displayCase.title)}` : ''}
+        title={
+          viewingFullDocument && displayDoc
+            ? // §2.11 (amendment A18) — RPT-05 title-keyed in-drawer swap.
+              `${decodeText(displayDoc.t)} — full document`
+            : displayCase
+              ? `${displayCase.id} · ${decodeText(displayCase.title)}`
+              : ''
+        }
         onClose={() => setSelectedCaseId(null)}
       >
         {displayCase ? (
-          <CaseDetail
-            caseItem={displayCase}
-            doc={DOCLIB[displayCase.doc]}
-            currentUser={currentUser}
-            onBack={() => setSelectedCaseId(null)}
-            onAction={handleAction}
-            pendingAction={pendingAction && pendingAction.caseId === displayCase.id ? pendingAction.kind : null}
-            onNavigate={onNavigate}
-            {...(onDeepLink !== undefined ? { onDeepLink } : {})}
-            // Base switchUser doclinks (CS-08): the persona rows this
-            // screen already owns via the Topbar bundle are the twin's
-            // switch-user mechanism — only offered when the shell
-            // actually supplied persona rows (the fixture case of an
-            // empty menu renders no dead links).
-            {...(topbar.profileMenuItems.length > 0
-              ? {
-                  onSwitchUser: (userId: string) => {
-                    topbar.profileMenuItems.find((item) => item.id === userId)?.onPress();
-                  },
-                }
-              : {})}
-          />
+          <>
+            {/* §2.11 (amendment A18) — CaseDetail stays MOUNTED (CSS-hidden,
+                not conditionally unmounted) while the full-document view
+                shows, the same "hidden composite state" precedent A13
+                already established for the persistent Shell Sidebar — this
+                is what preserves the case's own action-region state (e.g.
+                a mid-edit textarea) underneath the swap, per §2.11's own
+                text, rather than discarding it on remount. */}
+            <div style={viewingFullDocument ? { display: 'none' } : undefined}>
+              <CaseDetail
+                caseItem={displayCase}
+                doc={displayDoc}
+                currentUser={currentUser}
+                onBack={() => setSelectedCaseId(null)}
+                onAction={handleAction}
+                pendingAction={pendingAction && pendingAction.caseId === displayCase.id ? pendingAction.kind : null}
+                onNavigate={onNavigate}
+                {...(onDeepLink !== undefined ? { onDeepLink } : {})}
+                // Base switchUser doclinks (CS-08): the persona rows this
+                // screen already owns via the Topbar bundle are the twin's
+                // switch-user mechanism — only offered when the shell
+                // actually supplied persona rows (the fixture case of an
+                // empty menu renders no dead links).
+                {...(topbar.profileMenuItems.length > 0
+                  ? {
+                      onSwitchUser: (userId: string) => {
+                        topbar.profileMenuItems.find((item) => item.id === userId)?.onPress();
+                      },
+                    }
+                  : {})}
+                // §2.11 — only offered when this case's document actually
+                // resolves (never a dead click on a data-integrity gap).
+                {...(displayDoc ? { onViewFullDocument: () => setViewingFullDocument(true) } : {})}
+              />
+            </div>
+            {viewingFullDocument && displayDoc ? (
+              <div>
+                <div>
+                  {/* Same anatomy as CaseDetail.tsx's own "← All cases"
+                      control (ghost, chevron-left icon) — §2.11's own text. */}
+                  <Button variant="ghost" label="← Back to case" icon="chevron-left" onPress={() => setViewingFullDocument(false)} />
+                </div>
+                <DocumentBody docId={displayCase.doc} decodeText={decodeText} />
+              </div>
+            ) : null}
+          </>
         ) : null}
       </Drawer>
 
