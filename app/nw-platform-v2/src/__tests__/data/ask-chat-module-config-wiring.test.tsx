@@ -149,28 +149,57 @@ describe('Ask Studio (amendment A20) — a scripted deep link fires the existing
     vi.useRealTimers();
   });
 
-  it('selecting the Artifacts link on a real Studio answer calls onDeepLink with the exact request payload authored in data/askChat.ts', () => {
+  it('selecting the Artifacts link on a real Studio "document"-type answer calls onDeepLink with the exact request payload authored in data/askChat.ts, labeled with the entry\'s own authored deepLink label (Section 2.9.3 item 3 / §2.9.9(a) — `deepLinks[].label` governs ONLY this Artifacts inline-link row, distinct from the fixed action-button labels on the opportunity-status/compliance-attainment canvases, Amendment A20.1)', () => {
     const onDeepLink = vi.fn();
-    const entry = STUDIO_CHAT.entries.find((e) => e.id === 'studio-blocker-underwriting-assist')!;
-    const playLink = entry.deepLinks![0]!;
+    const entry = STUDIO_CHAT.entries.find((e) => e.id === 'studio-doc-adverse-action-redline')!;
+    const docLink = entry.deepLinks![0]!;
     render(<StudioAsk onNavigate={() => {}} onDeepLink={onDeepLink} />);
     askOnStudioAsk(entry.question);
-    const link = screen.getByRole('button', { name: new RegExp(playLink.label) });
+    const link = screen.getByRole('button', { name: new RegExp(docLink.label) });
     fireEvent.click(link);
     expect(onDeepLink).toHaveBeenCalledTimes(1);
-    expect(onDeepLink).toHaveBeenCalledWith(playLink.request);
+    expect(onDeepLink).toHaveBeenCalledWith(docLink.request);
   });
 
-  it('selecting the "See in OnSide" action on a real compliance-attainment answer calls onDeepLink with the exact request payload authored in data/askChat.ts, labeled with the entry\'s own authored deepLink label (Section 2.9.9(d))', () => {
+  it('selecting the "Detail →" action on a real opportunity-status answer calls onDeepLink with the exact request payload authored in data/askChat.ts, labeled with the LITERAL, component-vocabulary-fixed "Detail →" text (Section 2.9.9(c), Amendment A20.1 — never `ChatEntry.deepLinks[].label`)', () => {
+    const onDeepLink = vi.fn();
+    const entry = STUDIO_CHAT.entries.find((e) => e.id === 'studio-blocker-underwriting-assist')!;
+    render(<StudioAsk onNavigate={() => {}} onDeepLink={onDeepLink} />);
+    askOnStudioAsk(entry.question);
+    const link = screen.getByRole('button', { name: 'Detail →' });
+    fireEvent.click(link);
+    expect(onDeepLink).toHaveBeenCalledTimes(1);
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'studio.investment-design', kind: 'play', id: 'Underwriting assist' });
+  });
+
+  it('the "Detail →" action label does NOT vary with the entry\'s authored deepLinks[].label (Amendment A20.1)', () => {
+    const onDeepLink = vi.fn();
+    const entry = STUDIO_CHAT.entries.find((e) => e.id === 'studio-blocker-underwriting-assist')!;
+    render(<StudioAsk onNavigate={() => {}} onDeepLink={onDeepLink} />);
+    askOnStudioAsk(entry.question);
+    expect(screen.queryByRole('button', { name: 'Open Underwriting assist in Investment Design' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Detail →' })).toBeInTheDocument();
+  });
+
+  it('selecting the "See in OnSide" action on a real compliance-attainment answer calls onDeepLink with the exact request payload authored in data/askChat.ts, labeled with the LITERAL, component-vocabulary-fixed "See in OnSide" text (Section 2.9.9(d), Amendment A20.1 — never `ChatEntry.deepLinks[].label`, which belongs only to the Artifacts inline-link row and is not consulted for this action)', () => {
     const onDeepLink = vi.fn();
     const entry = STUDIO_CHAT.entries.find((e) => e.id === 'studio-fairlend-attainment')!;
     const domainLink = entry.deepLinks![0]!;
     render(<StudioAsk onNavigate={() => {}} onDeepLink={onDeepLink} />);
     askOnStudioAsk(entry.question);
-    const link = screen.getByRole('button', { name: new RegExp(domainLink.label) });
+    const link = screen.getByRole('button', { name: 'See in OnSide' });
     fireEvent.click(link);
     expect(onDeepLink).toHaveBeenCalledTimes(1);
     expect(onDeepLink).toHaveBeenCalledWith(domainLink.request);
+  });
+
+  it('the "See in OnSide" action label does NOT vary with the entry\'s authored deepLinks[].label (Amendment A20.1)', () => {
+    const onDeepLink = vi.fn();
+    const entry = STUDIO_CHAT.entries.find((e) => e.id === 'studio-fairlend-attainment')!;
+    render(<StudioAsk onNavigate={() => {}} onDeepLink={onDeepLink} />);
+    askOnStudioAsk(entry.question);
+    expect(screen.queryByRole('button', { name: 'Open Fair Lending in OnSide' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'See in OnSide' })).toBeInTheDocument();
   });
 });
 
