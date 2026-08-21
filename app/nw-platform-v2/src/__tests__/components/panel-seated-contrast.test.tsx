@@ -385,9 +385,12 @@ describe('CLASS SWEEP — OnSideOverview screen (DomainPostureCard, CARD_STYLE) 
     const user = userEvent.setup();
     const { container } = render(<OnSideOverview onNavigate={() => {}} />);
 
-    // DOMAINS[0] ('bsa') has no OBL entry — its accordion body renders the
-    // second call site's "Top open items" DataTable (openItemColumns).
-    const firstDomain = DOMAINS[0]!;
+    // 'bsa' has no OBL entry — its accordion body renders the second call
+    // site's "Top open items" DataTable (openItemColumns). Resolved by key,
+    // not by array position: L10's DOMAINS reorder (D3, aigov promoted to
+    // the front for flagship prominence) moved WHICH entry sits at index 0
+    // without changing 'bsa''s own no-OBL-entry property this test needs.
+    const firstDomain = DOMAINS.find((d) => d.key === 'bsa')!;
     // DomainPostureCard (posture grid, above) ALSO renders a same-named
     // button — scope to the accordion header specifically (it alone
     // carries aria-expanded; DomainPostureCard's title button does not).

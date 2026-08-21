@@ -102,6 +102,13 @@
  * presenter_entry_redesign.md §4 — this screen now contains no
  * demo/presenter reference at all, the §3.1 end-state the spec describes.
  *
+ * AI GOVERNANCE FLAGSHIP CALLOUT (L10, call-15, DECISIONS.md D3): a
+ * standing, always-visible `StatCard` (C1) below the header row, above
+ * `NorthwindsBrandStrip`, naming the aigov domain and reusing amendment
+ * A8's `qualifier` caption — the "prominence elevation, no dedicated nav
+ * tile" half of D3's AI-gov ruling. See `AigovFlagshipCallout`'s own
+ * header below for the full sourcing/placement rationale.
+ *
  * Layout constants (240px sidebar column, 2rem content padding, 1.5rem
  * title size): design_system_spec.md §1.4 states this document carries no
  * px/spacing values by design (colors only); these are therefore
@@ -178,6 +185,9 @@ import { HomeCustomizeBar, resolveVisibleKeys } from '../views/HomeCustomizeBar'
 import type { HomePanelKey } from '../views/HomeCustomizeBar';
 import { HomePanels } from '../views/HomePanels';
 import { CURRENT } from '../data/studio';
+import { StatCard } from '../components/StatCard';
+import { DOMAINS } from '../data/onside';
+import type { DeepLinkRequest } from '../App';
 
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
@@ -217,6 +227,14 @@ const HEADER_ROW_STYLE: CSSProperties = {
 };
 
 const CTA_ROW_STYLE: CSSProperties = {
+  display: 'flex',
+};
+
+// L10 — see file header "AI GOVERNANCE FLAGSHIP CALLOUT." A single-card
+// row (C1's own "1-3 per row" composition note, §2.2) — one card, its own
+// row, so it reads as a standalone callout rather than a peer inside a
+// multi-stat grid.
+const AIGOV_CALLOUT_ROW_STYLE: CSSProperties = {
   display: 'flex',
 };
 
@@ -266,6 +284,81 @@ function NorthwindsMark() {
       <path d="M5 5 L16 14 L27 5 L18 16 L27 27 L16 18 L5 27 L14 16 Z" fill="#5B7A99" />
       <circle cx="16" cy="16" r="2.25" fill="#F4A93C" />
     </svg>
+  );
+}
+
+// L10 — see file header "AI GOVERNANCE FLAGSHIP CALLOUT."
+const AIGOV_DOMAIN = DOMAINS.find((d) => d.key === 'aigov');
+
+/**
+ * AigovFlagshipCallout — L10 AI governance flagship elevation (call-15;
+ * DECISIONS.md D3): "AI-gov ... gets prominence elevation only (Home
+ * StatCard callout reusing C1/A8's `qualifier`; `DOMAINS` reordering,
+ * data-only; demo-arc close-beat placement, Marisol's lane) — no dedicated
+ * nav tile." This is that callout — one C1 `StatCard`, always visible on
+ * Home (never one of `HomePanels`' viewer-gated toggles: a flagship
+ * elevation is a standing statement, not a preference a viewer can hide),
+ * placed here rather than inside `HomePanels.tsx` for exactly that reason
+ * (this dispatch's ALLOWLIST separately scopes `HomePanels.tsx` to
+ * "aigov prominence region only" for whatever complementary in-panel touch
+ * that file's own dispatch wires — this callout does not depend on it).
+ *
+ * Every literal is sourced from `data/onside.ts` DOMAINS['aigov'] — the
+ * SAME row TPRM's own L9 dispatch reuses for its module (D3's "reuse
+ * first" rule applied symmetrically) — never fabricated: `label` is the
+ * domain's own name, `value` its own `met` count, and the `qualifier`
+ * caption (C1/A8) reuses that row's own `inst` field's "flagship
+ * framework" wording verbatim (`inst`: "CRI FS AI RMF (flagship framework
+ * · 230 controls) · NIST AI RMF catalog") rather than inventing new promo
+ * copy for this one card.
+ *
+ * Click-through mirrors `HomePanels.tsx` PostureBand's own per-domain "Open
+ * ->" pattern (B3 SEAM 1's `fireOrDeepLink`, that file's own header):
+ * `onDeepLink({ screen: 'onside.overview', kind: 'domain', id: 'aigov' })`
+ * when a caller has wired `onDeepLink` (delivers end to end —
+ * `OnSideOverview.tsx` already consumes this exact kind), falling back to
+ * plain `onNavigate('onside.overview')` otherwise — the identical fallback
+ * contract every other domain deep link in this codebase uses, not a
+ * second navigation mechanism invented for this one card. `data-lf-view`
+ * gives the demo-arc close-beat placement work (D3, Marisol's/L12's lane)
+ * a stable selector to target without that lane needing to touch this
+ * file.
+ *
+ * AMBIGUITY RESOLVED — exact row placement: D3 says "Home StatCard
+ * callout" but does not pin where on the page. Placed directly below the
+ * header row (title + HomeCustomizeBar) and above the Northwinds brand
+ * strip — the first content region under the title — since a flagship
+ * elevation reads most honestly as the most prominent position available,
+ * and D18's own primary-CTA rule (§ file header) still governs the CTA
+ * row below: this callout is informational/navigational, not a second
+ * primary action competing with "Open today's regulatory feed." Same
+ * category of implementer judgment call as this file's other documented
+ * px/layout decisions (see file header "Layout constants").
+ */
+function AigovFlagshipCallout({
+  onNavigate,
+  onDeepLink,
+}: {
+  onNavigate: (id: string) => void;
+  onDeepLink: ((request: DeepLinkRequest) => void) | undefined;
+}) {
+  if (!AIGOV_DOMAIN) return null;
+  const openAigovDomain = () => {
+    if (onDeepLink) {
+      onDeepLink({ screen: 'onside.overview', kind: 'domain', id: AIGOV_DOMAIN.key });
+    } else {
+      onNavigate('onside.overview');
+    }
+  };
+  return (
+    <div style={AIGOV_CALLOUT_ROW_STYLE} data-lf-view="aigov-flagship-callout">
+      <StatCard
+        label={AIGOV_DOMAIN.name}
+        value={AIGOV_DOMAIN.met}
+        qualifier="flagship framework"
+        onPress={openAigovDomain}
+      />
+    </div>
   );
 }
 
@@ -376,6 +469,8 @@ export function Home({ onNavigate, roleKey = CURRENT.roleKey, roleFirstName = CU
           onChange={(nextVisibleKeys) => setPanelState({ roleKey, visibleKeys: nextVisibleKeys })}
         />
       </div>
+      {/* L10 — see file header "AI GOVERNANCE FLAGSHIP CALLOUT." */}
+      <AigovFlagshipCallout onNavigate={onNavigate} onDeepLink={onDeepLink} />
       {/* call-04 — see file header "NORTHWINDS LOGO + MOCK CONTACT INFO." */}
       <NorthwindsBrandStrip />
       <div style={CTA_ROW_STYLE}>
