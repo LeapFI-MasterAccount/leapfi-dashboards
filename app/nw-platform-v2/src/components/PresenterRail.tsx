@@ -32,18 +32,26 @@
  * (script.ts) — the same file the D4 "one array + one registry entry, no
  * new nav plumbing" swap guarantee already depends on.
  *
- * RESTART / resetDemo (AMBIGUITY RESOLVED): §4's `Restarting` row names an
- * external `resetDemo()` event this composite does not perform — `onRestart`
- * is that external side effect (the shell resets whatever demo data needs
- * resetting and navigates home), called synchronously before this file
- * advances its own `stepIndex` back to 0. This port's resetDemo is a local
- * React state reset, not a network call, so it completes in the same tick —
- * no separate loading/transient visual is added for `Restarting` (contrast
- * `OnSideDocuments.tsx`'s Adopt, which is explicitly framed as
- * "irreversible-feeling" and deliberately slowed so its `loading` state
- * reads as a real wait; Restart is presenter utility chrome, not an
- * irreversible operation, so an artificial delay here would just be
- * decorative latency with no truth behind it).
+ * RESTART / resetDemo (AMBIGUITY RESOLVED; HR-ARC-02 fix wave correction
+ * below): §4's `Restarting` row names an external `resetDemo()` event this
+ * composite does not perform — `onRestart` is that external side effect (the
+ * shell resets whatever demo data needs resetting), called synchronously
+ * before this file advances its own `stepIndex` back to 0. This port's
+ * resetDemo is a local React state reset, not a network call, so it
+ * completes in the same tick — no separate loading/transient visual is added
+ * for `Restarting` (contrast `OnSideDocuments.tsx`'s Adopt, which is
+ * explicitly framed as "irreversible-feeling" and deliberately slowed so its
+ * `loading` state reads as a real wait; Restart is presenter utility chrome,
+ * not an irreversible operation, so an artificial delay here would just be
+ * decorative latency with no truth behind it). HR-ARC-02: `handleRestart`
+ * ALSO re-runs step 1's own `onNavigate(target)` after `onRestart()`, the
+ * same call `start()` makes — an earlier revision relied solely on the
+ * shell's `onRestart` side effect (which hardcodes `navigateToScreen('home')`)
+ * to put the SCREEN at step 1 too, true only by coincidence for a script
+ * whose step-1 target is `go:home`; false for SCRIPT_EXAMINER (step 1 is
+ * `onside:overview`), which silently left the rail captioned "STEP 1" over
+ * the bare Home screen. Restart now returns both the rail and the screen to
+ * the step-1 state for any script.
  *
  * STANDING RULES BANNER content: from demo_script_draft.md's "Presenter
  * standing rules (bind every step)", amended by the T6.7 fix wave:
@@ -92,6 +100,17 @@
  * mid-session (spec §3.4). Residual risk (unverified third-party global
  * hotkeys) disclosed, not eliminated — same category as
  * demo_script_draft.md's G2/G3.
+ *
+ * HR-ARC-03 (fix wave correction): a raw chord reveal that skipped the
+ * `?present=1` pre-stage previously flipped `visible` with NO navigation —
+ * coherent only when the screen already happened to match the current step
+ * (true for the pre-staged/mid-script cases, false for a lost-querystring
+ * reload or a second window). Every reveal (Hidden -> Visible, via this
+ * chord) now re-runs the CURRENT step's own `onNavigate(target)`, the same
+ * call `start()`/Restart make — the rail's caption and the screen it
+ * describes can no longer disagree at the moment the rail becomes visible,
+ * whether that is the very first reveal of the session or the Nth
+ * hide/show toggle mid-demo.
  *
  * EDITABLE-ELEMENT GUARD (RAIL-05): every chord ignores keydowns whose
  * target is an input/textarea/select/contenteditable surface. Step 4's own
@@ -357,9 +376,20 @@ export const PresenterRail = forwardRef<PresenterRailHandle, PresenterRailProps>
     onRestart(); // external resetDemo side effect — see file header "RESTART / resetDemo"
     setStepIndex(0);
     const first = script.steps[0];
+    // HR-ARC-02 fix: re-run step 1's own navigation, exactly like `start()`
+    // does below — Restart must return BOTH the rail's caption AND the
+    // screen behind it to the step-1 state, never caption-only. Previously
+    // this handler reset only local rail state and relied entirely on the
+    // shell's `onRestart` side effect (App.tsx's `handleRestart`, which
+    // hardcodes `navigateToScreen('home')`) to also land on the right
+    // screen — true only by coincidence for a script whose own step-1
+    // target happens to be `go:home`, false for any script (e.g.
+    // SCRIPT_EXAMINER, whose step 1 target is `onside:overview`) where it
+    // is not.
+    if (first) onNavigate(first.target);
     setAnnouncement(`Restarted — step 1 of ${script.steps.length}${first ? `: ${first.title}` : ''}`);
     // `visible` is left untouched: Restarting transitions to Visible[step=1], never Hidden (§4).
-  }, [onRestart, script]);
+  }, [onRestart, onNavigate, script]);
 
   const start = useCallback(() => {
     setStepIndex(0);
@@ -392,7 +422,25 @@ export const PresenterRail = forwardRef<PresenterRailHandle, PresenterRailProps>
       if (isEditableTarget(event.target)) return; // RAIL-05 — see file header "EDITABLE-ELEMENT GUARD"
       if (event.code === 'KeyP') {
         event.preventDefault();
-        setVisible((current) => !current); // toggle retains step position (§4 Hidden exit note); hiding unmounts the rail entirely (null render)
+        setVisible((current) => {
+          const next = !current;
+          // HR-ARC-03 fix: a reveal (Hidden -> Visible) must never show a
+          // step caption the screen behind it disagrees with. Previously
+          // this branch only flipped `visible` — coherent by construction
+          // ONLY when the rail was pre-staged via `?present=1` (which calls
+          // `start()`, itself an `onNavigate` call) or was already mid-script
+          // on the right screen. A raw chord reveal with no pre-stage (lost
+          // querystring on reload, second window, etc.) skipped navigation
+          // entirely and showed "STEP 1 OF n" over whatever screen happened
+          // to be mounted. Re-running the CURRENT step's own navigation on
+          // every reveal keeps the caption and the screen in agreement
+          // unconditionally — including the ordinary mid-session hide/show
+          // toggle this chord is otherwise documented to do (file header
+          // "KEYBOARD CHORDS"), where it is a harmless re-affirmation of the
+          // screen the presenter is already claimed to be on.
+          if (next && currentStep) onNavigate(currentStep.target);
+          return next;
+        });
         return;
       }
       if (!visible) return; // Next/Prev shortcuts only act from an adjacent Visible[step] state (§4)
@@ -406,7 +454,7 @@ export const PresenterRail = forwardRef<PresenterRailHandle, PresenterRailProps>
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [visible, handleNext, handlePrev]);
+  }, [visible, handleNext, handlePrev, currentStep, onNavigate]);
 
   // See file header "OCCLUSION COMPENSATION" (RAIL-01/RAIL-09): publish the
   // rail's live height so the injected stylesheet can inset screens and the

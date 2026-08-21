@@ -15,6 +15,9 @@
  * key set — turns the corresponding assertion below red.)
  */
 import { createRef } from 'react';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -28,6 +31,14 @@ import { DOCLIB } from '../../data/doclib';
 import { DOMAINS, OBL } from '../../data/onside';
 import { resetDemo } from '../../state/demoStore';
 import { topbarFixture } from '../reporting_cases/fixtures';
+
+// Plain `node:fs` read (t7-brand-audit-fix.test.tsx precedent) — HR-ARC-05
+// is a file-content/comment-honesty fix, not a runtime-behavior change, so
+// the discriminating check is a source-text assertion, not a DOM query.
+const scriptSourcePath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../data/script.ts');
+function readScriptSource(): string {
+  return readFileSync(scriptSourcePath, 'utf8');
+}
 
 beforeAll(() => {
   // jsdom has no scrollIntoView — the accordion's expand-and-scroll effect
@@ -75,6 +86,25 @@ describe('SCRIPTS.examiner registry shape (design_system_spec.md §4 multi-scrip
   it('D16: step 3 targets onside:dom-tprm, resolving via the RAIL-10 dom- rule to onside.documents (never a SoonSplash placeholder)', () => {
     expect(SCRIPT_EXAMINER[2]?.target).toBe('onside:dom-tprm');
     expect(resolveTarget('onside:dom-tprm')).toBe('onside.documents');
+  });
+});
+
+describe('HR-ARC-05 fix wave — script.ts no longer asserts the stale "genuinely missing domain-view screen" claim', () => {
+  it('the source file no longer ASSERTS Documents is the "genuinely missing domain-view screen" (TprmDomain.tsx already existed 2h14m before this script was authored) — it may only reference that old claim as corrected history', () => {
+    const source = readScriptSource();
+    // The live (uncorrected) assertion had this exact clause; the fix
+    // wave's correction rewords the resolution rationale itself so this
+    // precise phrase no longer appears as a live claim.
+    expect(source).not.toContain("own resolution for the genuinely missing domain-view screen");
+    // The correction is allowed to quote the old false claim once, for
+    // context, while explicitly disclaiming it.
+    expect(source).toMatch(/that was already false when written/);
+  });
+
+  it('the source file honestly attributes the onside:dom-tprm -> onside.documents routing to D16\'s deliberate ruling, not to a missing screen', () => {
+    const source = readScriptSource();
+    expect(source).toContain('D16 deliberately ruled');
+    expect(source).toMatch(/TprmDomain\.tsx.*shipped.*before/s);
   });
 });
 
@@ -133,13 +163,40 @@ describe('D18 re-walk (closes the gap flag): the CRO-routed case is the real top
 });
 
 describe('Step 1 gap-KPI sub-click (D21) — the named example figures are the real domain data, not invented', () => {
-  it('TPRM (24/33) and AI-gov (110/230) match the do-field\'s named example figures exactly', () => {
+  it('TPRM (24/33) and AI-gov (110/230, raw domain data) match the do-field\'s named example figures exactly', () => {
     const tprm = DOMAINS.find((d) => d.key === 'tprm');
     const aigov = DOMAINS.find((d) => d.key === 'aigov');
     expect(tprm && { met: tprm.met, tot: tprm.tot }).toEqual({ met: 24, tot: 33 });
     expect(aigov && { met: aigov.met, tot: aigov.tot }).toEqual({ met: 110, tot: 230 });
     expect(SCRIPT_EXAMINER[0]?.do).toContain('TPRM 24 of 33');
-    expect(SCRIPT_EXAMINER[0]?.do).toContain('AI-gov 110 of 230');
+    // HR-ARC-04 fix wave correction: the do-field no longer claims the
+    // composite "110 of 230" — that exact string never renders anywhere
+    // (DomainsAccordion.tsx pairs 110 with 214, and 214 with 230, in two
+    // SEPARATE sentences, never 110 with 230 directly). The do-field now
+    // names the two real rendered figures instead.
+    expect(SCRIPT_EXAMINER[0]?.do).not.toContain('AI-gov 110 of 230');
+    expect(SCRIPT_EXAMINER[0]?.do).toContain('AI-gov 110 of 214 obligations met');
+    expect(SCRIPT_EXAMINER[0]?.do).toContain('214 of 230 in scope');
+  });
+});
+
+describe('HR-ARC-04 fix wave (SCRIPT side, coordinated with the DomainsAccordion.tsx verification lane) — step 3\'s do-field names exactly the two real rendered figures, never the invented "110 of 230" composite', () => {
+  it('step 3\'s do-field contains "110 of 214" and "214 of 230" as separate figures, never "110 of 230"', () => {
+    const step3 = SCRIPT_EXAMINER[2];
+    expect(step3?.do).not.toMatch(/110\s*(of|\/)\s*230/);
+    expect(step3?.do).toContain('110 of 214 obligations met');
+    expect(step3?.do).toContain('214 of 230 in scope');
+  });
+
+  it('the rendered AI Governance callout actually carries those two figures as separate strings, proving the script text says exactly what renders', async () => {
+    const user = userEvent.setup();
+    render(<OnSideOverview onNavigate={() => {}} />);
+    await user.click(screen.getByRole('button', { name: 'AI Governance' }));
+    await waitFor(() => expect(screen.getByRole('region', { name: 'AI Governance' })).toBeInTheDocument());
+    const body = screen.getByRole('region', { name: 'AI Governance' });
+    expect(within(body).getByText(/110 of 214 obligations met/)).toBeInTheDocument();
+    expect(within(body).getByText(/214 of 230 obligations in scope/)).toBeInTheDocument();
+    expect(body.textContent).not.toMatch(/110\s*(of|\/)\s*230/);
   });
 });
 

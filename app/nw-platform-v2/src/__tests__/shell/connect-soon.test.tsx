@@ -96,6 +96,43 @@ describe('STU-12 — the remaining locked modules stay visible beneath the open 
   })
 })
 
+describe('HR-SHELL-02 — a disabled Connect/Vantage Sidebar row never claims to be the current page while it becomes the active screen', () => {
+  it('reaching the Vantage splash via Roadmap does not mark the disabled Vantage Sidebar row as aria-current, and Vantage keeps its "Coming Soon" disabled treatment', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await goToVantageSplashViaRoadmap(user)
+
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    const vantage = within(nav).getByRole('button', { name: /^Vantage/ })
+    // Before the fix: this row simultaneously rendered aria-current="page"
+    // (App.tsx passed the active screenId straight through as Sidebar's
+    // activeId) AND the disabled "Coming Soon" dimmed treatment — a nav row
+    // asserting "you are here" and "not available yet" at once.
+    expect(vantage).not.toHaveAttribute('aria-current')
+    expect(vantage).not.toHaveAttribute('data-current')
+    expect(vantage).toBeDisabled()
+    expect(within(vantage).getByText('Coming Soon')).toBeInTheDocument()
+    // No OTHER row is falsely marked current either — the honest state is
+    // "no live page to point to," not a substitute claim on some other row.
+    expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(0)
+  })
+
+  it('reaching the Connect splash via Roadmap does not mark the disabled Connect Sidebar row as aria-current', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Studio' }))
+    await user.click(screen.getByRole('button', { name: 'Roadmap' }))
+    await user.click(screen.getByRole('button', { name: /LeapFI · Connect/ }))
+
+    const nav = screen.getByRole('navigation', { name: 'Primary' })
+    const connect = within(nav).getByRole('button', { name: /^Connect/ })
+    expect(connect).not.toHaveAttribute('aria-current')
+    expect(connect).toBeDisabled()
+    expect(within(connect).getByText('Coming Soon')).toBeInTheDocument()
+    expect(nav.querySelectorAll('[aria-current="page"]')).toHaveLength(0)
+  })
+})
+
 describe("RAIL-06 / §5.6 Exit — Roadmap's What's-next Connect card leads to the Connect splash", () => {
   it('pressing the Connect SetupCard on Roadmap lands on the Connect splash with AllRailz and Vantage beneath it', async () => {
     const user = userEvent.setup()

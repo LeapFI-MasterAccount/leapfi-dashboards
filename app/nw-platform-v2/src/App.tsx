@@ -601,6 +601,27 @@ const SCREEN_LABEL: Record<ScreenId, string> = {
 }
 
 /**
+ * HR-SHELL-02 (hostile-review fix wave): the top-level Sidebar rows this
+ * screen id set names (`Sidebar.tsx` NAV_ITEMS, PI2-D39: `disabled: true`
+ * on the flat `'connect'`/`'connect.vantage'` rows) render BOTH the
+ * current-item indicator (`aria-current="page"` + accent left-border,
+ * `SidebarItem.tsx` — driven purely by `current`/`level`, with no awareness
+ * of `disabled`) AND the disabled "Coming Soon" dimmed/locked treatment
+ * whenever this shell claims one of them as the active screen via
+ * `Sidebar`'s `activeId` prop — a nav row simultaneously asserting "you are
+ * here" and "not available yet." `SidebarItem.tsx`/`Sidebar.tsx` are owned
+ * by a concurrent, non-allowlisted dispatch (`SidebarItem.tsx`'s own file
+ * header: "union built by a concurrent, non-allowlisted dispatch"), so this
+ * fix lives entirely on the App-owned nav-state side: `activeId` below never
+ * claims one of these disabled rows as current, so no row ever renders both
+ * states at once. `'connect.allrailz'` has no top-level Sidebar row at all
+ * (unreachable via a direct Sidebar click) so it cannot trigger the same
+ * conflict, but is included for consistency — this whole module family is
+ * the same locked "Soon" splash template (`ConnectSoon.tsx`).
+ */
+const DISABLED_NAV_SCREEN_IDS: ReadonlySet<ScreenId> = new Set(['connect', 'connect.allrailz', 'connect.vantage'])
+
+/**
  * ThemeToggle — call-05 (planning/call-05-theme-toggle-icons.md;
  * DECISIONS.md D8). Local, file-scoped composition — NOT a new shared
  * primitive — the same category as `Topbar.tsx`'s own `HomeLogoButton`/
@@ -1009,7 +1030,12 @@ function App() {
   const casesUndecidedCount = CASES.filter(isUntouched).length
 
   const sidebarProps: SidebarProps = {
-    activeId: screenId,
+    // HR-SHELL-02: never claim a disabled top-level row (Connect/Vantage,
+    // PI2-D39) as the current item — see `DISABLED_NAV_SCREEN_IDS` above.
+    // `''` matches no `SidebarItem`'s `id`, so every row's `current` prop
+    // resolves false: an honest "no live page to point to" state, not a
+    // false "you are here" claim layered on top of "not available yet."
+    activeId: DISABLED_NAV_SCREEN_IDS.has(screenId) ? '' : screenId,
     onNavigate: navigateToScreen,
     casesUndecidedCount,
   }
