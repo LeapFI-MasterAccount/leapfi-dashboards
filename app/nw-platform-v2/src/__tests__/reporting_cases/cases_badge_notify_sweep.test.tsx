@@ -110,7 +110,14 @@ function openCaseDetail(caseId: string): HTMLElement {
 
 beforeEach(() => {
   vi.useFakeTimers();
-  seedCases(DOCLIB); // resets CASES to 8 fresh, untouched, analyst-stage cases
+  // PI2-D45 (Marisol Vance's arc-fidelity ruling, USER OVERRIDE): resets
+  // CASES to 8 fresh cases, but the five board/exec-tier cases now boot
+  // pre-routed to 'cro' (replaying the shipped accept mutation), so only
+  // the three proc-tier cases (aa-procedure, msg-disclosure, rege-proc —
+  // CASE-2026-003/005/006) still boot untouched at stage 'analyst'. See
+  // `engine_data/pi2_d45_boot_routing.test.tsx` for the dedicated boot
+  // proof.
+  seedCases(DOCLIB);
 });
 
 afterEach(() => {
@@ -131,13 +138,23 @@ describe('F1 exact repro — save-language stale Sidebar badge (S1.1-04)', () =>
     const casesRow = () => within(nested()).getByRole('button', { name: /^Cases/ });
 
     const startCount = CASES.filter(isUntouched).length;
-    expect(startCount).toBe(8);
-    expect(casesRow().querySelector('[data-lf-primitive="tag"][data-variant="count"]')?.textContent).toBe('8');
+    // PI2-D45 (USER OVERRIDE): the five board/exec-tier cases now boot
+    // pre-routed to 'cro' (not 'analyst'/untouched), so only the three
+    // proc-tier cases (aa-procedure, msg-disclosure, rege-proc) count as
+    // isUntouched at boot — 3, not the pre-PI2-D45 8.
+    expect(startCount).toBe(3);
+    expect(casesRow().querySelector('[data-lf-primitive="tag"][data-variant="count"]')?.textContent).toBe('3');
 
     fireEvent.click(casesRow());
-    const firstCase = CASES[0];
-    if (!firstCase) throw new Error('expected a seeded case');
-    const detail = openCaseDetail(firstCase.id);
+    // CASE-2026-003 ('aa-procedure', proc tier) — still boots at 'analyst',
+    // untouched, under PI2-D45 (unlike CASES[0], which is now
+    // 'mrm-change-draft', pre-routed to 'cro' and offers no analyst
+    // controls — see `cases_list_role_gating.test.tsx`'s identical
+    // substitution). The scenario (save-language stale-badge repro) is
+    // identical on any still-analyst case; this is the proc-tier fixture
+    // the sweep's other files converged on.
+    const targetCase = caseById('CASE-2026-003');
+    const detail = openCaseDetail(targetCase.id);
 
     fireEvent.click(within(detail).getByRole('button', { name: 'Edit the language' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Proposed language' }), {
@@ -146,9 +163,9 @@ describe('F1 exact repro — save-language stale Sidebar badge (S1.1-04)', () =>
     fireEvent.click(within(detail).getByRole('button', { name: 'Save the language' }));
     commit();
 
-    expect(firstCase.edited).toBe(true);
+    expect(targetCase.edited).toBe(true);
     const expectedCount = CASES.filter(isUntouched).length;
-    expect(expectedCount).toBe(startCount - 1); // 7
+    expect(expectedCount).toBe(startCount - 1); // 2
 
     // Cases.tsx's OWN local `renderTick` state re-renders its own header —
     // this update is real and immediate, no cross-screen navigation
@@ -169,9 +186,12 @@ describe('F1 exact repro — save-language stale Sidebar badge (S1.1-04)', () =>
 describe('per-action store-version sync (the primitive every useDemoStore() subscriber reads)', () => {
   it('save-language bumps the store version when the language actually changes', () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
-    const firstCase = CASES[0];
-    if (!firstCase) throw new Error('expected a seeded case');
-    const detail = openCaseDetail(firstCase.id);
+    // CASE-2026-003 ('aa-procedure', proc tier) — still boots at 'analyst'
+    // under PI2-D45, so the analyst controls (including "Edit the
+    // language") genuinely render. CASES[0] is now 'mrm-change-draft',
+    // pre-routed to 'cro' at boot, and offers none.
+    const targetCase = caseById('CASE-2026-003');
+    const detail = openCaseDetail(targetCase.id);
 
     fireEvent.click(within(detail).getByRole('button', { name: 'Edit the language' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Proposed language' }), {
@@ -181,15 +201,16 @@ describe('per-action store-version sync (the primitive every useDemoStore() subs
     fireEvent.click(within(detail).getByRole('button', { name: 'Save the language' }));
     commit();
 
-    expect(firstCase.edited).toBe(true);
+    expect(targetCase.edited).toBe(true);
     expect(getDemoStoreVersion()).toBeGreaterThan(before);
   });
 
   it('revert-language bumps the store version', () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
-    const firstCase = CASES[0];
-    if (!firstCase) throw new Error('expected a seeded case');
-    let detail = openCaseDetail(firstCase.id);
+    // CASE-2026-003 ('aa-procedure', proc tier) — still boots at 'analyst'
+    // under PI2-D45; same substitution as the previous test.
+    const targetCase = caseById('CASE-2026-003');
+    let detail = openCaseDetail(targetCase.id);
 
     // Edit + save first so `caseItem.edited` is true — CaseDetail.tsx only
     // ever renders "Revert to the OnSide draft" once it is.
@@ -199,14 +220,14 @@ describe('per-action store-version sync (the primitive every useDemoStore() subs
     });
     fireEvent.click(within(detail).getByRole('button', { name: 'Save the language' }));
     commit();
-    expect(firstCase.edited).toBe(true);
+    expect(targetCase.edited).toBe(true);
 
     detail = document.querySelector('[data-lf-view="case-detail"]') as HTMLElement;
     const before = getDemoStoreVersion();
     fireEvent.click(within(detail).getByRole('button', { name: 'Revert to the OnSide draft' }));
     commit();
 
-    expect(firstCase.edited).toBe(false);
+    expect(targetCase.edited).toBe(false);
     expect(getDemoStoreVersion()).toBeGreaterThan(before);
   });
 
@@ -240,10 +261,11 @@ describe('per-action store-version sync (the primitive every useDemoStore() subs
 
   it('save-language does NOT bump the store version when the saved text is unchanged (no shell-derived value moved)', () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
-    const firstCase = CASES[0];
-    if (!firstCase) throw new Error('expected a seeded case');
-    const detail = openCaseDetail(firstCase.id);
-    const originalLang = firstCase.lang;
+    // CASE-2026-003 ('aa-procedure', proc tier) — still boots at 'analyst'
+    // under PI2-D45; same substitution as the two tests above.
+    const targetCase = caseById('CASE-2026-003');
+    const detail = openCaseDetail(targetCase.id);
+    const originalLang = targetCase.lang;
 
     fireEvent.click(within(detail).getByRole('button', { name: 'Edit the language' }));
     // No change to the textarea — save the identical text back.
@@ -251,8 +273,8 @@ describe('per-action store-version sync (the primitive every useDemoStore() subs
     fireEvent.click(within(detail).getByRole('button', { name: 'Save the language' }));
     commit();
 
-    expect(firstCase.lang).toBe(originalLang);
-    expect(firstCase.edited).toBe(false);
+    expect(targetCase.lang).toBe(originalLang);
+    expect(targetCase.edited).toBe(false);
     expect(getDemoStoreVersion()).toBe(before);
   });
 });
