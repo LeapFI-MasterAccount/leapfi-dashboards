@@ -70,6 +70,32 @@ describe('Home greeting heading (PI2-D40 — replaces the static "Home" h1)', ()
   })
 })
 
+describe('call-04 — Northwinds logo + mock contact info in the greeting section', () => {
+  it('renders the Northwinds mark, org name, and mock address/phone directly below the greeting heading, above the primary CTA', () => {
+    render(<App />)
+
+    const strip = document.querySelector('[data-lf-view="northwinds-brand-strip"]')
+    expect(strip).not.toBeNull()
+    expect(strip?.querySelector('[data-lf-mark="northwinds"]')).not.toBeNull()
+    expect(within(strip as HTMLElement).getByText('Northwinds Federal Credit Union')).toBeInTheDocument()
+    // Mock contact info — never a claim about a real organization.
+    expect(within(strip as HTMLElement).getByText(/1200 Meridian Way, Suite 400, Minneapolis, MN 55401/)).toBeInTheDocument()
+    expect(within(strip as HTMLElement).getByText(/\(612\) 555-0148/)).toBeInTheDocument()
+
+    // Greeting-adjacent placement: after the heading, before the CTA.
+    const heading = screen.getByRole('heading', { level: 1 })
+    const cta = screen.getByRole('button', { name: "Open today's regulatory feed" })
+    expect(Boolean(heading.compareDocumentPosition(strip as Node) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true)
+    expect(Boolean((strip as Node).compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true)
+  })
+
+  it('the Northwinds mark is decorative (aria-hidden) — the org name text carries the accessible content, not the SVG', () => {
+    render(<App />)
+    const mark = document.querySelector('[data-lf-mark="northwinds"]')
+    expect(mark).toHaveAttribute('aria-hidden', 'true')
+  })
+})
+
 describe('Home KPI StatCards removed (PI2-D40)', () => {
   it('no longer renders the two base-anchored KPI figures ($540,000/yr freed, 3.5 FTE) or their StatCard groups', () => {
     render(<App />)

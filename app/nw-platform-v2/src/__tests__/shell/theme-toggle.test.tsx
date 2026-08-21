@@ -11,6 +11,17 @@
  *
  * D18: no test here touches Home's "Start the demo" affordance.
  *
+ * call-05 (planning/call-05-theme-toggle-icons.md; DECISIONS.md D8):
+ * the toggle no longer renders via `Switch` (P8) with a visible "Light
+ * theme" text label — App.tsx's local `ThemeToggle` helper (see that
+ * component's own header) now renders sun/moon `Icon` (P1) glyphs
+ * instead, keeping the SAME `role="switch"`/`aria-checked` contract but
+ * with the accessible name/tooltip now "Light mode"/"Dark mode" (naming
+ * the CURRENT state, not a fixed "Light theme" label). Every assertion
+ * below that queried `{ name: 'Light theme' }` now queries the
+ * state-correct name instead — same coverage, updated selector, per the
+ * dispatch's own "existing test suite green" requirement.
+ *
  * SPRINT 1 HOSTILE-REVIEW CORRECTION (S2, findings B2/B3 — Topbar.tsx:835):
  * the shell dispatch brief's "announces via aria-live" instruction was
  * satisfied by a custom live region coupled to the theme VALUE rather than
@@ -41,36 +52,47 @@ beforeEach(() => {
 })
 
 describe('theme toggle (dispatch pin; scaffold port per App.tsx "THEME TOGGLE")', () => {
-  it('boots dark: data-theme="dark" and the Light theme switch reads unchecked', () => {
+  it('boots dark: data-theme="dark" and the toggle reads unchecked, named "Dark mode"', () => {
     render(<App />)
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
-    expect(screen.getByRole('switch', { name: 'Light theme' })).toHaveAttribute('aria-checked', 'false')
+    expect(screen.getByRole('switch', { name: 'Dark mode' })).toHaveAttribute('aria-checked', 'false')
   })
 
-  it('toggling flips data-theme dark -> light -> dark, switch state tracking it', async () => {
+  it('toggling flips data-theme dark -> light -> dark, switch state and accessible name tracking it', async () => {
     const user = userEvent.setup()
     render(<App />)
-    const toggle = screen.getByRole('switch', { name: 'Light theme' })
+    const toggle = screen.getByRole('switch', { name: 'Dark mode' })
 
     await user.click(toggle)
     expect(document.documentElement.getAttribute('data-theme')).toBe('light')
-    expect(screen.getByRole('switch', { name: 'Light theme' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('switch', { name: 'Light mode' })).toHaveAttribute('aria-checked', 'true')
 
-    await user.click(screen.getByRole('switch', { name: 'Light theme' }))
+    await user.click(screen.getByRole('switch', { name: 'Light mode' }))
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
-    expect(screen.getByRole('switch', { name: 'Light theme' })).toHaveAttribute('aria-checked', 'false')
+    expect(screen.getByRole('switch', { name: 'Dark mode' })).toHaveAttribute('aria-checked', 'false')
   })
 
   it('persists the chosen theme across a full remount (getInitialTheme localStorage port)', async () => {
     const user = userEvent.setup()
     const first = render(<App />)
-    await user.click(screen.getByRole('switch', { name: 'Light theme' }))
+    await user.click(screen.getByRole('switch', { name: 'Dark mode' }))
     expect(document.documentElement.getAttribute('data-theme')).toBe('light')
     first.unmount()
 
     render(<App />)
-    expect(screen.getByRole('switch', { name: 'Light theme' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('switch', { name: 'Light mode' })).toHaveAttribute('aria-checked', 'true')
     expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+  })
+
+  it('call-05: the toggle renders sun and moon Icon glyphs, never a text label, and both carry a tooltip (title)', () => {
+    render(<App />)
+    const toggle = screen.getByRole('switch', { name: 'Dark mode' })
+    expect(toggle).toHaveAttribute('title')
+    expect(toggle.querySelector('[data-lf-primitive="icon"][data-name="sun"]')).not.toBeNull()
+    expect(toggle.querySelector('[data-lf-primitive="icon"][data-name="moon"]')).not.toBeNull()
+    // No stray "Light theme"/"On"/"Off" text nodes left behind from the
+    // retired Switch-based control.
+    expect(toggle.textContent).toBe('')
   })
 
   it('B2/B3: booting the app does NOT falsely announce a theme change — no "theme changed" claim exists before anything has changed', () => {
@@ -84,7 +106,7 @@ describe('theme toggle (dispatch pin; scaffold port per App.tsx "THEME TOGGLE")'
   it('B3: toggling the theme produces exactly ONE state-change signal — the native switch\'s aria-checked flip — never a second, differently-worded custom live-region announcement', async () => {
     const user = userEvent.setup()
     render(<App />)
-    await user.click(screen.getByRole('switch', { name: 'Light theme' }))
+    await user.click(screen.getByRole('switch', { name: 'Dark mode' }))
 
     // The native mechanism (already pinned above: aria-checked flips
     // true/false) is the sole authoritative announcement. No separate

@@ -576,7 +576,8 @@ export function OnSideOverview({ onNavigate, deepLink, onDeepLink, onDeepLinkCon
   // owning domain row and opens this screen's own obligation drawer for
   // that exact obligation. Confirmed live producers (Sprint 1 hostile
   // review, finding A2): Reporting.tsx's obligation quick-open
-  // (`handleOpenObligation`) and HomePanels.tsx's Strategic Signal touch
+  // (`handleOpenObligation`) and HomePanels.tsx's Regulatory Radar (call-03
+  // rename — formerly "Strategic Signal") touch
   // chips (`touchToDeepLinkRequest`'s `obl` branch) — both previously
   // landed on this screen and opened nothing. An id whose domain segment
   // or obligation id doesn't resolve in OBL still consumes the nonce but
