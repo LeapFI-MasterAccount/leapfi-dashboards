@@ -9,6 +9,12 @@
  * own, unrelated `StatCard` instances further down, e.g. the
  * Investment-and-return panel) are unaffected.
  *
+ * HF1 (user ruling 2026-08-21): a SIXTH gated panel, 'aigov' ("AI
+ * Governance") — the flagship StatCard callout formerly rendered
+ * unconditionally by `Home.tsx` — now renders here, default-shown at
+ * position 1, toggled/ordered like the other five. See
+ * `AigovFlagshipPanel`'s own header below.
+ *
  * call-03 RENAME (planning/call-03-regulatory-radar-rename.md;
  * meeting_notes_2026-08-20.md:86, Dan Scheffler/Josh Siegel: rename
  * "Strategic Signal" to "Regulatory Radar"): every literal string this
@@ -764,6 +770,62 @@ function YourQueuePanel({
   );
 }
 
+// HF1 (user ruling 2026-08-21, superseding L10's always-visible reading of
+// call-15 / DECISIONS.md D3's placement half): the AI-gov flagship callout
+// is Customize-gated — the sixth panel key, 'aigov', default-shown at
+// position 1. See `AigovFlagshipPanel` below.
+const AIGOV_DOMAIN = DOMAINS.find((d) => d.key === 'aigov');
+
+// L10 — a single-card row (C1's own "1-3 per row" composition note, §2.2):
+// one card, its own row, so it reads as a standalone callout rather than a
+// peer inside a multi-stat grid. Moved verbatim from Home.tsx's former
+// `AIGOV_CALLOUT_ROW_STYLE` (HF1).
+const aigovCalloutRowStyle: CSSProperties = {
+  display: 'flex',
+};
+
+/**
+ * AigovFlagshipPanel — the AI-gov flagship StatCard callout (L10, call-15,
+ * DECISIONS.md D3), moved verbatim from `Home.tsx`'s former ungated
+ * `AigovFlagshipCallout` per the HF1 user ruling (2026-08-21): the Home
+ * content area below the greeting contains NOTHING not configured via
+ * Customize, so the callout is now rendered here as the 'aigov' panel —
+ * toggled/ordered by `HomeCustomizeBar` exactly like the other five,
+ * SHOWN by default at position 1 (`HP`'s own order, data/misc.ts).
+ *
+ * Every literal is sourced from `data/onside.ts` DOMAINS['aigov'] — never
+ * fabricated: `label` is the domain's own name, `value` its own `met`
+ * count, and the `qualifier` caption (C1/A8) reuses that row's own `inst`
+ * field's "flagship framework" wording verbatim.
+ *
+ * Click-through uses this file's EXISTING `fireOrDeepLink` helper —
+ * identical behavior to Home.tsx's former hand-rolled if/else, including
+ * the plain `onNavigate('onside.overview')` fallback. `data-lf-view` keeps
+ * the stable selector the demo-arc close-beat lane targets (D3). No header
+ * go-link: `headerLinks('aigov')` resolves to `[]` (like 'qa') — the card
+ * itself is the sole click target; a header link to the same destination
+ * would duplicate the action.
+ */
+function AigovFlagshipPanel({
+  onNavigate,
+  onDeepLink,
+}: {
+  onNavigate: (id: string) => void;
+  onDeepLink: ((request: DeepLinkRequest) => void) | undefined;
+}) {
+  if (!AIGOV_DOMAIN) return null;
+  return (
+    <div style={aigovCalloutRowStyle} data-lf-view="aigov-flagship-callout">
+      <StatCard
+        label={AIGOV_DOMAIN.name}
+        value={AIGOV_DOMAIN.met}
+        qualifier="flagship framework"
+        onPress={() => fireOrDeepLink(onDeepLink, onNavigate, { screen: 'onside.overview', kind: 'domain', id: AIGOV_DOMAIN.key })}
+      />
+    </div>
+  );
+}
+
 function QuickActionsPanel({ onNavigate }: { onNavigate: (id: string) => void }) {
   return (
     <div style={setupCardRowStyle}>
@@ -793,6 +855,8 @@ export function HomePanels({ visibleKeys, currentRoleKey, onNavigate, onDeepLink
 
   function renderPanel(key: HomePanelKey) {
     switch (key) {
+      case 'aigov':
+        return <AigovFlagshipPanel onNavigate={onNavigate} onDeepLink={onDeepLink} />;
       case 'posture':
         return <PostureBand onNavigate={onNavigate} onDeepLink={onDeepLink} />;
       case 'legis':

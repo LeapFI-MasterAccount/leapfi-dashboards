@@ -155,10 +155,10 @@ import { HP, HOME_ORDER } from '../data/misc';
 import { PANEL_STYLE } from '../theme/panelStyle';
 import { getPersistedHomeOrder, persistHomeOrder } from '../state/demoStore';
 
-export type HomePanelKey = 'posture' | 'legis' | 'invest' | 'queue' | 'qa';
+export type HomePanelKey = 'aigov' | 'posture' | 'legis' | 'invest' | 'queue' | 'qa';
 
 function isHomePanelKey(key: string): key is HomePanelKey {
-  return key === 'posture' || key === 'legis' || key === 'invest' || key === 'queue' || key === 'qa';
+  return key === 'aigov' || key === 'posture' || key === 'legis' || key === 'invest' || key === 'queue' || key === 'qa';
 }
 
 /** `HP` (data/misc.ts) minus 'kpis' — see file header. */

@@ -82,9 +82,9 @@ describe("Adam Schlesinger ('ceo') — financial-focused seed (call-10)", () => 
 })
 
 describe("Rachel Fischer ('cro') — risk-focused by construction (call-10; no explicit seed entry, see demoStore.ts header)", () => {
-  it('boots to the shipped default order, posture (Risk posture) first — unchanged from pre-L11 behavior', () => {
+  it('boots to the shipped default order — aigov first (HF1 user ruling 2026-08-21), then posture (Risk posture)', () => {
     const { container } = render(<App />)
-    expect(panelKeysInOrder(container)).toEqual(['posture', 'legis', 'invest', 'queue', 'qa'])
+    expect(panelKeysInOrder(container)).toEqual(['aigov', 'posture', 'legis', 'invest', 'queue', 'qa'])
   })
 })
 
@@ -119,8 +119,10 @@ describe('Restart (handleRestart -> resetDemo) clears a persisted Home-layout cu
     await switchPersona(user, /Adam Schlesinger/)
 
     // Customize Adam's layout via the bar (toggle "Risk posture" — his
-    // seed's LAST panel — off).
-    await user.click(screen.getByRole('button', { name: 'Customize (5 of 5 shown)' }))
+    // seed's LAST panel — off). HF1: his stored 5-key seed stays
+    // authoritative over the new 6-key default ('aigov' hidden for him
+    // until toggled on), so the derived trigger reads 5 of 6.
+    await user.click(screen.getByRole('button', { name: 'Customize (5 of 6 shown)' }))
     const bar = screen.getByRole('group', { name: 'Customize your home' })
     await user.click(within(bar).getByRole('button', { name: '5. Risk posture' }))
     expect(getPersistedHomeOrder('ceo')).toEqual(['invest', 'legis', 'queue', 'qa'])

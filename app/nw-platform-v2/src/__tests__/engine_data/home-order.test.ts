@@ -42,20 +42,23 @@ afterEach(() => {
 })
 
 describe('resolveVisibleKeys healing vs base homeOrder (base 4126–4133)', () => {
-  it('the 5-key universe is HP (base 4125) minus kpis, in HP order', () => {
-    expect(HP.map((p) => p[0])).toEqual(['kpis', 'posture', 'legis', 'invest', 'queue', 'qa'])
-    expect([...DEFAULT_VISIBLE_KEYS]).toEqual(['posture', 'legis', 'invest', 'queue', 'qa'])
+  // HF1 (user ruling 2026-08-21): 'aigov' ("AI Governance") joins the
+  // customizable universe as the sixth key, default position 1 — the
+  // formerly-ungated Home flagship callout is now Customize-gated.
+  it('the 6-key universe is HP (base 4125) minus kpis, in HP order — aigov first (HF1)', () => {
+    expect(HP.map((p) => p[0])).toEqual(['kpis', 'aigov', 'posture', 'legis', 'invest', 'queue', 'qa'])
+    expect([...DEFAULT_VISIBLE_KEYS]).toEqual(['aigov', 'posture', 'legis', 'invest', 'queue', 'qa'])
   })
 
-  it('a never-customized role heals to all 5 panels in HP order (base 4128–4131: no stored sequence -> every key appended)', () => {
+  it('a never-customized role heals to all 6 panels in HP order (base 4128–4131: no stored sequence -> every key appended)', () => {
     expect(HOME_ORDER['test-fresh-role']).toBeUndefined()
-    expect(resolveVisibleKeys('test-fresh-role')).toEqual(['posture', 'legis', 'invest', 'queue', 'qa'])
+    expect(resolveVisibleKeys('test-fresh-role')).toEqual(['aigov', 'posture', 'legis', 'invest', 'queue', 'qa'])
   })
 
   it('healing returns a fresh array — later mutation cannot corrupt the default set', () => {
     const first = resolveVisibleKeys('test-fresh-role')
     first.push('posture')
-    expect(resolveVisibleKeys('test-fresh-role')).toEqual(['posture', 'legis', 'invest', 'queue', 'qa'])
+    expect(resolveVisibleKeys('test-fresh-role')).toEqual(['aigov', 'posture', 'legis', 'invest', 'queue', 'qa'])
   })
 
   it('a role customized to EMPTY stays empty — stored sequence is authoritative (dispatch pin; port amendment to base 4129)', () => {

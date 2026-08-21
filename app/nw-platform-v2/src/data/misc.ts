@@ -273,6 +273,13 @@ export type HomePanel = [string, string, string];
 
 export const HP: HomePanel[] = [
   ['kpis', 'home-kpis', 'Top metrics'],
+  // HF1 (user ruling 2026-08-21, superseding L10's always-visible reading
+  // of call-15): the AI-gov flagship callout joins the Customize-gated
+  // panel set as the sixth key. This single entry sets the toggle order,
+  // the section <h2> text, and the shipped default position (first visible
+  // panel — 'kpis' is excluded from the managed set already). Label matches
+  // HomePanels.tsx's own DOM_SHORT.aigov display name.
+  ['aigov', 'hp-aigov', 'AI Governance'],
   ['posture', 'hp-posture', 'Risk posture'],
   // call-03 rename (planning/call-03-regulatory-radar-rename.md;
   // meeting_notes_2026-08-20.md:86): label only — 'legis'/'hp-legis' stay
