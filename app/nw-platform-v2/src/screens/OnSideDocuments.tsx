@@ -192,6 +192,10 @@ import { DOCLIB } from '../data/doclib';
 import type { DocEntry, DocStatus } from '../data/doclib';
 import { DOMAINS, GAPS, OBL } from '../data/onside';
 import type { GapItem, ObligationRow } from '../data/onside';
+// L8 exit criterion 6 (ONS-CASE-01) — read-only import of the live CASES
+// binding for the doc → case reverse cross-link; `data/cases.ts` itself
+// stays outside this lane's allowlist (unedited).
+import { CASES } from '../data/cases';
 import { CURRENT } from '../data/studio';
 import { findRedlineDocForObligation } from '../views/DomainsAccordion';
 import { applyGapClosure, useDemoStore } from '../state/demoStore';
@@ -459,6 +463,13 @@ export function OnSideDocuments({ deepLink, onDeepLink, onDeepLinkConsumed }: On
   const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedRedlineFilter, setSelectedRedlineFilter] = useState<string[]>([]);
+  // D5 (DECISIONS.md) / L8 exit criterion 1: a fourth FilterGroup on this
+  // screen's existing FilterBar — "Type: Policy/Standard/Procedure" — no
+  // new screen, no nav-budget cost. `doclib.ts`'s `DocType` union already
+  // carries these three members; the other six (Evidence/Committee
+  // record/Board record/Draft/Template/Training) are out of D5's named
+  // scope, not omitted by oversight.
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [openDocId, setOpenDocId] = useState<string | null>(null);
   // B-dead-interactions-01/-02 — the obligation-detail drawer target
   // (gap board + domain-impact registers). Mutually exclusive with
@@ -514,6 +525,14 @@ export function OnSideDocuments({ deepLink, onDeepLink, onDeepLinkConsumed }: On
   const docStatusCounts: Record<DocStatus, number> = { good: 0, warn: 0, crit: 0 };
   for (const doc of allDocs) docStatusCounts[doc.status]++;
   const adoptedCount = allDocs.filter((doc) => doc.rlState?.act === 'adopted').length;
+
+  // D5 — live per-type counts, same "count from the same field the filter
+  // predicate reads" discipline as docStatusCounts/DOC_DOMAIN_COUNTS above.
+  const DOC_TYPE_FILTER_OPTIONS = ['Policy', 'Standard', 'Procedure'] as const;
+  const docTypeCounts: Record<(typeof DOC_TYPE_FILTER_OPTIONS)[number], number> = { Policy: 0, Standard: 0, Procedure: 0 };
+  for (const doc of allDocs) {
+    if (doc.type === 'Policy' || doc.type === 'Standard' || doc.type === 'Procedure') docTypeCounts[doc.type]++;
+  }
 
   const openDoc = openDocId ? (allDocs.find((d) => d.id === openDocId) ?? null) : null;
   if (openDoc) lastOpenDocRef.current = openDoc;
@@ -655,6 +674,7 @@ export function OnSideDocuments({ deepLink, onDeepLink, onDeepLinkConsumed }: On
   const filteredDocs = allDocs.filter((doc) => {
     if (selectedDomains.length > 0 && !selectedDomains.includes(doc.dom)) return false;
     if (selectedStatuses.length > 0 && !selectedStatuses.includes(doc.status)) return false;
+    if (selectedTypes.length > 0 && !selectedTypes.includes(doc.type)) return false;
     if (selectedRedlineFilter.length > 0) {
       const isAdopted = doc.rlState?.act === 'adopted';
       const isPending = Boolean(doc.redline) && !isAdopted;
@@ -754,10 +774,33 @@ export function OnSideDocuments({ deepLink, onDeepLink, onDeepLinkConsumed }: On
     onToggle: (id) => setSelectedRedlineFilter((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])),
   };
 
+  // D5 — the fourth FilterGroup this dispatch adds: "Type: Policy/Standard/
+  // Procedure" on the existing FilterBar array below (no new tab, no new
+  // screen, zero nav-budget cost).
+  const typeFilterGroup: FilterGroup = {
+    id: 'type',
+    label: 'Type',
+    options: DOC_TYPE_FILTER_OPTIONS.map((t) => ({ id: t, label: t, count: docTypeCounts[t] })),
+    selectedIds: selectedTypes,
+    onToggle: (id) => setSelectedTypes((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])),
+  };
+
   // Live read by id (never the displayDoc snapshot, which is pre-adoption
   // during the Drawer's closing animation).
   const isDisplayDocAdopted = displayDoc ? isDocAdopted(displayDoc.id) : false;
   const isAdoptingDisplayDoc = displayDoc ? adoptingDocId === displayDoc.id : false;
+
+  // L8 exit criterion 6 (D15) — ONS-CASE-01 (r14_census_high_gaps.md):
+  // "Document/redline drawer has no cross-reference back to the case it
+  // produced." A18's own pattern is case → document ("View full document",
+  // CaseDetail.tsx:760-762); this is the REVERSE of that pattern —
+  // document → case, read live off the same module-level `CASES` binding
+  // `SettingsToggles.tsx`'s own "AMBIGUITY RESOLVED — live open-case count"
+  // note already establishes as this codebase's precedent for consuming
+  // `CASES` from outside `Cases.tsx`/`data/cases.ts`: read live, never
+  // fabricate, and honestly render nothing if `seedCases()` has not yet
+  // run when this screen mounts (Core Principle 3).
+  const affiliatedCase = displayDoc ? CASES.find((c) => c.doc === displayDoc.id) : undefined;
 
   // Screen-owned metadata rows only — the document's own full `secs` text
   // is appended by the shared `DocumentBody` (design_system_spec.md
@@ -766,6 +809,17 @@ export function OnSideDocuments({ deepLink, onDeepLink, onDeepLinkConsumed }: On
   // of the "spread secs into fields" line.
   const drawerFields: DrawerContentField[] = displayDoc
     ? [
+        // ONS-CASE-01 AC1/AC2 — case ID in the drawer's own header/
+        // metadata region, clickable (DrawerContentField.onPress, the
+        // same inline-navigating-link affordance DrawerContent.tsx's own
+        // header already documents), firing a 'case'-kind deep link (an
+        // already-CLASS-1, already-wired kind per App.tsx's DeepLinkKind
+        // union — no App.tsx change needed). Omitted entirely (never a
+        // dead click) when the doc has no affiliated case, or when this
+        // screen's consumer did not wire `onDeepLink`.
+        ...(affiliatedCase && onDeepLink
+          ? [{ label: 'Case', value: affiliatedCase.id, onPress: () => onDeepLink({ screen: 'cases', kind: 'case', id: affiliatedCase.id }) }]
+          : []),
         { label: 'Version', value: displayDoc.v },
         { label: 'Domain', value: DOMAIN_LABEL[displayDoc.dom] ?? displayDoc.dom },
         { label: 'Type', value: displayDoc.type },
@@ -951,7 +1005,7 @@ export function OnSideDocuments({ deepLink, onDeepLink, onDeepLinkConsumed }: On
           <Button variant="secondary" label={ONSIDE_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
         </div>
 
-          <FilterBar groups={[domainFilterGroup, statusFilterGroup, redlineFilterGroup]} />
+          <FilterBar groups={[domainFilterGroup, statusFilterGroup, redlineFilterGroup, typeFilterGroup]} />
 
           <div style={SCROLL_WRAP_STYLE}>
             <DataTable

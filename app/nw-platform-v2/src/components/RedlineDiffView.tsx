@@ -51,9 +51,25 @@ interface DiffPart {
   text: string;
 }
 
-/** Splits on whitespace boundaries while keeping the whitespace as its own tokens, so reassembled text preserves original spacing. */
+/** L8 exit criterion 2 (D15) — AC-r18-1 fix (`r18_redline_review_ux.md`):
+ * the pre-fix tokenizer split whitespace into its own tokens
+ * (`/\S+|\s+/g`). Because a run of whitespace between two DIFFERENT words
+ * is textually identical to the whitespace it replaces, the word-level LCS
+ * below matched those bare-space tokens across the before/after pair —
+ * fragmenting a genuinely-contiguous multi-word replacement into
+ * alternating equal(space)/delete(word)/equal(space)/delete(word) parts,
+ * so `mergeAdjacent` never saw two adjacent same-type parts to merge (one
+ * `<del>`/`<ins>` pill per word — the reported "word-fragment pill
+ * treatment," AC-r18-1's root cause, cited verbatim in the r18 file).
+ * Fixed by keeping each word's trailing whitespace attached to that same
+ * token (`\S+\s*`), so a token only equals another token when the WORD
+ * (not just incidental trailing space) matches — a full phrase
+ * replacement then diffs as one contiguous delete run + one contiguous
+ * insert run. The `\s+` alternative still catches a leading whitespace
+ * run with no preceding word (start-of-string edge case). Reassembled
+ * text still preserves original spacing, unchanged from before this fix. */
 function tokenize(text: string): string[] {
-  return text.match(/\S+|\s+/g) ?? [];
+  return text.match(/\S+\s*|\s+/g) ?? [];
 }
 
 function computeLcsTable(a: string[], b: string[]): number[][] {
