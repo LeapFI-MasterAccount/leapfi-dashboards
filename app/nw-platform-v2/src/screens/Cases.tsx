@@ -885,6 +885,21 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
                   : ''
         }
         onClose={() => setSelectedCaseId(null)}
+        // r05 whole-trail element 6 — "Export button: save or print the
+        // whole trail" (r05_whole_trail.md "Required display elements"
+        // item 6; AC-r05-2). Direct reuse of the ghost Button (P2) /
+        // window.print() pattern already shipped twice
+        // (Reporting.tsx:315/332, ReportView.tsx:1130) — no new export
+        // mechanism. Offered only while `CaseDetail`'s own trail content
+        // is the visible Drawer content (not the full-document swap, not
+        // the reassign picker, and not the deadline-driven leg, which
+        // carries no redline/document-version elements to export) — the
+        // Drawer's own `footer` slot, so it never renders inside
+        // `DrawerContent`'s `actions` list and so never competes with
+        // `CaseDetail`'s per-stage `variant="primary"` action (PI2-D2;
+        // AC-r05-2's "does NOT compete with the side-car's per-type
+        // primary verb").
+        footer={displayCase && !viewingFullDocument && !reassignMode ? <Button variant="ghost" label="Print / Save as PDF" onPress={() => window.print()} /> : null}
       >
         {displayDeadlineCase ? (
           // PI2-D2 leg (b) — the deadline-driven case leg's own render
