@@ -25,26 +25,29 @@ describe('seedCases() gate — unchanged by the PI2-D2 widening (r17b AC: "gate 
     seedCases(DOCLIB);
   });
 
-  it('still seeds exactly the 8 drafted-redline cases, in the same doc order — the new case shapes add no entries to CASES', () => {
+  it('still seeds exactly the 8 drafted-redline cases — the new case shapes add no entries to CASES (PI2-D45 further USER OVERRIDE reorders the ARRAY; doc membership is unchanged)', () => {
     expect(CASES).toHaveLength(8);
-    expect(CASES.map((c) => c.doc)).toEqual([
-      'irp',
-      'tprm-program',
-      'aa-procedure',
-      'mrm-change-draft',
-      'msg-disclosure',
-      'rege-proc',
-      'gov-charter',
-      'gen-ai-draft',
-    ]);
+    expect(CASES.map((c) => c.doc).sort()).toEqual(
+      ['irp', 'tprm-program', 'aa-procedure', 'mrm-change-draft', 'msg-disclosure', 'rege-proc', 'gov-charter', 'gen-ai-draft'].sort(),
+    );
   });
 
-  it('every seeded case is still drafted-redline-shaped (base/lang present, stage starts at analyst)', () => {
+  it('every seeded case is still drafted-redline-shaped (base/lang present); proc-tier cases still start at analyst — PI2-D45 (USER OVERRIDE) routes the 5 board/exec-tier cases to cro at boot', () => {
     for (const c of CASES) {
       expect(typeof c.base).toBe('string');
       expect(typeof c.lang).toBe('string');
+    }
+    const proc = CASES.filter((c) => c.tier === 'proc');
+    const routed = CASES.filter((c) => c.tier === 'board' || c.tier === 'exec');
+    expect(proc).toHaveLength(3);
+    expect(routed).toHaveLength(5);
+    for (const c of proc) {
       expect(c.stage).toBe('analyst');
       expect(c.history[0]?.who).toBe('OnSide');
+    }
+    for (const c of routed) {
+      expect(c.stage).toBe('cro');
+      expect(c.history[0]?.who).toBe('Priya Raman');
     }
   });
 });

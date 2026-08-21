@@ -38,45 +38,59 @@ describe('notification pipeline through the shell (SH-1/CS-01; base notify → r
   it('a store notify() write badges the bell live, Open lands on the case detail and clears the unread badge (openNotif 2644–2647)', async () => {
     const user = userEvent.setup()
     render(<App />)
-    const firstCase = CASES[0]!
 
-    // Boot: no unread badge (NOTIFS seeded empty).
-    expect(screen.getByRole('button', { name: 'Notifications' })).toBeInTheDocument()
+    // PI2-D45 (USER OVERRIDE): 5 board/exec-tier cases now boot already
+    // routed + notified (bootUnread === 5) — write onto a still-untouched
+    // proc-tier case instead of CASES[0], so the delta and the fresh
+    // panel row are unambiguous rather than duplicating an existing entry.
+    const bootUnread = NOTIFS.filter((n) => n['read'] !== true).length
+    expect(bootUnread).toBe(5)
+    const targetCase = CASES.find((c) => c.tier === 'proc')!
+
+    expect(screen.getByRole('button', { name: `Notifications, ${bootUnread} unread` })).toBeInTheDocument()
 
     // The write the cases batch fires on Accept & route (base 2691) —
     // default persona is Rachel (cro), the write's target role.
     act(() => {
-      notifyCaseRouted(firstCase)
+      notifyCaseRouted(targetCase)
     })
 
     // Badge appears without any navigation/remount — the store
     // subscription is the base's renderBell() fan-out.
-    const trigger = screen.getByRole('button', { name: 'Notifications, 1 unread' })
+    const trigger = screen.getByRole('button', { name: `Notifications, ${bootUnread + 1} unread` })
     await user.click(trigger)
     const panel = screen.getByRole('group', { name: 'Notifications · Chief Risk Officer' })
-    expect(within(panel).getByText(`Approval needed · ${firstCase.title}`)).toBeInTheDocument()
+    const freshTitle = within(panel).getByText(`Approval needed · ${targetCase.title}`)
+    expect(freshTitle).toBeInTheDocument()
 
-    await user.click(within(panel).getByRole('button', { name: 'Open' }))
+    await user.click(within(freshTitle.closest('li') as HTMLElement).getByRole('button', { name: 'Open' }))
 
     // Landed on the Cases detail for that case.
     expect(screen.getByRole('button', { name: '← All cases' })).toBeInTheDocument()
-    // Read-flip: unread badge cleared (base openNotif x.read=true).
+    // Read-flip: unread badge cleared (base openNotif x.read=true) — the
+    // fresh write is unshifted to the front (base notify(), source 2626).
     expect(NOTIFS[0]?.['read']).toBe(true)
-    expect(screen.getByRole('button', { name: 'Notifications' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `Notifications, ${bootUnread} unread` })).toBeInTheDocument()
   })
 
   it('SH-8: re-opening the SAME case from the bell after backing out in-screen is not a dead press', async () => {
     const user = userEvent.setup()
     render(<App />)
-    const firstCase = CASES[0]!
+
+    // PI2-D45 (USER OVERRIDE): same reasoning as the previous test — use a
+    // still-untouched proc-tier case rather than CASES[0].
+    const bootUnread = NOTIFS.filter((n) => n['read'] !== true).length
+    const targetCase = CASES.find((c) => c.tier === 'proc')!
 
     act(() => {
-      notifyCaseRouted(firstCase)
+      notifyCaseRouted(targetCase)
     })
 
     // First open from the bell.
-    await user.click(screen.getByRole('button', { name: 'Notifications, 1 unread' }))
-    await user.click(within(screen.getByRole('group', { name: 'Notifications · Chief Risk Officer' })).getByRole('button', { name: 'Open' }))
+    await user.click(screen.getByRole('button', { name: `Notifications, ${bootUnread + 1} unread` }))
+    const panel1 = screen.getByRole('group', { name: 'Notifications · Chief Risk Officer' })
+    const row1 = within(panel1).getByText(`Approval needed · ${targetCase.title}`).closest('li') as HTMLElement
+    await user.click(within(row1).getByRole('button', { name: 'Open' }))
     expect(screen.getByRole('button', { name: '← All cases' })).toBeInTheDocument()
 
     // Back to the list INSIDE the Cases screen (screenId stays 'cases',
@@ -103,9 +117,13 @@ describe('notification pipeline through the shell (SH-1/CS-01; base notify → r
     })
 
     // Same bell row, same case — previously a no-op setState (unchanged
-    // key, no remount); the per-press nonce now forces the remount.
-    await user.click(screen.getByRole('button', { name: 'Notifications' }))
-    await user.click(within(screen.getByRole('group', { name: 'Notifications · Chief Risk Officer' })).getByRole('button', { name: 'Open' }))
+    // key, no remount); the per-press nonce now forces the remount. The
+    // target's notification is now read, so the badge is back to
+    // `bootUnread` (its own entry no longer counts as unread).
+    await user.click(screen.getByRole('button', { name: `Notifications, ${bootUnread} unread` }))
+    const panel2 = screen.getByRole('group', { name: 'Notifications · Chief Risk Officer' })
+    const row2 = within(panel2).getByText(`Approval needed · ${targetCase.title}`).closest('li') as HTMLElement
+    await user.click(within(row2).getByRole('button', { name: 'Open' }))
     expect(screen.getByRole('button', { name: '← All cases' })).toBeInTheDocument()
   })
 })
@@ -116,28 +134,36 @@ describe('Restart = full demo reset (SH-2/RAIL-02/CS-04/RPT-02; base resetDemo 3
     render(<App />)
     toggleRail()
 
-    // Rehearsal mutations: a routed case (stage + notification + clock
-    // ticks) and a customized Home layout.
-    const firstCase = CASES[0]!
-    firstCase.stage = 'cro'
+    // Rehearsal mutations: an extra routed case (stage + notification +
+    // clock ticks) and a customized Home layout. PI2-D45 (USER OVERRIDE):
+    // boot already carries 5 notifications and CLOCK.i===11 — mutate a
+    // still-untouched proc-tier case instead of CASES[0], on top of that
+    // baseline.
+    const bootNotifs = NOTIFS.length
+    const bootClock = CLOCK.i
+    const targetCase = CASES.find((c) => c.tier === 'proc')!
+    targetCase.stage = 'cro'
     act(() => {
-      notifyCaseRouted(firstCase)
+      notifyCaseRouted(targetCase)
     })
     HOME_ORDER['cro'] = ['ai']
-    expect(NOTIFS.length).toBe(1)
-    expect(CLOCK.i).toBeGreaterThan(0)
+    expect(NOTIFS.length).toBe(bootNotifs + 1)
+    expect(CLOCK.i).toBeGreaterThan(bootClock)
 
     const rail = screen.getByRole('region', { name: 'Presenter rail' })
     await user.click(within(rail).getByRole('button', { name: 'Restart' }))
 
-    // Opening frame restored: eight open, none decided, empty bell,
-    // clock at tick 0, layout customization gone.
+    // Opening frame restored to the PI2-D45 boot state: eight open, the 3
+    // proc-tier cases undecided, the 5 board/exec-tier cases routed with
+    // their notifications, clock back at the boot-seed tick count, layout
+    // customization gone.
     expect(CASES.length).toBe(8)
-    expect(CASES.every((c) => c.stage === 'analyst')).toBe(true)
-    expect(NOTIFS).toEqual([])
-    expect(CLOCK.i).toBe(0)
+    expect(CASES.filter((c) => c.tier === 'proc').every((c) => c.stage === 'analyst')).toBe(true)
+    expect(CASES.filter((c) => c.tier === 'board' || c.tier === 'exec').every((c) => c.stage === 'cro')).toBe(true)
+    expect(NOTIFS.length).toBe(bootNotifs)
+    expect(CLOCK.i).toBe(bootClock)
     expect(HOME_ORDER).toEqual({})
-    expect(screen.getByRole('button', { name: 'Notifications' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: `Notifications, ${bootNotifs} unread` })).toBeInTheDocument()
     expect(
       screen.getByText('Demo reset. Every gap, redline, lever, filter, and conversation is back to the opening state.'),
     ).toBeInTheDocument()

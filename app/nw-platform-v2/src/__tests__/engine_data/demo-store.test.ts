@@ -73,6 +73,13 @@ const CASE_REF = { id: 'CASE-2026-001', title: 'Incident Response Plan' };
 
 describe('notify pipeline (base notify 2626–2629; write sites 2691–2758)', () => {
   it('notify() unshifts the base entry shape, stamps the demo clock, defaults kind to app, and notifies subscribers', () => {
+    // PI2-D45 (USER OVERRIDE): resetDemo()'s boot seed now writes 5
+    // notifications and advances CLOCK — reset both to a clean baseline
+    // here so this pipeline unit test stays deterministic and isolated
+    // from that boot-seeding side effect (covered separately by the
+    // boot-state tests in engine_data/cases.test.ts).
+    NOTIFS.length = 0;
+    CLOCK.i = 0;
     let calls = 0;
     const unsubscribe = subscribeDemoStore(() => {
       calls++;
@@ -120,6 +127,9 @@ describe('notify pipeline (base notify 2626–2629; write sites 2691–2758)', (
   });
 
   it('openNotificationForCase flips read=true on the first unread match for that role only (base openNotif 2644–2647)', () => {
+    // PI2-D45 (USER OVERRIDE): isolate from the 5 boot-seeded notifications
+    // (same reasoning as the previous test).
+    NOTIFS.length = 0;
     notifyCaseRouted(CASE_REF); // to: cro
     notifyCaseAdopted(CASE_REF); // to: analyst, same case
 
@@ -239,12 +249,26 @@ describe('resetDemo (SH-2/RAIL-02/CS-04/RPT-02; base resetDemo 3938–3961)', ()
     // --- restart ---
     resetDemo();
 
-    // CASES: 8 open, none decided, single seeded history line (CS-04's "eight open and none decided").
+    // CASES: 8 open. PI2-D45 (USER OVERRIDE): the 5 board/exec-tier cases
+    // boot pre-routed to 'cro' (2-or-3-entry replayed history); only the 3
+    // proc-tier cases stay at 'analyst' with the single seeded history line.
     expect(CASES.length).toBe(8);
-    expect(CASES.every((x) => x.stage === 'analyst')).toBe(true);
-    expect(CASES.every((x) => x.history.length === 1)).toBe(true);
-    expect(NOTIFS).toEqual([]);
-    expect(CLOCK.i).toBe(0); // timestamps restart at 9:14 AM
+    const proc = CASES.filter((x) => x.tier === 'proc');
+    const routed = CASES.filter((x) => x.tier === 'board' || x.tier === 'exec');
+    expect(proc.length).toBe(3);
+    expect(routed.length).toBe(5);
+    expect(proc.every((x) => x.stage === 'analyst')).toBe(true);
+    expect(proc.every((x) => x.history.length === 1)).toBe(true);
+    expect(routed.every((x) => x.stage === 'cro')).toBe(true);
+    expect(routed.find((x) => x.doc === 'mrm-change-draft')?.history.length).toBe(3);
+    expect(routed.filter((x) => x.doc !== 'mrm-change-draft').every((x) => x.history.length === 2)).toBe(true);
+    expect(NOTIFS.length).toBe(5);
+    expect(NOTIFS.every((n) => n['to'] === 'cro')).toBe(true);
+    // 11 stamp()/CLOCK ticks consumed by the boot-time replay (mrm-change-
+    // draft: edit + accept + notify = 3; the other 4 routed cases: accept
+    // + notify = 2 each = 8; 3 + 8 = 11) — timestamps no longer restart at
+    // the very first tick.
+    expect(CLOCK.i).toBe(11);
     expect(BOARD_LOG).toEqual({});
     expect(HOME_ORDER).toEqual({});
     expect(getDemoSliders()).toEqual(DEFAULT_SLIDERS);

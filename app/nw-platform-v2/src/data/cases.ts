@@ -507,4 +507,105 @@ export function seedCases(DOCLIB_: typeof DOCLIB): void {
       });
     }
   );
+
+  // PI2-D45 (Marisol Vance's arc-fidelity ruling; USER OVERRIDE delivered
+  // mid-dispatch, superseding the original one-case ruling: "Rachel is
+  // supposed to have 5 cases, all 5 cases with executive or board
+  // approval."). Runs strictly AFTER the loop above — seedCases()'s own
+  // drafted-redline gate (`if (!d || !d.redline) return;`) stays
+  // byte-identical per r17b_case_boundary.md's "gate preserved" AC;
+  // nothing here edits that gate or the loop it lives in.
+  //
+  // Membership is derived from CASE_TIER, never a hard-coded id list, per
+  // the ruling's own instruction ("that is exactly the CASE_TIER 'board' +
+  // 'exec' set ... so the rule reads as what it is"): every board- and
+  // exec-tier case boots already routed to the CRO, replaying the shipped
+  // `screens/Cases.tsx` `handleAction`/`performAction` semantics so the
+  // booted state is indistinguishable from the action genuinely having
+  // happened. The three proc-tier cases (aa-procedure, msg-disclosure,
+  // rege-proc) are untouched by this block and stay exactly as the loop
+  // above left them.
+  //
+  //  - mrm-change-draft additionally replays a prior 'save-language' edit
+  //    first (analyst-edited text lives at doclib.ts's own
+  //    `redline.analystEdit` — Marisol's authored content, present ONLY on
+  //    this entry): base stays the OnSide draft (`d.redline.nw`, already
+  //    set by the loop above), `lang` becomes the edit, `edited` flips
+  //    true, and the accept's history wording is therefore the
+  //    edited-branch wording ('Accepted with edits and routed for
+  //    approval') — exactly `screens/Cases.tsx`'s `handleAction`,
+  //    `kind === 'save-language'` then `kind === 'accept'`.
+  //  - The other four board/exec cases (gov-charter, gen-ai-draft, irp,
+  //    tprm-program) carry no `redline.analystEdit` in doclib.ts, so only
+  //    the accept replays: `edited` stays `false` and `lang` stays
+  //    `=== base` exactly as the shipped 'accept' branch leaves a case
+  //    whose `edited` was never flipped
+  //    (`screens/Cases.tsx` `handleAction`, kind === 'accept':
+  //    `logEntry(c, c.edited ? '...with edits...' : 'Accepted as drafted
+  //    and routed for approval', ...)`) — the shipped mechanism's own
+  //    no-prior-edit path, not a fabricated fifth case type.
+  //
+  // The acting analyst is Priya Raman, Risk Analyst (`data/studio.ts`
+  // USERS[1]) — the only role that can reach either action at the
+  // `analyst` stage (`waitingOnRoleKey('analyst') === 'analyst'`,
+  // `screens/Cases.tsx`).
+  const ROUTED_ANALYST = { name: 'Priya Raman', role: 'Risk Analyst' };
+  CASES.filter((c) => c.tier === 'board' || c.tier === 'exec').forEach((c) => {
+    const d = (DOCLIB_ as Record<string, any>)[c.doc];
+    if (c.doc === 'mrm-change-draft' && d?.redline?.analystEdit) {
+      // Replays 'save-language' (screens/Cases.tsx handleAction,
+      // kind === 'save-language').
+      c.lang = d.redline.analystEdit;
+      c.edited = true;
+      c.history.unshift({
+        when: stamp(),
+        who: ROUTED_ANALYST.name,
+        role: ROUTED_ANALYST.role,
+        what: 'Edited the proposed language',
+        note: 'OnSide’s draft kept as the base version. Both texts stay in the case.',
+      });
+    }
+    // Replays 'accept' (screens/Cases.tsx handleAction, kind === 'accept').
+    c.stage = 'cro';
+    c.history.unshift({
+      when: stamp(),
+      who: ROUTED_ANALYST.name,
+      role: ROUTED_ANALYST.role,
+      what: c.edited ? 'Accepted with edits and routed for approval' : 'Accepted as drafted and routed for approval',
+      note: 'Sent to R. Fischer, Chief Risk Officer.',
+    });
+    // Replays notifyCaseRouted(notifRef(c)) → notify('cro', 'Approval
+    // needed · '+title, id, 'email') (state/demoStore.ts's base notify()
+    // pipeline, source 2626-2629/2691). Written directly against NOTIFS
+    // here — data/cases.ts owns NOTIFS, and importing state/demoStore.ts
+    // back into this file would be circular (demoStore.ts already imports
+    // NOTIFS/seedCases/stamp from here) — same wording, verbatim.
+    NOTIFS.unshift({
+      to: 'cro',
+      title: 'Approval needed · ' + c.title,
+      cid: c.id,
+      kind: 'email',
+      when: stamp(),
+      read: false,
+    });
+  });
+
+  // PI2-D45 (further USER OVERRIDE addition, narrative verification): the
+  // arc requires MRM-09 (mrm-change-draft) to be the CRO's FIRST case —
+  // `views/HomePanels.tsx`'s "Your queue" Approve action opens
+  // `myCases[0]`, and `myCases = CASES.filter((c) =>
+  // waitingOnRoleKey(c.stage) === roleKey)` (HomePanels.tsx:343) consumes
+  // CASES' own array order with no sort of its own. `screens/Cases.tsx`'s
+  // own list is unaffected — it always renders via
+  // `defaultSortColumnId="id"` (Cases.tsx:688), sorting by case id
+  // regardless of underlying array order. Data/order only: move
+  // mrm-change-draft's element ahead of the other routed cases that
+  // currently precede it in doc order (irp, tprm-program) — every other
+  // case's relative order (including the three still-`analyst` proc-tier
+  // cases) is untouched.
+  const mrmIndex = CASES.findIndex((c) => c.doc === 'mrm-change-draft');
+  if (mrmIndex > 0) {
+    const [mrmCase] = CASES.splice(mrmIndex, 1);
+    CASES.unshift(mrmCase as Case);
+  }
 }

@@ -20,7 +20,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { Cases } from '../../screens/Cases';
-import { seedCases } from '../../data/cases';
+import { CASES, seedCases } from '../../data/cases';
+import type { Case } from '../../data/cases';
 import { DOCLIB } from '../../data/doclib';
 import { USERS } from '../../data/studio';
 import type { StudioUser } from '../../data/studio';
@@ -134,6 +135,16 @@ describe('A18 — "View full document" in-drawer swap', () => {
   });
 
   it('available at every reachable stage whenever `doc` resolves (not gated on redline/editing state)', () => {
+    // PI2-D45 (USER OVERRIDE): CASE-2026-001 ('irp', exec tier) now boots
+    // already routed to 'cro' — reset it to a clean, untouched 'analyst'
+    // state so the analyst-only "Edit the language" affordance under test
+    // here is reachable.
+    const seed = CASES.find((c) => c.id === 'CASE-2026-001') as Case;
+    seed.stage = 'analyst';
+    seed.edited = false;
+    seed.lang = seed.base;
+    seed.history = [seed.history[seed.history.length - 1] as Case['history'][number]];
+
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
     openRow('CASE-2026-001');
     const dialog = screen.getByRole('dialog');
@@ -146,6 +157,13 @@ describe('A18 — "View full document" in-drawer swap', () => {
   });
 
   it('preserves the case action-region state (a mid-edit textarea) underneath the swap, never unmounting CaseDetail', () => {
+    // PI2-D45 (USER OVERRIDE): same reset as the previous test.
+    const seed = CASES.find((c) => c.id === 'CASE-2026-001') as Case;
+    seed.stage = 'analyst';
+    seed.edited = false;
+    seed.lang = seed.base;
+    seed.history = [seed.history[seed.history.length - 1] as Case['history'][number]];
+
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
     openRow('CASE-2026-001');
     let dialog = screen.getByRole('dialog');

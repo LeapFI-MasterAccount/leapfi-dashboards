@@ -550,15 +550,18 @@ describe('OnSide · Cases nested badge (USER RULING PI2-D43, q11-01 CLOSED YES; 
 
   it('AC-S1.1-04-3 — the badge count equals CASES.filter(isUntouched).length, the identical value driving Cases.tsx\'s own header, via the ONE shared exported predicate', async () => {
     const user = userEvent.setup()
-    // Diverge one seeded case from "untouched" (edited, still `analyst`
-    // stage) so `undecidedCount` (7) differs from `openCases.length` (8) —
-    // Cases.tsx's header renders literal "None have been decided yet." when
-    // the two are equal, which this test must not be mistaken for.
-    const firstCase = CASES[0]
-    if (!firstCase) throw new Error('expected at least one seeded case')
+    // PI2-D45 (USER OVERRIDE): the 5 board/exec-tier cases now boot already
+    // routed to 'cro' (not `isUntouched`); only the 3 proc-tier cases boot
+    // `isUntouched` (undecided count 3, not 8). Diverge one of THOSE from
+    // "untouched" (edited, still `analyst` stage) so `undecidedCount` (2)
+    // differs from `openCases.length` (8) — Cases.tsx's header renders
+    // literal "None have been decided yet." when the two are equal, which
+    // this test must not be mistaken for.
+    const firstCase = CASES.find((c) => c.tier === 'proc')
+    if (!firstCase) throw new Error('expected at least one proc-tier seeded case')
     firstCase.edited = true
     const expectedCount = CASES.filter(isUntouched).length
-    expect(expectedCount).toBe(7)
+    expect(expectedCount).toBe(2)
 
     render(<App />)
     const nav = screen.getByRole('navigation', { name: 'Primary' })
@@ -591,8 +594,12 @@ describe('OnSide · Cases nested badge (USER RULING PI2-D43, q11-01 CLOSED YES; 
     expect(casesRow().querySelector('[data-lf-primitive="tag"][data-variant="count"]')?.textContent).toBe(String(startCount))
 
     await user.click(casesRow())
-    const firstCase = CASES[0]
-    if (!firstCase) throw new Error('expected at least one seeded case')
+    // PI2-D45 (USER OVERRIDE): CASES[0] ('irp') now boots pre-routed to
+    // 'cro' — the analyst persona can no longer accept it. Use a still-
+    // `analyst`-stage (proc-tier) case so the accept action below is
+    // reachable.
+    const firstCase = CASES.find((c) => c.tier === 'proc')
+    if (!firstCase) throw new Error('expected at least one proc-tier seeded case')
     const idCell = screen.getByText(firstCase.id)
     const row = idCell.closest('tr')
     if (!row) throw new Error('expected a table row for the seeded case')

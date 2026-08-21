@@ -327,7 +327,12 @@ describe('B3 SEAM 1 — onDeepLink threaded from Home.tsx (App.tsx NAV-PAYLOAD c
 describe("PI2-D5 — 'Your queue' q-cases row fires a 'case'-kind deep link (App.tsx KIND VOCABULARY; the pre-existing plain onNavigate('cases') dropped the specific case id despite the row's own subtitle naming it — buildQueueBucket's own `onOpenCase` prop-shape note flagged this exact gap)", () => {
   beforeEach(() => {
     CASES.length = 0
-    seedCases(DOCLIB) // every seeded case starts at stage 'analyst' — CASE-2026-001 is myCases[0] for both the analyst and cro branches below
+    // PI2-D45 (USER OVERRIDE): board/exec-tier cases now boot already
+    // routed to 'cro' (CASE-2026-001 'irp' among them) — CASE-2026-001 is
+    // no longer myCases[0] for the analyst branch. The proc-tier cases
+    // (aa-procedure, msg-disclosure, rege-proc) stay at 'analyst', so the
+    // analyst's oldest queued case is now the first of those instead.
+    seedCases(DOCLIB)
   })
 
   afterEach(() => {
@@ -340,10 +345,11 @@ describe("PI2-D5 — 'Your queue' q-cases row fires a 'case'-kind deep link (App
     const onDeepLink = vi.fn()
     render(<HomePanels visibleKeys={['queue']} currentRoleKey="analyst" onNavigate={onNavigate} onDeepLink={onDeepLink} />)
 
-    expect(screen.getByText(`Oldest: ${CASES[0]!.title}`)).toBeInTheDocument()
+    const analystCase = CASES.find((c) => c.stage === 'analyst')!
+    expect(screen.getByText(`Oldest: ${analystCase.title}`)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Open' }))
 
-    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'cases', kind: 'case', id: CASES[0]!.id })
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'cases', kind: 'case', id: analystCase.id })
     expect(onNavigate).not.toHaveBeenCalled()
   })
 
@@ -361,9 +367,14 @@ describe("PI2-D5 — 'Your queue' q-cases row fires a 'case'-kind deep link (App
     const onDeepLink = vi.fn()
     const c = CASES.find((x) => x.id === 'CASE-2026-001')!
     c.stage = 'cro'
+    // PI2-D45 (further USER OVERRIDE): mrm-change-draft boots as the
+    // CRO's FIRST routed case (array-order-first, per this ruling's own
+    // requirement) — myCases[0] is mrm-change-draft (CASE-2026-004), not
+    // CASE-2026-001, regardless of the explicit stage set above.
+    const expectedId = CASES.find((x) => x.doc === 'mrm-change-draft')!.id
     render(<HomePanels visibleKeys={['queue']} currentRoleKey="cro" onNavigate={vi.fn()} onDeepLink={onDeepLink} />)
 
     await user.click(screen.getByRole('button', { name: 'Approve' }))
-    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'cases', kind: 'case', id: 'CASE-2026-001' })
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'cases', kind: 'case', id: expectedId })
   })
 })

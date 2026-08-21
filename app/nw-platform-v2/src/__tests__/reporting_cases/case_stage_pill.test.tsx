@@ -33,6 +33,8 @@ import { topbarFixture } from './fixtures';
 // stable across tests (default CRO already used elsewhere in this suite).
 const CRO = USERS[0] as StudioUser;
 void CRO;
+// USERS[2] is Dana Reyes, roleKey 'legal' — PI2-D45 (USER OVERRIDE)'s
+// zero-waiting-at-boot baseline for the "waiting on you" tests below.
 
 function stageCellText(caseId: string): string {
   const idCell = screen.getByText(caseId);
@@ -52,9 +54,12 @@ describe('Cases stagePill (Cases.tsx ~196-205) — regression guard', () => {
   it('AC-S1.1-03-1: an untouched analyst-stage case renders "Not decided yet"', () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} />);
 
-    // Freshly seeded cases are all stage 'analyst', edited: false,
-    // history.length === 1 — the `isUntouched` case (Cases.tsx:192-193).
-    expect(stageCellText('CASE-2026-001')).toBe('Not decided yet');
+    // PI2-D45 (USER OVERRIDE): only the 3 proc-tier cases boot stage
+    // 'analyst', edited: false, history.length === 1 — the `isUntouched`
+    // case (Cases.tsx:192-193). CASE-2026-001 ('irp', exec tier) now boots
+    // pre-routed to 'cro'; CASE-2026-003 ('aa-procedure', proc tier) is
+    // still untouched.
+    expect(stageCellText('CASE-2026-003')).toBe('Not decided yet');
   });
 
   it('AC-S1.1-03-1: a touched case returned to analyst stage renders "Back with the analyst"', () => {
@@ -87,7 +92,12 @@ describe('Cases stagePill (Cases.tsx ~196-205) — regression guard', () => {
     // `edited: true` fails `isUntouched` even with a single history
     // entry, so it must NOT render the count-variant "Not decided yet"
     // pill either.
-    const target = CASES.find((c) => c.id === 'CASE-2026-002');
+    //
+    // PI2-D45 (USER OVERRIDE): CASE-2026-002 ('tprm-program', exec tier)
+    // now boots pre-routed to 'cro' (stage 'cro' renders "With the CRO",
+    // a separate stagePill branch entirely) — use CASE-2026-005
+    // ('msg-disclosure', proc tier), which still boots stage 'analyst'.
+    const target = CASES.find((c) => c.id === 'CASE-2026-005');
     expect(target).toBeDefined();
     if (target) {
       target.edited = true;
@@ -95,7 +105,7 @@ describe('Cases stagePill (Cases.tsx ~196-205) — regression guard', () => {
 
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} />);
 
-    expect(stageCellText('CASE-2026-002')).toBe('Back with the analyst');
+    expect(stageCellText('CASE-2026-005')).toBe('Back with the analyst');
   });
 });
 
@@ -107,22 +117,27 @@ describe('Cases list header (Cases.tsx 492-493, 557-558) — undecided/waiting t
   it('AC-S1.1-03-2: renders "N of M have been decided yet" when undecidedCount > 0 and < openCases.length', () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} />);
 
-    // All 8 seeded cases are untouched at boot: undecidedCount === 8 ===
-    // openCases.length -> the "None ... have been decided yet." branch
-    // (Cases.tsx:557, `undecidedCount === openCases.length ? 'None' : ...`).
-    expect(screen.getByText(/None have been decided yet\./)).toBeInTheDocument();
+    // PI2-D45 (USER OVERRIDE): only the 3 proc-tier cases boot untouched
+    // ('analyst', edited: false, history.length 1) — the 5 board/exec-tier
+    // cases boot already routed to 'cro', so undecidedCount is 3, not 8
+    // (never equal to openCases.length === 8), landing on the "N of M"
+    // branch rather than "None" (Cases.tsx:557).
+    expect(screen.getByText(/3 of 8 have been decided yet\./)).toBeInTheDocument();
   });
 
   it('AC-S1.1-03-2: switches to "N of M have been decided yet" once fewer than all cases are undecided', () => {
-    const target = CASES.find((c) => c.id === 'CASE-2026-001');
+    // PI2-D45 (USER OVERRIDE): CASE-2026-001 ('irp') already boots routed
+    // to 'cro' (not `isUntouched`) — toggle a still-`analyst`-stage
+    // proc-tier case instead, dropping undecidedCount from 3 to 2.
+    const target = CASES.find((c) => c.id === 'CASE-2026-003');
     expect(target).toBeDefined();
     if (target) {
-      target.edited = true; // no longer "untouched" -> undecidedCount drops to 7 of 8
+      target.edited = true; // no longer "untouched" -> undecidedCount drops to 2 of 8
     }
 
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} />);
 
-    expect(screen.getByText(/7 of 8 have been decided yet\./)).toBeInTheDocument();
+    expect(screen.getByText(/2 of 8 have been decided yet\./)).toBeInTheDocument();
   });
 
   it('AC-S1.1-03-2: omits the "have been decided yet" text entirely when undecidedCount is 0', () => {
@@ -137,25 +152,32 @@ describe('Cases list header (Cases.tsx 492-493, 557-558) — undecided/waiting t
   });
 
   it('AC-S1.1-03-2: renders "N cases are waiting on you" exactly when waitingOnMeCount > 0 for the current user', () => {
-    // Default `currentUser` is `CURRENT` (Rachel Fischer, CRO — Cases.tsx
-    // file header). `waitingOnRoleKey('analyst')` returns 'analyst', not
-    // 'cro' (Cases.tsx:215-219), so a fresh analyst-stage seed produces
-    // ZERO cases waiting on the CRO.
-    render(<Cases topbar={topbarFixture()} onNavigate={() => {}} />);
+    // PI2-D45 (USER OVERRIDE): the default CRO persona now has 5 cases
+    // waiting at boot (the routed board/exec-tier set), and the analyst
+    // persona has 3 (the untouched proc-tier set) — neither is a genuine
+    // zero-case baseline any more. `waitingOnRoleKey` only ever returns
+    // 'analyst' | 'cro' | 'legal' | null (Cases.tsx:213-218), and no case
+    // boots at 'legal' — General Counsel (Dana Reyes, USERS[2]) is the
+    // true zero-waiting baseline.
+    const LEGAL = USERS[2] as StudioUser;
+    render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={LEGAL} />);
 
     expect(screen.queryByText(/waiting on you/)).not.toBeInTheDocument();
   });
 
   it('AC-S1.1-03-2: "N cases are waiting on you" appears once a case reaches the CRO-waiting stage', () => {
+    // PI2-D45 (USER OVERRIDE): same zero-waiting baseline as the previous
+    // test (General Counsel) — routing ONE case to 'legal' exercises the
+    // singular "1 case is waiting on you." text without colliding with
+    // the 5 cases already routed to the default CRO persona at boot.
+    const LEGAL = USERS[2] as StudioUser;
     const target = CASES.find((c) => c.id === 'CASE-2026-001');
     expect(target).toBeDefined();
     if (target) {
-      // waitingOnRoleKey('cro'|'final'|'committee') -> 'cro' (Cases.tsx
-      // 215-219); the default currentUser's roleKey is 'cro'.
-      target.stage = 'cro';
+      target.stage = 'legal';
     }
 
-    render(<Cases topbar={topbarFixture()} onNavigate={() => {}} />);
+    render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={LEGAL} />);
 
     expect(screen.getByText(/1 case is waiting on you\./)).toBeInTheDocument();
   });
