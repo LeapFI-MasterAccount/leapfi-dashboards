@@ -9,16 +9,36 @@
  * `caseSaveLang`/`caseCancelEdit`/`caseRevert` (2668-2767); `caseWaitingOn`/
  * `canAct` (2617-2624); `caseStagePill`/`caseStageOwner` (2607-2621).
  *
- * NOT the shared Drawer (dispatch brief, restated from the addendum): the
- * base engine never routes `case:` pages through `#drawer` — `showDrawer`
- * is never called for a case page, only `onsideShow('case:'+cid)` (a plain
- * view swap). This file is that swap's content, rendered in-page by
- * `Cases.tsx`, not inside `Drawer`/`DrawerContent`. DrawerContent's field-
- * row shape is deliberately not reused here — this is a multi-step
- * approve/route/reject + free-text-edit flow DrawerContent (§2.2 C8,
- * `kind: signal/play/doc` only) was never built to carry; the field rows,
- * Tags, and Buttons below are composed directly, matching the addendum's
- * own reasoning for this row (§1.1 `case:ID`).
+ * SUPERSEDED — PI2-D14 host migration (design_system_spec.md §2.10
+ * preamble, `implementation/DECISIONS.md` PI2-D14): the paragraph below
+ * previously read "NOT the shared Drawer" and described this file's
+ * content as a full-page swap `Cases.tsx` rendered in place. That
+ * exception DISSOLVES per PI2-D14 — `Cases.tsx` now mounts this file's
+ * content as the shared Drawer's (C7) `children`, on row-select, with
+ * close-restore to the triggering row (C7's existing baseline; see
+ * `Cases.tsx`'s own header). DrawerContent (C8) is still NOT reused here
+ * (unchanged reasoning, kept below): this remains a multi-step
+ * approve/route/reject + free-text-edit flow DrawerContent's field-row
+ * shape was never built to carry, so the field rows, Tags, and Buttons
+ * below stay composed directly as this component's own body, simply
+ * passed as the Drawer's children rather than rendered in-page.
+ *
+ * STOP-flagged, unresolved by this migration (evidence return, not
+ * decided here): this file's own pre-existing local `<Drawer
+ * open={emailOpen}>` (below, "the base openEmail drawer") now nests a
+ * SECOND `[role="dialog"]` inside the host Drawer's own subtree whenever
+ * a viewer presses "View the email you were sent" while the case
+ * side-car is open — two simultaneously-mounted Drawer instances, one
+ * inside the other's DOM subtree, each with its own trap boundary and
+ * initial-focus grab. `design_system_spec.md`'s own A17-A19 traceability
+ * record (§11) confirms this local Drawer was read and left "confirmed
+ * untouched" by the very pass that ratified the host migration — this is
+ * a real, provable gap (`cases_fix_wave.test.tsx`'s existing CS-01 email
+ * test now finds two `[role="dialog"]` nodes), not a hypothetical one,
+ * and its resolution (e.g. folding the email preview into the same
+ * RPT-05 in-drawer content-swap the "View full document" trigger uses,
+ * versus something else) is a design call this dispatch's role
+ * directives forbid inventing. Reported, not fixed, here.
  *
  * Back affordance: ghost Button, "← All cases," matching the base engine's
  * `src-back` pattern (`.src-back{...cursor:pointer...}`, line 557-558;
@@ -556,9 +576,20 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
         <div style={HEADER_ROW_STYLE}>
           <div>
             <Label text="Case · opened by OnSide on detection" variant="eyebrow" surface="panel" />
-            <h2 id="case-detail-title" style={TITLE_STYLE}>
+            {/* PI2-D14 host migration: this content now mounts inside the
+                shared Drawer (C7, see Cases.tsx), whose own header already
+                renders a real `<h2>` carrying this exact `{id} · {title}`
+                text as the dialog's accessible name (Drawer.tsx:442-456).
+                Keeping a second `<h2>` with near-identical text directly
+                below it would be a redundant heading-level stop for
+                screen-reader heading navigation (Core Principle 4) — same
+                text, two landmarks. Demoted to a `<p>`, same id (still a
+                valid `aria-labelledby` target below) and the same visual
+                TITLE_STYLE weight, so nothing changes for a sighted user;
+                the heading role itself is what moved to the Drawer. */}
+            <p id="case-detail-title" style={TITLE_STYLE}>
               {caseItem.id} · {decodeText(caseItem.title)}
-            </h2>
+            </p>
             <p style={CITE_STYLE}>{decodeText(caseItem.trigger)}</p>
           </div>
           <Tag text={pill.text} variant={pill.variant} />
