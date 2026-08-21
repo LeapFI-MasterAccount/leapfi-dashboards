@@ -1,148 +1,141 @@
 /**
- * StudioAsk — Screen anatomy §5.4 "Studio · Ask — Step 4 'One answer'"
- * (design_system_spec.md), fed by demo_script_draft.md Step 4 and its
- * G5/G6 gap-register entries. Reworked by the fix-wave "studio" batch
- * (findings STU-01/03/06/07/08/14 + the shared demoStore wiring).
+ * StudioAsk — the agent-chat screen (design_system_spec.md Section 2.9.8-2.9.13,
+ * amendment A20, PI2-D47). REBUILT from the pre-A20 ChatHero-hosted screen
+ * (git history carries that anatomy; this header describes the new one).
  *
- * Region map (§5.4): Topbar → page title → ChatHero (C10): counters
- * StatCard row ("412 monitored docs", "interviews 11 of 12" —
- * survey_map.md 895–919) → message list → suggestion Chips (`#uc-list`) →
- * Input + "Ask" Button. Components used per spec: Topbar, Sidebar, ChatHero
- * (C10), StatCard (C1, via ChatHero's own counter row), Input (P6), Button
- * (`primary` — the screen's ONE primary CTA), Chip (`suggestion`).
+ * PI2-D47 (user ruling, final): "the Ask screen becomes an AGENT CHAT —
+ * chat bar at the TOP, the rest of the screen a DYNAMIC response canvas
+ * rendering per question type." The KPI-tile + chips + form hybrid is
+ * RETIRED. No ChatHero (C10) call site remains on this screen; this
+ * screen's own local Drawer/AskChatPanel mount and its "Ask Studio"
+ * utility-corner trigger are retired in the same edit (Section 2.9.12) — "the
+ * screen IS the agent," a second, smaller instance of the same concept
+ * layered on top of itself is redundant, not merely low-priority.
  *
- * SUPERSEDED — Topbar/Sidebar data ownership (amendment A11,
- * design_system_spec.md §3.0): both composites now mount exactly once, in
- * App.tsx's persistent Shell — this screen no longer accepts a `topbar`
- * prop or builds a local `SidebarProps`; it keeps only `onNavigate` for its
- * own in-content links (source citation links → OnSide · Documents),
- * unrelated to rendering Sidebar itself.
+ * Region map (Section 2.9.8, replaces Section 5.4's pre-A20 map in full): Topbar
+ * (shell) → page title ("Studio · Ask") → top chat bar (suggestion Chips
+ * row → Input + "Ask" Button row, screen-local composition of Chip P5/
+ * Input P6/Button P2 — NOT a ChatHero mount, Section 2.9.8's own "why the chat
+ * bar is not a ChatHero mount" rationale) → full-height response canvas
+ * (below the chat bar) — one of four typed layouts, or NoMatch/Empty
+ * (Section 2.9.9) — → the existing scope-chip / ChatIntakeWizard slot, now
+ * beneath the canvas instead of beneath ChatHero (Section 2.9.8, "continues to
+ * mount in its existing slot").
  *
- * Matching engine (STU-03) — ported from the base, no longer authored:
- *   - `matchCopilotQA` keeps an exact-question / full-chip-phrase fast
- *     path (the suggestion Chips fill the Input with the short chip
- *     label, so the label itself must match — a port-side wiring
- *     necessity), then applies the base's own `cpMatch` word-overlap
- *     algorithm VERBATIM (leapfi-platform.html:1799-1808): ≥2 distinct
- *     overlapping words of length >4 from the seeded question. The old
- *     two-way `phrase.includes(q)` substring test — which matched "in"
- *     against 'data sharing' and returned a confidently wrong cited
- *     policy answer — is gone.
- *   - The auto-loan seed fires on the base route() probes ('auto loan' /
- *     'loan origination', 4448) plus the Step-4 seeded phrasing
- *     ('indirect' + 'lend' together) — never on 'indirect' alone.
- *   - route()'s greeting/short-query guard (4471-4476) is ported: a
- *     greeting or a <3-word fragment gets the base's help line, never a
- *     wrong answer and never a 'Scope "Thanks"…' chip.
+ * State machine (Section 2.9.8): reuses ChatHero's own six-state vocabulary,
+ * unmodified in name/meaning, now driving the canvas instead of a bubble
+ * list — Idle → Typing → Submitting (Button `loading`) → AnswerRendering →
+ * AnswerComplete; NoMatch unchanged in meaning. Typing leaves the canvas
+ * untouched (the canvas keeps showing the PRIOR turn, or Empty); Submitting/
+ * AnswerRendering show a loading placeholder, never stale prior content;
+ * the canvas shows exactly the latest turn, never an accumulating list — a
+ * new Ask replaces `currentTurn` wholesale (AC-A20-4).
  *
- * Shared demo state (state/demoStore.ts): the opportunity register renders
- * the LIVE `OPPS` pool (base renderRegister, 4315-4327) via
- * `useDemoStore()`, values adoption-scaled by the live levers
- * (`fmt(o.val*L.eff)+'/yr at adoption'`, base 4325; STU-07). Accepting a
- * play — the wizard's Add intent or the seeded auto-loan Add — calls
- * `demoStore.acceptOpportunity` (the base acceptProposed data mutation,
- * 4403-4407: OPPS push + DETAIL stub + SCOPE_EVENTS entry + re-render
- * fan-out), so the accept confirmation's "OnSide has re-evaluated those
- * domain targets. The library is at N." line is TRUE — OnSide's scope-
- * events panel and Investment Design's live plan both see the new play
- * (STU-01). The confirmation line also carries the base's tolerance
- * clause (ready vs sequence-gated, 4410), restored now that the live
- * levers are reachable.
+ * TWO DISTINCT ANSWER SOURCES feed the canvas, both cited in Section 2.9.8:
+ *   1. The SCRIPTED content schema (Section 2.9.4/2.9.10) — `entries` (default
+ *      `STUDIO_CHAT_MODULE_CONFIG.entries`, the exact-match contract Section
+ *      2.9.4 states: case-insensitive/trimmed, no fuzzy matching). A match's
+ *      `response` field (Section 2.9.10) selects one of the four typed canvas
+ *      layouts (Section 2.9.9); absence renders 'instructional'.
+ *   2. StudioAsk's OWN pre-existing engine-driven flows — `matchSeed`/
+ *      `matchCopilotQA` (the seeded auto-loan matching + `COPILOT_QA`),
+ *      the "Add to the opportunity register" offer, the post-accept
+ *      cross-nav offers, and `ChatIntakeWizard` — "categorically
+ *      different from the scripted content this amendment's response-type
+ *      vocabulary governs" (Section 2.9.8, restating Section 2.9.6) — PORTED FORWARD
+ *      UNCHANGED IN BEHAVIOR, relocated in RENDERING SURFACE ONLY. Tried
+ *      only when the scripted entries do not match (the scripted content
+ *      schema is this screen's newer, narrower, curated vocabulary; the
+ *      engine is StudioAsk's own long-standing fallback, unchanged in
+ *      matching order/precedence from before this amendment — neither the
+ *      ruling nor Section 2.9.4 states an order when both could apply, and the
+ *      scripted set is authored specifically for this screen's own
+ *      question inventory, so it is checked first).
  *
- * Seeded auto-loan flow (STU-06/STU-08): the answer is the base
- * autoLoanAnswer content (4417-4424) — the You-have / Missing / OnSide-
- * flags (with control scores) / Envelope grounding rows as plain text,
- * with the envelope value lever-scaled ('at your adoption setting',
- * 4423) — and the register write is gated behind an explicit "Add to the
- * opportunity register" press (base 4426 addAutoLoan button; `secondary`,
- * because "Ask" is this screen's one primary CTA per spec §5.4/§6),
- * never fired automatically by the answer timer. The register
- * announcement + highlight run ONLY when a row is actually added — a
- * repeat ask can no longer re-announce an unchanged table.
+ * IMPLEMENTER JUDGMENT (documented per this codebase's own established
+ * "AMBIGUITY RESOLVED" convention — ChatHero.tsx/StatCard.tsx/
+ * InvestmentDesign.tsx headers — not a silent resolution of a spec
+ * conflict; each choice below is a mechanical rendering-surface adaptation
+ * the ruling explicitly authorizes in principle without dictating the
+ * exact literal wiring):
+ *   - The legacy generic `COPILOT_QA` answer (citations, no register
+ *     tie-in) renders via the `document` layout shape: prose + an
+ *     Artifacts list built from its `citations` — EXACTLY what Section 2.9.9(a)
+ *     itself says: "This is StudioAsk's own already-shipped 'Sources'
+ *     panel..., generalized from 'the seeded policy answer's citations' to
+ *     'any document-typed entry's deepLinks' — retained, not rebuilt."
+ *     Each citation string still navigates to OnSide · Documents via
+ *     `onNavigate` (unchanged target/behavior — the base data has no
+ *     per-citation doc id to deep-link more specifically than that).
+ *   - The seeded auto-loan answer renders via the `opportunity-status`
+ *     layout shape — EXACTLY what Section 2.9.8 itself says: "Their new home is
+ *     the response canvas's opportunity-status layout's own actions slot."
+ *     Pre-Add, the DrawerContent fields/StatCard are built from the
+ *     locally-computed `buildAutoLoanOpportunity()` record (the play is
+ *     not yet a live OPPS/DETAIL row); its `actions` slot carries "Add to
+ *     the opportunity register" / "See the governance work in OnSide"
+ *     (the same two offers, base 4424/4426, now living in DrawerContent's
+ *     actions row instead of ChatHero's retired chip/button-row chrome).
+ *     Once added, the SAME turn re-resolves the play LIVE from `OPPS` (the
+ *     `useDemoStore()` subscription re-renders this screen on the write)
+ *     and its `actions` slot switches to "Detail →" (the same nav-payload
+ *     contract Section 2.9.9(c) states for a scripted entry) plus "See the
+ *     scope change in OnSide" — the base's own two post-accept offers
+ *     (4411 region) minus "See it in the register": that offer's own
+ *     target (a same-screen scroll into StudioAsk's local register
+ *     section) no longer exists on this screen after Section 2.9.11 relocates
+ *     the register to Investment Design (AC-A20-9) — "Detail →" already
+ *     opens that exact play on that exact screen, so a second button
+ *     pointed at the same destination would be a redundant control, not a
+ *     ported one. The turn's prose switches from the grounding answer to
+ *     the base's own `sayAccepted()` confirmation line once added (the
+ *     content the user was always shown next; single-turn canvas
+ *     discipline replaces the SAME turn's content instead of appending a
+ *     new bubble, Section 2.9.8's own "no accumulating scroll" rule).
+ *   - The base route() greeting/short-query guard (`HELP_LINE`) renders
+ *     via the `instructional` layout shape (a how-to line, no citations —
+ *     exactly what Section 2.9.9(b) describes; no deepLinks is fully valid for
+ *     `instructional`, unlike the required-non-empty `document` case).
+ *   - No-match (neither the scripted entries nor the engine match) renders
+ *     the `NoMatch` layout (Section 2.9.9, unchanged meaning) using this module's
+ *     own `defaultNoMatchMessage` — the SAME `defaultNoMatchMessage`-class
+ *     content ChatHero's own no-match state rendered pre-A20.
  *
- * Intake wizard wiring (STU-14): while the wizard is mounted, the main
- * Ask input is routed THROUGH the intake via
- * `ChatIntakeWizardHandle.handleExternalInput` — the port of the base's
- * intake mode consuming all input (route() 4434-4444: 'cancel' cancels,
- * anything else is captured as the current answer). Review-phase asks
- * route normally (base: mode is back to 'idle' there). A no-match can
- * therefore no longer park a stale scope chip mid-intake, and the
- * wizard's terminal handlers clear any pending scope offer (the base
- * resetChips equivalent).
+ * Register relocation (Section 2.9.11, AC-A20-9): the opportunity register
+ * `DataTable` — and this screen's own live subscription driving it — is
+ * REMOVED from this screen entirely; it now lives on
+ * `InvestmentDesign.tsx` as a new, permanently-visible section. This
+ * screen renders zero `<DataTable>` instances.
  *
- * AMBIGUITY RESOLVED — citations rendering: `ChatHero.tsx`'s `ChatMessage`
- * shape is `{ id, role, text: string }` — plain text, no structured
- * citation slot. Demo script Step 4's "See" line explicitly calls out "the
- * auto-loan answer rendering... with citations back to approved policy
- * documents" as visible content, so this screen renders a companion
- * "Sources" panel beneath ChatHero, populated from the matched seed's
- * `citations` list and shown once the answer is final. Each source is a
- * real button (fix B-dead-interactions-10; base `<span class="doclink"
- * onclick="onsideShow('docs')">`, leapfi-platform.html:3636/1813) that
- * navigates to OnSide · Documents via the existing `onNavigate` prop —
- * clicking a cited policy is no longer a dead click.
+ * Focus management (Section 2.9.9, Core Principle 6): the canvas is not an
+ * overlay — no focus trap, no forced focus move when a turn completes;
+ * its root region carries `aria-live="polite"` unconditionally (Section 2.9.9's
+ * "canvas's own root region," the same "answer region is a live region"
+ * baseline ChatHero already shipped) so a rendered answer is announced
+ * without moving keyboard focus off the Input (AC-A20-8).
  *
- * INTAKE TRANSCRIPT MERGES INTO CHATHERO'S ONE BOUNDED LOG (fix
- * C-unbounded-growth-01; base anchor leapfi-platform.html:435 `#st-ask
- * .chat-log{max-height:420px;overflow-y:auto}`, single log, scroll-to-
- * latest on every botSay 4343/4348): `ChatIntakeWizard` no longer renders
- * its own second, unbounded `<ul>` for the scoping conversation — it hands
- * its transcript up via `onTranscriptChange`, and this screen merges it
- * onto the SAME array passed to ChatHero's `messages` prop while the
- * wizard is mounted, so the whole conversation (pre-intake Q&A + the
- * intake's own Q&A) renders as one ordered, bounded, auto-scrolling log —
- * never two. When the wizard terminates (complete/discard/cancel), its
- * transcript is folded permanently into this screen's own `messages`
- * state before the terminal confirmation line is appended, so the history
- * a presenter scrolled through during intake is not lost, matching the
- * base's single continuous `chat-log`.
+ * Matching engine (STU-03, ported verbatim from the pre-A20 file — see
+ * git history for the base-line citations this header previously carried
+ * in full): `matchCopilotQA`/`matchSeed`/`isGreetingOrFragment` are
+ * byte-identical to the pre-A20 implementation; only their call site (the
+ * canvas, not ChatHero's `messages` prop) changed.
  *
- * PLAY DETAIL FROM THE REGISTER + POST-ACCEPT CROSS-NAV (fix
- * B-dead-interactions-03/10): every register row now carries a real
- * "Detail →" row action (base `<div class="uc" onclick="openPlay(n)">…
- * <span class="go">Detail →</span>`, leapfi-platform.html:4325) that fires
- * `onDeepLink({ screen: 'studio.investment-design', kind: 'play', id })` —
- * this screen owns no play-detail Drawer of its own (Drawer stays a
- * single, screen-local instance per `InvestmentDesign.tsx`'s own
- * "Drawer instance ownership" note; nav-payload is the shipped mechanism
- * for "navigate AND open a specific item elsewhere," App.tsx file header
- * "NAVIGATION-WITH-PAYLOAD / DEEP LINKS"), so the click lands on
- * Investment Design's real drawer already showing that exact play. The
- * seeded auto-loan answer also offers "See the governance work in OnSide"
- * (base 4424, `goOnside('dom-mrm')`) before it's added, and once ANY play
- * is added (seeded or wizard-scoped) the confirmation carries "See it in
- * the register" (scrolls + re-highlights the row already on this screen)
- * and "See the scope change in OnSide" (base 4411-ish region) — both dead
- * in the prior build.
- *
- * Inline-tag stripping: `COPILOT_QA[].a` (`data/misc.ts`) carries `<b>...
- * </b>` emphasis spans the original source rendered via `innerHTML`.
- * `ChatMessage.text` is plain text only, so `stripInlineTags` below
- * removes the tags rather than leaving literal "<b>" characters on
- * screen.
- *
- * Accessibility gate (persona directive 7): ChatHero (C10, unmodified
- * here) owns the Ask flow's own `aria-live="polite"` answer announcement;
- * this screen adds exactly one further screen-owned `aria-live="polite"`
- * region for the opportunity register's live addition — announced only
- * when the register actually changes (see STU-06 above).
- *
- * Tests: src/__tests__/studio/studio-ask.test.tsx executes this screen
- * against the base anchors above (vitest + @testing-library).
+ * Tests: src/__tests__/studio/studio-ask-a20-agent-canvas.test.tsx (new,
+ * this amendment) executes the Section 2.9.13 falsifiable acceptance criteria
+ * plus the ported engine-content assertions, adapted to the new anatomy.
  */
 import { useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { SidebarProps } from '../components/Sidebar';
-import { ChatHero } from '../components/ChatHero';
-import type { ChatCounter, ChatMessage, ChatHeroState } from '../components/ChatHero';
-import { DataTable } from '../components/DataTable';
-import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
-import { Drawer } from '../components/Drawer';
-import { Tag } from '../components/primitives/Tag';
+import { DrawerContent } from '../components/DrawerContent';
+import type { DrawerContentAction, DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
+import { StatCard } from '../components/StatCard';
 import { Label } from '../components/primitives/Label';
 import { Chip } from '../components/primitives/Chip';
 import { Button } from '../components/primitives/Button';
-import { AskChatPanel } from '../components/AskChatPanel';
+import { Input } from '../components/primitives/Input';
+import { Icon } from '../components/primitives/Icon';
+import { Spinner } from '../components/primitives/Spinner';
 import { ChatIntakeWizard } from '../views/ChatIntakeWizard';
 import type { ChatIntakeWizardHandle } from '../views/ChatIntakeWizard';
 import { COPILOT_QA, AUTO_LOAN_OPPORTUNITY, AUTO_LOAN_DETAIL } from '../data/misc';
@@ -153,6 +146,10 @@ import { fmt } from '../engine/plan';
 import type { PlanOpportunity } from '../engine/plan';
 import { acceptOpportunity, adoptionScaledValue, getLiveLevers, useDemoStore } from '../state/demoStore';
 import { STUDIO_CHAT_MODULE_CONFIG } from '../data/askChatModuleConfig';
+import type { ChatEntry, ChatEntryDeepLink } from '../data/chatTypes';
+import { DOMAINS } from '../data/onside';
+import type { OnsideDomain } from '../data/onside';
+import { DOMAIN_STATUS_LABEL, DOMAIN_STATUS_VARIANT, statusOf } from '../views/DomainsAccordion';
 import type { DeepLinkScreenProps } from '../App';
 import { PANEL_STYLE } from '../theme/panelStyle';
 
@@ -162,7 +159,21 @@ interface SeedAnswer {
   opportunityMatch: boolean;
 }
 
-/** See file header "inline-tag stripping." */
+/** Structurally identical to the composite-C10 chat-bubble shape
+ * (`{ id, role, text }`, plus an unused-here optional `deepLinks`) that
+ * composite's own module exports — declared locally here rather than
+ * imported so AC-A20-1's grep (this screen keeps zero references to that
+ * composite's module, not even a type-only import) holds; `ChatIntakeWizard.
+ * tsx`'s own `onTranscriptChange` prop is typed against that real type, and
+ * TS accepts this local alias there by structural compatibility, no
+ * adapter needed. */
+interface IntakeTranscriptMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+}
+
+/** See file header "inline-tag stripping" (ported verbatim). */
 function stripInlineTags(input: string): string {
   return input.replace(/<\/?(b|strong|em|br)\s*\/?>/gi, '');
 }
@@ -175,7 +186,7 @@ function stripInlineTags(input: string): string {
  * `AUTO_LOAN_OPPORTUNITY.g` names. */
 const AUTO_LOAN_CITATION_DOC_IDS = ['mrm-val-indirect', 'mrm-cs-indirect', 'aa-procedure', 'fl-review'] as const;
 
-/** Step 4's own seeded question (demo_script_draft.md §2 Step 4 `say` line:
+/** Step 4's own seeded question (demo_script_draft.md Section 2 Step 4 `say` line:
  * "what are our rules on indirect auto lending?"). */
 const SEEDED_AUTO_LOAN_QUESTION = 'What are our rules on indirect auto lending?';
 
@@ -264,6 +275,16 @@ function isGreetingOrFragment(query: string): boolean {
 const HELP_LINE =
   'I can do three things from this box: answer from your approved policies with citations, price a known idea from the catalog, or scope something new into the register. What would you like?';
 
+/** Exact-match content-schema matcher (design_system_spec.md Section 2.9.4):
+ * case-insensitive, trimmed, exact match only — no partial/fuzzy/word-
+ * overlap matching (a deliberately narrower contract than `matchSeed`
+ * above; tried first — see file header). */
+function matchScriptedEntry(entries: ChatEntry[], query: string): ChatEntry | null {
+  const q = query.trim().toLowerCase();
+  if (q.length === 0) return null;
+  return entries.find((entry) => entry.question.trim().toLowerCase() === q) ?? null;
+}
+
 /** Mirrors `data/studio.ts`'s own (unexported) `gateCalc` exactly —
  * duplicated locally since it is not exported. Returns the base
  * addAutoLoan record (4427) as a plan-ready opportunity (`disc: true`). */
@@ -291,13 +312,12 @@ function capitalizeFirst(value: string): string {
 }
 
 /** ASK_SUBMIT_DELAY_MS / ASK_RENDER_DELAY_MS: implementer judgment calls
- * (design_system_spec.md §1.4 carries no timing values) — long enough that
- * ChatHero's `submitting`/`answer-rendering` states are visibly real
+ * (design_system_spec.md Section 1.4 carries no timing values) — long enough that
+ * the chat bar's `Submitting`/`AnswerRendering` states are visibly real
  * waits, matching Core Principle 1's discipline against instant,
  * indistinguishable-from-fake state flips. */
 const ASK_SUBMIT_DELAY_MS = 350;
 const ASK_RENDER_DELAY_MS = 450;
-const REGISTER_HIGHLIGHT_MS = 1800;
 
 // `position: 'relative'` makes this scrolling region the containing
 // block for any absolutely-positioned descendant (sr-only spans today,
@@ -316,162 +336,222 @@ const MAIN_STYLE: CSSProperties = {
   gap: '2rem',
 };
 const TITLE_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)' };
-/** §5.8 region map addition (amendment A16, PI2-D42) — utility corner
- * (§5.1's originally-named placement), seated beside the page title. */
 const HEADER_ROW_STYLE: CSSProperties = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' };
+/** Section 2.9.8 — screen-local chat-bar composition (Chip P5/Input P6/Button P2),
+ * NOT a ChatHero mount. Panel-seated, matching this screen's pre-A20 chat
+ * region treatment. */
 export const CHAT_PANEL_STYLE: CSSProperties = {
   ...PANEL_STYLE,
   padding: '1.5rem',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '1rem',
 };
-const SCOPE_CHIP_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' };
-const INTAKE_SLOT_STYLE: CSSProperties = { marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' };
-const SOURCES_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
-// Layout/reset only — the eyebrow treatment itself (uppercase/tracking/
-// weight/color) lives in Label (P3) `eyebrow`, §8 R-1.
-const SOURCES_HEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit' };
-const SOURCES_LIST_STYLE: CSSProperties = { margin: 0, padding: '0 0 0 1.1rem', fontSize: '0.875rem', color: 'var(--ink)', lineHeight: 1.6 };
-/** Fix B-dead-interactions-10: base `.doclink` styling (underlined, accent-colored, inline) rendered as a real `<button>` so each source is keyboard-operable. */
-const CITATION_LINK_STYLE: CSSProperties = {
-  font: 'inherit',
-  fontSize: 'inherit',
-  color: 'var(--accent)',
-  background: 'transparent',
-  border: 'none',
-  padding: 0,
+const SUGGESTION_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' };
+const ASK_ROW_STYLE: CSSProperties = { display: 'flex', gap: '0.625rem', alignItems: 'flex-end' };
+const SCOPE_CHIP_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' };
+const INTAKE_SLOT_STYLE: CSSProperties = { paddingTop: '1rem', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.875rem' };
+/** ChatIntakeWizard.tsx's own file header: "the persistent transcript
+ * (`messages`) no longer renders here — it's handed to the composing
+ * screen via `onTranscriptChange`... rendered inside ChatHero's own
+ * bounded, auto-scrolling `<ul>`." ChatHero no longer mounts on this
+ * screen (Section 2.9.8), so this screen renders that same bounded list itself,
+ * screen-local — reusing ChatHero's own bubble/list treatment verbatim
+ * (duplicated locally, the same per-file convention `ChatIntakeWizard.tsx`
+ * already uses for its own transient "Thinking…" bubble, cited in its file
+ * header as "REUSE, not a new pattern"), not a new pattern. */
+const INTAKE_TRANSCRIPT_LIST_STYLE: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.625rem',
   margin: 0,
-  textDecoration: 'underline',
-  cursor: 'pointer',
-  textAlign: 'left',
-};
-const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
-const SUBHEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit', fontSize: '1.125rem', fontWeight: 700, color: 'var(--ink)' };
-const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
-const SR_ONLY_STYLE: CSSProperties = {
-  // Visually-hidden recipe — `top`/`left` pinned to 0 is load-bearing;
-  // see the invariant note on `DataTable.tsx`'s `srOnlyStyle`. Without
-  // it an unpositioned absolute box falls back to its in-flow static
-  // position, which can extend `html.scrollHeight` past this screen's
-  // scrolling `<main>` (now also `position: 'relative'`, same reason).
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  width: 1,
-  height: 1,
   padding: 0,
-  margin: -1,
-  overflow: 'hidden',
-  clip: 'rect(0,0,0,0)',
-  whiteSpace: 'nowrap',
-  border: 0,
+  listStyle: 'none',
+  maxHeight: '20rem',
+  overflowY: 'auto',
 };
+function intakeBubbleStyle(role: IntakeTranscriptMessage['role']): CSSProperties {
+  return {
+    alignSelf: role === 'user' ? 'flex-end' : 'flex-start',
+    maxWidth: '80%',
+    background: role === 'user' ? 'var(--accent)' : 'var(--panel)',
+    color: role === 'user' ? 'var(--bg)' : 'var(--ink)',
+    border: role === 'user' ? 'none' : '1px solid var(--border)',
+    borderRadius: 'var(--radius-sm, 10px)',
+    padding: '0.625rem 0.875rem',
+    fontSize: '0.875rem',
+    lineHeight: 1.5,
+  };
+}
+const CANVAS_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '1rem', flex: '1 1 auto' };
+const ARTIFACTS_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
+const ARTIFACTS_LIST_STYLE: CSSProperties = { margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.375rem' };
+const SECTION_HEADING_STYLE: CSSProperties = { margin: 0, font: 'inherit' };
+const PROSE_STYLE: CSSProperties = { margin: 0, fontSize: '0.9375rem', color: 'var(--ink)', lineHeight: 1.6 };
+const LOADING_ROW_STYLE: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: 'var(--ink2)' };
+const DRAWER_SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.75rem' };
+const TURN_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 
-const COUNTERS: ChatCounter[] = [
-  // survey_map.md 895–919 / demo_script_draft.md Step 4 say line — cited
-  // literal figures, not invented.
-  { value: 412, label: 'Monitored documents' },
-  { value: '11 of 12', label: 'Discovery interviews complete' },
-];
+const SUGGESTIONS_BASE: string[] = [...COPILOT_QA.map((item) => item.chips), SEEDED_AUTO_LOAN_QUESTION];
 
-const SUGGESTIONS: string[] = [...COPILOT_QA.map((item) => item.chips), SEEDED_AUTO_LOAN_QUESTION];
-
-export interface StudioAskProps extends DeepLinkScreenProps {
-  /** Navigation hook for this screen's own in-content links (source citation links → OnSide · Documents) — unrelated to Sidebar, which App.tsx's Shell owns (see file header). */
-  onNavigate: SidebarProps['onNavigate'];
+/** Section 2.9.9(a)/(b) — the SAME inline-navigating-link treatment
+ * (`affordance_standard.md` Section 3.2) already shipped at
+ * `DrawerContentFieldValue`/`ChatMessageDeepLinkButton`, reused here as a
+ * THIRD call site (not a new pattern): accent text, no button chrome,
+ * trailing `arrow-right` Icon, underline on hover, `<button type="button">`
+ * so it stays keyboard-operable and `--focus-ring`-eligible. A local,
+ * unexported subcomponent for the same reason the other two call sites
+ * are local: hover/focus need a real per-link hook instance a `.map()`
+ * callback cannot provide without violating the rules of hooks. */
+function ArtifactLinkButton({ label, onPress }: { label: string; onPress: () => void }) {
+  const [hover, setHover] = useState(false);
+  const [focused, setFocused] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onPress}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.25rem',
+        alignSelf: 'flex-start',
+        background: 'transparent',
+        border: 'none',
+        padding: 0,
+        margin: 0,
+        font: 'inherit',
+        fontSize: '0.8125rem',
+        color: 'var(--accent)',
+        cursor: 'pointer',
+        textDecoration: hover ? 'underline' : 'none',
+        borderRadius: 'var(--radius-xs, 4px)',
+        boxShadow: focused ? 'var(--focus-ring)' : 'none',
+      }}
+    >
+      {label}
+      <Icon name="arrow-right" size={16} tone="interactive" />
+    </button>
+  );
 }
 
-export function StudioAsk({ onNavigate, onDeepLink }: StudioAskProps) {
-  // §2.9.1 item 4 — this screen gains its FIRST local Drawer instance,
-  // scoped to the chat only (StudioAsk.tsx today mounts no `<Drawer>` at
-  // all — its own live Ask flow above is a Shell-mounted, engine-driven
-  // full-page surface, categorically different from this stateless,
-  // read-only, scripted Q&A chat, §2.9.6). Bumping `chatOpenNonce` forces
-  // AskChatPanel to remount fresh on every open (§2.9.5, AC-A16-8).
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatOpenNonce, setChatOpenNonce] = useState(0);
-  const handleOpenChat = () => {
-    setChatOpenNonce((n) => n + 1);
-    setChatOpen(true);
-  };
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  /** The intake wizard's own transcript, mirrored up via
-   * `onTranscriptChange` (fix C-unbounded-growth-01) — merged into
-   * ChatHero's `messages` prop while the wizard is mounted so the whole
-   * conversation renders inside ChatHero's one bounded log, never a
-   * second unbounded list. Folded into `messages` permanently, then
-   * cleared, on every wizard terminal (complete/discard/cancel). */
-  const [intakeTranscript, setIntakeTranscript] = useState<ChatMessage[]>([]);
-  /** The most recently registered play (seeded add or wizard complete) —
-   * drives the post-accept "See it in the register" / "See the scope
-   * change in OnSide" offer (fix B-dead-interactions-10). Cleared at the
-   * start of the next Ask. */
-  const [lastAccepted, setLastAccepted] = useState<PlanOpportunity | null>(null);
+interface ArtifactsListProps {
+  links: { label: string; onPress: () => void }[];
+}
+
+function ArtifactsList({ links }: ArtifactsListProps) {
+  if (links.length === 0) return null;
+  return (
+    <div style={ARTIFACTS_STYLE}>
+      <h3 style={SECTION_HEADING_STYLE}>
+        <Label text="Artifacts" variant="eyebrow" />
+      </h3>
+      <ul style={ARTIFACTS_LIST_STYLE}>
+        {links.map((link) => (
+          <li key={link.label}>
+            <ArtifactLinkButton label={link.label} onPress={link.onPress} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Section 2.9.9 common canvas header — "You asked: '<question>'", a
+ * `body-secondary` Label immediately above every layout's own content
+ * (plus NoMatch). Absent for the `Empty` first-load state (no question
+ * asked yet). */
+function CanvasHeader({ question }: { question: string }) {
+  return <Label text={`You asked: '${question}'`} variant="body-secondary" />;
+}
+
+/** One `PlanOpportunity`'s field rows for the `opportunity-status` layout
+ * (Section 2.9.9(c)) — identical labels/values to StudioAsk's own pre-A20
+ * register `DataTable` columns (Section 2.9.11 relocates that exact table). */
+function opportunityFields(opportunity: PlanOpportunity): DrawerContentField[] {
+  return [
+    { label: 'Category', value: opportunity.c },
+    { label: 'Build cost', value: fmt(opportunity.cost) },
+    { label: 'Horizon', value: opportunity.h },
+    { label: 'Weakest control gate', value: `${opportunity.weakGate} · ${opportunity.minGate}` },
+  ];
+}
+
+function opportunityTags(opportunity: PlanOpportunity, threshold: number): DrawerContentTag[] {
+  const tags: DrawerContentTag[] = [
+    opportunity.minGate >= threshold ? { text: 'Ready', variant: 'status-positive' } : { text: 'Sequence-gated', variant: 'status-caution' },
+  ];
+  if (opportunity.disc) tags.push({ text: 'From Ask', variant: 'hitl' });
+  return tags;
+}
+
+/** One `OnsideDomain`'s field rows for the `compliance-attainment` layout
+ * (Section 2.9.9(d)). */
+function domainFields(domain: OnsideDomain): DrawerContentField[] {
+  return [
+    { label: 'Regulatory bodies', value: domain.bodies },
+    { label: 'Owner', value: domain.owner },
+  ];
+}
+
+function domainTags(domain: OnsideDomain): DrawerContentTag[] {
+  const status = statusOf(domain);
+  return [{ text: DOMAIN_STATUS_LABEL[status], variant: DOMAIN_STATUS_VARIANT[status] }];
+}
+
+/** A canvas turn's identifying data — content is resolved LIVE at render
+ * time from `OPPS`/`DETAIL`/`DOMAINS` (never retyped, PI2-D28) for every
+ * variant that carries an id/key. Exactly one turn is ever current
+ * (AC-A20-4). */
+type CanvasTurn =
+  | { source: 'entry'; question: string; entry: ChatEntry }
+  | { source: 'legacy-document'; question: string; text: string; citations: string[] }
+  | { source: 'legacy-opportunity'; question: string; text: string; addedText: string }
+  | { source: 'legacy-instructional'; question: string; text: string }
+  | { source: 'no-match'; question: string };
+
+export interface StudioAskProps extends DeepLinkScreenProps {
+  /** Navigation hook for this screen's own in-content links (source citation links → OnSide · Documents) — unrelated to Sidebar, which App.tsx's Shell owns. */
+  onNavigate: SidebarProps['onNavigate'];
+  /** Testing/override hook, mirrors `InvestmentDesign.tsx`'s own optional
+   * `opportunities` prop. Defaults to the live scripted set
+   * (`STUDIO_CHAT_MODULE_CONFIG.entries`) — lets a test exercise the
+   * response canvas's four typed layouts against a minimal fixture
+   * without depending on Marisol's concurrently-authored content (AC-A20-5). */
+  entries?: ChatEntry[];
+}
+
+export function StudioAsk({ onNavigate, onDeepLink, entries = STUDIO_CHAT_MODULE_CONFIG.entries }: StudioAskProps) {
   const [inputValue, setInputValue] = useState('');
-  const [chatState, setChatState] = useState<ChatHeroState>('idle');
-  const [citations, setCitations] = useState<string[]>([]);
-  const [justRegisteredId, setJustRegisteredId] = useState<string | null>(null);
-  const [registerAnnouncement, setRegisterAnnouncement] = useState('');
-  /** True while the seeded auto-loan answer's explicit "Add to the
-   * opportunity register" offer is on screen (base 4426; STU-06). */
-  const [autoLoanOffer, setAutoLoanOffer] = useState(false);
+  const [chatState, setChatState] = useState<'idle' | 'typing' | 'submitting' | 'answer-rendering' | 'answer-complete' | 'no-match'>('idle');
+  const [currentTurn, setCurrentTurn] = useState<CanvasTurn | null>(null);
   /** The last unmatched query, offered for scoping via the entry chip (base route() no-match chips, 4469-4470). Cleared when intake starts, when a later Ask matches, or on any intake terminal (base resetChips). */
   const [pendingScopeQuery, setPendingScopeQuery] = useState<string | null>(null);
   /** Non-null while the intake wizard is mounted — `startIntake(name)`'s own `name` (4363). */
   const [intakeUseCaseName, setIntakeUseCaseName] = useState<string | null>(null);
+  /** The wizard's own transcript, mirrored up via `onTranscriptChange`
+   * (`ChatIntakeWizard.tsx`'s file header, fix C-unbounded-growth-01) —
+   * rendered by THIS screen (see `INTAKE_TRANSCRIPT_LIST_STYLE` above)
+   * since ChatHero no longer mounts here. Cleared on every wizard terminal
+   * (complete/discard/cancel): the response canvas's single-turn
+   * discipline (Section 2.9.8 — "no accumulating scroll") extends sensibly to
+   * the wizard's own sub-conversation too, once it terminates and the
+   * canvas's next turn (the terminal confirmation line) supersedes it. */
+  const [intakeTranscript, setIntakeTranscript] = useState<IntakeTranscriptMessage[]>([]);
 
-  // Register/pool subscription — the register table below renders the LIVE
-  // OPPS pool (base renderRegister reads the shared OPPS, 4315-4327), and
-  // acceptOpportunity writes land through the store's re-render fan-out.
+  // Register/pool subscription — re-renders this screen on every demoStore
+  // write, so a live-opportunity canvas turn (the auto-loan seed, or a
+  // scripted `opportunity-status` entry) always resolves the CURRENT OPPS/
+  // DETAIL record on its next render (PI2-D28 "live, never retyped" —
+  // AC-A20-7), including the moment the auto-loan play is actually added.
   useDemoStore();
 
   const requestSeqRef = useRef(0);
-  const msgSeqRef = useRef(0);
-  const registerTimeoutRef = useRef<number | undefined>(undefined);
   const wizardRef = useRef<ChatIntakeWizardHandle | null>(null);
-  /** Scroll target for the post-accept "See it in the register" offer (fix B-dead-interactions-10). */
-  const registerSectionRef = useRef<HTMLElement>(null);
-
-  /** Announcement + highlight for a register row that was ACTUALLY added
-   * (STU-06: never re-announced for an unchanged table). Value figure is
-   * adoption-scaled like the visible register cell (base 4325; STU-07). */
-  const announceRegistered = (o: PlanOpportunity) => {
-    setJustRegisteredId(o.n);
-    setRegisterAnnouncement(
-      `New opportunity registered: ${o.n} — ${fmt(adoptionScaledValue(o.val))}/yr at adoption, gated on ${o.g.join(', ')}.`,
-    );
-    if (registerTimeoutRef.current !== undefined) window.clearTimeout(registerTimeoutRef.current);
-    registerTimeoutRef.current = window.setTimeout(() => setJustRegisteredId(null), REGISTER_HIGHLIGHT_MS);
-  };
-
-  /** Appends one assistant bubble to the main log — the port target for
-   * botSay lines landing in the shared chat log (4408, 4413, 4437, 4473). */
-  const appendAssistantMessage = (text: string) => {
-    msgSeqRef.current += 1;
-    const assistantMessage: ChatMessage = { id: `msg-${msgSeqRef.current}`, role: 'assistant', text };
-    setMessages((prev) => [...prev, assistantMessage]);
-  };
-
-  /** Base acceptProposed's confirmation line (4408-4411), VERBATIM
-   * semantics: tolerance clause (ready vs sequence-gated at the live
-   * threshold), obligation arithmetic (3 + gates×2, 4405/4410),
-   * display-name domains, and the live library count — all TRUE now that
-   * `acceptOpportunity` really pushed the play (STU-01). */
-  const sayAccepted = (o: PlanOpportunity) => {
-    const L = getLiveLevers();
-    const clause =
-      o.minGate >= L.threshold
-        ? ' and clears the gate at your current tolerance. Studio has picked it up for funding consideration.'
-        : ', currently sequence-gated. Studio shows it with the control that unlocks it.';
-    const obligations = 3 + o.g.length * 2;
-    appendAssistantMessage(
-      `Added. ${o.n} is in the register${clause} It pulls ${obligations} obligations into scope across ${domainsFor(o.g).join(
-        ', ',
-      )}; OnSide has re-evaluated those domain targets. The library is at ${OPPS.length}.`,
-    );
-    // fix B-dead-interactions-10: drives the "See it in the register" /
-    // "See the scope change in OnSide" post-accept offer (base 4411
-    // region's acceptProposed buttons).
-    setLastAccepted(o);
-  };
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (value: string) => {
     setInputValue(value);
@@ -499,327 +579,429 @@ export function StudioAsk({ onNavigate, onDeepLink }: StudioAskProps) {
     }
 
     const requestKey = ++requestSeqRef.current;
-
-    msgSeqRef.current += 1;
-    const userMessage: ChatMessage = { id: `msg-${msgSeqRef.current}`, role: 'user', text: trimmed };
-    setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
     setChatState('submitting');
-    setLastAccepted(null); // a fresh Ask retires the prior post-accept offer (B-dead-interactions-10)
 
     window.setTimeout(() => {
       if (requestSeqRef.current !== requestKey) return; // superseded by a newer Ask press
       setChatState('answer-rendering');
       window.setTimeout(() => {
         if (requestSeqRef.current !== requestKey) return;
-        const matched = matchSeed(trimmed);
-        if (matched) {
-          msgSeqRef.current += 1;
-          const assistantMessage: ChatMessage = { id: `msg-${msgSeqRef.current}`, role: 'assistant', text: matched.text };
-          setMessages((prev) => [...prev, assistantMessage]);
-          setCitations(matched.citations);
-          setChatState('answer-complete');
-          setPendingScopeQuery(null); // a matched answer retires any stale scope offer
-          // STU-06: the seeded answer OFFERS the register add (base 4426)
-          // — it never writes the register itself.
-          setAutoLoanOffer(matched.opportunityMatch && !OPPS.some((o) => o.n === AUTO_LOAN_OPPORTUNITY.n));
-        } else if (isGreetingOrFragment(trimmed)) {
-          // Base route() guard (4471-4476): help line, no scope chip.
-          appendAssistantMessage(HELP_LINE);
-          setCitations([]);
+
+        const scriptedMatch = matchScriptedEntry(entries, trimmed);
+        if (scriptedMatch) {
+          setCurrentTurn({ source: 'entry', question: trimmed, entry: scriptedMatch });
           setChatState('answer-complete');
           setPendingScopeQuery(null);
-          setAutoLoanOffer(false);
-        } else {
-          setCitations([]);
-          setChatState('no-match');
-          setPendingScopeQuery(trimmed); // recorded for the "Scope … as a new use case" entry chip (4469-4470)
-          setAutoLoanOffer(false);
+          return;
         }
+
+        const seeded = matchSeed(trimmed);
+        if (seeded) {
+          if (seeded.opportunityMatch) {
+            setCurrentTurn({ source: 'legacy-opportunity', question: trimmed, text: seeded.text, addedText: '' });
+          } else {
+            setCurrentTurn({ source: 'legacy-document', question: trimmed, text: seeded.text, citations: seeded.citations });
+          }
+          setChatState('answer-complete');
+          setPendingScopeQuery(null);
+          return;
+        }
+
+        if (isGreetingOrFragment(trimmed)) {
+          setCurrentTurn({ source: 'legacy-instructional', question: trimmed, text: HELP_LINE });
+          setChatState('answer-complete');
+          setPendingScopeQuery(null);
+          return;
+        }
+
+        setCurrentTurn({ source: 'no-match', question: trimmed });
+        setChatState('no-match');
+        setPendingScopeQuery(trimmed); // recorded for the "Scope … as a new use case" entry chip (4469-4470)
       }, ASK_RENDER_DELAY_MS);
     }, ASK_SUBMIT_DELAY_MS);
   };
 
   /** Base addAutoLoan → acceptProposed (4415-4429, 4401-4412): the
    * explicit register press for the seeded answer. Sets the rich
-   * AUTO_LOAN_DETAIL first (base 4429), then the shared-store accept. */
+   * AUTO_LOAN_DETAIL first (base 4429), then the shared-store accept. The
+   * current turn's `addedText` switches to the confirmation line — the
+   * SAME turn re-renders with the play now live in OPPS/DETAIL (see file
+   * header "IMPLEMENTER JUDGMENT"). */
   const handleAddAutoLoan = () => {
-    if (!OPPS.some((o) => o.n === AUTO_LOAN_OPPORTUNITY.n)) {
-      if (!DETAIL[AUTO_LOAN_OPPORTUNITY.n]) {
-        DETAIL[AUTO_LOAN_OPPORTUNITY.n] = {
-          sum: AUTO_LOAN_DETAIL.sum,
-          work: [...AUTO_LOAN_DETAIL.work],
-          tech: [...AUTO_LOAN_DETAIL.tech],
-          deps: [...AUTO_LOAN_DETAIL.deps],
-          unlocks: [...AUTO_LOAN_DETAIL.unlocks],
-        };
-      }
-      const opportunity = buildAutoLoanOpportunity();
-      acceptOpportunity(opportunity);
-      announceRegistered(opportunity);
-      sayAccepted(opportunity);
+    if (OPPS.some((o) => o.n === AUTO_LOAN_OPPORTUNITY.n)) return;
+    if (!DETAIL[AUTO_LOAN_OPPORTUNITY.n]) {
+      DETAIL[AUTO_LOAN_OPPORTUNITY.n] = {
+        sum: AUTO_LOAN_DETAIL.sum,
+        work: [...AUTO_LOAN_DETAIL.work],
+        tech: [...AUTO_LOAN_DETAIL.tech],
+        deps: [...AUTO_LOAN_DETAIL.deps],
+        unlocks: [...AUTO_LOAN_DETAIL.unlocks],
+      };
     }
-    setAutoLoanOffer(false);
+    const opportunity = buildAutoLoanOpportunity();
+    acceptOpportunity(opportunity);
+    setCurrentTurn((prev) => (prev && prev.source === 'legacy-opportunity' ? { ...prev, addedText: sayAcceptedText(opportunity) } : prev));
   };
 
+  /** Base acceptProposed's confirmation line (4408-4411), VERBATIM
+   * semantics: tolerance clause (ready vs sequence-gated at the live
+   * threshold), obligation arithmetic (3 + gates×2, 4405/4410),
+   * display-name domains, and the live library count. */
+  function sayAcceptedText(o: PlanOpportunity): string {
+    const L = getLiveLevers();
+    const clause =
+      o.minGate >= L.threshold
+        ? ' and clears the gate at your current tolerance. Studio has picked it up for funding consideration.'
+        : ', currently sequence-gated. Studio shows it with the control that unlocks it.';
+    const obligations = 3 + o.g.length * 2;
+    return `Added. ${o.n} is in the register${clause} It pulls ${obligations} obligations into scope across ${domainsFor(o.g).join(
+      ', ',
+    )}; OnSide has re-evaluated those domain targets. The library is at ${OPPS.length}.`;
+  }
+
   /** Fix B-dead-interactions-10: base autoLoanAnswer's "See the governance
-   * work in OnSide" offer (leapfi-platform.html:4424, `goOnside('dom-mrm')`)
-   * — the seed's weakest gate is always Model Risk (`AUTO_LOAN_OPPORTUNITY.g`
-   * includes it), so this mirrors the base's hardcoded target via the same
-   * CTRLDOM routing-slug lookup the real weak-gate governance links use. */
+   * work in OnSide" offer (leapfi-platform.html:4424, `goOnside('dom-mrm')`). */
   const handleSeeGovernanceWork = () => {
     const domainKey = CTRLDOM['Model Risk'];
     if (domainKey) onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: domainKey });
   };
 
-  /** Entry-chip press — mirrors route()'s scope-chip → `startIntake(name)` hand-off (4467-4470, 4363); the wizard owns the opening line and question sequencing from here. */
+  /** Fix B-dead-interactions-10: base's post-accept "See the scope change
+   * in OnSide" cross-nav — opens the play's weakest-gate domain via the
+   * nav-payload mechanism. */
+  const handleSeeScopeChangeInOnSide = (o: PlanOpportunity) => {
+    const domainKey = CTRLDOM[o.weakGate] ?? CTRLDOM[o.g[0] ?? ''];
+    if (domainKey) onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: domainKey });
+  };
+
+  /** Entry-chip press — mirrors route()'s scope-chip → `startIntake(name)` hand-off. */
   const handleStartIntake = () => {
     if (pendingScopeQuery === null || intakeUseCaseName !== null) return;
     setIntakeUseCaseName(capitalizeFirst(pendingScopeQuery));
     setPendingScopeQuery(null);
   };
 
-  /** Fix C-unbounded-growth-01: folds the wizard's own transcript
-   * (mirrored via `onTranscriptChange`) permanently into this screen's
-   * `messages` history before a terminal confirmation line is appended —
-   * so the intake Q&A a presenter scrolled through stays in the ONE
-   * continuous chat-log (base's single `chat-log`, never a second list
-   * that vanishes with the wizard). Both `setMessages`/`setIntakeTranscript`
-   * calls use the functional form, so they compose correctly with the
-   * `appendAssistantMessage` call each terminal handler makes right after. */
-  const finalizeIntakeTranscript = () => {
-    setMessages((prev) => [...prev, ...intakeTranscript]);
-    setIntakeTranscript([]);
-  };
-
-  /** Port of `acceptProposed()`'s terminal behavior (4401-4412): the real
-   * shared-register write via `demoStore.acceptOpportunity` (OPPS push +
-   * DETAIL stub + SCOPE_EVENTS entry — STU-01), then the confirmation
-   * line. Announcement/highlight only when a row was actually added. */
   const handleIntakeComplete = (opportunity: PlanOpportunity) => {
-    finalizeIntakeTranscript();
     setIntakeUseCaseName(null);
-    setPendingScopeQuery(null); // base resetChips() on accept
+    setIntakeTranscript([]);
+    setPendingScopeQuery(null);
     if (!OPPS.some((o) => o.n === opportunity.n)) {
       acceptOpportunity(opportunity);
-      announceRegistered(opportunity);
     }
-    sayAccepted(opportunity);
+    setCurrentTurn({ source: 'legacy-opportunity', question: opportunity.n, text: sayAcceptedText(opportunity), addedText: sayAcceptedText(opportunity) });
+    setChatState('answer-complete');
   };
 
-  /** Port of `discardProposed()` (4413). */
   const handleIntakeDiscard = () => {
-    finalizeIntakeTranscript();
     setIntakeUseCaseName(null);
-    setPendingScopeQuery(null); // base resetChips()
-    appendAssistantMessage('Discarded. Nothing was added to the register. What else is on your mind?');
+    setIntakeTranscript([]);
+    setPendingScopeQuery(null);
+    setCurrentTurn({ source: 'legacy-instructional', question: '', text: 'Discarded. Nothing was added to the register. What else is on your mind?' });
+    setChatState('answer-complete');
   };
 
-  /** Port of route()'s intake-cancel branch (4435-4439). */
   const handleIntakeCancel = () => {
-    finalizeIntakeTranscript();
     setIntakeUseCaseName(null);
-    setPendingScopeQuery(null); // base resetChips()
-    appendAssistantMessage('Scoping cancelled. Nothing was added. Ask me anything, or describe another idea when you’re ready.');
+    setIntakeTranscript([]);
+    setPendingScopeQuery(null);
+    setCurrentTurn({ source: 'legacy-instructional', question: '', text: 'Scoping cancelled. Nothing was added. Ask me anything, or describe another idea when you’re ready.' });
+    setChatState('answer-complete');
   };
 
-  /** Fix B-dead-interactions-10: scrolls the already-visible register
-   * section into view and re-triggers its highlight — the "See it in the
-   * register" post-accept offer. The row is already on this screen (no
-   * cross-screen nav needed, unlike "See the scope change in OnSide"
-   * below). */
-  const handleSeeInRegister = (o: PlanOpportunity) => {
-    registerSectionRef.current?.scrollIntoView({ block: 'start' });
-    announceRegistered(o);
-  };
-
-  /** Fix B-dead-interactions-10: base's post-accept "See the scope change
-   * in OnSide" cross-nav — opens the play's weakest-gate domain via the
-   * nav-payload mechanism (App.tsx "NAVIGATION-WITH-PAYLOAD / DEEP
-   * LINKS"), same target kind the pre-accept "See the governance work in
-   * OnSide" offer uses below. */
-  const handleSeeScopeChangeInOnSide = (o: PlanOpportunity) => {
-    const domainKey = CTRLDOM[o.weakGate] ?? CTRLDOM[o.g[0] ?? ''];
-    if (domainKey) onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: domainKey });
-  };
-
-  const showSources = chatState === 'answer-complete' && citations.length > 0;
+  const busy = chatState === 'submitting' || chatState === 'answer-rendering';
   const showScopeChip = pendingScopeQuery !== null && intakeUseCaseName === null;
-  const showAutoLoanOffer = autoLoanOffer && chatState === 'answer-complete';
-  /** Fix B-dead-interactions-10: post-accept cross-nav offer, shown once
-   * any play is registered (seeded add or wizard complete) until the next
-   * Ask. */
-  const showPostAcceptOffer = lastAccepted !== null;
 
-  // Fix C-unbounded-growth-01: while the wizard is mounted, ChatHero
-  // renders the pre-intake conversation PLUS the wizard's own live
-  // transcript as one array — the intake's Q&A appears inside ChatHero's
-  // single bounded, auto-scrolling log instead of a second list beneath
-  // it. Once the wizard terminates, `intakeTranscript` is folded into
-  // `messages` and cleared (see `finalizeIntakeTranscript`), so this falls
-  // back to plain `messages` with no duplication.
-  const chatHeroMessages: ChatMessage[] = intakeUseCaseName !== null ? [...messages, ...intakeTranscript] : messages;
+  const handleAskPress = () => {
+    if (inputValue.trim().length === 0 || busy) return;
+    handleAsk(inputValue);
+  };
 
-  // The register renders the LIVE pool, newest first (base renderRegister
-  // reverses OPPS, 4322), values adoption-scaled (base 4325; STU-07).
-  const registerRows: PlanOpportunity[] = [...OPPS].reverse();
+  /** Section 2.9.9(a)/(b) — `document`/`instructional` layout body for a
+   * scripted `ChatEntry`. `document` requires non-empty `deepLinks`;
+   * `instructional` renders the Artifacts list only when present. */
+  function renderEntryDocumentOrInstructional(entry: ChatEntry) {
+    const responseType = entry.response?.responseType ?? 'instructional';
+    const heading = responseType === 'document' ? 'Answer' : 'How to';
+    const links: { label: string; onPress: () => void }[] = (entry.deepLinks ?? []).map((link: ChatEntryDeepLink) => ({
+      label: link.label,
+      onPress: () => onDeepLink?.(link.request),
+    }));
+    return (
+      <>
+        <h2 style={SECTION_HEADING_STYLE}>
+          <Label text={heading} variant="eyebrow" />
+        </h2>
+        <p style={PROSE_STYLE}>{entry.responseText}</p>
+        <ArtifactsList links={links} />
+      </>
+    );
+  }
 
-  const opportunityColumns: DataTableColumn<PlanOpportunity>[] = [
-    {
-      id: 'name',
-      header: 'Opportunity',
-      sortable: true,
-      sortValue: (row) => row.n,
-      render: (row) => (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-          {row.n}
-          {row.disc ? <Tag text="From Ask" variant="hitl" /> : null}
-        </span>
-      ),
-    },
-    { id: 'category', header: 'Category', render: (row) => <span>{row.c}</span> },
-    { id: 'cost', header: 'Build cost', align: 'end', sortable: true, sortValue: (row) => row.cost, render: (row) => <span>{fmt(row.cost)}</span> },
-    {
-      id: 'value',
-      header: 'Annual value',
-      align: 'end',
-      sortable: true,
-      sortValue: (row) => row.val,
-      // Base register row (4325): fmt(o.val*L.eff)+'/yr at adoption' —
-      // adoption-scaled at the LIVE levers, never the raw catalog val.
-      render: (row) => <span>{fmt(adoptionScaledValue(row.val))}/yr at adoption</span>,
-    },
-    { id: 'horizon', header: 'Horizon', render: (row) => <span style={{ textTransform: 'capitalize' }}>{row.h}</span> },
-    { id: 'gate', header: 'Weakest control gate', render: (row) => <span>{row.weakGate} · {row.minGate}</span> },
-  ];
+  /** Section 2.9.9(c), Amendment A20.1 — "Detail →" is the LITERAL,
+   * component-vocabulary-fixed Button label; it is NEVER sourced from
+   * `ChatEntry.deepLinks[].label` (that field is a sibling of `response`
+   * used only for the Artifacts inline-link row, §2.9.3 item 3/§2.9.9(a)/
+   * (b), and `ChatEntryOpportunityStatusResponse` does not even carry a
+   * `deepLinks` field). The request payload fires the EXISTING
+   * `onDeepLink({screen: 'studio.investment-design', kind: 'play', id})`
+   * contract verbatim. */
+  function renderEntryOpportunityStatus(opportunityId: string) {
+    const opportunity = OPPS.find((o) => o.n === opportunityId);
+    const L = getLiveLevers();
+    const detailAction: DrawerContentAction = {
+      label: 'Detail →',
+      variant: 'secondary',
+      onPress: () => onDeepLink?.({ screen: 'studio.investment-design', kind: 'play', id: opportunityId }),
+    };
+    return (
+      <>
+        <h2 style={SECTION_HEADING_STYLE}>
+          <Label text="Opportunity status" variant="eyebrow" />
+        </h2>
+        {opportunity ? (
+          <>
+            <StatCard label="Annual value" value={fmt(adoptionScaledValue(opportunity.val))} unit="/yr at adoption" />
+            <section aria-labelledby="studio-ask-opportunity-heading" style={DRAWER_SECTION_STYLE}>
+              <h3 id="studio-ask-opportunity-heading" style={SECTION_HEADING_STYLE}>
+                {opportunity.n}
+              </h3>
+              <DrawerContent
+                kind="play"
+                fields={opportunityFields(opportunity)}
+                tags={opportunityTags(opportunity, L.threshold)}
+                actions={[detailAction]}
+              />
+            </section>
+          </>
+        ) : null}
+      </>
+    );
+  }
 
-  const updatingRowIdsProp = justRegisteredId ? { updatingRowIds: new Set([justRegisteredId]) } : {};
+  /** Section 2.9.9(d), Amendment A20.1 — "See in OnSide" is the LITERAL,
+   * component-vocabulary-fixed Button label; it is NEVER sourced from
+   * `ChatEntry.deepLinks[].label` (that field is a sibling of `response`
+   * used only for the Artifacts inline-link row, §2.9.3 item 3/§2.9.9(a)/
+   * (b), and `ChatEntryComplianceAttainmentResponse` does not even carry a
+   * `deepLinks` field). The request payload fires the EXISTING
+   * `onDeepLink({screen: 'onside.overview', kind: 'domain', id})` contract
+   * verbatim. */
+  function renderEntryComplianceAttainment(domainKey: string) {
+    const domain = DOMAINS.find((d) => d.key === domainKey);
+    const seeInOnsideAction: DrawerContentAction = {
+      label: 'See in OnSide',
+      variant: 'secondary',
+      onPress: () => onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: domainKey }),
+    };
+    return (
+      <>
+        <h2 style={SECTION_HEADING_STYLE}>
+          <Label text="Compliance standing" variant="eyebrow" />
+        </h2>
+        {domain ? (
+          <>
+            <StatCard label={domain.name} value={domain.met} unit={`of ${domain.target}`} />
+            <section aria-labelledby="studio-ask-domain-heading" style={DRAWER_SECTION_STYLE}>
+              <h3 id="studio-ask-domain-heading" style={SECTION_HEADING_STYLE}>
+                {domain.name}
+              </h3>
+              <DrawerContent
+                kind="domain"
+                fields={domainFields(domain)}
+                tags={domainTags(domain)}
+                actions={[seeInOnsideAction]}
+              />
+            </section>
+          </>
+        ) : null}
+      </>
+    );
+  }
 
-  /** Fix B-dead-interactions-03: base's per-row "Detail →" affordance
-   * (`<div class="uc" onclick="openPlay(n)">…<span class="go">Detail
-   * →</span>`, leapfi-platform.html:4325) — every register row now opens
-   * the real play drawer on Investment Design via the nav-payload
-   * mechanism (this screen owns no Drawer of its own). */
-  const registerRowAction: DataTableRowAction<PlanOpportunity> | undefined = onDeepLink
-    ? {
-        label: () => 'Detail →',
-        onPress: (row) => onDeepLink({ screen: 'studio.investment-design', kind: 'play', id: row.n }),
+  function renderEntryProse(entry: ChatEntry) {
+    return (
+      <>
+        <p style={PROSE_STYLE}>{entry.responseText}</p>
+      </>
+    );
+  }
+
+  function renderTurnBody(turn: CanvasTurn) {
+    switch (turn.source) {
+      case 'entry': {
+        const response = turn.entry.response;
+        if (response?.responseType === 'opportunity-status') {
+          return (
+            <>
+              {renderEntryProse(turn.entry)}
+              {renderEntryOpportunityStatus(response.opportunityId)}
+            </>
+          );
+        }
+        if (response?.responseType === 'compliance-attainment') {
+          return (
+            <>
+              {renderEntryProse(turn.entry)}
+              {renderEntryComplianceAttainment(response.domainKey)}
+            </>
+          );
+        }
+        // 'document' / 'instructional' / absent (backward-compatible default).
+        return renderEntryDocumentOrInstructional(turn.entry);
       }
-    : undefined;
+      case 'legacy-document': {
+        const links = turn.citations.map((citation) => ({ label: citation, onPress: () => onNavigate('onside.documents') }));
+        return (
+          <>
+            <h2 style={SECTION_HEADING_STYLE}>
+              <Label text="Answer" variant="eyebrow" />
+            </h2>
+            <p style={PROSE_STYLE}>{turn.text}</p>
+            <ArtifactsList links={links} />
+          </>
+        );
+      }
+      case 'legacy-instructional':
+        return (
+          <>
+            <h2 style={SECTION_HEADING_STYLE}>
+              <Label text="How to" variant="eyebrow" />
+            </h2>
+            <p style={PROSE_STYLE}>{turn.text}</p>
+          </>
+        );
+      case 'legacy-opportunity': {
+        const opportunity = OPPS.find((o) => o.n === AUTO_LOAN_OPPORTUNITY.n) ?? buildAutoLoanOpportunity();
+        const isLive = OPPS.some((o) => o.n === AUTO_LOAN_OPPORTUNITY.n);
+        const L = getLiveLevers();
+        const actions: DrawerContentAction[] = isLive
+          ? [
+              { label: 'Detail →', variant: 'secondary', onPress: () => onDeepLink?.({ screen: 'studio.investment-design', kind: 'play', id: opportunity.n }) },
+              { label: 'See the scope change in OnSide', variant: 'ghost', onPress: () => handleSeeScopeChangeInOnSide(opportunity) },
+            ]
+          : [
+              { label: 'Add to the opportunity register', variant: 'secondary', onPress: handleAddAutoLoan },
+              { label: 'See the governance work in OnSide', variant: 'ghost', onPress: handleSeeGovernanceWork },
+            ];
+        return (
+          <>
+            <h2 style={SECTION_HEADING_STYLE}>
+              <Label text="Opportunity status" variant="eyebrow" />
+            </h2>
+            <p style={PROSE_STYLE}>{turn.addedText || turn.text}</p>
+            <StatCard label="Annual value" value={fmt(adoptionScaledValue(opportunity.val))} unit="/yr at adoption" />
+            <section aria-labelledby="studio-ask-auto-loan-heading" style={DRAWER_SECTION_STYLE}>
+              <h3 id="studio-ask-auto-loan-heading" style={SECTION_HEADING_STYLE}>
+                {opportunity.n}
+              </h3>
+              <DrawerContent kind="play" fields={opportunityFields(opportunity)} tags={opportunityTags(opportunity, L.threshold)} actions={actions} />
+            </section>
+          </>
+        );
+      }
+      case 'no-match':
+        return (
+          <p style={PROSE_STYLE} role="status">
+            {STUDIO_CHAT_MODULE_CONFIG.defaultNoMatchMessage}
+          </p>
+        );
+    }
+  }
+
+  function renderCanvasContent() {
+    if (busy) {
+      return (
+        <div style={LOADING_ROW_STYLE} aria-hidden="true">
+          <Spinner variant="inline" size="small" /> Thinking…
+        </div>
+      );
+    }
+    if (currentTurn === null) {
+      // Empty layout (Section 2.9.9) — no question asked yet; canvas header absent.
+      return <p style={PROSE_STYLE}>Ask a question above to get started.</p>;
+    }
+    return (
+      <div style={TURN_STYLE}>
+        <CanvasHeader question={currentTurn.question} />
+        {renderTurnBody(currentTurn)}
+      </div>
+    );
+  }
 
   return (
-    <>
     <main id="studio-ask-main" style={MAIN_STYLE} aria-labelledby="studio-ask-title">
-          <div style={HEADER_ROW_STYLE}>
-            <h1 id="studio-ask-title" style={TITLE_STYLE}>
-              Studio · Ask
-            </h1>
-            {/* §5.8 entry affordance (amendment A16, PI2-D42) — uniform
-                across all three studio.* screens. Coexists with this
-                screen's own primary "Ask" Button below without hierarchy
-                ambiguity (§2.9.5 — ghost-weight utility chrome, never
-                competes with the stated primary CTA, §6). */}
-            <Button variant="ghost" label={STUDIO_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
-          </div>
+      <div style={HEADER_ROW_STYLE}>
+        <h1 id="studio-ask-title" style={TITLE_STYLE}>
+          Studio · Ask
+        </h1>
+      </div>
 
-          <div style={CHAT_PANEL_STYLE}>
-            <ChatHero
-              counters={COUNTERS}
-              messages={chatHeroMessages}
-              suggestions={SUGGESTIONS}
-              inputValue={inputValue}
-              onInputChange={handleInputChange}
-              onAsk={handleAsk}
-              state={chatState}
+      <div style={CHAT_PANEL_STYLE} data-lf-region="chat-bar">
+        <div style={SUGGESTION_ROW_STYLE} role="group" aria-label="Suggested questions">
+          {[...entries.map((entry) => entry.question), ...SUGGESTIONS_BASE].map((suggestion) => (
+            <Chip key={suggestion} text={suggestion} variant="suggestion" onPress={() => handleInputChange(suggestion)} />
+          ))}
+        </div>
+        <div style={ASK_ROW_STYLE}>
+          <div style={{ flex: 1 }}>
+            <Input
+              ref={inputRef}
+              label={STUDIO_CHAT_MODULE_CONFIG.inputLabel}
+              value={inputValue}
+              placeholder={STUDIO_CHAT_MODULE_CONFIG.inputPlaceholder}
+              onChange={handleInputChange}
+              onSubmit={handleAskPress}
+              disabled={chatState === 'submitting'}
+              surface="panel"
             />
-
-            {showAutoLoanOffer ? (
-              <div style={SCOPE_CHIP_ROW_STYLE} role="group" aria-label="Register the scoped opportunity">
-                {/* Base autoLoanAnswer's explicit add action (4426); `secondary` — "Ask" is this screen's one primary (spec §5.4/§6). */}
-                <Button label="Add to the opportunity register" variant="secondary" onPress={handleAddAutoLoan} />
-                {/* Fix B-dead-interactions-10: base 4424 `goOnside('dom-mrm')`. */}
-                <Button label="See the governance work in OnSide" variant="ghost" onPress={handleSeeGovernanceWork} />
-              </div>
-            ) : null}
-
-            {showScopeChip && pendingScopeQuery !== null ? (
-              <div style={SCOPE_CHIP_ROW_STYLE} role="group" aria-label="Scope a new use case">
-                <Chip
-                  text={`Scope "${capitalizeFirst(pendingScopeQuery)}" as a new use case`}
-                  variant="suggestion"
-                  onPress={handleStartIntake}
-                />
-              </div>
-            ) : null}
-
-            {showPostAcceptOffer && lastAccepted !== null ? (
-              <div style={SCOPE_CHIP_ROW_STYLE} role="group" aria-label="After registering">
-                {/* Fix B-dead-interactions-10: base's post-accept cross-nav buttons (4411 region). */}
-                <Button label="See it in the register" variant="ghost" onPress={() => handleSeeInRegister(lastAccepted)} />
-                <Button label="See the scope change in OnSide" variant="ghost" onPress={() => handleSeeScopeChangeInOnSide(lastAccepted)} />
-              </div>
-            ) : null}
-
-            {intakeUseCaseName !== null ? (
-              <div style={INTAKE_SLOT_STYLE}>
-                <ChatIntakeWizard
-                  key={intakeUseCaseName}
-                  ref={wizardRef}
-                  useCaseName={intakeUseCaseName}
-                  onComplete={handleIntakeComplete}
-                  onDiscard={handleIntakeDiscard}
-                  onCancel={handleIntakeCancel}
-                  onTranscriptChange={setIntakeTranscript}
-                />
-              </div>
-            ) : null}
           </div>
+          <Button label="Ask" variant="primary" onPress={handleAskPress} loading={chatState === 'submitting'} disabled={inputValue.trim().length === 0} />
+        </div>
+      </div>
 
-          {showSources ? (
-            <div style={SOURCES_STYLE} aria-label="Answer sources">
-              <h2 style={SOURCES_HEADING_STYLE}>
-                <Label text="Sources" variant="eyebrow" />
-              </h2>
-              <ul style={SOURCES_LIST_STYLE}>
-                {citations.map((citation) => (
-                  <li key={citation}>
-                    {/* Fix B-dead-interactions-10: base `<span class="doclink" onclick="onsideShow('docs')">` (leapfi-platform.html:3636/1813). */}
-                    <button type="button" onClick={() => onNavigate('onside.documents')} style={CITATION_LINK_STYLE}>
-                      {citation}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <div style={CANVAS_STYLE} data-lf-region="response-canvas" aria-live="polite">
+        {renderCanvasContent()}
+      </div>
+
+      {showScopeChip && pendingScopeQuery !== null ? (
+        <div style={SCOPE_CHIP_ROW_STYLE} role="group" aria-label="Scope a new use case">
+          <Chip
+            text={`Scope "${capitalizeFirst(pendingScopeQuery)}" as a new use case`}
+            variant="suggestion"
+            onPress={handleStartIntake}
+          />
+        </div>
+      ) : null}
+
+      {intakeUseCaseName !== null ? (
+        <div style={INTAKE_SLOT_STYLE}>
+          {/* "Conversation" — mirrors ChatHero's own retired `messageListStyle`
+              list label, NOT "Scoping conversation" (the base's pre-fix
+              SEPARATE unbounded list fix C-unbounded-growth-01 already
+              retired — see `ChatIntakeWizard.tsx`'s own file header; this
+              is that same one-list discipline's screen-local continuation,
+              not a resurrection of the retired pattern). */}
+          {intakeTranscript.length > 0 ? (
+            <ul aria-label="Conversation" style={INTAKE_TRANSCRIPT_LIST_STYLE}>
+              {intakeTranscript.map((message) => (
+                <li key={message.id} style={intakeBubbleStyle(message.role)}>
+                  {message.text}
+                </li>
+              ))}
+            </ul>
           ) : null}
-
-          <section ref={registerSectionRef} aria-labelledby="studio-ask-register-heading" style={SECTION_STYLE}>
-            <h2 id="studio-ask-register-heading" style={SUBHEADING_STYLE}>
-              Opportunity register
-            </h2>
-            <span role="status" aria-live="polite" style={SR_ONLY_STYLE}>
-              {registerAnnouncement}
-            </span>
-            <div style={SCROLL_WRAP_STYLE}>
-              <DataTable
-                caption="Opportunity register"
-                columns={opportunityColumns}
-                rows={registerRows}
-                getRowId={(row) => row.n}
-                {...updatingRowIdsProp}
-                {...(registerRowAction ? { rowAction: registerRowAction } : {})}
-                defaultSortColumnId="value"
-                defaultSortDirection="descending"
-              />
-            </div>
-          </section>
+          <ChatIntakeWizard
+            key={intakeUseCaseName}
+            ref={wizardRef}
+            useCaseName={intakeUseCaseName}
+            onComplete={handleIntakeComplete}
+            onDiscard={handleIntakeDiscard}
+            onCancel={handleIntakeCancel}
+            onTranscriptChange={setIntakeTranscript}
+          />
+        </div>
+      ) : null}
     </main>
-
-    {/* §2.9.1 item 4 — this screen's first (and only) local Drawer
-        instance, scoped to the "Ask Studio" chat only. */}
-    <Drawer open={chatOpen} title={STUDIO_CHAT_MODULE_CONFIG.drawerTitle} onClose={() => setChatOpen(false)}>
-      <AskChatPanel key={chatOpenNonce} config={STUDIO_CHAT_MODULE_CONFIG} {...(onDeepLink ? { onDeepLinkPress: onDeepLink } : {})} />
-    </Drawer>
-    </>
   );
 }

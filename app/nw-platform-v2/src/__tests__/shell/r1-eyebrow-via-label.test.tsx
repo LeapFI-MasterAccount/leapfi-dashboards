@@ -70,14 +70,14 @@ describe('§8 R-1 — eyebrow treatment authored only by Label (P3) eyebrow', ()
     expect(strayLetterSpacingElements(container)).toHaveLength(0);
   });
 
-  it('StudioAsk.tsx — the "Sources" heading renders through Label eyebrow', () => {
+  it('StudioAsk.tsx — the response canvas\'s "Artifacts" heading (amendment A20, design_system_spec.md Section 2.9.9(a) — the generalized former "Sources" panel) renders through Label eyebrow', () => {
     resetDemo();
     vi.useFakeTimers();
     try {
       render(<StudioAsk onNavigate={() => {}} />);
       const main = screen.getByRole('main');
-      const input = within(main).getByRole('textbox', { name: 'Ask a policy question' });
-      fireEvent.change(input, { target: { value: 'What are our rules on indirect auto lending?' } });
+      const input = within(main).getByRole('textbox', { name: 'Ask Studio a question' });
+      fireEvent.change(input, { target: { value: 'What is our wire transfer limit for members?' } });
       fireEvent.click(within(main).getByRole('button', { name: 'Ask' }));
       act(() => {
         vi.advanceTimersByTime(350);
@@ -85,8 +85,8 @@ describe('§8 R-1 — eyebrow treatment authored only by Label (P3) eyebrow', ()
       act(() => {
         vi.advanceTimersByTime(450);
       });
-      const sourcesHeading = eyebrowLabels(document.body).find((el) => el.textContent === 'Sources');
-      expect(sourcesHeading).toBeDefined();
+      const artifactsHeading = eyebrowLabels(document.body).find((el) => el.textContent === 'Artifacts');
+      expect(artifactsHeading).toBeDefined();
     } finally {
       vi.useRealTimers();
     }

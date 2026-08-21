@@ -48,6 +48,17 @@ export interface ChatEntry {
   responseText: string;
   /** Zero or more inline references into real screens. */
   deepLinks?: ChatEntryDeepLink[];
+  /** NEW (amendment A20, PI2-D47). Discriminates which of the response
+   * canvas's four layouts (Section 2.9.9) StudioAsk renders this entry through.
+   * Omitted = 'instructional'-equivalent rendering -- backward compatible
+   * with every pre-A20 entry in both `ONSIDE_CHAT`/`STUDIO_CHAT`. Read
+   * ONLY by StudioAsk's response canvas; `AskChatPanel`/`ChatHero`'s
+   * Drawer-hosted bubble surface (unchanged, all six remaining
+   * `onside.*`/`studio.*` screens) ignores this field entirely and always
+   * renders `responseText`+`deepLinks` regardless of its presence -- this
+   * is how "the OnSide drawer chat gains the compliance-attainment
+   * response type via content" (PI2-D47) ships with zero surface change. */
+  response?: ChatEntryResponse;
 }
 
 /** One module's chat configuration — chrome fields authored per §2.9.4/
@@ -74,3 +85,54 @@ export interface ChatModuleConfig {
   /** Marisol's scripted set for this module. */
   entries: ChatEntry[];
 }
+
+/* ============================================================
+ * Amendment A20 (PI2-D47) -- response-type vocabulary, spec Section 2.9.9/2.9.10.
+ * Additive only: every field below is new; `ChatEntry.response` is
+ * optional and its absence renders exactly as every pre-A20 entry already
+ * does today ('instructional'-equivalent -- see `ChatEntry.response`'s own
+ * doc comment below). Nothing above this block changes shape.
+ * ============================================================ */
+
+/** One discriminant per Section 2.9.9's four response-canvas layouts, matching
+ * PI2-D47(a)-(d) verbatim: document questions, policy/how-to questions,
+ * opportunity-project questions, OnSide-context questions. */
+export type ChatResponseType = 'document' | 'instructional' | 'opportunity-status' | 'compliance-attainment';
+
+/** 'document'/'instructional' carry no extra fields -- their canvas layout
+ * needs nothing beyond `responseText`/`deepLinks` (Section 2.9.9(a)/(b)). The
+ * discriminant alone decides whether `deepLinks` is required non-empty
+ * (`document`) or optional (`instructional`) -- enforced by the response
+ * canvas, not by these two interfaces' shape (both are structurally
+ * identical on purpose; the distinction is authoring intent, Section 2.9.9(b)). */
+export interface ChatEntryDocumentResponse {
+  responseType: 'document';
+}
+export interface ChatEntryInstructionalResponse {
+  responseType: 'instructional';
+}
+
+/** `opportunityId` is `PlanOpportunity.n` (engine/plan.ts) -- the SAME id
+ * the live `OPPS`/`DETAIL` pool and the relocated register (Section 2.9.11) key
+ * on. The response canvas resolves cost/value/horizon/gate/status LIVE by
+ * this id at render time; this schema never carries a duplicate of those
+ * fields (PI2-D28, restated at Section 2.9.10). */
+export interface ChatEntryOpportunityStatusResponse {
+  responseType: 'opportunity-status';
+  opportunityId: string;
+}
+
+/** `domainKey` is `OnsideDomain.key` (`data/onside.ts` `DOMAINS`) -- the
+ * response canvas resolves name/bodies (the OCC/NCUA/CFPB/FFIEC/FinCEN
+ * framing text)/met/target LIVE by this key; this schema never carries a
+ * duplicate of those fields (PI2-D28, restated at Section 2.9.10). */
+export interface ChatEntryComplianceAttainmentResponse {
+  responseType: 'compliance-attainment';
+  domainKey: string;
+}
+
+export type ChatEntryResponse =
+  | ChatEntryDocumentResponse
+  | ChatEntryInstructionalResponse
+  | ChatEntryOpportunityStatusResponse
+  | ChatEntryComplianceAttainmentResponse;

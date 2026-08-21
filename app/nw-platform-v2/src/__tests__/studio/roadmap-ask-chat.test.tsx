@@ -12,11 +12,12 @@ import userEvent from '@testing-library/user-event';
 import { Roadmap } from '../../screens/Roadmap';
 
 describe('Studio · Roadmap — "Ask Studio" entry affordance (AC-A16-4)', () => {
-  it('renders a ghost "Ask Studio" Button and opens this screen\'s first local Drawer to "Studio chat"', async () => {
+  it('renders a secondary-weight "Ask Studio" Button and opens this screen\'s first local Drawer to "Studio chat"', async () => {
     const user = userEvent.setup();
     render(<Roadmap onNavigate={() => {}} />);
     const trigger = screen.getByRole('button', { name: 'Ask Studio' });
-    expect(trigger).toHaveAttribute('data-variant', 'ghost');
+    // Amendment A20 (PI2-D47, design_system_spec.md §2.9.12): the entry-affordance trigger's weight flips ghost -> secondary on all six remaining onside.*/studio.* screens ("the CTA is crap" -> a real border/hover fill), never primary (Core Principle 2 -- never competes with a screen's own primary CTA).
+    expect(trigger).toHaveAttribute('data-variant', 'secondary');
     await user.click(trigger);
     const heading = await screen.findByRole('heading', { name: 'Studio chat' });
     await waitFor(() => expect(heading).toHaveFocus());

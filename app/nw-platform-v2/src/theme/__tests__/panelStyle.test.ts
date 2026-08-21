@@ -168,9 +168,19 @@ describe('theme/panelStyle — consolidated call sites (12 default-radius + 2 ra
       ...PANEL_STYLE,
       padding: '1rem 1.125rem',
     });
+    // Amendment A20 (PI2-D47, design_system_spec.md Section 2.9.8): StudioAsk's
+    // chat bar is now screen-local markup (Chip/Input/Button composed
+    // directly, not a ChatHero mount) that lays out its own suggestion-Chip
+    // row above its Input+Button row, so CHAT_PANEL_STYLE now also owns its
+    // internal flex layout — it no longer merely wraps a self-laying-out
+    // ChatHero. The panel-surface base (background/border/radius) and the
+    // 1.5rem padding are unchanged.
     expect(CHAT_PANEL_STYLE).toEqual({
       ...PANEL_STYLE,
       padding: '1.5rem',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '1rem',
     });
   });
 });

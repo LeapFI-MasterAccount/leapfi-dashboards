@@ -609,13 +609,13 @@ describe('CLASS SWEEP — BoardLogForm (rendered only inside the shared reportin
   });
 });
 
-describe('CLASS SWEEP — ChatHero (composite C10), rendered only via StudioAsk\'s CHAT_PANEL_STYLE (spreads PANEL_STYLE — panel-seated, single deterministic call site)', () => {
+describe('CLASS SWEEP — StudioAsk\'s own chat-bar Input (amendment A20, PI2-D47: screen-local Chip/Input/Button composition inside CHAT_PANEL_STYLE, panel-seated — no ChatHero mount remains on this screen, design_system_spec.md Section 2.9.8)', () => {
   beforeEach(resetDemo);
 
-  it('the "Ask a policy question" Input label is fixed — ChatHero hardcodes surface="panel" on its own Input call, same precedent as SliderControlRow\'s stanceBoxStyle Label (always-panel-seated composite, no threading needed)', () => {
+  it('the chat-bar Input label ("Ask Studio a question", STUDIO_CHAT_MODULE_CONFIG.inputLabel) is panel-seated — surface="panel" threaded explicitly, same contrast discipline ChatHero previously hardcoded for its own Input', () => {
     render(<StudioAsk onNavigate={() => {}} />);
-    expect(screen.getByText('Ask a policy question').style.color).toBe('var(--chart-axis)');
-    expect(screen.getByText('Ask a policy question').style.color).not.toBe('var(--ink2)');
+    expect(screen.getByText('Ask Studio a question').style.color).toBe('var(--chart-axis)');
+    expect(screen.getByText('Ask Studio a question').style.color).not.toBe('var(--ink2)');
   });
 });
 

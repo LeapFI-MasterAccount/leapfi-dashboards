@@ -108,7 +108,8 @@ describe('lever changes recompute the stance banner live (recompute base 1256-13
 describe('play drawer — full base openPlay content (base 1391-1432; fix-wave STU-13)', () => {
   it('opens a funded play with summary, economics, verdict, scope of work, tech deps, governance detail, financial block, and connections', () => {
     renderScreen();
-    const row = screen.getByRole('row', { name: /Loan-document summarization/ });
+    const fundedTable = screen.getByRole('table', { name: 'Your funded portfolio' });
+    const row = within(fundedTable).getByRole('row', { name: /Loan-document summarization/ });
     fireEvent.click(within(row).getByRole('button', { name: 'Open' }));
 
     const drawer = screen.getByRole('dialog');
@@ -197,7 +198,8 @@ describe('play drawer deep-link actions (fix B-dead-interactions-07 — play-dra
     fireEvent.click(within(gatedDrawer).getByRole('button', { name: 'See the gap queue' }));
     expect(onDeepLink).toHaveBeenCalledWith({ screen: 'onside.feed', kind: 'section', id: 'gaps' });
 
-    const row = screen.getByRole('row', { name: /Loan-document summarization/ });
+    const fundedTable = screen.getByRole('table', { name: 'Your funded portfolio' });
+    const row = within(fundedTable).getByRole('row', { name: /Loan-document summarization/ });
     fireEvent.click(within(row).getByRole('button', { name: 'Open' }));
     const readyDrawer = screen.getByRole('dialog');
     expect(within(readyDrawer).queryByRole('button', { name: 'See the gap queue' })).not.toBeInTheDocument();
@@ -241,5 +243,39 @@ describe('play deep-link consumption (fix B-dead-interactions-03/04 — the CONS
       deepLink: { screen: 'studio.investment-design', kind: 'play', id: 'Deposit pricing optimization', nonce: 1 },
     });
     expect(screen.getByRole('dialog')).toHaveTextContent('Deposit pricing optimization');
+  });
+});
+
+describe('AC-A20-9 (InvestmentDesign half) — the relocated opportunity register (amendment A20, PI2-D47, design_system_spec.md §2.9.11)', () => {
+  it('renders exactly one ADDITIONAL <DataTable> (beyond PlanTable\'s own), containing the FULL, unfiltered, reversed live OPPS pool — independent of the lever-driven funded/gated/bench views above', () => {
+    const { container } = renderScreen();
+    // PlanTable's own table + the relocated register table = 2 real <table>s
+    // in this default view (PlanTable is a real <table>, gated/bench are
+    // this screen's own non-DataTable mini-tables per the file's own
+    // "AMBIGUITY RESOLVED — gated/bench side lists" note).
+    expect(container.querySelectorAll('table[data-lf-composite]')).toHaveLength(2);
+    const registerTable = screen.getByRole('table', { name: 'Opportunity register' });
+    // Every catalog play plus (once one is added elsewhere) every
+    // Ask-scoped addition — the FULL, unfiltered pool, independent of the
+    // lever-driven funded/gated/bench views (which can legitimately omit
+    // plays this table never does).
+    for (const name of ['Underwriting assist', 'Unified data foundation', 'Complaint analytics', 'Reason-code remediation program']) {
+      expect(within(registerTable).getByText(name)).toBeInTheDocument();
+    }
+    // Default sort is `value` descending (same as the pre-A20 register) —
+    // the highest annual-value play (Underwriting assist, $400k catalog
+    // value) renders first.
+    const firstRow = within(registerTable).getAllByRole('row')[1]; // [0] is the header row
+    expect(firstRow).toHaveTextContent('Underwriting assist');
+  });
+
+  it('a row\'s "Detail →" action opens the SAME local play-detail Drawer this screen\'s own PlanTable/GatedTable/BenchTable "Open" actions already open — no round-trip through onDeepLink needed (§2.9.11 "reached FROM its own now-hosting screen")', () => {
+    const onDeepLink = vi.fn();
+    renderScreen({ onDeepLink });
+    const registerTable = screen.getByRole('table', { name: 'Opportunity register' });
+    const row = within(registerTable).getByRole('row', { name: /Loan-document summarization/ });
+    fireEvent.click(within(row).getByRole('button', { name: 'Detail →' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Loan-document summarization');
+    expect(onDeepLink).not.toHaveBeenCalled();
   });
 });

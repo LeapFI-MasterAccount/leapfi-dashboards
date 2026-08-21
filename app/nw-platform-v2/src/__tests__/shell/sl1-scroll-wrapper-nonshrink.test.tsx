@@ -30,7 +30,6 @@
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { OnSideOwnership } from '../../screens/OnSideOwnership';
-import { StudioAsk } from '../../screens/StudioAsk';
 import { Cases } from '../../screens/Cases';
 import { InvestmentDesign } from '../../screens/InvestmentDesign';
 import { OnSideFeed } from '../../screens/OnSideFeed';
@@ -62,21 +61,17 @@ describe('SL-1 — horizontal-scroll wrappers declare flexShrink: 0 unconditiona
     expectAllNonShrinking(container);
   });
 
-  it('StudioAsk.tsx:346 — Opportunity register wrapper', () => {
-    const { container } = render(<StudioAsk onNavigate={() => {}} />);
-    expectAllNonShrinking(container);
-  });
-
   it('Cases.tsx:250 — Open/Closed cases table wrapper(s)', () => {
     const { container } = render(<Cases topbar={makeTopbarProps()} onNavigate={() => {}} />);
     expectAllNonShrinking(container);
   });
 
-  it('InvestmentDesign.tsx:244 and components/PlanTable.tsx:66 — mini-table and plan-table wrappers', () => {
+  it('InvestmentDesign.tsx:244, components/PlanTable.tsx:66, and the relocated opportunity-register wrapper (amendment A20, design_system_spec.md Section 2.9.11 — moved off StudioAsk.tsx onto this screen) — mini-table, plan-table, and register wrappers', () => {
     const { container } = render(<InvestmentDesign />);
-    // Both InvestmentDesign's own miniTableWrapStyle sites and PlanTable's
-    // own tableWrapStyle render in this one default view.
-    expectAllNonShrinking(container, 2);
+    // InvestmentDesign's own miniTableWrapStyle sites, PlanTable's own
+    // tableWrapStyle, and the relocated opportunity-register's own scroll
+    // wrapper all render in this one default view.
+    expectAllNonShrinking(container, 3);
   });
 
   it("views/HomePanels.tsx:475 — 'Risk posture by domain' table wrapper", () => {
