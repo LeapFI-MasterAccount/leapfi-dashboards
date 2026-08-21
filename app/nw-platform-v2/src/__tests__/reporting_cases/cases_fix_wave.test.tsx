@@ -76,15 +76,27 @@ afterEach(() => {
 
 describe('CS-01 — case actions write the base notify() pipeline (2691/2715)', () => {
   it("analyst Accept unshifts the CRO's email notification (base 2691)", () => {
+    // PI2-D45 (USER OVERRIDE): CASE-2026-001 ('irp', exec tier) now boots
+    // already routed to 'cro' — reset it to a clean, untouched 'analyst'
+    // state so this test can exercise the analyst's own accept action,
+    // same arrangement seedCases() itself used to produce for every case
+    // before the ruling.
+    const c = caseById('CASE-2026-001');
+    c.stage = 'analyst';
+    c.edited = false;
+    c.lang = c.base;
+    c.history = [c.history[c.history.length - 1] as Case['history'][number]];
+    const notifsBaseline = NOTIFS.length;
+
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
     openCaseDetail('CASE-2026-001');
 
     fireEvent.click(screen.getByRole('button', { name: 'Accept & route for approval' }));
-    expect(NOTIFS).toHaveLength(0); // pessimistic: nothing before the commit resolves
+    expect(NOTIFS).toHaveLength(notifsBaseline); // pessimistic: nothing before the commit resolves
     commit();
 
     expect(caseById('CASE-2026-001').stage).toBe('cro');
-    expect(NOTIFS).toHaveLength(1);
+    expect(NOTIFS).toHaveLength(notifsBaseline + 1);
     expect(NOTIFS[0]).toMatchObject({ to: 'cro', cid: 'CASE-2026-001', kind: 'email', read: false });
     expect(String(NOTIFS[0]?.['title'])).toMatch(/^Approval needed · /);
   });
@@ -176,6 +188,15 @@ describe('CS-03 / CS-05 — stage notes carry base copy, not dispatch prose', ()
 
 describe('CS-06 / CS-07 — language editor', () => {
   it('while editing, "Save the language" is the only primary and the Accept primary is not rendered (CS-06)', () => {
+    // PI2-D45 (USER OVERRIDE): CASE-2026-001 boots pre-routed to 'cro' —
+    // reset to a clean, untouched 'analyst' state so the analyst-owned
+    // editor renders (see CS-01's identical arrange step above).
+    const seed = caseById('CASE-2026-001');
+    seed.stage = 'analyst';
+    seed.edited = false;
+    seed.lang = seed.base;
+    seed.history = [seed.history[seed.history.length - 1] as Case['history'][number]];
+
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
     const detail = openCaseDetail('CASE-2026-001');
 
@@ -188,6 +209,13 @@ describe('CS-06 / CS-07 — language editor', () => {
   });
 
   it('re-opening the editor after a revert shows the reverted draft, not the abandoned custom text (CS-07)', () => {
+    // PI2-D45 (USER OVERRIDE): same reset as CS-06 above.
+    const seed = caseById('CASE-2026-001');
+    seed.stage = 'analyst';
+    seed.edited = false;
+    seed.lang = seed.base;
+    seed.history = [seed.history[seed.history.length - 1] as Case['history'][number]];
+
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
     const detail = openCaseDetail('CASE-2026-001');
     const original = caseById('CASE-2026-001').base;
@@ -229,6 +257,16 @@ describe('CS-08 — restored affordances (base doclinks with live twin targets)'
   });
 
   it('renders the in-context switch-user link when persona rows exist, wired to the matching row (base 2835)', () => {
+    // PI2-D45 (USER OVERRIDE): CASE-2026-001 boots pre-routed to 'cro' —
+    // reset to 'analyst' so the CRO is a non-actor here and the "with
+    // Priya" wait note + switch-user link render (same arrange step as
+    // CS-01/CS-06/CS-07 above).
+    const seed = caseById('CASE-2026-001');
+    seed.stage = 'analyst';
+    seed.edited = false;
+    seed.lang = seed.base;
+    seed.history = [seed.history[seed.history.length - 1] as Case['history'][number]];
+
     const priyaPress = vi.fn();
     const topbar = topbarFixture();
     topbar.profileMenuItems = [
@@ -302,6 +340,19 @@ describe('CS-08 — restored affordances (base doclinks with live twin targets)'
 
 describe('CS-09 — a replacement toast gets its own full auto-dismiss window', () => {
   it('the second confirmation toast survives past the first mount’s 5s timer', () => {
+    // PI2-D45 (USER OVERRIDE): CASE-2026-001 ('irp') and CASE-2026-002
+    // ('tprm-program') are both exec tier and now boot pre-routed to
+    // 'cro' — reset both to a clean 'analyst' state so the analyst's
+    // accept/reject actions below are reachable (same arrange step as
+    // CS-01/CS-06/CS-07/CS-08 above).
+    for (const id of ['CASE-2026-001', 'CASE-2026-002']) {
+      const seed = caseById(id);
+      seed.stage = 'analyst';
+      seed.edited = false;
+      seed.lang = seed.base;
+      seed.history = [seed.history[seed.history.length - 1] as Case['history'][number]];
+    }
+
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
 
     // First action: accept case 001 (toast armed at ~t=600).
@@ -333,6 +384,15 @@ describe('CS-09 — a replacement toast gets its own full auto-dismiss window', 
 
 describe('A-overlap-04 — the confirmation toast is no longer wrapped in a fixed top-right mount (base #toast is bottom-center, source 110)', () => {
   it('renders the self-positioning Toast with no screen-level fixed top-right wrapper around it', () => {
+    // PI2-D45 (USER OVERRIDE): CASE-2026-001 boots pre-routed to 'cro' —
+    // reset to 'analyst' so the accept action below is reachable (same
+    // arrange step as CS-01/CS-06/CS-07/CS-08/CS-09 above).
+    const seed = caseById('CASE-2026-001');
+    seed.stage = 'analyst';
+    seed.edited = false;
+    seed.lang = seed.base;
+    seed.history = [seed.history[seed.history.length - 1] as Case['history'][number]];
+
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
 
     openCaseDetail('CASE-2026-001');
@@ -423,7 +483,7 @@ describe("PI2-D5 — 'case'-kind deep link (App.tsx KIND VOCABULARY: id = the Ca
     // pre-populated with the exact matching case, not that the list
     // disappears.
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Open cases' })).toBeInTheDocument();
     expect(onDeepLinkConsumed).toHaveBeenCalledWith(1);
   });
 
@@ -439,7 +499,7 @@ describe("PI2-D5 — 'case'-kind deep link (App.tsx KIND VOCABULARY: id = the Ca
       />,
     );
 
-    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Open cases' })).toBeInTheDocument();
     expect(document.querySelector('[data-lf-view="case-detail"]')).toBeNull();
     expect(onDeepLinkConsumed).not.toHaveBeenCalled();
   });
@@ -456,7 +516,7 @@ describe("PI2-D5 — 'case'-kind deep link (App.tsx KIND VOCABULARY: id = the Ca
       />,
     );
 
-    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Open cases' })).toBeInTheDocument();
     expect(onDeepLinkConsumed).toHaveBeenCalledWith(3);
   });
 });

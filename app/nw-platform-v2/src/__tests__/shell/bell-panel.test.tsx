@@ -30,6 +30,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../../App'
 import { NotificationBellPanel, filterNotifsForRole } from '../../views/NotificationBellPanel'
+import { CASES } from '../../data/cases'
 import type { Notif } from '../../data/cases'
 
 const SEED: Notif[] = [
@@ -104,18 +105,23 @@ describe('bell trigger + panel (base renderBell, source 2631–2641)', () => {
   })
 })
 
-describe('bell through the shell at boot (base seedCases resets NOTIFS=[], source 2593–2603)', () => {
-  it('boot bell is empty for the default CRO persona: no unread badge, honest empty state on open', async () => {
+describe('bell through the shell at boot (PI2-D45 USER OVERRIDE: 5 board/exec-tier cases boot routed to the CRO with seeded notifications — supersedes the prior empty-bell-at-boot ruling)', () => {
+  it('boot bell shows exactly 5 unread items for the default CRO persona, each the shipped "Approval needed" wording', async () => {
     const user = userEvent.setup()
     render(<App />)
 
-    // No unread count in the accessible name at boot (NOTIFS seeded empty).
-    const trigger = screen.getByRole('button', { name: 'Notifications' })
+    const trigger = screen.getByRole('button', { name: 'Notifications, 5 unread' })
+    expect(trigger).toBeInTheDocument()
     await user.click(trigger)
-    expect(
-      screen.getByText('Nothing waiting on you. Cases you are asked to action land here, and by email if the case says so.'),
-    ).toBeInTheDocument()
-    // Panel is titled for the base default persona's role (L823–854: Rachel Fischer CRO).
-    expect(screen.getByRole('group', { name: 'Notifications · Chief Risk Officer' })).toBeInTheDocument()
+
+    const panel = screen.getByRole('group', { name: 'Notifications · Chief Risk Officer' })
+    const rows = within(panel).getAllByRole('button', { name: 'Open' })
+    expect(rows).toHaveLength(5)
+    // Every seeded row carries the shipped notifyCaseRouted wording and
+    // the email+in-app kind (base caseAccept, source 2691).
+    for (const c of CASES.filter((x) => x.tier === 'board' || x.tier === 'exec')) {
+      expect(within(panel).getByText(`Approval needed · ${c.title}`)).toBeInTheDocument()
+    }
+    expect(within(panel).queryByText('Nothing waiting on you. Cases you are asked to action land here, and by email if the case says so.')).not.toBeInTheDocument()
   })
 })

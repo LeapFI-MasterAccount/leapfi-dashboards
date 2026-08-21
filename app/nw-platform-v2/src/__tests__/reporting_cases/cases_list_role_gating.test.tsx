@@ -94,7 +94,10 @@ describe('case-detail role gating (base caseWaitingOn/canAct 2617-2624, osCasePa
   it("CRO viewing an analyst-owned case sees 'This case is with' and ZERO case-action buttons (base 2835)", () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={CRO} />);
 
-    const detail = openCaseDetail('CASE-2026-001');
+    // PI2-D45 (USER OVERRIDE): CASE-2026-001 ('irp', exec tier) now boots
+    // pre-routed to 'cro' — CASE-2026-003 ('aa-procedure', proc tier)
+    // still boots at 'analyst', genuinely owned by the analyst here.
+    const detail = openCaseDetail('CASE-2026-003');
 
     // Waiting note names the stage owner with the base's exact copy (base
     // cwait, 2835: "This case is with <b>P. Raman, Risk Analyst</b>." —
@@ -118,7 +121,8 @@ describe('case-detail role gating (base caseWaitingOn/canAct 2617-2624, osCasePa
   it('the owning role (analyst) sees the accept/reject action pair (base 2830-2834)', () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
 
-    const detail = openCaseDetail('CASE-2026-001');
+    // PI2-D45 (USER OVERRIDE): same substitution as the previous test.
+    const detail = openCaseDetail('CASE-2026-003');
 
     // The affirm/decline pair the dispatch calls "Confirm/Disregard" —
     // base labels pinned verbatim (see file header note).

@@ -46,9 +46,14 @@ describe('Dan flow §2 — five-step walk, drafted-redline case (smoke check)', 
   it('open case -> full document -> redline -> why -> approve from context, without ever leaving the Drawer', async () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
 
-    const caseId = 'CASE-2026-001'; // seedCases' first entry -> doc 'irp'
+    // PI2-D45 (USER OVERRIDE): CASE-2026-001 ('irp', exec tier) now boots
+    // already routed to 'cro' — this smoke walk needs a still-`analyst`-
+    // stage case (proc tier) so step 5's analyst-only accept action is
+    // reachable. CASE-2026-003 ('aa-procedure') is also SIGNAL-untouched
+    // (data/misc.ts), preserving step 4's honest-empty-origin assertion.
+    const caseId = 'CASE-2026-003';
     const docId = CASES.find((c) => c.id === caseId)!.doc;
-    expect(docId).toBe('irp');
+    expect(docId).toBe('aa-procedure');
 
     // Step 1 — open case.
     openRow(caseId);

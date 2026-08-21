@@ -133,23 +133,42 @@ describe('data/cases.ts vs base 2544–2768 (CASES + state machine seed)', () =>
     seedCases(DOCLIB) // base seedCases(), 2587–2604 — seeds from the 8 redline docs
   })
 
-  it('seeds exactly 8 cases in the base doc order with sequential ids (base 2590–2603)', () => {
+  it('seeds exactly 8 cases with ids sequential to the base doc order (base 2590–2603), PI2-D45 (further USER OVERRIDE) reorders the ARRAY only', () => {
     expect(CASES).toHaveLength(8)
-    expect(CASES.map((c) => c.id)).toEqual([
-      'CASE-2026-001',
-      'CASE-2026-002',
-      'CASE-2026-003',
-      'CASE-2026-004',
-      'CASE-2026-005',
-      'CASE-2026-006',
-      'CASE-2026-007',
-      'CASE-2026-008',
-    ])
+    // id assignment is still exactly the base doc-order sequence — a
+    // per-doc, order-independent fact (each doc always gets the same id).
+    expect(CASES.map((c) => c.doc).sort()).toEqual(
+      [
+        'irp',
+        'tprm-program',
+        'aa-procedure',
+        'mrm-change-draft',
+        'msg-disclosure',
+        'rege-proc',
+        'gov-charter',
+        'gen-ai-draft',
+      ].sort(),
+    )
+    expect(Object.fromEntries(CASES.map((c) => [c.doc, c.id]))).toEqual({
+      irp: 'CASE-2026-001',
+      'tprm-program': 'CASE-2026-002',
+      'aa-procedure': 'CASE-2026-003',
+      'mrm-change-draft': 'CASE-2026-004',
+      'msg-disclosure': 'CASE-2026-005',
+      'rege-proc': 'CASE-2026-006',
+      'gov-charter': 'CASE-2026-007',
+      'gen-ai-draft': 'CASE-2026-008',
+    })
+    // PI2-D45 (further USER OVERRIDE, narrative verification): the CASES
+    // array itself is reordered so mrm-change-draft is the CRO's FIRST
+    // routed case (`views/HomePanels.tsx`'s "Your queue" Approve consumes
+    // raw CASES order — see `data/cases.ts` seedCases()'s own trailing
+    // reorder step) — every other case's relative order is unchanged.
     expect(CASES.map((c) => c.doc)).toEqual([
+      'mrm-change-draft',
       'irp',
       'tprm-program',
       'aa-procedure',
-      'mrm-change-draft',
       'msg-disclosure',
       'rege-proc',
       'gov-charter',
@@ -157,7 +176,7 @@ describe('data/cases.ts vs base 2544–2768 (CASES + state machine seed)', () =>
     ])
   })
 
-  it('sentinel CASE-2026-001 matches base joins: owner 2583, detected 2582, tier 2559, stage analyst, lang===base', () => {
+  it('sentinel CASE-2026-001 matches base joins: owner 2583, detected 2582, tier 2559, lang===base (PI2-D45 USER OVERRIDE: exec tier boots routed to cro)', () => {
     const first = CASES.find((c) => c.id === 'CASE-2026-001')
     expect(first).toMatchObject({
       doc: 'irp',
@@ -165,12 +184,16 @@ describe('data/cases.ts vs base 2544–2768 (CASES + state machine seed)', () =>
       owner: 'P. Nguyen · ISD', // CASE_OWNER['irp'], base 2583
       detected: 'Aug 14, 2026', // CASE_DETECTED['irp'], base 2582
       tier: 'exec', // CASE_TIER['irp'], base 2559
-      stage: 'analyst',
+      // PI2-D45 (USER OVERRIDE): every board/exec-tier case boots already
+      // routed to the CRO ("accept as drafted" — no analystEdit exists for
+      // 'irp' in doclib.ts, so edited stays false and lang stays === base).
+      stage: 'cro',
       edited: false,
     })
-    expect(first?.lang).toBe(first?.base) // both start as d.redline.nw (base 2599)
-    expect(first?.history.map((h) => h.who)).toEqual(['OnSide'])
-    expect(first?.history.map((h) => h.when)).toEqual(['Aug 14, 2026 · 6:12 AM ET']) // fixed demo-date fabric (rule (d)10)
+    expect(first?.lang).toBe(first?.base) // both start as d.redline.nw (base 2599), untouched by the accept-as-drafted replay
+    expect(first?.history.map((h) => h.who)).toEqual(['Priya Raman', 'OnSide'])
+    expect(first?.history.map((h) => h.what)).toEqual(['Accepted as drafted and routed for approval', 'Change detected and language proposed'])
+    expect(first?.history[1]?.when).toBe('Aug 14, 2026 · 6:12 AM ET') // fixed demo-date fabric (rule (d)10), the original OnSide entry untouched
   })
 
   it('CASE_TIER byte-matches base 2559', () => {
