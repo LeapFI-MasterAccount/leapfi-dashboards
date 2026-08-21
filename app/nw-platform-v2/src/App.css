@@ -1,0 +1,51 @@
+/*
+ * Structural CSS — shared byte-identical between dark and light themes
+ * (lightmode_amendment_proposal.md S7: "one structural CSS ... only the
+ * color custom properties swap"). All colors below reference the custom
+ * properties defined in src/theme/tokens.css — no hex literals here.
+ *
+ * Typography: brand_doctrine.md "Typography" — Inter is the only approved
+ * typeface, fallback Inter -> Helvetica Neue -> Helvetica -> Arial ->
+ * sans-serif. This build ships no embedded font binary and fetches
+ * nothing at runtime (D11 self-contained-build requirement): the stack
+ * below resolves to Inter when the OS/browser already has it installed,
+ * and falls through the doctrine's own fallback chain otherwise — never
+ * `system-ui`/`-apple-system` as the primary declaration, per doctrine.
+ *
+ * Base document reset only. The D13 placeholder scaffold's own markup
+ * (`.app-shell`/`.app-header`/`.theme-toggle`/`.token-preview`/etc.) was
+ * removed here in the shell-assembly dispatch (App.tsx rewrite): every
+ * screen and shell composite in this codebase styles itself entirely via
+ * inline `CSSProperties` referencing `var(--token)` (see any file under
+ * `src/screens/` or `src/components/` for the established convention), so
+ * App.tsx renders no element that references a class from this file — the
+ * scaffold-era rules were dead weight once that markup was gone, including
+ * the raw-hex `.app-chevron` gradient this project's styling rule forbids
+ * (`color: var(--token)` only). Nothing in this file replaces them; the
+ * shell has no global CSS needs beyond this reset.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    Inter,
+    'Helvetica Neue',
+    Helvetica,
+    Arial,
+    sans-serif;
+  background-color: var(--bg);
+  color: var(--ink);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}

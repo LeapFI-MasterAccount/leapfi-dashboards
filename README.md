@@ -10,6 +10,19 @@ Sites reflects the change automatically. You never re-edit Sites after initial s
 - Base URL: https://leapfi-masteraccount.github.io/leapfi-dashboards
 - Each Google Sites page has one **Embed > By URL** block pointing at a dashboard URL.
 
+## Current state (PI-3, rev-88)
+
+- The NorthWinds v2 demo app lives at `app/nw-platform-v2/` (React 18 + TypeScript strict,
+  Vite single-file build). Its build output is the generated artifact
+  `src/leapfi-platform-v2.html` — never hand-edit it.
+- `src/leapfi-platform.html` (v1) is READ-ONLY; every publish verifies it byte-identical.
+- Publishing runs `publish.py --push` ONLY in an isolated worktree of `main`
+  (`wt/publish-rev73`), sourcing from committed origin state. Each publish is tagged `rev-N`;
+  rollback is forward-only: `git checkout rev-<N> -- src docs`, republish.
+- Tests: `cd app/nw-platform-v2 && npx vitest run && npx tsc --noEmit`.
+- Program records (plans, ledgers, decisions, writeups) live in the `leapfi-documentation`
+  repo under `08_Programs/` — GitHub is the system of record.
+
 ## Everyday workflow
 1. Put your latest dashboard HTML files in `src/` (one file per dashboard).
    Keep the **filename stable** so the published URL stays stable.
