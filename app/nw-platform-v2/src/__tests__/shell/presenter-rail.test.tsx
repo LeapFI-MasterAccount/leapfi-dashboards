@@ -67,6 +67,26 @@ describe('script data + target resolution (demo_script_draft.md §1/§3; base go
     expect(resolveTarget('onside:dom-mrm')).toBe('onside.documents')
   })
 
+  it('D16: the TPRM demo-arc close-beat target onside:dom-tprm resolves via the RAIL-10 dom- rule to onside.documents, not a fabricated placeholder', () => {
+    expect(resolveTarget('onside:dom-tprm')).toBe('onside.documents')
+  })
+
+  it('D17: onside:overview resolves to the already-shipped onside.overview screen (one additive RAIL-10-style branch)', () => {
+    expect(resolveTarget('onside:overview')).toBe('onside.overview')
+  })
+
+  it('D17 addition leaves every other resolveTarget branch unaffected', () => {
+    for (const [target, screenId] of STEP_SCREEN_TABLE) {
+      expect(resolveTarget(target), `resolveTarget(${target})`).toBe(screenId)
+    }
+    expect(resolveTarget('onside:src:ffiec')).toBe('onside.feed')
+    expect(resolveTarget('onside:case:CASE-2026-001')).toBe('cases')
+    expect(resolveTarget('onside:dom-mrm')).toBe('onside.documents')
+    expect(resolveTarget('go:onside')).toBeNull()
+    expect(resolveTarget('studio:register')).toBeNull()
+    expect(resolveTarget('onside:unknownview')).toBeNull()
+  })
+
   it("step 5's rail title carries the trademark (RAIL-07; demo_script_draft.md §1 line 37 / §2 line 163, brand_doctrine.md line 59)", () => {
     expect(SCRIPT_CEO[4]?.title).toBe('Out of Pilot Purgatory™')
   })

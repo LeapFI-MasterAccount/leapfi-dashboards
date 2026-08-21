@@ -182,6 +182,7 @@ export type ScriptTargetId =
   | 'studio.investment-design'
   | 'studio.roadmap'
   | 'cases' // RAIL-10: onside:case:<id> deep links land on the built Cases screen
+  | 'onside.overview' // D17: onside:overview → the already-shipped OnSideOverview screen
   | 'board-deck';
 
 /**
@@ -224,6 +225,13 @@ export function resolveTarget(target: string): ScriptTargetId | null {
   if (target.startsWith('onside:src:')) return 'onside.feed';
   if (target.startsWith('onside:case:')) return 'cases';
   if (target.startsWith('onside:dom-')) return 'onside.documents';
+  // D17: onside:overview → the already-shipped OnSideOverview screen (its
+  // own region map — KPI strip + all-domain posture grid — IS the
+  // "at-a-glance view of multiple frameworks and domains" call-17 asks for;
+  // no dedicated NIST screen needed). RAIL-10-style: one additive branch
+  // resolving a grammatically-valid onside:<view> token onto a real, built
+  // screen id, nothing fabricated.
+  if (target === 'onside:overview') return 'onside.overview';
   if (target.startsWith('onside:')) return null;
 
   if (target === 'deck:board') return 'board-deck';
