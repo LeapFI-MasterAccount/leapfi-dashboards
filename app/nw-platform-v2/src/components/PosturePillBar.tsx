@@ -56,25 +56,61 @@
  *   3. Clear now/goal markers + unmistakable on-target state: the "now"
  *      (current) ring is thickened for a clearer marker; when a segment
  *      is BOTH current and target (a domain already sitting at its own
- *      goal), it gets the goal's solid fill PLUS a thickened ring PLUS a
- *      `--bg`-colored boundary ring (`boxShadow`) — a combination neither
- *      "now, not yet at goal" (ring only) nor "goal, not yet reached"
- *      (fill only) carries alone, so the on-target case reads strictly
- *      stronger than either. This is IN ADDITION to, not instead of, the
- *      adjacent Status Tag every PosturePillBar consumer already renders
- *      next to it (D2: "already met by PosturePillBar's target-band fill
- *      + Status Tag").
+ *      goal), it gets the goal's solid fill PLUS a thickened ring PLUS an
+ *      `--ink`-colored boundary ring (`boxShadow`) PLUS an explicit
+ *      "target met" text marker (see HR-A11Y-01 fix note below) — a
+ *      combination neither "now, not yet at goal" (ring only) nor "goal,
+ *      not yet reached" (fill only) carries alone, so the on-target case
+ *      reads strictly stronger than either, through both a visual and a
+ *      text/assistive-tech channel. This is IN ADDITION to, not instead
+ *      of, the adjacent Status Tag every PosturePillBar consumer already
+ *      renders next to it (D2: "already met by PosturePillBar's
+ *      target-band fill + Status Tag").
+ *
+ * HR-A11Y-01 FIX (S2, hostile review, CONFIRMED) — the re-skin's original
+ * on-target treatment used a `--bg`-colored ring and relied entirely on
+ * `PostureSegment.label`'s own suffix text (computed upstream in
+ * `engine/plan.ts`, out of this file) for the "unmistakable" claim. Two
+ * independently-reproduced defects: (1) `var(--bg)` is near-identical in
+ * luminance to both real rendering contexts this ring ever sits against
+ * (a panel-seated card via `--panel`, or the page background itself via
+ * `--bg` directly on `TprmDomain.tsx`'s unwrapped mount) — 1.151:1 dark /
+ * 1.096:1 light against `--panel`, and exactly 1:1 (self-colored, zero
+ * signal) against `--bg`; (2) the on-target label text is byte-identical
+ * to a plain current-only label (`' • now'`, never mentioning "goal"),
+ * contradicting this file's own a11y baseline ("Segment meaning is
+ * labelled in text, never conveyed by color alone"). Fixed entirely
+ * within this file, no new token:
+ *   - Ring recolored `--bg` -> `--ink` (already consumed by this file's
+ *     plain-current branch) — `--ink` clears >4.5:1 against BOTH
+ *     `--panel` and `--bg` in both themes (see contrast table below),
+ *     so the ring is now genuinely visible in every real consumer
+ *     context, not merely present in the DOM.
+ *   - An explicit on-target text marker is now rendered alongside
+ *     `segment.label` (this component's own markup, not a change to the
+ *     upstream label computation in `engine/plan.ts`, which stays out of
+ *     this dispatch's allowlist): a decorative `aria-hidden` checkmark
+ *     for sighted users plus a visually-hidden ("sr-only", the same
+ *     absolute-clip recipe already used elsewhere in this codebase, e.g.
+ *     `DataTable.tsx`) " — target met" string, so a screen-reader user
+ *     hears the on-target fact explicitly instead of the same "<band> •
+ *     now" phrase a merely-current, not-yet-at-target segment produces.
  *
  * Contrast (independently recomputed from tokens.css hex, WCAG
- * relative-luminance, both themes — every pairing below is UNCHANGED from
- * the pre-re-skin component, since only geometry/weight moved):
- *   dark  target/on-target  bg(#000000) on accent(#00f2ff)   = 15.14:1
- *   dark  current           ink(#ffffff) on panel(#0d1525)   = 18.24:1
- *   dark  between/default   chart-axis(#7c8ca3) on panel     =  5.33:1 (D2b)
- *   light target/on-target  bg(#ffffff) on accent(#006d75)   =  6.10:1 (D2b)
- *   light current           ink(#0a2342) on panel(#f1f5f9)   = 14.39:1 (D2b)
- *   light between/default   chart-axis(#5a6b82) on panel     =  4.97:1 (D2b)
- * All six clear the 4.5:1 AA text floor in both themes.
+ * relative-luminance, both themes):
+ *   dark  target/on-target fill  bg(#000000) on accent(#00f2ff)  = 15.14:1
+ *   dark  on-target ring         ink(#ffffff) on panel(#0d1525)  = 18.24:1
+ *   dark  on-target ring (page)  ink(#ffffff) on bg(#000000)     = 21.00:1
+ *   dark  current                ink(#ffffff) on panel(#0d1525)  = 18.24:1
+ *   dark  between/default        chart-axis(#7c8ca3) on panel    =  5.33:1 (D2b)
+ *   light target/on-target fill  bg(#ffffff) on accent(#006d75)  =  6.10:1 (D2b)
+ *   light on-target ring         ink(#0a2342) on panel(#f1f5f9)  = 14.39:1 (D2b)
+ *   light on-target ring (page)  ink(#0a2342) on bg(#ffffff)     = 14.39:1
+ *   light current                ink(#0a2342) on panel(#f1f5f9)  = 14.39:1 (D2b)
+ *   light between/default        chart-axis(#5a6b82) on panel    =  4.97:1 (D2b)
+ * Every pairing clears the WCAG 1.4.11 non-text 3:1 floor (the on-target
+ * ring rows) and the 4.5:1 AA text floor (the rest), in both themes and
+ * both real consumer backgrounds (`--panel`-seated and page-level `--bg`).
  *
  * HOME-06 fold-in (00-scope.md r15c) — read against this lane's allowlist:
  * see this dispatch's own evidence return for the STOP-item on the literal
@@ -149,15 +185,35 @@ const baseSegmentStyle: CSSProperties = {
 // current+target (on-target) cases below.
 const TARGET_PADDING = '0.5rem 0.85rem';
 
+// HR-A11Y-01 fix — visually-hidden (sr-only) recipe, the same
+// absolute-clip pattern already used elsewhere in this codebase (e.g.
+// `DataTable.tsx`'s `srOnlyStyle`): announces the on-target fact to
+// assistive tech without duplicating this component's inline layout.
+const srOnlyStyle: CSSProperties = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0,0,0,0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
+
 function segmentStyle(segment: PostureSegment): CSSProperties {
   if (segment.isCurrent && segment.isTarget) {
     // On-target now: the domain's current band already IS its own goal.
-    // Gets the goal's solid fill AND the current ring (thickened) AND a
-    // --bg-colored boundary ring (boxShadow) — a combination neither
+    // Gets the goal's solid fill AND the current ring (thickened) AND an
+    // --ink-colored boundary ring (boxShadow) — a combination neither
     // "now, not yet at goal" nor "goal, not yet reached" carries alone,
     // so this reads unmistakably stronger than either (D2: "unmistakable
-    // on-target state"). No new color: --accent/--bg only, both already
-    // used elsewhere in this component.
+    // on-target state"). HR-A11Y-01 fix: --bg -> --ink (--ink already
+    // consumed by this file's plain-current branch below) — --bg was
+    // near-invisible against both real consumer backgrounds (see file
+    // header contrast table); --ink clears >4.5:1 against both.
     return {
       ...baseSegmentStyle,
       background: 'var(--accent)',
@@ -166,7 +222,7 @@ function segmentStyle(segment: PostureSegment): CSSProperties {
       borderWidth: 3,
       fontWeight: 800,
       padding: TARGET_PADDING,
-      boxShadow: '0 0 0 2px var(--bg)',
+      boxShadow: '0 0 0 2px var(--ink)',
     };
   }
   if (segment.isTarget) {
@@ -201,11 +257,28 @@ export function PosturePillBar({ segments, state = 'default' }: PosturePillBarPr
       data-state={state}
       style={{ ...listStyle, opacity: state === 'updating' ? 0.6 : 1 }}
     >
-      {segments.map((segment) => (
-        <li key={segment.index} role="listitem" style={segmentStyle(segment)} aria-current={segment.isCurrent ? 'true' : undefined}>
-          {segment.label}
-        </li>
-      ))}
+      {segments.map((segment) => {
+        const onTarget = segment.isCurrent && segment.isTarget;
+        return (
+          <li key={segment.index} role="listitem" style={segmentStyle(segment)} aria-current={segment.isCurrent ? 'true' : undefined}>
+            {segment.label}
+            {onTarget ? (
+              // HR-A11Y-01 fix: an explicit on-target marker independent of
+              // `segment.label` (computed upstream in `engine/plan.ts`,
+              // out of this file's allowlist, and byte-identical to a
+              // plain current-only label — " • now", never "goal"). The
+              // decorative checkmark gives sighted users a text-carried
+              // (never color-only) signal; the sr-only span gives
+              // screen-reader users the fact this segment's shared label
+              // text never states.
+              <>
+                <span aria-hidden="true"> ✓</span>
+                <span style={srOnlyStyle}> — target met</span>
+              </>
+            ) : null}
+          </li>
+        );
+      })}
     </ul>
   );
 }
