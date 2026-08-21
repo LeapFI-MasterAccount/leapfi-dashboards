@@ -13,14 +13,15 @@
  * tests `AskChatPanel`'s own generic behavior against a small inline
  * config, not this integration seam.
  */
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ONSIDE_CHAT_MODULE_CONFIG, STUDIO_CHAT_MODULE_CONFIG } from '../../data/askChatModuleConfig';
 import { ONSIDE_CHAT, STUDIO_CHAT } from '../../data/askChat';
 import { OnSideFeed } from '../../screens/OnSideFeed';
 import { OnSideOverview } from '../../screens/OnSideOverview';
 import { StudioAsk } from '../../screens/StudioAsk';
+import { resetDemo } from '../../state/demoStore';
 
 /**
  * Open the given module's chat trigger and wait for the Drawer's own
@@ -35,6 +36,27 @@ async function openChat(user: ReturnType<typeof userEvent.setup>, triggerName: s
   const heading = await screen.findByRole('heading', { name: dialogName });
   await waitFor(() => expect(heading).toHaveFocus());
   return screen.getByRole('dialog', { name: dialogName });
+}
+
+/**
+ * Amendment A20 (PI2-D47, design_system_spec.md Section 2.9.8): `StudioAsk.tsx`
+ * no longer opens a Drawer for its scripted content — the screen ITSELF is
+ * the agent chat (chat bar at the top, driving the response canvas). This
+ * drives the SAME `handleAsk`/ASK_SUBMIT_DELAY_MS(350)/
+ * ASK_RENDER_DELAY_MS(450) real-timer flow `studio-ask-a20-agent-canvas.
+ * test.tsx` exercises, so this helper uses fake timers like that suite.
+ */
+function askOnStudioAsk(question: string) {
+  const main = within(screen.getByRole('main'));
+  const input = main.getByRole('textbox', { name: STUDIO_CHAT_MODULE_CONFIG.inputLabel });
+  fireEvent.change(input, { target: { value: question } });
+  fireEvent.click(main.getByRole('button', { name: 'Ask' }));
+  act(() => {
+    vi.advanceTimersByTime(350);
+  });
+  act(() => {
+    vi.advanceTimersByTime(450);
+  });
 }
 
 describe('askChatModuleConfig — entries sourced from data/askChat.ts by import, not copied', () => {
@@ -60,13 +82,12 @@ describe('Ask OnSide — real suggestion chips render (regression: was zero chip
   });
 });
 
-describe('Ask Studio — real suggestion chips render (regression: was zero chips, entries: [])', () => {
-  it('opening "Ask Studio" from Studio · Ask shows every STUDIO_CHAT.entries question as a suggestion Chip', async () => {
-    const user = userEvent.setup();
+describe('Ask Studio (amendment A20) — real suggestion chips render on StudioAsk\'s own chat bar (regression: was zero chips, entries: [])', () => {
+  it('StudioAsk\'s top chat bar shows every STUDIO_CHAT.entries question as a suggestion Chip, with no Drawer/trigger needed — the screen itself is the chat (Section 2.9.8)', () => {
     render(<StudioAsk onNavigate={() => {}} />);
-    const dialog = await openChat(user, 'Ask Studio', 'Studio chat');
+    const main = within(screen.getByRole('main'));
     for (const entry of STUDIO_CHAT.entries) {
-      expect(within(dialog).getByText(entry.question)).toBeInTheDocument();
+      expect(main.getByText(entry.question)).toBeInTheDocument();
     }
   });
 });
@@ -84,16 +105,21 @@ describe('Ask OnSide — selecting a real scripted question renders its real res
   });
 });
 
-describe('Ask Studio — selecting a real scripted question renders its real responseText', () => {
-  it('typing the exact question and pressing Ask renders the scripted answer (regression: was always defaultNoMatchMessage, entries: [])', async () => {
-    const user = userEvent.setup();
+describe('Ask Studio (amendment A20) — selecting a real scripted question renders its real responseText on the response canvas', () => {
+  beforeEach(() => {
+    resetDemo();
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('typing the exact question and pressing Ask renders the scripted answer (regression: was always defaultNoMatchMessage, entries: [])', () => {
     const entry = STUDIO_CHAT.entries.find((e) => e.id === 'studio-blocker-underwriting-assist')!;
     render(<StudioAsk onNavigate={() => {}} />);
-    const dialog = await openChat(user, 'Ask Studio', 'Studio chat');
-    await user.type(within(dialog).getByLabelText(STUDIO_CHAT_MODULE_CONFIG.inputLabel), entry.question);
-    await user.click(within(dialog).getByRole('button', { name: 'Ask' }));
-    expect(await within(dialog).findByText(entry.responseText)).toBeInTheDocument();
-    expect(within(dialog).queryByText(STUDIO_CHAT_MODULE_CONFIG.defaultNoMatchMessage)).not.toBeInTheDocument();
+    askOnStudioAsk(entry.question);
+    expect(screen.getByText(entry.responseText)).toBeInTheDocument();
+    expect(screen.queryByText(STUDIO_CHAT_MODULE_CONFIG.defaultNoMatchMessage)).not.toBeInTheDocument();
   });
 });
 
@@ -114,18 +140,23 @@ describe('Ask OnSide — a scripted deep link fires the existing DeepLinkRequest
   });
 });
 
-describe('Ask Studio — a scripted deep link fires the existing DeepLinkRequest path end to end', () => {
-  it('selecting the deep link on a real Studio answer calls onDeepLink with the exact request payload authored in data/askChat.ts', async () => {
-    const user = userEvent.setup();
+describe('Ask Studio (amendment A20) — a scripted deep link fires the existing DeepLinkRequest path end to end, from the response canvas\'s own Artifacts list', () => {
+  beforeEach(() => {
+    resetDemo();
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('selecting the Artifacts link on a real Studio answer calls onDeepLink with the exact request payload authored in data/askChat.ts', () => {
     const onDeepLink = vi.fn();
     const entry = STUDIO_CHAT.entries.find((e) => e.id === 'studio-blocker-underwriting-assist')!;
     const playLink = entry.deepLinks![0]!;
     render(<StudioAsk onNavigate={() => {}} onDeepLink={onDeepLink} />);
-    const dialog = await openChat(user, 'Ask Studio', 'Studio chat');
-    await user.type(within(dialog).getByLabelText(STUDIO_CHAT_MODULE_CONFIG.inputLabel), entry.question);
-    await user.click(within(dialog).getByRole('button', { name: 'Ask' }));
-    const link = await within(dialog).findByRole('button', { name: new RegExp(playLink.label) });
-    await user.click(link);
+    askOnStudioAsk(entry.question);
+    const link = screen.getByRole('button', { name: new RegExp(playLink.label) });
+    fireEvent.click(link);
     expect(onDeepLink).toHaveBeenCalledTimes(1);
     expect(onDeepLink).toHaveBeenCalledWith(playLink.request);
   });
@@ -150,12 +181,11 @@ describe('Context scoping — OnSide content and Studio content never cross into
     }
   });
 
-  it('no OnSide question is reachable from the rendered "Ask Studio" chat', async () => {
-    const user = userEvent.setup();
+  it('no OnSide question is reachable from StudioAsk\'s own chat bar (amendment A20 — the screen itself is the chat, no Drawer)', () => {
     render(<StudioAsk onNavigate={() => {}} />);
-    const dialog = await openChat(user, 'Ask Studio', 'Studio chat');
+    const main = within(screen.getByRole('main'));
     for (const entry of ONSIDE_CHAT.entries) {
-      expect(within(dialog).queryByText(entry.question)).not.toBeInTheDocument();
+      expect(main.queryByText(entry.question)).not.toBeInTheDocument();
     }
   });
 });

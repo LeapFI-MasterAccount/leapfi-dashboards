@@ -58,11 +58,18 @@ import { Label } from './primitives/Label';
 /** `'source'` added by the T6.3 follow-up (OnSideFeed.tsx's own W1
  * "AMBIGUITY RESOLVED" STOP-item: the source-connector detail rendered
  * `kind="signal"` only because this literal was missing and this file was
- * out of that dispatch's allowlist). `kind` remains a non-structural
- * `data-kind` hint — no branching. NOTE for the gate dispatch: OnSideFeed.tsx
- * still passes `kind="signal"` for its source detail; flip that literal to
- * `"source"` there (out of the reporting batch's allowlist). */
-export type DrawerContentKind = 'signal' | 'play' | 'doc' | 'source';
+ * out of that dispatch's allowlist). `'domain'` added by amendment A20
+ * (design_system_spec.md Section 2.9.9, PI2-D47) — StudioAsk's response canvas
+ * `compliance-attainment` layout mounts DrawerContent with `kind: 'domain'`
+ * for an OnSide domain's posture (fields: Regulatory bodies/Owner; tags:
+ * status; actions: "See in OnSide"). Same non-structural, additive,
+ * "purely a semantic/data-attribute hint" widening this file's own header
+ * already establishes for `kind` in general — an R-2 extension, never a
+ * new composite. `kind` remains a non-structural `data-kind` hint — no
+ * branching. NOTE for the gate dispatch: OnSideFeed.tsx still passes
+ * `kind="signal"` for its source detail; flip that literal to `"source"`
+ * there (out of the reporting batch's allowlist). */
+export type DrawerContentKind = 'signal' | 'play' | 'doc' | 'source' | 'domain';
 
 /** One Label+value pair (spec: "field rows (Label+value pairs)"). */
 export interface DrawerContentField {

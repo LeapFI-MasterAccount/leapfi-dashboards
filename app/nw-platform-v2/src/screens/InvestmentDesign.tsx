@@ -168,13 +168,15 @@
  * installed" STOP-item is stale and removed — the T6.5 regression-suite
  * dispatch installed vitest + @testing-library for the whole worktree.)
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { SliderControlRow } from '../components/SliderControlRow';
 import { PlanTable } from '../components/PlanTable';
 import { Drawer } from '../components/Drawer';
 import { DrawerContent } from '../components/DrawerContent';
 import type { DrawerContentAction, DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
+import { DataTable } from '../components/DataTable';
+import type { DataTableColumn } from '../components/DataTable';
 import { Tag } from '../components/primitives/Tag';
 import { Button } from '../components/primitives/Button';
 import { Label } from '../components/primitives/Label';
@@ -183,7 +185,7 @@ import { deriveRecomputeView, fmt, riskLabel } from '../engine/plan';
 import type { SliderState, PlanOpportunity, PlanTableRow, GatedRow, BenchRow, Levers } from '../engine/plan';
 import { OPPS, DETAIL, CTRL, CTRLDOM, GREEN, GOV, REGMAP } from '../data/studio';
 import type { StudioPlayDetail } from '../data/studio';
-import { setDemoSliders, useDemoStore } from '../state/demoStore';
+import { adoptionScaledValue, setDemoSliders, useDemoStore } from '../state/demoStore';
 import { STUDIO_CHAT_MODULE_CONFIG } from '../data/askChatModuleConfig';
 import type { DeepLinkRequest, DeepLinkScreenProps } from '../App';
 
@@ -237,6 +239,29 @@ const miniTdStyle: CSSProperties = { background: 'var(--panel)', borderTop: '1px
 const miniTdNameStyle: CSSProperties = { ...miniTdStyle, borderLeft: '1px solid var(--border)', borderRadius: '0.625rem 0 0 0.625rem', fontWeight: 700 };
 const miniTdLastStyle: CSSProperties = { ...miniTdStyle, borderRight: '1px solid var(--border)', borderRadius: '0 0.625rem 0.625rem 0' };
 const emptyNoteStyle: CSSProperties = { font: 'inherit', fontSize: '0.8125rem', color: 'var(--ink2)', margin: 0 };
+/** Amendment A20 (PI2-D47, design_system_spec.md §2.9.11) — the opportunity
+ * register's new home, relocated verbatim off `StudioAsk.tsx`: same
+ * columns/live subscription/ordering/default sort/live-region announcement,
+ * `flexShrink: 0` per SL-1 (design_system_spec.md §3.3, unconditional
+ * non-shrink invariant every horizontal-scroll wrapper in this codebase
+ * declares). */
+const registerScrollWrapStyle: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
+const REGISTER_HIGHLIGHT_MS = 1800;
+// Visually-hidden recipe — `top`/`left` pinned to 0 is load-bearing; see
+// the invariant note on `DataTable.tsx`'s `srOnlyStyle`.
+const SR_ONLY_STYLE: CSSProperties = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0,0,0,0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
 
 export interface InvestmentDesignProps extends DeepLinkScreenProps {
   /** Testing/override hook. Defaults to `INITIAL_SLIDERS` (the corrected survey_map.md §a defaults, G7 fix applied). */
@@ -435,6 +460,41 @@ function buildPlayDrawerContent(
   return { fields, tags, actions };
 }
 
+/**
+ * Amendment A20 (PI2-D47, design_system_spec.md §2.9.11) — the opportunity
+ * register's columns, relocated VERBATIM off `StudioAsk.tsx`'s pre-A20
+ * register `DataTable`: same columns (Opportunity + "From Ask" `hitl` Tag,
+ * Category, Build cost, Annual value, Horizon, Weakest control gate), same
+ * default sort (`value`, descending).
+ */
+const registerColumns: DataTableColumn<PlanOpportunity>[] = [
+  {
+    id: 'name',
+    header: 'Opportunity',
+    sortable: true,
+    sortValue: (row) => row.n,
+    render: (row) => (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+        {row.n}
+        {row.disc ? <Tag text="From Ask" variant="hitl" /> : null}
+      </span>
+    ),
+  },
+  { id: 'category', header: 'Category', render: (row) => <span>{row.c}</span> },
+  { id: 'cost', header: 'Build cost', align: 'end', sortable: true, sortValue: (row) => row.cost, render: (row) => <span>{fmt(row.cost)}</span> },
+  {
+    id: 'value',
+    header: 'Annual value',
+    align: 'end',
+    sortable: true,
+    sortValue: (row) => row.val,
+    // Adoption-scaled at the LIVE levers, same as the pre-A20 register cell.
+    render: (row) => <span>{fmt(adoptionScaledValue(row.val))}/yr at adoption</span>,
+  },
+  { id: 'horizon', header: 'Horizon', render: (row) => <span style={{ textTransform: 'capitalize' }}>{row.h}</span> },
+  { id: 'gate', header: 'Weakest control gate', render: (row) => <span>{row.weakGate} · {row.minGate}</span> },
+];
+
 /** Fix B-dead-interactions-05: the base styled these exact rows as
  * clickable openPlay targets (`.gated-row[data-play]{cursor:pointer}` +
  * hover, leapfi-platform.html:309-310; delegated click, 4493-4497) — this
@@ -551,11 +611,42 @@ export function InvestmentDesign({
   // (§2.9.5 fresh-open reseed, AC-A16-8).
   const [chatOpen, setChatOpen] = useState(false);
   const [chatOpenNonce, setChatOpenNonce] = useState(0);
+  /** Amendment A20 (§2.9.11) — the relocated register's own live-addition
+   * announcement + row highlight, ported verbatim off `StudioAsk.tsx`'s
+   * pre-A20 `announceRegistered`/`justRegisteredId` (STU-06's "announced
+   * ONLY when a row is actually added" discipline). Additions can land
+   * from THIS screen's own future writes or from another screen (e.g.
+   * StudioAsk's chat-driven `acceptOpportunity` calls) — either way the
+   * shared `OPPS.length` growth is what this screen reacts to. */
+  const [justRegisteredId, setJustRegisteredId] = useState<string | null>(null);
+  const [registerAnnouncement, setRegisterAnnouncement] = useState('');
+  const registerOppsLengthRef = useRef(OPPS.length);
+  const registerTimeoutRef = useRef<number | undefined>(undefined);
 
   // Subscribes to the shared demo store so the live opportunity pool
   // (Discovery-accepted plays pushed by demoStore.acceptOpportunity) is
   // reflected on every store write.
   useDemoStore();
+
+  // Amendment A20 (§2.9.11) — announces + highlights the newest register
+  // row whenever the live OPPS pool actually GREW since the last render
+  // (never re-announced for an unchanged table, STU-06's own discipline).
+  // `OPPS.length` is read fresh from the module-level pool on every render
+  // this screen's `useDemoStore()` subscription re-renders for.
+  useEffect(() => {
+    if (OPPS.length > registerOppsLengthRef.current) {
+      const newest = OPPS[OPPS.length - 1];
+      if (newest) {
+        setJustRegisteredId(newest.n);
+        setRegisterAnnouncement(
+          `New opportunity registered: ${newest.n} — ${fmt(adoptionScaledValue(newest.val))}/yr at adoption, gated on ${newest.g.join(', ')}.`,
+        );
+        if (registerTimeoutRef.current !== undefined) window.clearTimeout(registerTimeoutRef.current);
+        registerTimeoutRef.current = window.setTimeout(() => setJustRegisteredId(null), REGISTER_HIGHLIGHT_MS);
+      }
+    }
+    registerOppsLengthRef.current = OPPS.length;
+  }, [OPPS.length]);
 
   const view = deriveRecomputeView(sliders, opportunities);
 
@@ -622,7 +713,7 @@ export function InvestmentDesign({
             </h1>
             {/* §5.8 entry affordance (amendment A16, PI2-D42) — uniform
                 across all three studio.* screens. */}
-            <Button variant="ghost" label={STUDIO_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
+            <Button variant="secondary" label={STUDIO_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
           </div>
         </div>
 
@@ -643,6 +734,33 @@ export function InvestmentDesign({
             <BenchTable rows={view.benchRows} onOpenPlay={handleOpenPlayByName} />
           </div>
         </div>
+
+        {/* Amendment A20 (PI2-D47, design_system_spec.md §2.9.11) — the
+            opportunity register's new, permanently-visible home: the FULL,
+            unfiltered live OPPS pool (catalog + every Ask-scoped addition),
+            independent of this screen's own lever-driven plan/gated/bench
+            views above — reachable via the existing `studio:design` Sidebar
+            entry, no new nav entry. */}
+        <section aria-labelledby="investment-design-register-heading" style={sectionStyle}>
+          <h2 id="investment-design-register-heading" style={sectionHeadingStyle}>
+            Opportunity register
+          </h2>
+          <span role="status" aria-live="polite" style={SR_ONLY_STYLE}>
+            {registerAnnouncement}
+          </span>
+          <div style={registerScrollWrapStyle}>
+            <DataTable
+              caption="Opportunity register"
+              columns={registerColumns}
+              rows={[...OPPS].reverse()}
+              getRowId={(row) => row.n}
+              {...(justRegisteredId ? { updatingRowIds: new Set([justRegisteredId]) } : {})}
+              rowAction={{ label: () => 'Detail →', onPress: (row) => handleOpenPlayByName(row.n) }}
+              defaultSortColumnId="value"
+              defaultSortDirection="descending"
+            />
+          </div>
+        </section>
       </main>
 
       <Drawer

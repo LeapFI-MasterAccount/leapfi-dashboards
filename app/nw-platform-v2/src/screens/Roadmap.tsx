@@ -447,7 +447,7 @@ export function Roadmap({ onNavigate, onDeepLink }: RoadmapProps) {
               </h1>
               {/* §5.8 entry affordance (amendment A16, PI2-D42) — uniform
                   across all three studio.* screens. */}
-              <Button variant="ghost" label={STUDIO_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
+              <Button variant="secondary" label={STUDIO_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
             </div>
           </div>
 

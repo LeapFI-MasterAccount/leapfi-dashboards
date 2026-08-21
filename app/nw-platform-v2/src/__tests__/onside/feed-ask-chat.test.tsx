@@ -18,10 +18,11 @@ function renderFeed() {
 }
 
 describe('OnSide · Regulatory feed — "Ask OnSide" entry affordance (§2.9.5, AC-A16-11)', () => {
-  it('renders a ghost, icon-less "Ask OnSide" Button in the utility corner', () => {
+  it('renders a secondary-weight, icon-less "Ask OnSide" Button in the utility corner', () => {
     renderFeed();
     const trigger = screen.getByRole('button', { name: 'Ask OnSide' });
-    expect(trigger).toHaveAttribute('data-variant', 'ghost');
+    // Amendment A20 (PI2-D47, design_system_spec.md §2.9.12): the entry-affordance trigger's weight flips ghost -> secondary on all six remaining onside.*/studio.* screens ("the CTA is crap" -> a real border/hover fill), never primary (Core Principle 2 -- never competes with a screen's own primary CTA).
+    expect(trigger).toHaveAttribute('data-variant', 'secondary');
   });
 
   it('opens the screen\'s own local Drawer to "OnSide chat" with focus on the heading (AC-A16-5), never a second Drawer (AC-A16-1)', async () => {

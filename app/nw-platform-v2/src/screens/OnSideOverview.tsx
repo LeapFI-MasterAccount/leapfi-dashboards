@@ -668,7 +668,7 @@ export function OnSideOverview({ onNavigate, deepLink, onDeepLink, onDeepLinkCon
             </h1>
             {/* §5.8 entry affordance (amendment A16, PI2-D42) — uniform
                 across all four onside.* screens. */}
-            <Button variant="ghost" label={ONSIDE_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
+            <Button variant="secondary" label={ONSIDE_CHAT_MODULE_CONFIG.entryLabel} onPress={handleOpenChat} />
           </div>
 
           <section aria-labelledby="onside-overview-kpis-heading" style={SECTION_STYLE}>
