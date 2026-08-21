@@ -445,13 +445,18 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
       mode,
       (c) => {
         const formatted = formatOwnerLabel(nextOwner);
-        logEntry(c, mode === 'reassign' ? `Reassigned to ${nextOwner.name}` : `Transfer requested to ${nextOwner.name}`, reason.trim());
+        // HR-DATA-03: `performReassign` commits `c.owner` unconditionally
+        // for BOTH modes (no pending/approval state exists — D11 rules
+        // approval workflow explicitly OUT). The history/toast copy must
+        // say what actually happened (an immediate transfer), never a
+        // "request" this build cannot leave pending.
+        logEntry(c, mode === 'reassign' ? `Reassigned to ${nextOwner.name}` : `Ownership transferred to ${nextOwner.name}`, reason.trim());
         c.owner = formatted;
         setReassignMode(null);
         setReassignOwnerId(null);
         setReassignReason('');
       },
-      () => (mode === 'reassign' ? `Reassigned to ${nextOwner.name}.` : `Transfer request sent to ${nextOwner.name}.`),
+      () => (mode === 'reassign' ? `Reassigned to ${nextOwner.name}.` : `Ownership transferred to ${nextOwner.name}.`),
     );
   }
 
@@ -733,6 +738,13 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
   const openCases = CASES.filter((c) => c.stage !== 'closed' && c.stage !== 'rejected');
   const doneCases = CASES.filter((c) => c.stage === 'closed' || c.stage === 'rejected');
   const undecidedCount = CASES.filter(isUntouched).length;
+  // HR-DATA-01: the header sentence must state how many cases HAVE been
+  // decided, not how many have NOT (`undecidedCount` counts the latter —
+  // see `isUntouched` above). `decidedCount` is the true complement within
+  // the open set; the "None have been decided yet." branch below still
+  // fires exactly when decidedCount is 0 (i.e. undecidedCount ===
+  // openCases.length), identical to the prior branch condition.
+  const decidedCount = openCases.length - undecidedCount;
   const waitingOnMeCount = CASES.filter((c) => waitingOnRoleKey(c.stage) === currentUser.roleKey).length;
 
   const columns: DataTableColumn<Case>[] = [
@@ -805,7 +817,7 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
           Cases
         </h1>
         <p style={{ ...NOTE_STYLE, marginTop: '0.5rem' }}>
-          {undecidedCount > 0 ? `${undecidedCount === openCases.length ? 'None' : `${undecidedCount} of ${openCases.length}`} ${undecidedCount === 1 ? 'has' : 'have'} been decided yet.` : ''}
+          {undecidedCount > 0 ? `${decidedCount === 0 ? 'None' : `${decidedCount} of ${openCases.length}`} ${decidedCount === 1 ? 'has' : 'have'} been decided yet.` : ''}
           {waitingOnMeCount > 0 ? ` ${waitingOnMeCount} ${waitingOnMeCount === 1 ? 'case is' : 'cases are'} waiting on you.` : ''}
         </p>
       </div>
@@ -877,7 +889,11 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
             : reassignMode && displayCase
               ? // D11 — same RPT-05 title-keyed in-drawer swap class as the
                 // full-document view above (a third instance of the pattern).
-                `${displayCase.id} · ${reassignMode === 'reassign' ? 'Reassign' : 'Request transfer'}`
+                // HR-DATA-03: "Transfer ownership" (not "Request transfer")
+                // — `performReassign` commits `c.owner` immediately for
+                // this mode too; the label must not promise a pending
+                // request this build never leaves pending.
+                `${displayCase.id} · ${reassignMode === 'reassign' ? 'Reassign' : 'Transfer ownership'}`
               : displayCase
                 ? `${displayCase.id} · ${decodeText(displayCase.title)}`
                 : displayDeadlineCase
@@ -977,7 +993,9 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
                 </div>
                 <section aria-labelledby="case-reassign-heading" style={CARD_STYLE}>
                   <h3 id="case-reassign-heading" style={REASSIGN_HEADING_STYLE}>
-                    {reassignMode === 'reassign' ? 'Reassign this case' : 'Request transfer'}
+                    {/* HR-DATA-03: "Transfer ownership" — see the Drawer
+                        title comment above; same honesty fix. */}
+                    {reassignMode === 'reassign' ? 'Reassign this case' : 'Transfer ownership'}
                   </h3>
                   <Label text="New owner" variant="eyebrow" surface="panel" />
                   <ul role="list" style={REASSIGN_LIST_STYLE}>
@@ -999,7 +1017,7 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
                   <div style={REASSIGN_ACTIONS_STYLE}>
                     <Button
                       variant="primary"
-                      label={reassignMode === 'reassign' ? 'Confirm reassignment' : 'Send transfer request'}
+                      label={reassignMode === 'reassign' ? 'Confirm reassignment' : 'Confirm transfer'}
                       loading={pendingAction !== null && pendingAction.caseId === displayCase.id && pendingAction.kind === reassignMode}
                       disabled={!reassignOwnerId || !reassignReason.trim() || pendingAction !== null}
                       onPress={() => {

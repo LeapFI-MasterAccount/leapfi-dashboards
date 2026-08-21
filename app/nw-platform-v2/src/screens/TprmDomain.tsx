@@ -204,6 +204,25 @@ const VISUALLY_HIDDEN_STYLE: CSSProperties = { position: 'absolute', top: 0, lef
 const POSTURE_ROW_STYLE: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' };
 const POSTURE_META_STYLE: CSSProperties = { fontSize: '0.8125rem', color: 'var(--ink2)' };
 const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
+/** HR-SHELL-01 — same reconciliation footer `views/DomainsAccordion.tsx`
+ * carries for the identical "obligations table shows a subset of the
+ * posture row's full count" pattern (that file's own `pillSoftStyle`,
+ * verbatim style values — the panel-seated `--chart-axis` substitute for
+ * `--ink2`, same FIX WAVE Class C1 rule this file's own header already
+ * documents for its `DIGEST_HINT_STYLE`-class panel text). Not a new
+ * primitive/composite: a screen-local copy of an existing style object,
+ * the same "each screen owns its own layout" discipline this file's own
+ * header section already establishes for `CARD_STYLE`-class constants. */
+const RECONCILE_PILL_STYLE: CSSProperties = {
+  display: 'inline-block',
+  fontSize: '0.75rem',
+  fontWeight: 600,
+  color: 'var(--chart-axis)',
+  background: 'var(--panel)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-pill, 999px)',
+  padding: '0.2rem 0.65rem',
+};
 
 export interface TprmDomainProps extends DeepLinkScreenProps {
   /** Cross-screen navigation for this screen's own links (obligation/document/case rows, the domain cross-link). */
@@ -321,7 +340,14 @@ export function TprmDomain({ onNavigate, onDeepLink }: TprmDomainProps) {
 
       <section aria-labelledby="tprm-obligations-heading" style={SECTION_STYLE}>
         <h2 id="tprm-obligations-heading" style={SUBHEADING_STYLE}>
-          Gaps &amp; partials · {openObligations.length} of {obligations.length} obligations
+          {/* HR-SHELL-01: the posture row above states the full register
+              (domain.appl/tot/met, 33/33/24) — this table only ever shows
+              a 12-row representative subset. "shown obligations" (matching
+              `views/DomainsAccordion.tsx`'s own identical-pattern heading
+              wording) discloses that this heading's own denominator is NOT
+              the posture row's denominator, so a reader never has to infer
+              it from an unexplained 12 vs 33 gap. */}
+          Gaps &amp; partials · {openObligations.length} of {obligations.length} shown obligations
         </h2>
         <div style={SCROLL_WRAP_STYLE}>
           <DataTable
@@ -332,6 +358,19 @@ export function TprmDomain({ onNavigate, onDeepLink }: TprmDomainProps) {
             emptyMessage="No open gaps or partials in Third-Party Risk Management."
             rowAction={obligationRowAction}
           />
+        </div>
+        {/* HR-SHELL-01 — same reconciliation footer
+            `views/DomainsAccordion.tsx:421-425` carries for its own
+            identical shown-subset obligations table: names the shown-met
+            count from THIS 12-row set (not `domain.met`, which is the
+            full-register figure already stated in the posture row above)
+            and points at the real, full-register count by name so the
+            12-vs-33 gap is disclosed, not silent. */}
+        <div style={{ marginTop: '0.625rem' }}>
+          <span style={RECONCILE_PILL_STYLE}>
+            {obligations.filter((o) => o.st === 'met').length} met obligations shown here and the full register with
+            provenance: all {domain.appl} enumerated
+          </span>
         </div>
       </section>
 

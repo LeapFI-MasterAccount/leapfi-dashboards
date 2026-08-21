@@ -571,6 +571,12 @@ describe('OnSide · Cases nested badge (USER RULING PI2-D43, q11-01 CLOSED YES; 
     firstCase.edited = true
     const expectedCount = CASES.filter(isUntouched).length
     expect(expectedCount).toBe(2)
+    // HR-DATA-01: the badge shows the UNDECIDED count (Sidebar's own
+    // contract, unchanged), but Cases.tsx's own header sentence states the
+    // true DECIDED count — the complement within the open set, not the
+    // same number the badge shows.
+    const openCasesCount = CASES.filter((c) => c.stage !== 'closed' && c.stage !== 'rejected').length
+    const expectedDecidedCount = openCasesCount - expectedCount
 
     render(<App />)
     const nav = screen.getByRole('navigation', { name: 'Primary' })
@@ -583,7 +589,7 @@ describe('OnSide · Cases nested badge (USER RULING PI2-D43, q11-01 CLOSED YES; 
     // count — same fixture data, same exported predicate, never two
     // independently-written literals that merely happen to match.
     await user.click(casesRow)
-    expect(screen.getByText(new RegExp(`${expectedCount} of \\d+ have been decided yet`))).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(`${expectedDecidedCount} of \\d+ have been decided yet`))).toBeInTheDocument()
   })
 
   it('AC-S1.1-04-4 — a case-stage-changing action lowers the badge even while Cases is not the active screen, without remounting Cases', async () => {

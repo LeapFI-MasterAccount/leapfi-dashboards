@@ -189,9 +189,9 @@ describe('PI2-D45 boot routing — Cases badge/bell reflect the boot state', () 
     seedCases(DOCLIB);
   });
 
-  it('the Cases header reads "3 of 8 have been decided yet" and "5 cases are waiting on you" for the default CRO persona', () => {
+  it('the Cases header reads "5 of 8 have been decided yet" (HR-DATA-01: the true DECIDED count, not undecidedCount) and "5 cases are waiting on you" for the default CRO persona', () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} />);
-    expect(screen.getByText(/3 of 8 have been decided yet\./)).toBeInTheDocument();
+    expect(screen.getByText(/5 of 8 have been decided yet\./)).toBeInTheDocument();
     expect(screen.getByText(/5 cases are waiting on you\./)).toBeInTheDocument();
   });
 });

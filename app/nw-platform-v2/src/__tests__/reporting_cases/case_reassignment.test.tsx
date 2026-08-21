@@ -15,7 +15,10 @@
  *     standard cases → Priya") is pinned directly against `CASE_TIER` +
  *     boot `stage`, proving the ALREADY-SHIPPED PI2-D45-A boot-seed state
  *     satisfies call-09's rule with no further seed change required.
- *  3. D11 — case reassignment / "Request transfer": a `pickingCondition`-
+ *  3. D11 — case reassignment / "Transfer ownership" (HR-DATA-03 relabel;
+ *     was "Request transfer" — the control commits an immediate,
+ *     unconditional owner mutation, never a pending request, so its label
+ *     must say what it does): a `pickingCondition`-
  *     class inline owner-picker (A18 in-drawer content-swap, a third
  *     instance of the "View full document"/"Back to case" pattern), roster
  *     = `data/studio.ts` USERS, required reason Input, writes exactly one
@@ -153,7 +156,7 @@ describe('call-09 / PI2-D45-A reconciliation — CRO/Priya routing rule applied 
   });
 });
 
-describe('D11 — case reassignment / "Request transfer" (A18-class in-drawer content swap)', () => {
+describe('D11 — case reassignment / "Transfer ownership" (A18-class in-drawer content swap)', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     seedCases(DOCLIB);
@@ -230,31 +233,40 @@ describe('D11 — case reassignment / "Request transfer" (A18-class in-drawer co
     expect(within(dialog).queryByRole('button', { name: 'Confirm reassignment' })).not.toBeInTheDocument();
   });
 
-  it('"Request transfer" reuses the IDENTICAL picker/confirm UI, only the history phrasing/initiator differ from "Reassign"', () => {
+  it('HR-DATA-03: "Transfer ownership" reuses the IDENTICAL picker/confirm UI, only the history phrasing/initiator differ from "Reassign" — and its copy states an immediate mutation, never a pending request this build cannot leave pending', () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />);
     openRow('CASE-2026-003');
     const before = caseById('CASE-2026-003').history.length;
 
-    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Request transfer' }));
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Transfer ownership' }));
     const dialog = screen.getByRole('dialog');
     // Same owner list, same required-reason gate — one component, not a
     // second one (D11).
     for (const user of USERS) {
       expect(within(dialog).getByText(user.name)).toBeInTheDocument();
     }
+    // HR-DATA-03 (no-lying-controls): nothing in the picker/confirm UI may
+    // claim a pending/awaiting-approval state that does not exist — D11
+    // rules approval workflow explicitly OUT, and `performReassign`
+    // commits `c.owner` unconditionally on confirm for this mode too.
+    expect(within(dialog).queryByText(/pending/i)).not.toBeInTheDocument();
+    expect(within(dialog).queryByText(/awaiting approval/i)).not.toBeInTheDocument();
     fireEvent.click(within(dialog).getAllByRole('button', { name: 'Select' })[2] as HTMLElement); // Dana Reyes
     fireEvent.change(within(dialog).getByLabelText('Reason'), { target: { value: 'Needs counsel review before I can act on it.' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Send transfer request' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm transfer' }));
     commit();
 
     const after = caseById('CASE-2026-003');
     expect(after.history).toHaveLength(before + 1);
     expect(after.history[0]).toMatchObject({
-      what: 'Transfer requested to Dana Reyes',
+      what: 'Ownership transferred to Dana Reyes',
       note: 'Needs counsel review before I can act on it.',
       who: ANALYST.name,
     });
     expect(after.owner).toBe('D. Reyes · General Counsel');
+    // The owner field updates immediately on commit — the copy now says
+    // exactly that ("Ownership transferred"), not "Request"/"pending".
+    expect(screen.getByRole('status')).toHaveTextContent('Ownership transferred to Dana Reyes.');
   });
 
   it('Irreversibility gate: a rapid double-press on the confirm Button commits exactly ONE reassignment, never two', () => {

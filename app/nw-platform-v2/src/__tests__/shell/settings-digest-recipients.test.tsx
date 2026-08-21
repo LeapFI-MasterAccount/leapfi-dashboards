@@ -157,6 +157,34 @@ describe('Settings · Toggles — digest management DataTable (D7: DataTable C6,
     expect(screen.getByText('Digest enabled.')).toBeInTheDocument()
   })
 
+  it('HR-DATA-02: disabling the digest updates the "Next send" and "In this digest" hints so they never contradict the row\'s own "Disabled" status', async () => {
+    const user = userEvent.setup()
+    renderSettings()
+    const table = getDigestTable()
+    const dataRow = getDigestDataRow(table)
+
+    // Active baseline: both hints assert a live schedule/count.
+    expect(screen.getByText('Next send: every weekday, 7:00 AM ET')).toBeInTheDocument()
+
+    await user.click(within(dataRow).getByRole('button', { name: 'Disable' }))
+    expect(within(dataRow).getByText('Disabled')).toBeInTheDocument()
+
+    // The panel directly above the now-"Disabled" row must not keep
+    // asserting a scheduled send or a live item count for it — both hints
+    // read `digestEnabled` now, so they agree with the Status Tag.
+    expect(screen.queryByText('Next send: every weekday, 7:00 AM ET')).not.toBeInTheDocument()
+    expect(screen.getByText('Next send: paused — digest disabled')).toBeInTheDocument()
+    expect(screen.getByText('digest disabled — nothing will be sent')).toBeInTheDocument()
+    expect(screen.queryByText(/item.*captured in the/)).not.toBeInTheDocument()
+
+    // Re-enabling restores the live hints — the coherence holds both ways.
+    await user.click(within(dataRow).getByRole('button', { name: 'Enable' }))
+    expect(within(dataRow).getByText('Active')).toBeInTheDocument()
+    expect(screen.getByText('Next send: every weekday, 7:00 AM ET')).toBeInTheDocument()
+    expect(screen.queryByText('Next send: paused — digest disabled')).not.toBeInTheDocument()
+    expect(screen.getByText(/item.*captured in the/)).toBeInTheDocument()
+  })
+
   it('double-clicking the row action toggle settles on the correct final state (no torn double-submission)', async () => {
     const user = userEvent.setup()
     renderSettings()

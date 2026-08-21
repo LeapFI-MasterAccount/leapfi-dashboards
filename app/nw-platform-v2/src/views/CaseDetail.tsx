@@ -700,7 +700,14 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
             {onOpenReassign ? (
               <span style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
                 <Button variant="ghost" label="Reassign" disabled={isPending} onPress={() => onOpenReassign('reassign')} />
-                <Button variant="ghost" label="Request transfer" disabled={isPending} onPress={() => onOpenReassign('request-transfer')} />
+                {/* HR-DATA-03 (no-lying-controls): this control commits an
+                    immediate, unconditional owner mutation identical to
+                    "Reassign" — no pending/approval state exists anywhere
+                    in this build (D11 rules approval workflow explicitly
+                    OUT). "Transfer ownership" states what the click
+                    actually does; "Request transfer" promised a step this
+                    screen never performs. */}
+                <Button variant="ghost" label="Transfer ownership" disabled={isPending} onPress={() => onOpenReassign('request-transfer')} />
               </span>
             ) : null}
           </div>

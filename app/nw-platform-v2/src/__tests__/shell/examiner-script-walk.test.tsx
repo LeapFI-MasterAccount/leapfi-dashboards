@@ -216,3 +216,36 @@ describe('Step 3 close-beat correction (D16/D23) — AI-gov has no obligation re
     expect(within(body).getByText(/of 230/)).toBeInTheDocument();
   });
 });
+
+// HR-ARC-04 (Lane B render-side verification) — the finding's own claim is
+// that a presenter following the script's paraphrase ("110 of 230 controls
+// met") expects to find that exact composite printed on screen and cannot,
+// because `views/DomainsAccordion.tsx` renders two SEPARATE, individually
+// truthful sentences (110 of 214 met; 214 of 230 in scope) that never
+// combine into "110 of 230". Lane A owns aligning `data/script.ts`'s
+// wording to the real figures; this lane owns confirming the rendered
+// copy itself is not the confusing part — verified below: each real string
+// renders as its own clear, correctly-denominated sentence, and no element
+// in the expanded region ever pairs 110 directly with 230. No source
+// change was needed on the render side (`views/DomainsAccordion.tsx`,
+// `screens/Home.tsx`'s AigovFlagshipCallout) — both already state only
+// the two real, non-composite figures.
+describe('HR-ARC-04 (Lane B) — the flagship callout never renders a false "110 of 230" composite', () => {
+  it('the expanded AI Governance region states each real figure in its own sentence, and no rendered text ever joins 110 with 230', async () => {
+    const user = userEvent.setup();
+    render(<OnSideOverview onNavigate={() => {}} />);
+    await user.click(screen.getByRole('button', { name: 'AI Governance' }));
+    await waitFor(() => expect(screen.getByRole('region', { name: 'AI Governance' })).toBeInTheDocument());
+    const body = screen.getByRole('region', { name: 'AI Governance' });
+
+    // The two real, distinct claims — met-of-applicable, and
+    // applicable-of-total — each render as their own unambiguous sentence.
+    expect(within(body).getByText(/110 of 214 obligations met at required maturity/)).toBeInTheDocument();
+    expect(within(body).getByText(/214 of 230 obligations in scope/)).toBeInTheDocument();
+
+    // The exact confusion HR-ARC-04 found the SCRIPT's own paraphrase
+    // inviting — a rendered composite pairing 110 directly with 230 — is
+    // absent from the region's full text, not merely from one queried node.
+    expect(body.textContent ?? '').not.toMatch(/110\s*(of|\/)\s*230/);
+  });
+});
