@@ -4,16 +4,24 @@
  * `qualifier`; `DOMAINS` reordering, data-only; demo-arc close-beat
  * placement, Marisol's lane) — no dedicated nav tile."
  *
- * This pins the "Home StatCard callout reusing C1/A8's `qualifier`" half of
- * D3 — a single interactive StatCard (C1), rendered on `Home.tsx` itself
- * (not inside `HomePanels.tsx`, which stays gated by the user's own
- * customization toggles — a flagship callout must always be visible,
- * never a panel a viewer can hide), reusing amendment A8's `qualifier`
- * caption prop. Every literal below (label/value/qualifier) is sourced
- * straight from `data/onside.ts` DOMAINS['aigov'] — never a fabricated
- * figure — and the qualifier caption reuses that same domain row's own
- * `inst` field substring ("flagship framework"), not new copy invented for
- * this callout.
+ * USER RULING (binding, 2026-08-21 — HF1; supersedes L10's always-visible
+ * reading of call-15 that an earlier revision of this header pinned): the
+ * Home content area below the greeting must contain NOTHING that is not
+ * configured by the user via Customize. The callout is therefore no longer
+ * rendered unconditionally by `Home.tsx`; it is now the sixth
+ * Customize-gated panel key, `'aigov'` ("AI Governance"), rendered by
+ * `HomePanels.tsx` (`AigovFlagshipPanel`) and toggled/ordered by
+ * `HomeCustomizeBar` exactly like the existing five — SHOWN by default at
+ * position 1 for any role with no stored layout, hideable like any other
+ * panel, and counted by the derived "Customize (N of 6 shown)" trigger.
+ *
+ * Still pinned from D3's original "Home StatCard callout reusing C1/A8's
+ * `qualifier`" half: a single interactive StatCard (C1) reusing amendment
+ * A8's `qualifier` caption prop. Every literal below
+ * (label/value/qualifier) is sourced straight from `data/onside.ts`
+ * DOMAINS['aigov'] — never a fabricated figure — and the qualifier caption
+ * reuses that same domain row's own `inst` field substring ("flagship
+ * framework"), not new copy invented for this callout.
  *
  * Click-through (D19b, `affordance_standard.md` §2.2): the callout is the
  * StatCard's own `onPress`-driven interactive variant (real `<button>`,
@@ -27,14 +35,24 @@
  * to plain `onNavigate('onside.overview')` when it has not — never a dead
  * click, never a second nav mechanism invented for this one card.
  */
-import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Home } from '../../screens/Home'
 import { DOMAINS } from '../../data/onside'
+import { HOME_ORDER } from '../../data/misc'
 
 const AIGOV = DOMAINS.find((d) => d.key === 'aigov')
 if (!AIGOV) throw new Error("fixture assumption broken: data/onside.ts DOMAINS no longer has an 'aigov' entry")
+
+beforeEach(() => {
+  // The gating test below commits a customization (HOME_ORDER + the D13
+  // localStorage layer) for the default role — clear both between tests so
+  // one test's toggle never leaks into a sibling's default-render
+  // assertions (same isolation precedent home.test.tsx establishes).
+  for (const key of Object.keys(HOME_ORDER)) delete HOME_ORDER[key]
+  window.localStorage.clear()
+})
 
 describe('Home — AI Governance flagship StatCard callout (D3)', () => {
   it('renders a StatCard callout naming the aigov domain, with a qualifier caption sourced from that domain\'s own data (never fabricated copy)', () => {
@@ -87,15 +105,39 @@ describe('Home — AI Governance flagship StatCard callout (D3)', () => {
     expect(onNavigate).toHaveBeenCalledWith('onside.overview')
   })
 
-  it('is always visible on Home regardless of the HomeCustomizeBar\'s visibleKeys panel toggles — a flagship elevation is not a panel a viewer can hide', () => {
+  it('renders INSIDE the Customize-gated aigov panel section — no longer an ungated Home.tsx render (user ruling 2026-08-21)', () => {
     render(<Home onNavigate={() => {}} />)
-    // No HomePanels customization interaction happens here; this asserts
-    // the callout lives outside the `<HomePanels visibleKeys={...}>` tree
-    // by checking it is present even with HomePanels' own defaults intact
-    // (i.e. it is not one of `HOME_PANEL_DEFS`' gated keys).
-    const cards = Array.from(document.querySelectorAll('[data-lf-composite="stat-card"]'))
+
+    const section = document.querySelector('section[data-lf-home-panel="aigov"]')
+    expect(section, 'no section[data-lf-home-panel="aigov"] rendered — the callout is not panel-gated').not.toBeNull()
+    const cards = Array.from((section as HTMLElement).querySelectorAll('[data-lf-composite="stat-card"]'))
     const aigovCard = cards.find((el) => el.textContent?.includes(AIGOV.name))
-    expect(aigovCard).toBeDefined()
-    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
+    expect(aigovCard, 'the aigov StatCard is not inside the aigov panel section').toBeDefined()
+    // The stable demo-arc selector (D3) moved with the card.
+    expect((section as HTMLElement).querySelector('[data-lf-view="aigov-flagship-callout"]')).not.toBeNull()
+  })
+
+  it('is the FIRST panel section on a default (never-customized) render — default-shown at position 1', () => {
+    const { container } = render(<Home onNavigate={() => {}} />)
+
+    const sections = Array.from(container.querySelectorAll('[data-lf-home-panel]')).map(
+      (el) => el.getAttribute('data-lf-home-panel'),
+    )
+    expect(sections[0]).toBe('aigov')
+  })
+
+  it('toggling the "AI Governance" chip off in Customize removes the card from the DOM and the trigger reads "Customize (5 of 6 shown)" — a user-configurable panel, not a standing fixture', async () => {
+    const user = userEvent.setup()
+    render(<Home onNavigate={() => {}} />)
+
+    await user.click(screen.getByRole('button', { name: 'Customize (6 of 6 shown)' }))
+    const bar = screen.getByRole('group', { name: 'Customize your home' })
+    // Shown at position 1 by default, so the chip carries its position prefix.
+    await user.click(within(bar).getByRole('button', { name: '1. AI Governance' }))
+
+    expect(document.querySelector('section[data-lf-home-panel="aigov"]')).toBeNull()
+    const cards = Array.from(document.querySelectorAll('[data-lf-composite="stat-card"]'))
+    expect(cards.find((el) => el.textContent?.includes(AIGOV.name))).toBeUndefined()
+    expect(screen.getByRole('button', { name: 'Customize (5 of 6 shown)' })).toBeInTheDocument()
   })
 })

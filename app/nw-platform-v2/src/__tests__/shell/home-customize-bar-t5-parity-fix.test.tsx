@@ -129,7 +129,10 @@ describe('T5 parity — Chip `density="compact"` scoped to the panel-toggle opti
 
     // 'posture' is visible in DEFAULT_VISIBLE_KEYS, so its rendered label
     // carries the position-number prefix (see HomeCustomizeBar.tsx render).
-    const postureButton = getByRole('button', { name: '1. Risk posture' })
+    // HF1 (user ruling 2026-08-21): 'aigov' now leads the default, so
+    // posture sits at position 2 — derive it so this never goes stale again.
+    const posturePosition = DEFAULT_VISIBLE_KEYS.indexOf('posture') + 1
+    const postureButton = getByRole('button', { name: `${posturePosition}. Risk posture` })
     expect(postureButton).toHaveAttribute('aria-pressed', 'true')
   })
 })
@@ -172,9 +175,11 @@ describe('T5 parity — dismiss contract: Escape retained, outside-click added',
     })
     await user.click(getByRole('button', { name: TRIGGER_NAME }))
 
-    await user.click(getByRole('button', { name: '1. Risk posture' }))
+    // HF1: derive posture's position prefix (now 2, behind 'aigov') and the
+    // expected remainder from DEFAULT_VISIBLE_KEYS instead of stale literals.
+    await user.click(getByRole('button', { name: `${DEFAULT_VISIBLE_KEYS.indexOf('posture') + 1}. Risk posture` }))
 
-    expect(latest).toEqual(['legis', 'invest', 'queue', 'qa'])
+    expect(latest).toEqual(DEFAULT_VISIBLE_KEYS.filter((k) => k !== 'posture'))
     // Still open — toggling an option does not dismiss the panel.
     expect(getByRole('button', { name: 'Clear all' })).toBeInTheDocument()
   })
