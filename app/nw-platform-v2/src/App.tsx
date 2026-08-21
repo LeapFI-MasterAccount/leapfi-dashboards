@@ -234,6 +234,16 @@
  * Rachel Fischer) per demo_script_draft.md's own standing rule: "default
  * persona Rachel Fischer, CRO, stays as-is."
  *
+ * PERSONA PERSISTENCE (L11, call-10, DECISIONS.md D13): `currentUserId`'s
+ * initial value now comes from `getInitialUserId()` (localStorage,
+ * `CURRENT_USER_STORAGE_KEY`) instead of a hardcoded `CURRENT.id`, and a
+ * dedicated effect (near the theme effect, below) persists every change —
+ * same mechanism as the theme toggle, ported verbatim. This is what makes
+ * "Adam's financial-focused Home layout survives refresh" observable at
+ * all: without it, a refresh always rebooted to Rachel regardless of who
+ * was active, so `views/HomeCustomizeBar.tsx`'s own persona-keyed layout
+ * persistence (D13) would never see a persisted non-default `roleKey`.
+ *
  * THEME TOGGLE: the D13 scaffold's `theme`/`getInitialTheme`/localStorage
  * logic is ported verbatim (byte-identical mechanism, just re-hosted) into
  * `Topbar`'s documented `themeToggleSlot` extension point. Theme is a
@@ -433,6 +443,25 @@ function getInitialTheme(): Theme {
   }
   const stored = window.localStorage.getItem(THEME_STORAGE_KEY)
   return stored === 'light' || stored === 'dark' ? stored : 'dark'
+}
+
+// PERSONA PERSISTENCE (L11, call-10, DECISIONS.md D13): the active persona
+// (`currentUserId`) is what actually selects which Home layout renders —
+// `Home.tsx` passes `roleKey={currentUser.roleKey}` straight through to
+// `resolveVisibleKeys` (views/HomeCustomizeBar.tsx). Without persisting
+// WHICH persona is active, a refresh would always reboot to the default
+// (Rachel/'cro') regardless of who was selected, so "Adam's financial-
+// focused layout survives refresh" could never be observed. Ported
+// verbatim (byte-identical mechanism) from `getInitialTheme`/
+// `THEME_STORAGE_KEY` immediately above.
+const CURRENT_USER_STORAGE_KEY = 'nw-platform-v2-current-user'
+
+function getInitialUserId(): string {
+  if (typeof window === 'undefined') {
+    return CURRENT.id
+  }
+  const stored = window.localStorage.getItem(CURRENT_USER_STORAGE_KEY)
+  return stored !== null && USERS.some((user) => user.id === stored) ? stored : CURRENT.id
 }
 
 // Shell layout — hoisted verbatim from every screen's former identical
@@ -640,7 +669,7 @@ function ThemeToggle({ theme, onChange }: { theme: Theme; onChange: (next: Theme
 function App() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const [screenId, setScreenId] = useState<ScreenId>('home')
-  const [currentUserId, setCurrentUserId] = useState<string>(CURRENT.id)
+  const [currentUserId, setCurrentUserId] = useState<string>(getInitialUserId)
   // C-unbounded-growth-04 fix: ONE app-level toast slot, not two
   // independent booleans (the former `designPartnerToast`/`restartToast`
   // pair). Base `toast()` (source 3962–3966) is a singleton slot — every
@@ -699,6 +728,14 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme)
     window.localStorage.setItem(THEME_STORAGE_KEY, theme)
   }, [theme])
+
+  // L11 (D13): persist the active persona on every change — including
+  // handleRestart's `setCurrentUserId(CURRENT.id)` (base 3957), which
+  // writes the default persona back here, keeping Restart's "persona
+  // resets to Rachel" contract true after a subsequent refresh too.
+  useEffect(() => {
+    window.localStorage.setItem(CURRENT_USER_STORAGE_KEY, currentUserId)
+  }, [currentUserId])
 
   function navigateToScreen(id: string): void {
     if (!isScreenId(id)) return

@@ -201,6 +201,105 @@ export function adoptionScaledValue(val: number): number {
 }
 
 /* ============================================================
+ * Home layout persistence (L11, call-10, DECISIONS.md D13) — extends
+ * `HOME_ORDER` (data/misc.ts, per-role panel order that
+ * `views/HomeCustomizeBar.tsx`'s `resolveVisibleKeys`/`commitVisibleKeys`
+ * already read/write) with a persona-keyed `localStorage` read/write,
+ * following App.tsx's existing `THEME_STORAGE_KEY`/`getInitialTheme()`
+ * pattern verbatim (D13: "the existing store/cookie layer the
+ * architecture actually has" — a repo-wide grep confirms zero cookie
+ * usage in `src/`).
+ *
+ * REPRO-CHECK (D13, sprint-plan L11 entry criteria): before this section
+ * existed, `HOME_ORDER` was a bare module-level object with no
+ * localStorage backing — confirmed by inspection (this file and
+ * data/misc.ts had zero `localStorage` references prior to this
+ * dispatch). A non-persona setting (panel order/visibility, toggled via
+ * `HomeCustomizeBar`) independently reproduces Dan's "settings don't
+ * persist on refresh" complaint against a REAL browser refresh: a full
+ * page reload re-evaluates every ES module from scratch, so any
+ * in-memory-only singleton — HOME_ORDER included — reverts to its
+ * initial (empty) state. This is proven mechanically in
+ * `__tests__/state/home-layout-persistence.test.ts` ("repro-check"
+ * describe block, `vi.resetModules()` standing in for a full page
+ * reload) and folds in here as the one-line-fix D13 calls for: every
+ * `HomeCustomizeBar` write also persists to `localStorage`, and every
+ * read consults it as a fallback.
+ *
+ * PERSONA SEED: call-10's requirement statement asks for Adam
+ * (roleKey 'ceo') to see a financial-focused default and Rachel
+ * (roleKey 'cro') a risk-focused one. `HomeCustomizeBar.tsx`'s existing
+ * shipped default order (`DEFAULT_VISIBLE_KEYS`, HP order) already
+ * leads with 'posture' ("Risk posture") — i.e. Rachel's default IS
+ * already risk-focused by construction, and `home.test.tsx`'s pinned
+ * regression ("never-customized boot renders all 5 panels in the
+ * shipped HP order") asserts exactly that default for the shell's
+ * default persona (CURRENT.roleKey === 'cro'); no seed entry is added
+ * for 'cro' here; adding one would either duplicate the existing
+ * default (no-op) or contradict that pinned test. Only Adam ('ceo') —
+ * who has no existing seed at all and would otherwise get the same
+ * generic order — gets an explicit financial-focused seed below,
+ * leading with 'invest' ("Investment and return") ahead of 'legis'
+ * ("Regulatory Radar" — call-10's "financial AND COMPLIANCE
+ * information"), matching the requirement text without inventing any
+ * panel beyond HomeCustomizeBar.tsx's existing 5-key catalog.
+ * ============================================================ */
+
+const HOME_LAYOUT_STORAGE_KEY = 'nw-platform-v2-home-layout';
+
+/** Adam Schlesinger, CEO — financial-focused (call-10). See section header
+ * above for why Rachel/'cro' carries no seed entry here. */
+const PERSONA_HOME_LAYOUT_SEED: Record<string, readonly string[]> = {
+  ceo: ['invest', 'legis', 'queue', 'qa', 'posture'],
+};
+
+function readHomeLayoutStore(): Record<string, string[]> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(HOME_LAYOUT_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    return parsed !== null && typeof parsed === 'object' ? (parsed as Record<string, string[]>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeHomeLayoutStore(store: Record<string, string[]>): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(HOME_LAYOUT_STORAGE_KEY, JSON.stringify(store));
+}
+
+/** Read path — `HomeCustomizeBar.tsx`'s `resolveVisibleKeys` consults this
+ * whenever `HOME_ORDER[roleKey]` is `undefined` (never customized THIS
+ * session's in-memory state): a persisted order from a prior session wins
+ * over the persona seed, and the persona seed wins over "no seed at all"
+ * (the caller then falls through to its own full shipped default). */
+export function getPersistedHomeOrder(roleKey: string): readonly string[] | undefined {
+  const stored = readHomeLayoutStore()[roleKey];
+  if (stored !== undefined) return stored;
+  return PERSONA_HOME_LAYOUT_SEED[roleKey];
+}
+
+/** Write path — `HomeCustomizeBar.tsx`'s `commitVisibleKeys` calls this
+ * alongside its existing `HOME_ORDER[roleKey]` write, same "mutate the
+ * singleton, then also persist" shape `App.tsx`'s theme effect uses (write
+ * on every change, read once at boot). */
+export function persistHomeOrder(roleKey: string, order: readonly string[]): void {
+  const store = readHomeLayoutStore();
+  store[roleKey] = [...order];
+  writeHomeLayoutStore(store);
+}
+
+/** Restart (App.tsx handleRestart -> resetDemo, below) must be able to
+ * fully clear a session's Home-layout customization — see resetDemo's own
+ * call site for why this needs to exist alongside the in-memory
+ * HOME_ORDER/HOME_HIDE clears it already performs. */
+function clearPersistedHomeOrder(): void {
+  writeHomeLayoutStore({});
+}
+
+/* ============================================================
  * Notifications — base notify() (source 2626–2629), the six case-action
  * write sites (2691, 2707, 2715, 2724, 2749, 2758), and openNotif's
  * read-flip (2644–2647). NOTIFS itself lives in data/cases.ts.
@@ -429,5 +528,12 @@ export function resetDemo(): void {
   // Base 3949: reseedObj(HOME_HIDE,{}); reseedObj(HOME_ORDER,{}).
   for (const key of Object.keys(HOME_HIDE)) delete HOME_HIDE[key];
   for (const key of Object.keys(HOME_ORDER)) delete HOME_ORDER[key];
+  // L11 (D13): the in-memory HOME_ORDER clear above is no longer the whole
+  // story now that a session's customization also persists to
+  // localStorage (see "Home layout persistence" section above) — without
+  // this, Restart would clear HOME_ORDER but resolveVisibleKeys would
+  // immediately fall through to the still-persisted order, silently
+  // undoing the reset this function exists to perform.
+  clearPersistedHomeOrder();
   emit();
 }
