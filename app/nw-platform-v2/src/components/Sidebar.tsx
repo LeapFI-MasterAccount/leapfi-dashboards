@@ -31,15 +31,21 @@
  *   1. Home                          (no children)
  *   2. OnSide    -> Overview, Regulatory feed, Documents, Ownership
  *                   (expanded by default, PI2-D33)
- *   3. Studio    -> Ask, Investment Design, Roadmap
- *   4. Connect                       (no children — disabled, PI2-D39)
- *   5. Vantage                       (no children — disabled, PI2-D39)
- *   6. Reporting                     (no children)
- *   7. Settings  -> Toggles, About
+ *   3. TPRM                          (no children — L9, DECISIONS.md D3)
+ *   4. Studio    -> Ask, Investment Design, Roadmap
+ *   5. Connect                       (no children — disabled, PI2-D39)
+ *   6. Vantage                       (no children — disabled, PI2-D39)
+ *   7. Reporting                     (no children)
+ *   8. Settings  -> Toggles, About
  *
- * 7 top-level items — at the ≤7 budget §3.1 states, not over it. See
- * "PI2-D39" section below for the Connect/Vantage restructure this count
- * reflects.
+ * 8 top-level items — the §3.1 budget was ≤7 (PI2-D39's own count); L9
+ * (PI-3 sprint plan, call-14) raises it to 8 for TPRM specifically, a
+ * settled, recorded deviation (`implementation/DECISIONS.md` D3: TPRM
+ * "gets a genuinely new top-level Sidebar entry") — the same kind of
+ * sanctioned tripwire change PI2-D39 itself made to this exact budget
+ * (6 -> 7) for Connect/Vantage. See "PI2-D39" section below for that
+ * precedent and the L9 NAV-table comment above the `tprm` entry for D3's
+ * own citation.
  *
  * PARITY-ASSEMBLY ADDITION — OnSide · Overview 4th nested child
  * (parity_ia_addendum.md §0, resolved conservatively there and ratified
@@ -72,9 +78,9 @@
  * (`SidebarItem`'s new `disabled` prop — see that file's header) and
  * render a "Coming Soon" `Tag` (P4, `locked` variant — the same
  * primitive/variant SetupCard/SoonSplash "Soon" cards already use, C15/
- * C16). Net top-level count: 7 (was 6) — see "Static nav structure"
- * above and §3.1's ≤7 budget, still honored, now at the limit rather
- * than with headroom.
+ * C16). Net top-level count at THIS section's own PI2-D39 dispatch: 7
+ * (was 6) — see "Static nav structure" above; L9 (call-14, D3) later moves
+ * that count to 8 with the sanctioned budget deviation documented there.
  *
  * ROUTING left unchanged (implementer call, not a design decision — the
  * design decision was PI2-D39 itself): the routed ScreenIds `connect`
@@ -307,6 +313,22 @@ const NAV: NavTopItem[] = [
       { id: 'cases', label: 'Cases' },
     ],
   },
+  // L9 (PI-3 sprint plan, call-14; DECISIONS.md D3): TPRM's new 8th
+  // top-level entry — flat, no children, no `navigable`/`defaultExpanded`
+  // (same shape as 'reporting' below). Nav-budget deviation SANCTIONED:
+  // D3's own text raises the §3.1 ≤7 top-level budget to 8 for this one
+  // addition ("gets a genuinely new top-level Sidebar entry"), the same
+  // kind of settled, recorded tripwire change PI2-D39 made to this exact
+  // budget for Connect/Vantage (see "SUPERSEDED — PI2-D39" above) — not a
+  // silent re-litigation of the limit. Placement: immediately after OnSide
+  // — call-14's requirement statement (`planning/call-14-tprm-as-module.md`)
+  // positions TPRM "at the same organizational level as the Regulatory
+  // module," and meeting_notes.md:38 (cited by D3) frames "Regulatory and
+  // third-party feeds structured as siblings" — OnSide is this app's
+  // regulatory module, so TPRM sits as its immediate top-level sibling,
+  // not appended at the list's tail. `id` is `'tprm'`, a real routed
+  // ScreenId (App.tsx `SCREEN_IDS`).
+  { id: 'tprm', label: 'TPRM' },
   {
     id: 'studio',
     label: 'Studio',

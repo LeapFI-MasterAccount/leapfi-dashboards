@@ -46,6 +46,15 @@ describe('sidebar structure (base L762–821)', () => {
   // from six to seven, still within the ≤7 budget design_system_spec.md
   // §3.1 states (at the limit, not over it). This is not a re-litigation of
   // that budget; PI2-D39 is the settled decision this test now pins.
+  //
+  // COUNT CHANGED AGAIN BY DIRECTIVE (L9, PI-3 sprint plan call-14;
+  // `implementation/DECISIONS.md` D3, settled): TPRM gets "a genuinely new
+  // top-level Sidebar entry," moving the count from seven to eight — a
+  // sanctioned deviation from §3.1's ≤7 budget, the same kind of settled,
+  // recorded tripwire change PI2-D39 itself made to this exact budget
+  // (six to seven) for Connect/Vantage. This test now pins EIGHT, per D3,
+  // not a re-litigation of PI2-D39's own seven-item pin above.
+  //
   // Accessible names below match via a leading-substring RegExp (not
   // `exact: false` — @testing-library/dom's `name` matcher only supports
   // substring matching through a RegExp/function matcher; a plain string
@@ -53,16 +62,16 @@ describe('sidebar structure (base L762–821)', () => {
   // disabled item's row also carries the "Coming Soon" Tag as part of the
   // same button's content, so its full accessible name is e.g. "Connect
   // Coming Soon" (see SidebarItem.tsx file header "COMING SOON MARKER").
-  it('renders the seven top-level items and the "v 1.071" footer (PI2-D39: Connect/Vantage promoted to flat top-level entries)', () => {
+  it('renders the eight top-level items and the "v 1.071" footer (PI2-D39: Connect/Vantage promoted to flat top-level entries; D3/L9: TPRM added as an 8th)', () => {
     render(<App />)
     const nav = screen.getByRole('navigation', { name: 'Primary' })
-    for (const label of ['Home', 'OnSide', 'Studio', 'Connect', 'Vantage', 'Reporting', 'Settings']) {
+    for (const label of ['Home', 'OnSide', 'TPRM', 'Studio', 'Connect', 'Vantage', 'Reporting', 'Settings']) {
       expect(within(nav).getByRole('button', { name: new RegExp(`^${label}`) })).toBeInTheDocument()
     }
-    // Count what RENDERS, not what NAV declares: exactly 7 top-level rows,
-    // never 8 — SidebarItem marks every top-level row `data-level="top"`.
+    // Count what RENDERS, not what NAV declares: exactly 8 top-level rows,
+    // never 7 or 9 — SidebarItem marks every top-level row `data-level="top"`.
     const topLevelButtons = nav.querySelectorAll('[data-lf-composite="sidebar-item"][data-level="top"]')
-    expect(topLevelButtons).toHaveLength(7)
+    expect(topLevelButtons).toHaveLength(8)
     // Footer version string, verbatim from the base sidebar footer (L762–821).
     expect(within(nav).getByText('v 1.071')).toBeInTheDocument()
   })
@@ -622,11 +631,11 @@ describe('OnSide · Cases nested badge (USER RULING PI2-D43, q11-01 CLOSED YES; 
     expect(casesRow().querySelector('[data-lf-primitive="tag"][data-variant="count"]')?.textContent).toBe(String(newExpectedCount))
   })
 
-  it('AC-S1.1-04-5 — the seven-top-level-items tripwire (PI2-D39) is unaffected: the new "Cases" row renders data-level="nested", never counted by the top-level query', () => {
+  it('AC-S1.1-04-5 — the top-level-items tripwire (PI2-D39, now eight per D3/L9) is unaffected: the new "Cases" row renders data-level="nested", never counted by the top-level query', () => {
     render(<App />)
     const nav = screen.getByRole('navigation', { name: 'Primary' })
     const topLevelButtons = nav.querySelectorAll('[data-lf-composite="sidebar-item"][data-level="top"]')
-    expect(topLevelButtons).toHaveLength(7)
+    expect(topLevelButtons).toHaveLength(8)
 
     const nested = within(nav).getByRole('list', { name: 'OnSide sections' })
     const casesRow = within(nested).getByRole('button', { name: /^Cases/ })
