@@ -45,6 +45,25 @@
  * (the base decodes via innerHTML at render; the twin's panel renders
  * text).
  *
+ * SO3 BADGE-NOTIFY SWEEP (class fix, F1 confirmed instance
+ * `src/__tests__/reporting_cases/cases_badge_notify_sweep.test.tsx`): the
+ * six write sites above all have a base `notify()` anchor and a real bell
+ * title. `save-language`/`revert-language`/`attach-minutes`/`reopen` do
+ * NOT (no base source anchor for a notification at those points) but still
+ * mutate `stage`/`edited`/`history` — the fields `data/cases.ts`
+ * `isUntouched` and `waitingOnRoleKey` (this file, `CaseDetail.tsx`,
+ * `HomePanels.tsx`) read to derive persistent-shell surfaces (the Sidebar
+ * Cases badge, the Gap Closure Board Approval Report's committee bucket).
+ * Each of those four now calls `state/demoStore.ts`'s `syncCaseState()` —
+ * a bare `emit()`, the store's own existing pattern for a state-only sync
+ * with no bell entry (matching `acceptOpportunity`/`applyGapClosure`/
+ * `undoGapClosure`) — at its own write site. `condition-met` is the one
+ * enumerated action left un-synced, with the reasoning recorded inline at
+ * its write site: it is reachable only from `c.stage === 'final'`, mutates
+ * only `condMet` (read nowhere outside `CaseDetail.tsx`, already
+ * re-rendered by this file's own `renderTick`), and no shell-derived value
+ * in this codebase is sensitive to it.
+ *
  * RELEASE-NOTES RECONCILIATION (CS-12 — disposition note; every control
  * surface involved is outside this batch's allowlist, so the disposition
  * is recorded here per the dispatch's own allowance): `SettingsAbout.tsx`'s
@@ -162,6 +181,7 @@ import {
   notifyCaseRejected,
   notifyCaseRouted,
   notifyCaseRoutedLegal,
+  syncCaseState,
 } from '../state/demoStore';
 
 // See file header "CASES SEEDING."
@@ -415,6 +435,14 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
           c.condMet = true;
           c.stage = 'final';
           logEntry(c, `${APPROVAL.committee} approved · minutes attached`, `${c.minutes}. The vote is now part of the evidence chain.`);
+          // SO3 badge-notify sweep (CLASS fix): no base notify() call site
+          // here, but `c.stage` moves 'committee' -> 'final' — a transition
+          // `views/ReportView.tsx`'s Gap Closure Board Approval Report
+          // "For the committee meeting" bucket (filters on
+          // `c.stage === 'committee'` specifically, ReportView.tsx:522) is
+          // sensitive to, and that screen already subscribes via
+          // `useDemoStore()`. See file header "SO3 badge-notify sweep" note.
+          syncCaseState();
         },
         () => 'Minutes attached. The condition is satisfied and final approval is open.',
       );
@@ -425,6 +453,18 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
         (c) => {
           c.condMet = true;
           logEntry(c, `Condition evidenced · ${c.cond ?? ''}`, 'Final approval is now open.');
+          // SO3 badge-notify sweep — deliberately NO store sync here.
+          // `condMet` is read nowhere outside `../views/CaseDetail.tsx`
+          // (already re-rendered by this file's own `renderTick` bump on
+          // every commit, no cross-component staleness possible); this
+          // action is only ever reachable at `c.stage === 'final'`
+          // (`CaseDetail.tsx` gates "Record the condition as met" to that
+          // stage), a stage `data/cases.ts` `isUntouched`'s `stage ===
+          // 'analyst'` guard and `waitingOnRoleKey`'s 'cro' branch both
+          // already treat identically before and after this mutation — no
+          // shell-derived value this codebase computes can move. Provably
+          // inert, not merely believed inert; see the dedicated sweep test
+          // file's header for the full disposition table.
         },
         () => 'Condition recorded as met. Final approval is now open.',
       );
@@ -449,6 +489,11 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
         (c) => {
           c.stage = 'analyst';
           logEntry(c, 'Reopened for redraft', '');
+          // SO3 badge-notify sweep (CLASS fix): no base notify() call site
+          // here, but `c.stage` moves to 'analyst' — the exact stage both
+          // `isUntouched` and `waitingOnRoleKey` treat specially (from
+          // 'rejected', which both already treat as "nobody"/false).
+          syncCaseState();
         },
         () => 'Reopened for redraft.',
       );
@@ -464,6 +509,11 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
           if (changed) {
             c.edited = true;
             logEntry(c, 'Edited the proposed language', 'OnSide’s draft kept as the base version. Both texts stay in the case.');
+            // SO3 badge-notify sweep (CLASS fix, F1's confirmed instance):
+            // `c.edited` flipping true directly flips `isUntouched` — only
+            // synced when the language actually changed (a no-op save
+            // moves nothing, so nothing to sync).
+            syncCaseState();
           }
         },
         (c) => (c.edited ? 'Language updated. The original OnSide draft is kept in the case.' : 'No change to the language.'),
@@ -476,6 +526,18 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
           c.lang = c.base;
           c.edited = false;
           logEntry(c, 'Reverted to the OnSide draft', '');
+          // SO3 badge-notify sweep (CLASS fix): `c.edited` is the exact
+          // field `isUntouched` reads. `CaseDetail.tsx` only ever offers
+          // this action once `c.edited` is already true (itself only ever
+          // set by a prior `save-language`, which always logs an entry
+          // first, so `history.length` is already >1 by the time this is
+          // reachable — meaning `isUntouched` is already permanently false
+          // through the current UI wiring regardless of this flip). That
+          // "provably inert" read leans on a SEPARATE file's gating logic,
+          // not a structural invariant of this mutation, and it touches
+          // the same field the class's confirmed instance (F1) does — per
+          // the dispatch's own tie-break ("when in doubt, notify"), sync.
+          syncCaseState();
         },
         () => 'Reverted to the language OnSide proposed.',
       );
