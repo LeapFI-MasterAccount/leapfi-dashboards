@@ -237,8 +237,14 @@ export const SCRIPT_CEO: ScriptStep[] = [
  * `data/onside.ts:372-375`, the IRP-escalation/governance-charter/"104 of
  * 214 controls" items) plus the domain's own footer line, which carries
  * the literal ratified vocabulary — `data/onside.ts:87`'s `inst` field,
- * "CRI FS AI RMF (flagship framework · 230 controls)" — and the 110/230
- * figures (`DomainsAccordion.tsx:388,446`). This keeps D23's substance (one
+ * "CRI FS AI RMF (flagship framework · 230 controls)" — plus two SEPARATE
+ * rendered figures, never one composite: `DomainsAccordion.tsx:388` renders
+ * "110 of 214 obligations met at required maturity" and
+ * `DomainsAccordion.tsx:446` renders "214 of 230 obligations in scope · 110
+ * at required maturity" (HR-ARC-05 fix wave correction — no rendered string
+ * anywhere pairs 110 directly with 230; the `do` fields below name exactly
+ * these two real figures, not the invented composite). This keeps D23's
+ * substance (one
  * close beat, TPRM = full deep-dive register, AI-gov = a lighter,
  * real-content callout, not a second parallel deep-dive) while being
  * honest that it spans two already-visited screens via one real, existing
@@ -252,7 +258,7 @@ export const SCRIPT_EXAMINER: ScriptStep[] = [
     id: 'examiner-01-overview',
     title: 'Full posture, one glance',
     say: 'Every framework, every regulator, one posture — judged against the targets we set, gaps named out loud instead of buried in a binder.',
-    do: "OnSide → Overview; scan the domain-posture grid across every framework and body; click 'Gaps to your targets' in the KPI strip and name one real gap on record — TPRM 24 of 33 obligations met, or AI-gov 110 of 230 controls met.",
+    do: "OnSide → Overview; scan the domain-posture grid across every framework and body; click 'Gaps to your targets' in the KPI strip and name one real gap on record — TPRM 24 of 33 obligations met, or AI-gov 110 of 214 obligations met (214 of 230 in scope).",
     target: 'onside:overview',
   },
   {
@@ -266,7 +272,7 @@ export const SCRIPT_EXAMINER: ScriptStep[] = [
     id: 'examiner-03-tprm',
     title: 'TPRM deep-dive, AI-gov flagship',
     say: 'Third-party risk gets the full obligation register, gaps and all — and right beside it, the flagship AI-governance framework, judged the identical way.',
-    do: "OnSide → Documents → Domain impact; open Third-Party Risk Management's obligation register (the deep-dive). Then Sidebar → OnSide → Overview → click 'AI Governance' to expand its flagship-framework callout (110 of 230 controls met).",
+    do: "OnSide → Documents → Domain impact; open Third-Party Risk Management's obligation register (the deep-dive). Then Sidebar → OnSide → Overview → click 'AI Governance' to expand its flagship-framework callout (110 of 214 obligations met; 214 of 230 in scope).",
     target: 'onside:dom-tprm',
   },
 ];
@@ -282,8 +288,22 @@ export const SCRIPTS = {
 
 export type ScriptKey = keyof typeof SCRIPTS;
 
-/** Consumer (App.tsx) seeds its own active-script state from this. See file header "let ACTIVE_SCRIPT" note. */
-export const DEFAULT_SCRIPT_KEY: ScriptKey = 'ceo';
+/**
+ * Consumer (App.tsx) seeds its own active-script state from this. See file
+ * header "let ACTIVE_SCRIPT" note.
+ *
+ * HR-ARC-01 (hostile-review fix wave): the finalized, sign-off-ratified demo
+ * arc IS the presenter-driven NIST-posture / Risk-Lead / TPRM-AI-gov walk
+ * (DECISIONS.md D16-D24, closing all ten of Marisol Vance's
+ * q4-narrative-questions.md items) — D24 in particular rules the format
+ * "presenter-driven, decisively" and names Dan or Josh as the presenter for
+ * exactly this arc. `SCRIPT_EXAMINER` is that arc; shipping it means this
+ * key must select it, not `SCRIPT_CEO`. `SCRIPT_CEO` stays fully live in the
+ * `SCRIPTS` registry (swap rule 1 — "one array + one registry entry, no
+ * rework") for a future presenter who wants the original NorthWinds walk;
+ * only the ACTIVE selection changed, never the registry shape.
+ */
+export const DEFAULT_SCRIPT_KEY: ScriptKey = 'examiner';
 
 /** Screen ids this build can actually resolve a script target onto (see file header). */
 export type ScriptTargetId =
@@ -332,8 +352,23 @@ export function resolveTarget(target: string): ScriptTargetId | null {
   // follow-up shell wiring; landing on the wrong screen entirely (the old
   // blanket 'onside.documents' mapping) was the RAIL-10 defect. Only dom-
   // keeps the Documents landing — design_system_spec.md §5.3's own
-  // resolution for the genuinely missing domain-view screen (Documents owns
-  // the in-page "Domain impact" section).
+  // resolution for what THIS RAIL-10 rule was written to reach.
+  // HR-ARC-05 (hostile-review fix wave) CORRECTION: this branch's own prior
+  // comment called Documents "the genuinely missing domain-view screen" —
+  // that was already false when written. `screens/TprmDomain.tsx` (a real,
+  // dedicated, purpose-built TPRM domain screen — Sidebar's 8th top-level
+  // entry, DECISIONS.md D3) shipped 2h14m before this file's `examiner`
+  // script was authored (commit 59154a3 vs 0d84e7b), so no domain-view
+  // screen was "missing" at authoring time. `onside:dom-tprm` still resolves
+  // here to `onside.documents` because DECISIONS.md D16 deliberately ruled
+  // that exact target ("already-built real domain data... never a new
+  // locked SoonSplash placeholder," explicitly reusing D3's TPRM
+  // content-depth grounding) — a considered choice this rule implements
+  // faithfully, not a staleness bug. Whether D16's venue ruling itself
+  // should now point at `TprmDomain.tsx` instead, given that screen exists,
+  // is a question for D16's owning authority (Marisol Vance) to re-rule, not
+  // this implementer — flagged in this dispatch's `stops`, not resolved
+  // here.
   if (target.startsWith('onside:src:')) return 'onside.feed';
   if (target.startsWith('onside:case:')) return 'cases';
   if (target.startsWith('onside:dom-')) return 'onside.documents';

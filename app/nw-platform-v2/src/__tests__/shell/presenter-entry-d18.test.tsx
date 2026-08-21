@@ -88,7 +88,8 @@ describe('D18 §2.3 — ?present=1 boot pre-stage', () => {
     render(<App />)
     const rail = railQuery()
     expect(rail).toBeInTheDocument()
-    expect(within(rail as HTMLElement).getByText('STEP 1 OF 7')).toBeInTheDocument()
+    // HR-ARC-01: the live rail's active script is the 3-step examiner arc.
+    expect(within(rail as HTMLElement).getByText('STEP 1 OF 3')).toBeInTheDocument()
   })
 
   it('stays Hidden at boot when the querystring is absent', () => {
@@ -101,7 +102,7 @@ describe('RAIL-05 — editable-element guard on every rail chord', () => {
   it('ignores chords whose keydown target is an input or contenteditable surface, for toggle and step navigation alike', () => {
     render(<App />)
     pressRevealChord()
-    expect(within(railQuery() as HTMLElement).getByText('STEP 1 OF 7')).toBeInTheDocument()
+    expect(within(railQuery() as HTMLElement).getByText('STEP 1 OF 3')).toBeInTheDocument()
 
     const input = document.createElement('input')
     const editable = document.createElement('div')
@@ -111,7 +112,7 @@ describe('RAIL-05 — editable-element guard on every rail chord', () => {
       // Step chord from a text field: must not navigate (base failure: the
       // active screen unmounts and typed state is destroyed mid-demo).
       fireEvent.keyDown(input, { key: 'ArrowRight', code: 'ArrowRight', ctrlKey: true, altKey: true, shiftKey: true })
-      expect(within(railQuery() as HTMLElement).getByText('STEP 1 OF 7')).toBeInTheDocument()
+      expect(within(railQuery() as HTMLElement).getByText('STEP 1 OF 3')).toBeInTheDocument()
 
       // Toggle chord from a contenteditable: rail must stay visible.
       fireEvent.keyDown(editable, { key: 'P', code: 'KeyP', ctrlKey: true, altKey: true, shiftKey: true })
@@ -119,7 +120,7 @@ describe('RAIL-05 — editable-element guard on every rail chord', () => {
 
       // Same chords from a non-editable target still work.
       fireEvent.keyDown(window, { key: 'ArrowRight', code: 'ArrowRight', ctrlKey: true, altKey: true, shiftKey: true })
-      expect(within(railQuery() as HTMLElement).getByText('STEP 2 OF 7')).toBeInTheDocument()
+      expect(within(railQuery() as HTMLElement).getByText('STEP 2 OF 3')).toBeInTheDocument()
     } finally {
       input.remove()
       editable.remove()
