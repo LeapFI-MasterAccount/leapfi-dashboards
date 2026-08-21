@@ -116,7 +116,12 @@ describe('PosturePillBar re-skin · unmistakable on-target state (D2: target-ban
     plainRender.unmount();
 
     render(<PosturePillBar segments={onTargetSegments} />);
-    const combined = screen.getByText('3 · Defined · now');
+    // The on-target segment's <li> now carries extra child nodes (the
+    // HR-A11Y-01 checkmark + sr-only marker) alongside `segment.label`, so
+    // it's located via `closest('li')` off the label text rather than an
+    // exact-text match on the whole element.
+    const combinedLi = screen.getByText('3 · Defined · now', { exact: false }).closest('li') as HTMLElement;
+    const combined = combinedLi;
 
     // The combined segment keeps the goal's solid fill...
     expect(combined.style.background).toBe('var(--accent)');
@@ -128,9 +133,51 @@ describe('PosturePillBar re-skin · unmistakable on-target state (D2: target-ban
     expect(combined.style.boxShadow).toBeTruthy();
   });
 
+  // HR-A11Y-01 (S2, hostile review, CONFIRMED) — the pre-fix ring used
+  // `var(--bg)`, which is near-identical in luminance to both real
+  // consumer backgrounds (~1.1:1 panel-seated, exactly 1:1 page-level —
+  // both far under the WCAG 1.4.11 3:1 non-text floor). The fix recolors
+  // the ring to `var(--ink)`, already consumed elsewhere in this file
+  // (the plain-current branch) and independently verified >4.5:1 against
+  // both `--panel` and `--bg` in both themes (file header contrast
+  // table). Pinned here as a rendered-style assertion so a regression
+  // back to `--bg` (or any token failing the D2b contrast set) is caught
+  // directly, not just by a re-derivation from tokens.css.
+  it('the on-target boundary ring uses --ink (contrast-verified against both real consumer backgrounds), never --bg (near-invisible, HR-A11Y-01)', () => {
+    render(<PosturePillBar segments={onTargetSegments} />);
+    const combined = screen.getByText('3 · Defined · now', { exact: false }).closest('li') as HTMLElement;
+    expect(combined.style.boxShadow).toBe('0 0 0 2px var(--ink)');
+    expect(combined.style.boxShadow).not.toContain('var(--bg)');
+  });
+
+  // HR-A11Y-01 (S2) — `segment.label` alone (computed upstream in
+  // `engine/plan.ts`, out of this component's allowlist) is byte-identical
+  // between a plain current-only segment and an on-target segment (both
+  // end in " • now", never "goal"). This component's own markup now adds
+  // an explicit, independent on-target marker (decorative checkmark +
+  // sr-only text) so the fact is genuinely carried in text for both
+  // sighted-at-a-glance and assistive-tech users, not just implied by a
+  // ring a user has to notice.
+  //
+  // DISCRIMINATING: reverting this dispatch's marker (removing the
+  // `onTarget ? <>...</> : null` block in `PosturePillBar.tsx`) makes
+  // this test fail — confirmed by rerunning this file unmodified against
+  // that scratch revert.
+  it('the on-target segment carries an explicit text/assistive-tech marker beyond the shared "now" label — a plain current-only segment does not', () => {
+    const onTargetRender = render(<PosturePillBar segments={onTargetSegments} />);
+    const combinedLi = screen.getByText('3 · Defined · now', { exact: false }).closest('li') as HTMLElement;
+    expect(combinedLi.textContent).toContain('✓');
+    expect(combinedLi.textContent).toContain('target met');
+    onTargetRender.unmount();
+
+    render(<PosturePillBar segments={segments} />);
+    const plainCurrentLi = screen.getByText('3 · Defined · now', { exact: false }).closest('li') as HTMLElement;
+    expect(plainCurrentLi.textContent).not.toContain('target met');
+  });
+
   it('aria-current is still set only on the current segment — text/ARIA meaning is unchanged by the visual re-skin', () => {
     render(<PosturePillBar segments={onTargetSegments} />);
-    const li = screen.getByText('3 · Defined · now').closest('li');
+    const li = screen.getByText('3 · Defined · now', { exact: false }).closest('li');
     expect(li).toHaveAttribute('aria-current', 'true');
     const other = screen.getByText('1 · Ad hoc').closest('li');
     expect(other).not.toHaveAttribute('aria-current');

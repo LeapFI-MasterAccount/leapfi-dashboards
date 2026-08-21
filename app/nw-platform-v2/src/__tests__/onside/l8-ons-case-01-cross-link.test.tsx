@@ -115,11 +115,55 @@ describe('ONS-CASE-01 AC3 — case context on landing (CaseDetail.tsx, verified 
     expect(dialog.textContent).toMatch(/Before/)
     expect(dialog.textContent).toMatch(/After/)
 
-    // Approval stage — a fresh-seeded case starts at the 'analyst' stage; its own status pill text renders somewhere in the side-car.
-    expect(dialog.textContent).toMatch(/analyst|Not decided yet|Risk Analyst/i)
+    // Approval stage — HR-DATA-04 (S4, hostile review, CONFIRMED): CASE-2026-001
+    // is an exec-tier case (irp), and `seedCases()`'s PI2-D45 override routes
+    // every board/exec-tier case straight to the 'cro' stage before this test
+    // ever renders it (data/cases.ts:553-576) — it is NOT "a fresh-seeded case
+    // at the 'analyst' stage" as the old comment here claimed. The prior
+    // assertion (`/analyst|Not decided yet|Risk Analyst/i`) was an OR-regex
+    // that matched unrelated text ("Risk Analyst" in a history log line and
+    // the static "2. Risk analyst" progress-step label) and would keep
+    // passing even if the stage pill's text regressed — it never exercised
+    // the stage Tag at all. Scoped to the actual stage-pill Tag next to the
+    // Drawer heading (CaseDetail.tsx:665, `<Tag text={pill.text} .../>`),
+    // asserting the exact, unique text CASE-2026-001's real ('cro') stage
+    // produces.
+    expect(within(dialog).getByText('With the CRO')).toBeInTheDocument()
 
     // Who/when — the seeded CaseHistoryEntry ("OnSide" system actor, "Change detected and language proposed").
     expect(within(dialog).getByText('Change detected and language proposed')).toBeInTheDocument()
     expect(dialog.textContent).toContain('OnSide')
+  })
+
+  // HR-DATA-04 (S4, hostile review, CONFIRMED) — the renamed-status-label
+  // regression guard ("Not decided yet" -> "Open item", the `isUntouched()`
+  // branch of `stagePill()`, CaseDetail.tsx:293) needs a case that actually
+  // reaches that branch. CASE-2026-001 never does (see comment above); the
+  // three proc-tier cases (aa-procedure/msg-disclosure/rege-proc,
+  // data/cases.ts:74-76) are explicitly left untouched by the PI2-D45
+  // override and stay at `stage: 'analyst', edited: false, history.length
+  // === 1` — genuinely `isUntouched()`. CASE-2026-003 is aa-procedure (3rd
+  // entry seeded with a redline, data/cases.ts:476-509).
+  //
+  // DISCRIMINATING: reverting `stagePill()`'s `isUntouched(c)` branch text
+  // from 'Open item' back to the pre-rename 'Not decided yet' in a scratch
+  // copy makes this test fail (the exact-text query below stops matching);
+  // confirmed by rerunning this file unmodified against that scratch
+  // revert.
+  it('a genuinely untouched case (CASE-2026-003, aa-procedure, proc tier — never routed by the PI2-D45 override) shows the renamed "Open item" stage pill, never the pre-rename "Not decided yet"', () => {
+    render(<Cases topbar={topbarFixture()} onNavigate={() => {}} currentUser={ANALYST} />)
+
+    const idCell = screen.getByText('CASE-2026-003')
+    const row = idCell.closest('tr')
+    expect(row).not.toBeNull()
+    const openButton = within(row as HTMLElement).getByRole('button', { name: 'Open' })
+    act(() => {
+      openButton.focus()
+    })
+    fireEvent.click(openButton)
+
+    const dialog = screen.getByRole('dialog', { name: /CASE-2026-003/ })
+    expect(within(dialog).getByText('Open item')).toBeInTheDocument()
+    expect(within(dialog).queryByText('Not decided yet')).not.toBeInTheDocument()
   })
 })
