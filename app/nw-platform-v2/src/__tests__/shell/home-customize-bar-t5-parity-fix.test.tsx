@@ -46,11 +46,17 @@ function getWrap(container: HTMLElement): HTMLElement {
   return wrap as HTMLElement
 }
 
-// With DEFAULT_VISIBLE_KEYS (every panel shown), each toggle Chip's
-// accessible name carries its 1-based position prefix (HomeCustomizeBar.tsx
-// render: `${pos + 1}. ${label}`) — HOME_PANEL_DEFS order matches
-// DEFAULT_VISIBLE_KEYS order exactly, so array index doubles as position.
-const SHOWN_OPTION_NAMES = HOME_PANEL_DEFS.map(({ label }, i) => `${i + 1}. ${label}`)
+// With visibleKeys={DEFAULT_VISIBLE_KEYS}, a toggle Chip's
+// accessible name carries its 1-based position prefix only while SHOWN
+// (HomeCustomizeBar.tsx render: `${pos + 1}. ${label}`). HF1b (user ruling
+// 2026-08-21): 'aigov' is in HOME_PANEL_DEFS but EXCLUDED from
+// DEFAULT_VISIBLE_KEYS (default-hidden, opt-in), so its chip renders
+// unprefixed — derive each name from the key's DEFAULT_VISIBLE_KEYS
+// position instead of assuming the two arrays match.
+const SHOWN_OPTION_NAMES = HOME_PANEL_DEFS.map(({ key, label }) => {
+  const pos = DEFAULT_VISIBLE_KEYS.indexOf(key)
+  return pos >= 0 ? `${pos + 1}. ${label}` : label
+})
 
 describe('T5 parity — HomeCustomizeBar panel geometry contract (same shape FilterBar.tsx carries)', () => {
   it('the open panel is a non-wrapping vertical list, width tied to the trigger and capped, height-bounded with internal scroll, zIndex 50', async () => {
@@ -84,7 +90,7 @@ describe('T5 parity — HomeCustomizeBar panel geometry contract (same shape Fil
     expect(wrap.style.alignSelf).toBe('flex-start')
   })
 
-  it('all 5 panel-toggle options plus both command chips still render inside the height-bounded panel', async () => {
+  it('all 6 panel-toggle options (aigov unprefixed — default-hidden, HF1b) plus both command chips still render inside the height-bounded panel', async () => {
     const user = userEvent.setup()
     const { getByRole } = renderBar()
     await user.click(getByRole('button', { name: TRIGGER_NAME }))
@@ -98,7 +104,7 @@ describe('T5 parity — HomeCustomizeBar panel geometry contract (same shape Fil
 })
 
 describe('T5 parity — Chip `density="compact"` scoped to the panel-toggle option rows only', () => {
-  it('the 5 panel-toggle rows render compact (32px, full-width) — the option rows the dispatch names', async () => {
+  it('the panel-toggle rows (all 6, shown or not) render compact (32px, full-width) — the option rows the dispatch names', async () => {
     const user = userEvent.setup()
     const { getByRole } = renderBar()
     await user.click(getByRole('button', { name: TRIGGER_NAME }))
@@ -129,8 +135,8 @@ describe('T5 parity — Chip `density="compact"` scoped to the panel-toggle opti
 
     // 'posture' is visible in DEFAULT_VISIBLE_KEYS, so its rendered label
     // carries the position-number prefix (see HomeCustomizeBar.tsx render).
-    // HF1 (user ruling 2026-08-21): 'aigov' now leads the default, so
-    // posture sits at position 2 — derive it so this never goes stale again.
+    // Derived, never a literal — HF1 put posture at 2 (behind aigov), HF1b
+    // puts it back at 1 (aigov default-hidden); this stays correct either way.
     const posturePosition = DEFAULT_VISIBLE_KEYS.indexOf('posture') + 1
     const postureButton = getByRole('button', { name: `${posturePosition}. Risk posture` })
     expect(postureButton).toHaveAttribute('aria-pressed', 'true')
@@ -175,8 +181,9 @@ describe('T5 parity — dismiss contract: Escape retained, outside-click added',
     })
     await user.click(getByRole('button', { name: TRIGGER_NAME }))
 
-    // HF1: derive posture's position prefix (now 2, behind 'aigov') and the
-    // expected remainder from DEFAULT_VISIBLE_KEYS instead of stale literals.
+    // Derive posture's position prefix and the expected remainder from
+    // DEFAULT_VISIBLE_KEYS instead of stale literals (HF1b: aigov is no
+    // longer in the default set, so posture leads again).
     await user.click(getByRole('button', { name: `${DEFAULT_VISIBLE_KEYS.indexOf('posture') + 1}. Risk posture` }))
 
     expect(latest).toEqual(DEFAULT_VISIBLE_KEYS.filter((k) => k !== 'posture'))

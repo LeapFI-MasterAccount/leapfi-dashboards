@@ -53,8 +53,9 @@
  * customization surface of its own in this file (the removed StatCard row
  * was not one of this file's 5 managed panels before D40 either), and this
  * dispatch's ALLOWLIST scopes only the presentation/placement move, not
- * this component's managed-key set. This file only ever manages the 5 keys
- * it has always owned: posture, legis, invest, queue, qa.
+ * this component's managed-key set. This file manages the 6 keys of the
+ * Customize universe: aigov (HF1; default-HIDDEN per HF1b — see
+ * `DEFAULT_VISIBLE_KEYS`' own comment), posture, legis, invest, queue, qa.
  *
  * STATE OWNERSHIP / A DEFECT AVOIDED (STOP-item, flagged rather than
  * propagated): `data/misc.ts` exports `HOME_ORDER: Record<string,
@@ -167,7 +168,17 @@ export const HOME_PANEL_DEFS: ReadonlyArray<{ key: HomePanelKey; label: string }
   label: label as string,
 }));
 
-export const DEFAULT_VISIBLE_KEYS: readonly HomePanelKey[] = HOME_PANEL_DEFS.map((p) => p.key);
+/** HF1b (user ruling 2026-08-21, superseding HF1's default-shown reading):
+ * the shipped default visible set EXCLUDES 'aigov' — "nothing not
+ * configured by the user" means opt-in, so the AI Governance panel appears
+ * only after a user explicitly toggles it on in Customize. It stays in
+ * `HOME_PANEL_DEFS` (the chip list) so it CAN be toggled on, and
+ * `togglePanel` below seats it at position 1 when that happens. This
+ * constant is the twin's one default-visibility mechanism (data/misc.ts's
+ * `HOME_HIDE` export is deliberately never read — see file header "STATE
+ * OWNERSHIP"; it is also per-role runtime state in the base engine, wiped
+ * by `resetDemo`, so seeding it could never carry a shipped default). */
+export const DEFAULT_VISIBLE_KEYS: readonly HomePanelKey[] = HOME_PANEL_DEFS.map((p) => p.key).filter((k) => k !== 'aigov');
 
 /** Port of `homeOrder()`'s healing logic (source 4126-4133), scoped to the
  * 5-key universe this dispatch owns and deliberately never reading
@@ -331,7 +342,17 @@ export function HomeCustomizeBar({ roleKey, roleFirstName, visibleKeys, onChange
   }
 
   function togglePanel(key: HomePanelKey): void {
-    const next = visibleKeys.includes(key) ? visibleKeys.filter((k) => k !== key) : [...visibleKeys, key];
+    // Toggle ON: base homePanelToggle push semantics — "it joins at the
+    // end, where you picked it" (source 4159) — for every key EXCEPT
+    // 'aigov', the HF1b opt-in key, which keeps the position-1 seating the
+    // dispatch pins for its shown state ("keep its position-1 ordering WHEN
+    // shown"): it joins at the FRONT. Once committed, the stored sequence
+    // is authoritative like any other (resolveVisibleKeys never re-sorts).
+    const next = visibleKeys.includes(key)
+      ? visibleKeys.filter((k) => k !== key)
+      : key === 'aigov'
+        ? [key, ...visibleKeys]
+        : [...visibleKeys, key];
     commitVisibleKeys(roleKey, next);
     onChange(next);
   }

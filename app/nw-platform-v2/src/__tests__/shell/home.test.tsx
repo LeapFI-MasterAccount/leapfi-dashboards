@@ -18,7 +18,9 @@
  *    `homeOrder()` healing (4126–4133), `homePanelToggle`/`homePanelsClear`/
  *    `homePanelsReset` (4149–4172), `applyHomePanels` ordered render
  *    (4172–4188). Toggling a panel back ON appends it to the END of the
- *    stored order (base homePanelToggle push semantics).
+ *    stored order (base homePanelToggle push semantics) — except 'aigov',
+ *    the HF1b opt-in key, which lands FIRST when toggled on (user ruling
+ *    2026-08-21; pinned in home-aigov-callout.test.tsx).
  *
  * D18 (KNOWN FLUX): Home's "Start the demo" demo-entry affordance is NOT
  * pinned here — no test presses or asserts it.
@@ -140,48 +142,51 @@ describe('HomeCustomizeBar placement (PI2-D40 — top-right utility corner, comp
 })
 
 describe('Home customization: visibleKeys flow bar -> panels (base 4122–4193)', () => {
-  // HF1 (user ruling 2026-08-21): the AI-gov flagship callout is now the
-  // sixth Customize-gated panel key, 'aigov', default-shown at position 1
-  // — so the shipped default is 6 panels / "Customize (6 of 6 shown)" and
-  // 'aigov' leads every shipped-default order below. Behavior asserted is
-  // otherwise unchanged from the base anchors this file pins.
-  it('never-customized boot renders all 6 panels in the shipped HP order (homeOrder healing, 4126–4133)', () => {
+  // HF1b (user ruling 2026-08-21, superseding HF1's default-shown reading):
+  // the sixth Customize-gated panel key, 'aigov', is HIDDEN BY DEFAULT —
+  // opt-in via Customize only ("nothing not configured by the user"). The
+  // shipped default is therefore 5 panels / "Customize (5 of 6 shown)" and
+  // 'posture' leads every shipped-default order below. Toggle/clear/reset
+  // behavior for the other five keys is otherwise unchanged from the base
+  // anchors this file pins; aigov's own opt-in flow (lands FIRST when
+  // toggled on) is pinned in home-aigov-callout.test.tsx.
+  it('never-customized boot renders the 5 default panels in the shipped HP order — aigov absent until opted in (homeOrder healing, 4126–4133; HF1b)', () => {
     const { container } = render(<App />)
-    expect(panelKeysInOrder(container)).toEqual(['aigov', 'posture', 'legis', 'invest', 'queue', 'qa'])
-    expect(screen.getByRole('button', { name: 'Customize (6 of 6 shown)' })).toBeInTheDocument()
+    expect(panelKeysInOrder(container)).toEqual(['posture', 'legis', 'invest', 'queue', 'qa'])
+    expect(screen.getByRole('button', { name: 'Customize (5 of 6 shown)' })).toBeInTheDocument()
   })
 
   it('toggling a panel off in the bar removes exactly that panel and updates the shown count (homePanelToggle, 4149–4172)', async () => {
     const user = userEvent.setup()
     const { container } = render(<App />)
 
-    await user.click(screen.getByRole('button', { name: 'Customize (6 of 6 shown)' }))
+    await user.click(screen.getByRole('button', { name: 'Customize (5 of 6 shown)' }))
     const bar = screen.getByRole('group', { name: 'Customize your home' })
-    await user.click(within(bar).getByRole('button', { name: '2. Risk posture' }))
+    await user.click(within(bar).getByRole('button', { name: '1. Risk posture' }))
 
-    expect(panelKeysInOrder(container)).toEqual(['aigov', 'legis', 'invest', 'queue', 'qa'])
-    expect(screen.getByRole('button', { name: 'Customize (5 of 6 shown)' })).toBeInTheDocument()
+    expect(panelKeysInOrder(container)).toEqual(['legis', 'invest', 'queue', 'qa'])
+    expect(screen.getByRole('button', { name: 'Customize (4 of 6 shown)' })).toBeInTheDocument()
   })
 
-  it('toggling a panel back on appends it to the END of the order (base homePanelToggle push semantics, 4149–4172)', async () => {
+  it('toggling a panel back on appends it to the END of the order (base homePanelToggle push semantics, 4149–4172; aigov is the sole HF1b position-1 exception, pinned in home-aigov-callout.test.tsx)', async () => {
     const user = userEvent.setup()
     const { container } = render(<App />)
 
-    await user.click(screen.getByRole('button', { name: 'Customize (6 of 6 shown)' }))
+    await user.click(screen.getByRole('button', { name: 'Customize (5 of 6 shown)' }))
     const bar = screen.getByRole('group', { name: 'Customize your home' })
-    await user.click(within(bar).getByRole('button', { name: '2. Risk posture' }))
+    await user.click(within(bar).getByRole('button', { name: '1. Risk posture' }))
     // Now off — the chip loses its position number.
     await user.click(within(bar).getByRole('button', { name: 'Risk posture' }))
 
-    expect(panelKeysInOrder(container)).toEqual(['aigov', 'legis', 'invest', 'queue', 'qa', 'posture'])
-    expect(screen.getByRole('button', { name: 'Customize (6 of 6 shown)' })).toBeInTheDocument()
+    expect(panelKeysInOrder(container)).toEqual(['legis', 'invest', 'queue', 'qa', 'posture'])
+    expect(screen.getByRole('button', { name: 'Customize (5 of 6 shown)' })).toBeInTheDocument()
   })
 
-  it('Clear all empties the panel set honestly; Reset layout restores the full shipped order (homePanelsClear/homePanelsReset, 4149–4172)', async () => {
+  it('Clear all empties the panel set honestly; Reset layout restores the shipped default — aigov stays opt-in, never restored by Reset (homePanelsClear/homePanelsReset, 4149–4172; HF1b)', async () => {
     const user = userEvent.setup()
     const { container } = render(<App />)
 
-    await user.click(screen.getByRole('button', { name: 'Customize (6 of 6 shown)' }))
+    await user.click(screen.getByRole('button', { name: 'Customize (5 of 6 shown)' }))
     const bar = screen.getByRole('group', { name: 'Customize your home' })
 
     await user.click(within(bar).getByRole('button', { name: 'Clear all' }))
@@ -191,25 +196,25 @@ describe('Home customization: visibleKeys flow bar -> panels (base 4122–4193)'
     expect(within(screen.getByRole('group', { name: 'Customize your home' })).getByText(/Nothing showing/)).toBeInTheDocument()
 
     await user.click(within(screen.getByRole('group', { name: 'Customize your home' })).getByRole('button', { name: 'Reset layout' }))
-    expect(panelKeysInOrder(container)).toEqual(['aigov', 'posture', 'legis', 'invest', 'queue', 'qa'])
-    expect(screen.getByRole('button', { name: 'Customize (6 of 6 shown)' })).toBeInTheDocument()
+    expect(panelKeysInOrder(container)).toEqual(['posture', 'legis', 'invest', 'queue', 'qa'])
+    expect(screen.getByRole('button', { name: 'Customize (5 of 6 shown)' })).toBeInTheDocument()
   })
 
   it('the customized order survives leaving Home and returning (stored HOME_ORDER[roleKey] is authoritative, 4126–4133)', async () => {
     const user = userEvent.setup()
     const { container } = render(<App />)
 
-    await user.click(screen.getByRole('button', { name: 'Customize (6 of 6 shown)' }))
+    await user.click(screen.getByRole('button', { name: 'Customize (5 of 6 shown)' }))
     const bar = screen.getByRole('group', { name: 'Customize your home' })
-    await user.click(within(bar).getByRole('button', { name: '2. Risk posture' }))
-    expect(panelKeysInOrder(container)).toEqual(['aigov', 'legis', 'invest', 'queue', 'qa'])
+    await user.click(within(bar).getByRole('button', { name: '1. Risk posture' }))
+    expect(panelKeysInOrder(container)).toEqual(['legis', 'invest', 'queue', 'qa'])
 
     // Leave Home (Reporting is a top-level leaf) and come back.
     const nav = screen.getByRole('navigation', { name: 'Primary' })
     await user.click(within(nav).getByRole('button', { name: 'Reporting' }))
     await user.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: 'Home' }))
 
-    expect(panelKeysInOrder(container)).toEqual(['aigov', 'legis', 'invest', 'queue', 'qa'])
-    expect(screen.getByRole('button', { name: 'Customize (5 of 6 shown)' })).toBeInTheDocument()
+    expect(panelKeysInOrder(container)).toEqual(['legis', 'invest', 'queue', 'qa'])
+    expect(screen.getByRole('button', { name: 'Customize (4 of 6 shown)' })).toBeInTheDocument()
   })
 })
