@@ -1,12 +1,31 @@
 /**
  * HomePanels — view (parity_ia_addendum.md §1.7 "Home customization",
- * Batch 7): the 5 gated panels — Risk posture, Strategic signal,
- * Investment and return, Your queue, Quick actions — composed below
- * `Home.tsx`'s primary CTA row (wired: `Home.tsx` renders this component
- * per `HomeCustomizeBar.tsx`'s "WIRING RECIPE"). PI2-D40 (user directive
- * 2026-08-20) removed Home's former StatCard row entirely — this file's
- * own panels (including their own, unrelated `StatCard` instances further
- * down, e.g. the Investment-and-return panel) are unaffected.
+ * Batch 7): the 5 gated panels — Risk posture, Strategic signal (renamed
+ * "Regulatory Radar" — see call-03 note below), Investment and return,
+ * Your queue, Quick actions — composed below `Home.tsx`'s primary CTA row
+ * (wired: `Home.tsx` renders this component per `HomeCustomizeBar.tsx`'s
+ * "WIRING RECIPE"). PI2-D40 (user directive 2026-08-20) removed Home's
+ * former StatCard row entirely — this file's own panels (including their
+ * own, unrelated `StatCard` instances further down, e.g. the
+ * Investment-and-return panel) are unaffected.
+ *
+ * call-03 RENAME (planning/call-03-regulatory-radar-rename.md;
+ * meeting_notes_2026-08-20.md:86, Dan Scheffler/Josh Siegel: rename
+ * "Strategic Signal" to "Regulatory Radar"): every literal string this
+ * file owns is renamed below — the `StrategicSignalPanel` function (now
+ * `RegulatoryRadarPanel`), its `DataTable` caption, and its `Drawer`
+ * title. STOP-ITEM / OUT-OF-ALLOWLIST FINDING (reported, not silently
+ * left): this file's *visible panel section heading* (the `<h2>` above
+ * this panel, rendered from `labelByKey.get('legis')`) and the matching
+ * "Strategic signal" checkbox label in `HomeCustomizeBar.tsx`'s panel
+ * picker both resolve to the SAME literal string, `data/misc.ts`'s `HP`
+ * array entry `['legis', 'hp-legis', 'Strategic signal']` — a data file
+ * neither this dispatch's ALLOWLIST nor `HomeCustomizeBar.tsx` (also
+ * outside it) includes. Those are arguably the MOST visible occurrences
+ * of the old name (the panel's own on-screen heading, and the toggle a
+ * viewer uses to show/hide it) and are NOT renamed by this dispatch —
+ * flagged for the dispatcher/next lane holding `data/misc.ts` rather than
+ * an out-of-allowlist edit.
  *
  * Ports the non-`kpis` sections of `renderHome()` (leapfi-platform.html
  * 4197-4285) as five independently-gated `<section>`s, rendered in
@@ -559,7 +578,7 @@ function touchScreenId(t: SignalTouch): string {
   return t[0] === 'doc' ? 'onside.documents' : 'onside.overview';
 }
 
-function StrategicSignalPanel({
+function RegulatoryRadarPanel({
   onNavigate,
   onDeepLink,
 }: {
@@ -625,9 +644,9 @@ function StrategicSignalPanel({
   return (
     <>
       <div style={scrollWrapStyle}>
-        <DataTable caption="Strategic signal" columns={columns} rows={rows} getRowId={(r) => r.rowId} rowAction={rowAction} />
+        <DataTable caption="Regulatory Radar" columns={columns} rows={rows} getRowId={(r) => r.rowId} rowAction={rowAction} />
       </div>
-      <Drawer open={selected !== null} title={selected ? `Strategic signal · ${selected.sc}` : 'Strategic signal'} onClose={() => setOpenRowId(null)}>
+      <Drawer open={selected !== null} title={selected ? `Regulatory Radar · ${selected.sc}` : 'Regulatory Radar'} onClose={() => setOpenRowId(null)}>
         <DrawerContent kind="signal" fields={fields} actions={actions} />
       </Drawer>
     </>
@@ -777,7 +796,7 @@ export function HomePanels({ visibleKeys, currentRoleKey, onNavigate, onDeepLink
       case 'posture':
         return <PostureBand onNavigate={onNavigate} onDeepLink={onDeepLink} />;
       case 'legis':
-        return <StrategicSignalPanel onNavigate={onNavigate} onDeepLink={onDeepLink} />;
+        return <RegulatoryRadarPanel onNavigate={onNavigate} onDeepLink={onDeepLink} />;
       case 'invest':
         return <InvestmentReturnPanel sliders={liveSliders} opportunities={liveOpportunities} onNavigate={onNavigate} onDeepLink={onDeepLink} />;
       case 'queue':

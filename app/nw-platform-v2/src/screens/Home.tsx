@@ -115,6 +115,43 @@
  * `presenter-entry-d18.test.tsx`, plus `npx tsc --noEmit` (strict,
  * `exactOptionalPropertyTypes`).
  *
+ * call-04 — NORTHWINDS LOGO + MOCK CONTACT INFO (planning/call-04-homepage-
+ * customization.md; meeting_notes_2026-08-20.md:63/86): an additive
+ * content block, `NorthwindsBrandStrip`, rendered directly below the
+ * greeting `<h1>` — greeting-adjacent, per the source note's own framing
+ * ("the greeting" is where the logo request is anchored), and NOT inside
+ * `Topbar.tsx`'s wordmark slot, which is a DIFFERENT LeapFI mark serving a
+ * different purpose (D9/01-architecture.md row 4: "this is a DIFFERENT
+ * logo... in a different slot... an additive image+copy block on
+ * Home.tsx, not a Topbar change"). Placement (below the `<h1>`, before the
+ * CTA row) is this dispatch's own implementer judgment call — call-04's
+ * own open question ("where should the logo be positioned") is unresolved
+ * in the brief and no doctrine source pins a px/layout answer, the same
+ * category as this file's other documented "Layout constants" judgment
+ * calls above.
+ *
+ * MARK SOURCING — D9 COMPLIANCE (DECISIONS.md D9, ruled by Camille
+ * Aubert): "the fictional 'Northwinds' demo-org mark... may be any
+ * shape/color appropriate to the fictional client [but] no implementer
+ * may derive, recolor, crop, or approximate the Northwinds mark FROM any
+ * LeapFI master PNG or the chevron gradient (CHV-1)." `NorthwindsMark`
+ * below is wholly original inline SVG vector art authored for this
+ * dispatch (a simple four-point compass/wind-rose glyph, evoking
+ * "Northwinds" without referencing any LeapFI asset) — it imports no PNG,
+ * copies no path data from `Icon.tsx`'s glyph set, and uses a fixed
+ * slate/navy palette distinct from CHV-1's cyan-to-cobalt chevron
+ * gradient (`--accent`/`--accent2`) specifically so it can never read as
+ * a recolor of the LeapFI mark. It is theme-invariant (fixed literal
+ * colors, not `var(--accent)`) for the same reason a real client's static
+ * brand mark would not repaint itself to match ANOTHER company's theme
+ * toggle.
+ *
+ * "Northwinds" itself (org name, mock address, mock phone) is demo copy
+ * for a fictional client — matches this codebase's existing "mock"
+ * register (e.g. `data/studio.ts`'s fictional personas, `DOCLIB`'s
+ * fictional regulatory citations), never a claim about a real
+ * organization.
+ *
  * SEAM 1 RESOLVED (B3 dispatch) — `HomePanels.tsx`'s own file header
  * ("CLICKABLE TOUCH CHIPS...") flagged this exact gap: `App.tsx`'s
  * NAVIGATION-WITH-PAYLOAD contract (that file's header, lines 120-188) was
@@ -136,6 +173,7 @@ import type { CSSProperties } from 'react';
 import type { DeepLinkScreenProps } from '../App';
 import type { SidebarProps } from '../components/Sidebar';
 import { Button } from '../components/primitives/Button';
+import { Label } from '../components/primitives/Label';
 import { HomeCustomizeBar, resolveVisibleKeys } from '../views/HomeCustomizeBar';
 import type { HomePanelKey } from '../views/HomeCustomizeBar';
 import { HomePanels } from '../views/HomePanels';
@@ -181,6 +219,70 @@ const HEADER_ROW_STYLE: CSSProperties = {
 const CTA_ROW_STYLE: CSSProperties = {
   display: 'flex',
 };
+
+// call-04 — see file header "NORTHWINDS LOGO + MOCK CONTACT INFO."
+const BRAND_STRIP_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.75rem',
+};
+
+const BRAND_STRIP_TEXT_STYLE: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.125rem',
+};
+
+const BRAND_STRIP_ORG_NAME_STYLE: CSSProperties = {
+  margin: 0,
+  font: 'inherit',
+  fontSize: '0.9375rem',
+  fontWeight: 700,
+  color: 'var(--ink)',
+};
+
+/**
+ * NorthwindsMark — wholly original inline SVG vector art (D9 compliance —
+ * see file header "MARK SOURCING"). A simple four-point compass/wind-rose
+ * glyph: two crossed diamonds of differing length forming an eight-ray
+ * star, evoking "Northwinds" without copying any LeapFI asset's shape or
+ * palette. Fixed literal colors (never `var(--accent)`/`var(--accent2)`),
+ * deliberately distinct from CHV-1's cyan-to-cobalt chevron gradient.
+ */
+function NorthwindsMark() {
+  return (
+    <svg
+      width={32}
+      height={32}
+      viewBox="0 0 32 32"
+      aria-hidden="true"
+      data-lf-mark="northwinds"
+      style={{ flex: '0 0 auto' }}
+    >
+      <circle cx="16" cy="16" r="15" fill="none" stroke="#3B4A5A" strokeWidth="1.5" />
+      {/* Long north-south / east-west points. */}
+      <path d="M16 3 L19 16 L16 29 L13 16 Z" fill="#3B4A5A" />
+      {/* Short diagonal points, rotated 45deg from the long pair. */}
+      <path d="M5 5 L16 14 L27 5 L18 16 L27 27 L16 18 L5 27 L14 16 Z" fill="#5B7A99" />
+      <circle cx="16" cy="16" r="2.25" fill="#F4A93C" />
+    </svg>
+  );
+}
+
+/** call-04 — see file header "NORTHWINDS LOGO + MOCK CONTACT INFO." Mock
+ * address/phone (demo copy for a fictional client, per this codebase's
+ * existing "mock" register — see file header). */
+function NorthwindsBrandStrip() {
+  return (
+    <div style={BRAND_STRIP_STYLE} data-lf-view="northwinds-brand-strip">
+      <NorthwindsMark />
+      <div style={BRAND_STRIP_TEXT_STYLE}>
+        <p style={BRAND_STRIP_ORG_NAME_STYLE}>Northwinds Federal Credit Union</p>
+        <Label text="1200 Meridian Way, Suite 400, Minneapolis, MN 55401 · (612) 555-0148" variant="body-secondary" />
+      </div>
+    </div>
+  );
+}
 
 // Viewer-local-clock fix (user-reported defect on rev-76, PI2-D40
 // follow-up): PI2-D40's original single flat `HOME_GREETINGS` array picked
@@ -274,6 +376,8 @@ export function Home({ onNavigate, roleKey = CURRENT.roleKey, roleFirstName = CU
           onChange={(nextVisibleKeys) => setPanelState({ roleKey, visibleKeys: nextVisibleKeys })}
         />
       </div>
+      {/* call-04 — see file header "NORTHWINDS LOGO + MOCK CONTACT INFO." */}
+      <NorthwindsBrandStrip />
       <div style={CTA_ROW_STYLE}>
         {/* D18 (presenter_entry_redesign.md §1): product-native primary
             CTA — same Button primitive, same slot, same weight; the

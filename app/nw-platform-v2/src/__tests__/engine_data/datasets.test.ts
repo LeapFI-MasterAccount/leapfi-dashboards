@@ -226,11 +226,11 @@ describe('data/misc.ts vs base 3613–3647 / 4020–4121 / 4122–4125 / 4357–
     ])
   })
 
-  it('HP is the 6-panel home catalog byte-matching base 4125', () => {
+  it('HP is the 6-panel home catalog byte-matching base 4125, except the call-03-renamed "legis" label (planning/call-03-regulatory-radar-rename.md; "Strategic signal" -> "Regulatory Radar"; key/id stay byte-identical)', () => {
     expect(HP).toEqual([
       ['kpis', 'home-kpis', 'Top metrics'],
       ['posture', 'hp-posture', 'Risk posture'],
-      ['legis', 'hp-legis', 'Strategic signal'],
+      ['legis', 'hp-legis', 'Regulatory Radar'],
       ['invest', 'hp-invest', 'Investment and return'],
       ['queue', 'hp-queue', 'Your queue'],
       ['qa', 'home-qa', 'Quick actions'],

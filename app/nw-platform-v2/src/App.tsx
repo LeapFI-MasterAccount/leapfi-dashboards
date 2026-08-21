@@ -236,12 +236,20 @@
  *
  * THEME TOGGLE: the D13 scaffold's `theme`/`getInitialTheme`/localStorage
  * logic is ported verbatim (byte-identical mechanism, just re-hosted) into
- * `Topbar`'s documented `themeToggleSlot` extension point, rendered via the
- * `Switch` primitive (P8) — a real on/off toggle with an announced state,
- * a better a11y fit than the scaffold's own bespoke `<button>` for the same
- * job. Theme is a display preference, not demo data, so Restart (below)
- * deliberately leaves it untouched (§4: resetDemo "mutates demo data only,
- * never rail state" — theme is neither).
+ * `Topbar`'s documented `themeToggleSlot` extension point. Theme is a
+ * display preference, not demo data, so Restart (below) deliberately
+ * leaves it untouched (§4: resetDemo "mutates demo data only, never rail
+ * state" — theme is neither).
+ *
+ * THEME TOGGLE SUN/MOON ICONS (call-05, planning/call-05-theme-toggle-
+ * icons.md; DECISIONS.md D8): the toggle used to render via the `Switch`
+ * primitive (P8) with a visible "Light theme" text label plus a literal
+ * "On"/"Off" span — exactly the text-label pattern call-05 asks to
+ * replace. It now renders via the local, file-scoped `ThemeToggle` helper
+ * (below, near `themeToggleSlot`'s construction) instead of `Switch` or
+ * `Button` (P2) — see that helper's own header for why: both primitives
+ * hardcode a visible text label with no icon-only rendering path, and
+ * both files sit outside this dispatch's ALLOWLIST (`Icon.tsx` only).
  *
  * DEAD PROP RETIRED (S3, Sprint-1 hostile-review remediation wave 2):
  * `topbarProps` no longer threads a `theme` field to `Topbar` — that prop
@@ -406,7 +414,7 @@ import { Topbar } from './components/Topbar'
 import type { TopbarProfileMenuItem, TopbarProps } from './components/Topbar'
 import { PresenterRail } from './components/PresenterRail'
 import { Toast } from './components/Toast'
-import { Switch } from './components/primitives/Switch'
+import { Icon } from './components/primitives/Icon'
 import { NotificationBellPanel } from './views/NotificationBellPanel'
 import { CURRENT, USERS } from './data/studio'
 import { CASES, NOTIFS, isUntouched } from './data/cases'
@@ -484,7 +492,8 @@ function isScreenId(id: string): id is ScreenId {
  * `deepLink.kind` consumer guard in `src/` (screens/ + views/) sorts
  * these into three classes. `doc-redline` (ruled a duplicate of
  * `document`, amendment A9) is REMOVED from this union this wave — its
- * one producer (`HomePanels.tsx`'s Strategic Signal drawer doc chip) is
+ * one producer (`HomePanels.tsx`'s Regulatory Radar drawer doc chip,
+ * call-03 rename — formerly "Strategic Signal") is
  * re-pointed onto `document`, the kind it duplicated.
  *   - CLASS 1 — wired end to end (5): `domain`, `play`, `case`,
  *     `document`, `report`. Both a live producer and a matching consumer
@@ -554,6 +563,72 @@ const SCREEN_LABEL: Record<ScreenId, string> = {
   'board-deck': 'Board deck',
 }
 
+/**
+ * ThemeToggle — call-05 (planning/call-05-theme-toggle-icons.md;
+ * DECISIONS.md D8). Local, file-scoped composition — NOT a new shared
+ * primitive — the same category as `Topbar.tsx`'s own `HomeLogoButton`/
+ * `NotificationBell` local helpers: `Switch` (P8) and `Button` (P2), the
+ * two primitives 01-architecture.md row 5 names as "implementer choice,"
+ * both hardcode a VISIBLE text label next to any icon (`Switch.tsx`
+ * always renders `<span>{label}</span>` plus a literal "On"/"Off" span;
+ * `Button.tsx` always renders `{label}` inside its content span) — neither
+ * supports icon-only rendering, and both files sit outside this
+ * dispatch's ALLOWLIST (`Icon.tsx` only). A bare `<button>` plus the Icon
+ * primitive (already in allowlist, carrying the D8-ruled `sun`/`moon`
+ * glyphs) is therefore the only path that satisfies call-05's literal
+ * requirement — "replace the text labels... with sun and moon icons" —
+ * without an out-of-allowlist edit to either primitive; documented here
+ * per persona directive 4 rather than silently improvised.
+ *
+ * Keeps the SAME `role="switch"`/`aria-checked` contract the former
+ * `Switch`-based control had, so this remains a real toggle with an
+ * announced state (call-05: "maintain the same functional behavior").
+ * `title` doubles as the native tooltip AND, paired with `aria-label`,
+ * the accessible name — call-05's "include tooltip text to support
+ * accessibility" AC. Both icons render always — sun fixed to the light
+ * end, moon fixed to the dark end — with the CURRENT mode's icon at
+ * `interactive` tone and the other at `disabled` tone: this resolves
+ * call-05's own open question ("should the inactive icon be dimmed") by
+ * showing both permanently rather than swapping a single ambiguous icon,
+ * and keeps state carried by a real shape difference (two distinct
+ * glyphs), never color alone (P4/persona directive 4's "never color
+ * alone" rule, generalized here to this two-icon control).
+ */
+function ThemeToggle({ theme, onChange }: { theme: Theme; onChange: (next: Theme) => void }) {
+  const [focused, setFocused] = useState(false)
+  const isLight = theme === 'light'
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={isLight}
+      aria-label={isLight ? 'Light mode' : 'Dark mode'}
+      title={isLight ? 'Light mode — press for dark mode' : 'Dark mode — press for light mode'}
+      onClick={() => onChange(isLight ? 'dark' : 'light')}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      data-lf-composite="theme-toggle"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.375rem',
+        minWidth: 44,
+        minHeight: 44,
+        padding: '0.375rem 0.5rem',
+        border: 'none',
+        borderRadius: 'var(--radius-sm, 6px)',
+        background: 'transparent',
+        boxShadow: focused ? 'var(--focus-ring)' : 'none',
+        cursor: 'pointer',
+        outline: 'none',
+      }}
+    >
+      <Icon name="sun" size={16} tone={isLight ? 'interactive' : 'disabled'} />
+      <Icon name="moon" size={16} tone={isLight ? 'disabled' : 'interactive'} />
+    </button>
+  )
+}
+
 function App() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const [screenId, setScreenId] = useState<ScreenId>('home')
@@ -580,6 +655,22 @@ function App() {
   // SAME case from the bell still forces the remount (a bare case-id key
   // is Object.is-equal on the re-press and never remounts).
   const [bellPressNonce, setBellPressNonce] = useState(0)
+  // call-19 NAV BUG FIX (planning/call-19-navigation-bug-fix.md; Adam
+  // Schlesinger, meeting_notes_2026-08-20.md:111): `Cases.tsx` keeps its
+  // open case detail (`selectedCaseId`) as LOCAL component state, not
+  // shell state — so pressing the "Cases" nav item while already on the
+  // `cases` screen with a detail Drawer open used to be a total no-op:
+  // `navigateToScreen` early-returns whenever `id === screenId`, which is
+  // always true here (opening a case never changes `screenId` away from
+  // `'cases'`), so the mounted `<Cases>` instance was never re-keyed and
+  // its stale `selectedCaseId` never cleared. Bumped on every GENERIC nav
+  // to `'cases'` (never on the dedicated bell path, which has its own
+  // `bellPressNonce`/`pendingCaseId` remount key and must keep opening the
+  // specific case it targets) so the `key` below always forces a fresh
+  // `<Cases>` mount — clearing `selectedCaseId` back to null — even when
+  // the shell was already sitting on the `cases` screen. See
+  // `navigateToScreen` and the `case 'cases':` render below.
+  const [casesResetNonce, setCasesResetNonce] = useState(0)
   // See file header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS" — the one
   // pending payload (null when none/consumed).
   const [deepLinkTarget, setDeepLinkTarget] = useState<DeepLinkTarget | null>(null)
@@ -608,7 +699,15 @@ function App() {
     // list — only the dedicated bell path (handleOpenCaseFromBell, which
     // does not call this function) opens a specific case. See file header
     // "NOTIFICATION BELL."
-    if (id === 'cases') setPendingCaseId(null)
+    // call-19 NAV BUG FIX: every generic nav to `cases` also forces a fresh
+    // `<Cases>` mount (see the `casesResetNonce` state comment above) — this
+    // is what actually closes an open case detail Drawer when the shell was
+    // already sitting on `cases`, which the `id === screenId` early return
+    // below would otherwise skip entirely.
+    if (id === 'cases') {
+      setPendingCaseId(null)
+      setCasesResetNonce((nonce) => nonce + 1)
+    }
     // Generic nav opens the screen plain: drop any unconsumed deep-link
     // payload (file header "NAVIGATION-WITH-PAYLOAD / DEEP LINKS" —
     // GENERIC NAV CLEARS; the deep-link twin of the pendingCaseId clear
@@ -726,7 +825,7 @@ function App() {
     // STATE stays; it drives the effect above (`data-theme` attribute +
     // localStorage) and the toggle below directly, same as before — only
     // the now-inert pass-through into `topbarProps` is removed.
-    themeToggleSlot: <Switch checked={theme === 'light'} label="Light theme" onChange={(checked) => setTheme(checked ? 'light' : 'dark')} />,
+    themeToggleSlot: <ThemeToggle theme={theme} onChange={setTheme} />,
     // See file header "NOTIFICATION BELL" — raw NOTIFS singleton passed
     // through; NotificationBellPanel does its own role filtering (matches
     // the base engine's own `myNotifs()` scoping, per its file header).
@@ -820,7 +919,12 @@ function App() {
         // header "SHELL COMPOSITION — PERSISTENT MOUNT").
         return (
           <Cases
-            key={pendingCaseId !== null ? `${pendingCaseId}·${bellPressNonce}` : 'cases-list'}
+            // call-19 NAV BUG FIX: the plain-list branch's key now folds in
+            // `casesResetNonce` (bumped on every generic nav to `cases`, see
+            // that state's own comment) so pressing "Cases" while a case
+            // detail is open forces a fresh `<Cases>` mount instead of
+            // reusing the still-mounted instance's stale `selectedCaseId`.
+            key={pendingCaseId !== null ? `${pendingCaseId}·${bellPressNonce}` : `cases-list-${casesResetNonce}`}
             topbar={topbarProps}
             onNavigate={navigateToScreen}
             currentUser={currentUser}

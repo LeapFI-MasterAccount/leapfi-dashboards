@@ -46,7 +46,24 @@ afterEach(() => {
   })
 })
 
-describe('Strategic signal drawer "Would touch" resolution (SH-5, base sigTouch 4047-4058)', () => {
+describe('call-03 rename — the panel\'s own DataTable caption and Drawer title read "Regulatory Radar" (formerly "Strategic Signal")', () => {
+  it('renders the DataTable\'s accessible name and the open drawer\'s title as "Regulatory Radar", never the old name — this dispatch\'s two OWNED literal strings (see `home-panel-legis-label-rename.test.tsx` for the section-<h2>/toggle-label rename that closed the former OUT-OF-ALLOWLIST `data/misc.ts` panel-heading finding; the drawer-title query below is scoped to the dialog specifically because the panel\'s own <h2> now ALSO reads "Regulatory Radar")', async () => {
+    const user = userEvent.setup()
+    render(<HomePanels visibleKeys={['legis']} currentRoleKey="cro" onNavigate={noNavigate} />)
+
+    expect(screen.getByRole('table', { name: 'Regulatory Radar' })).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Strategic signal' })).not.toBeInTheDocument()
+
+    const row = screen.getByText('Fed & FDIC joint NPRM · Regulation O · insider credit').closest('tr')
+    expect(row).not.toBeNull()
+    await user.click(within(row as HTMLElement).getByRole('button', { name: 'Review' }))
+
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByRole('heading', { name: /^Regulatory Radar/ })).toBeInTheDocument()
+  })
+})
+
+describe('Regulatory Radar drawer "Would touch" resolution (SH-5, base sigTouch 4047-4058; call-03 renamed from "Strategic signal")', () => {
   it('resolves doc titles and domain display names — never raw slugs', async () => {
     const user = userEvent.setup()
     render(<HomePanels visibleKeys={['legis']} currentRoleKey="cro" onNavigate={noNavigate} />)
@@ -90,7 +107,7 @@ describe('CRO queue "Rulemaking to watch" row (SH-9, base 4257)', () => {
   })
 })
 
-describe('Strategic signal drawer touch chips + lifecycle link (B-07, base openSignal 4049-4056/4111)', () => {
+describe('Regulatory Radar drawer touch chips + lifecycle link (B-07, base openSignal 4049-4056/4111; call-03 renamed from "Strategic signal")', () => {
   it('renders one nav action per "would touch" item plus "Open the full lifecycle →", each routed to the right screen', async () => {
     const user = userEvent.setup()
     const onNavigate = vi.fn()
@@ -123,7 +140,7 @@ describe('Home panel-header go-links (B-08, base .panel-h .go2 868/869/872/878)'
     expect(onNavigate).toHaveBeenCalledWith('onside.overview')
   })
 
-  it('Strategic signal header link navigates to onside.feed', async () => {
+  it('Regulatory Radar header link navigates to onside.feed', async () => {
     const user = userEvent.setup()
     const onNavigate = vi.fn()
     render(<HomePanels visibleKeys={['legis']} currentRoleKey="cro" onNavigate={onNavigate} />)
@@ -233,7 +250,7 @@ describe('B3 SEAM 1 — onDeepLink threaded from Home.tsx (App.tsx NAV-PAYLOAD c
     expect(onNavigate).not.toHaveBeenCalled()
   })
 
-  it('Strategic signal touch actions fire domain/document kinds (hostile-review fix wave A1: doc-redline retired, re-pointed onto \'document\' — App.tsx KIND VOCABULARY, amendment A9/A12), and "Open the full lifecycle →" fires a section deep link', async () => {
+  it('Regulatory Radar touch actions fire domain/document kinds (hostile-review fix wave A1: doc-redline retired, re-pointed onto \'document\' — App.tsx KIND VOCABULARY, amendment A9/A12), and "Open the full lifecycle →" fires a section deep link', async () => {
     const user = userEvent.setup()
     const onNavigate = vi.fn()
     const onDeepLink = vi.fn()
@@ -259,7 +276,7 @@ describe('B3 SEAM 1 — onDeepLink threaded from Home.tsx (App.tsx NAV-PAYLOAD c
     expect(onNavigate).not.toHaveBeenCalled()
   })
 
-  it('Strategic signal touch actions fire the obligation kind with the domKey:oblId id encoding', async () => {
+  it('Regulatory Radar touch actions fire the obligation kind with the domKey:oblId id encoding', async () => {
     const user = userEvent.setup()
     const onDeepLink = vi.fn()
     render(<HomePanels visibleKeys={['legis']} currentRoleKey="cro" onNavigate={noNavigate} onDeepLink={onDeepLink} />)

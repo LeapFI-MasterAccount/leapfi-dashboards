@@ -42,6 +42,24 @@
  * not spec-dictated path data either) — the spec binds the shape's
  * *meaning* (outward vs. inward, double vs. single chevron), not its
  * literal path string.
+ *
+ * DECISIONS.md D8 (call-05, theme-toggle sun/moon icons — ruled by Camille
+ * Aubert, brand-steward): two new closed-set members, `'sun'` / `'moon'`,
+ * for App.tsx's theme-toggle control (replacing its former text labels,
+ * "Light theme"/dark). Per D8: "both glyphs are pure stroke-path data
+ * through the existing `fill=\"none\"`/`TONE_COLOR` mechanism — sun as a
+ * stroked circle + rays (never a filled warm disc), moon as a stroked
+ * crescent — per ICON-1/FORB-4, zero exception." `'sun'` renders a small
+ * stroked circle plus eight short stroked ray lines radiating outward
+ * (never a filled disc — this file's `fill="none"` SVG root makes a
+ * filled disc structurally impossible without a deliberate per-glyph
+ * override, which this glyph does not take); `'moon'` renders a single
+ * crescent path (an outer circle arc with an inner circle arc cut
+ * in from one side — the same "two overlapping circle arcs forming a
+ * crescent outline" construction every monoline icon set uses for this
+ * glyph). Exact path coordinates are this primitive's own SVG-authoring
+ * judgment, the same latitude the AMENDMENT A15 note above already
+ * establishes for this file's other hand-authored glyphs.
  */
 import type { CSSProperties, SVGProps } from 'react';
 
@@ -56,7 +74,9 @@ export type IconName =
   | 'lock'
   | 'calendar'
   | 'expand'
-  | 'collapse';
+  | 'collapse'
+  | 'sun'
+  | 'moon';
 
 export type IconTone = 'default' | 'interactive' | 'disabled';
 
@@ -131,6 +151,21 @@ const GLYPHS: Record<IconName, GlyphProps[]> = {
     { d: 'M4 6l6 6-6 6' },
     { d: 'M20 6l-6 6 6 6' },
   ],
+  // D8 — stroked circle + 8 stroked rays, never a filled disc (ICON-1/FORB-4).
+  sun: [
+    { d: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z' },
+    { d: 'M12 2v2.5' },
+    { d: 'M12 19.5V22' },
+    { d: 'M4.2 4.2l1.8 1.8' },
+    { d: 'M18 18l1.8 1.8' },
+    { d: 'M2 12h2.5' },
+    { d: 'M19.5 12H22' },
+    { d: 'M4.2 19.8l1.8-1.8' },
+    { d: 'M18 6l1.8-1.8' },
+  ],
+  // D8 — single stroked crescent (outer arc + inner cut arc), never a
+  // filled disc.
+  moon: [{ d: 'M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z' }],
 };
 
 export function Icon({ name, size = 16, tone = 'default', disabled = false, title, style }: IconProps) {

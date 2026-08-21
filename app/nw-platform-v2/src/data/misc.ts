@@ -274,7 +274,15 @@ export type HomePanel = [string, string, string];
 export const HP: HomePanel[] = [
   ['kpis', 'home-kpis', 'Top metrics'],
   ['posture', 'hp-posture', 'Risk posture'],
-  ['legis', 'hp-legis', 'Strategic signal'],
+  // call-03 rename (planning/call-03-regulatory-radar-rename.md;
+  // meeting_notes_2026-08-20.md:86): label only — 'legis'/'hp-legis' stay
+  // byte-identical so HOME_ORDER's persisted per-role layouts (which store
+  // keys, never labels) are unaffected. Was 'Strategic signal'; this is
+  // the most-visible on-screen site of the old name (this panel's own
+  // section <h2> and HomeCustomizeBar.tsx's matching toggle label both
+  // resolve from this literal) — see HomePanels.tsx's file header
+  // "STOP-ITEM / OUT-OF-ALLOWLIST FINDING" for the residue this closes.
+  ['legis', 'hp-legis', 'Regulatory Radar'],
   ['invest', 'hp-invest', 'Investment and return'],
   ['queue', 'hp-queue', 'Your queue'],
   ['qa', 'home-qa', 'Quick actions'],
