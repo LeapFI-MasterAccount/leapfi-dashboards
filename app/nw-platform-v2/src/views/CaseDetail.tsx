@@ -9,16 +9,36 @@
  * `caseSaveLang`/`caseCancelEdit`/`caseRevert` (2668-2767); `caseWaitingOn`/
  * `canAct` (2617-2624); `caseStagePill`/`caseStageOwner` (2607-2621).
  *
- * NOT the shared Drawer (dispatch brief, restated from the addendum): the
- * base engine never routes `case:` pages through `#drawer` — `showDrawer`
- * is never called for a case page, only `onsideShow('case:'+cid)` (a plain
- * view swap). This file is that swap's content, rendered in-page by
- * `Cases.tsx`, not inside `Drawer`/`DrawerContent`. DrawerContent's field-
- * row shape is deliberately not reused here — this is a multi-step
- * approve/route/reject + free-text-edit flow DrawerContent (§2.2 C8,
- * `kind: signal/play/doc` only) was never built to carry; the field rows,
- * Tags, and Buttons below are composed directly, matching the addendum's
- * own reasoning for this row (§1.1 `case:ID`).
+ * SUPERSEDED — PI2-D14 host migration (design_system_spec.md §2.10
+ * preamble, `implementation/DECISIONS.md` PI2-D14): the paragraph below
+ * previously read "NOT the shared Drawer" and described this file's
+ * content as a full-page swap `Cases.tsx` rendered in place. That
+ * exception DISSOLVES per PI2-D14 — `Cases.tsx` now mounts this file's
+ * content as the shared Drawer's (C7) `children`, on row-select, with
+ * close-restore to the triggering row (C7's existing baseline; see
+ * `Cases.tsx`'s own header). DrawerContent (C8) is still NOT reused here
+ * (unchanged reasoning, kept below): this remains a multi-step
+ * approve/route/reject + free-text-edit flow DrawerContent's field-row
+ * shape was never built to carry, so the field rows, Tags, and Buttons
+ * below stay composed directly as this component's own body, simply
+ * passed as the Drawer's children rather than rendered in-page.
+ *
+ * STOP-flagged, unresolved by this migration (evidence return, not
+ * decided here): this file's own pre-existing local `<Drawer
+ * open={emailOpen}>` (below, "the base openEmail drawer") now nests a
+ * SECOND `[role="dialog"]` inside the host Drawer's own subtree whenever
+ * a viewer presses "View the email you were sent" while the case
+ * side-car is open — two simultaneously-mounted Drawer instances, one
+ * inside the other's DOM subtree, each with its own trap boundary and
+ * initial-focus grab. `design_system_spec.md`'s own A17-A19 traceability
+ * record (§11) confirms this local Drawer was read and left "confirmed
+ * untouched" by the very pass that ratified the host migration — this is
+ * a real, provable gap (`cases_fix_wave.test.tsx`'s existing CS-01 email
+ * test now finds two `[role="dialog"]` nodes), not a hypothetical one,
+ * and its resolution (e.g. folding the email preview into the same
+ * RPT-05 in-drawer content-swap the "View full document" trigger uses,
+ * versus something else) is a design call this dispatch's role
+ * directives forbid inventing. Reported, not fixed, here.
  *
  * Back affordance: ghost Button, "← All cases," matching the base engine's
  * `src-back` pattern (`.src-back{...cursor:pointer...}`, line 557-558;
@@ -141,6 +161,8 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Drawer } from '../components/Drawer';
+import { DrawerContent } from '../components/DrawerContent';
+import type { DrawerContentField } from '../components/DrawerContent';
 import { RedlineDiffView } from '../components/RedlineDiffView';
 import { Button } from '../components/primitives/Button';
 import type { ButtonVariant } from '../components/primitives/Button';
@@ -152,6 +174,7 @@ import type { Case } from '../data/cases';
 import type { DocEntry } from '../data/doclib';
 import type { StudioUser } from '../data/studio';
 import { DOMAINS } from '../data/onside';
+import { resolveOriginSignal } from '../data/originSignal';
 import { PANEL_STYLE } from '../theme/panelStyle';
 import type { DeepLinkRequest } from '../App';
 
@@ -204,6 +227,13 @@ export interface CaseDetailProps {
    * 2835/2849/2855). Omit (e.g. no persona rows available) and the
    * "Sign in as X …" links do not render. */
   onSwitchUser?: (userId: string) => void;
+  /** §2.11 (amendment A18) — the "View full document" trigger. Fires the
+   * composing screen's (`Cases.tsx`) in-drawer swap to the full document
+   * body + inline redline. Rendered only when `doc` resolves (§2.11's own
+   * "available whenever doc resolves, at every stage") AND this callback
+   * is supplied — omit and the Button does not render, never a dead
+   * click, matching this file's other optional-callback props. */
+  onViewFullDocument?: () => void;
 }
 
 const DOMAIN_LABEL: Record<string, string> = Object.fromEntries(DOMAINS.map((d) => [d.key, d.name]));
@@ -311,7 +341,7 @@ const CONDITION_LIST_STYLE: CSSProperties = { display: 'flex', flexDirection: 'c
 const HISTORY_LIST_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const HISTORY_ROW_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.15rem', borderLeft: '2px solid var(--border)', paddingLeft: '0.75rem' };
 
-export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendingAction, onNavigate, onDeepLink, onSwitchUser }: CaseDetailProps) {
+export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendingAction, onNavigate, onDeepLink, onSwitchUser, onViewFullDocument }: CaseDetailProps) {
   const [editing, setEditing] = useState(false);
   const [draftLang, setDraftLang] = useState(caseItem.lang);
   const [pickingCondition, setPickingCondition] = useState(false);
@@ -539,6 +569,43 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
     return null;
   }
 
+  // PI2-D31 origin field group (design_system_spec.md §2.10 preamble /
+  // §2.10.1 item 5, amendment A17) — replaces the standalone `trigger`
+  // paragraph below with four DrawerContent (C8) field rows (Source/Date/
+  // Signal/Note), fed by lane 1's read-only resolver (data/originSignal.ts)
+  // against this case's own document id. AC-r02-2 (cited by A17 item 5,
+  // reused verbatim): an unresolvable origin renders the group's empty-
+  // state message and ZERO field rows, never a blank row set — handled
+  // below by rendering no DrawerContent at all in that branch.
+  //
+  // STOP-flagged (task 4, this dispatch's own evidence return — not
+  // resolved here): A17/PI2-D31 also specify the Signal row as an inline
+  // 'signal'-kind deep link (DrawerContentField.onPress). That wiring is
+  // deliberately withheld: the live 'signal'-kind deep-link consumer
+  // (OnSideFeed.tsx's SIGNAL_ROW_BY_ID, built from data/onside.ts's
+  // SRC_ITEMS/SRC_ROWS, keyed `${sourceKey}::${itemIndex}`) reads a
+  // structurally different, non-overlapping dataset from the one this
+  // resolver correctly reads for doc-linkage (data/misc.ts's
+  // SIGNAL[].touch) — the former carries no document-touch field at all,
+  // the latter carries no id in the former's id space, and several
+  // entries only correlate by loose, non-identical title text (a genuine
+  // content contradiction, not a mechanical re-point). Wiring onPress
+  // today would fire a deep link OnSideFeed's own consumer silently
+  // resolves to nothing ("a stale/unknown id still consumes the nonce but
+  // opens nothing," OnSideFeed.tsx's own comment) — a lying control
+  // (PI2-D24) Core Principle 3 forbids shipping. The Signal row therefore
+  // renders as plain text, identical in kind to Source/Date/Note, pending
+  // a design/data ruling on which dataset is authoritative.
+  const origin = resolveOriginSignal(caseItem.doc);
+  const originFields: DrawerContentField[] = origin.resolved
+    ? [
+        { label: 'Source', value: origin.signal.sc },
+        { label: 'Date', value: origin.signal.age },
+        { label: 'Signal', value: decodeText(origin.signal.t) },
+        { label: 'Note', value: decodeText(origin.signal.read) },
+      ]
+    : [];
+
   const missingDocNote = !doc ? (
     <p style={WAIT_NOTE_STYLE}>No document library entry matches this case&rsquo;s document id (&ldquo;{caseItem.doc}&rdquo;) — the before/after language below cannot be shown.</p>
   ) : null;
@@ -556,10 +623,25 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
         <div style={HEADER_ROW_STYLE}>
           <div>
             <Label text="Case · opened by OnSide on detection" variant="eyebrow" surface="panel" />
-            <h2 id="case-detail-title" style={TITLE_STYLE}>
+            {/* PI2-D14 host migration: this content now mounts inside the
+                shared Drawer (C7, see Cases.tsx), whose own header already
+                renders a real `<h2>` carrying this exact `{id} · {title}`
+                text as the dialog's accessible name (Drawer.tsx:442-456).
+                Keeping a second `<h2>` with near-identical text directly
+                below it would be a redundant heading-level stop for
+                screen-reader heading navigation (Core Principle 4) — same
+                text, two landmarks. Demoted to a `<p>`, same id (still a
+                valid `aria-labelledby` target below) and the same visual
+                TITLE_STYLE weight, so nothing changes for a sighted user;
+                the heading role itself is what moved to the Drawer. */}
+            <p id="case-detail-title" style={TITLE_STYLE}>
               {caseItem.id} · {decodeText(caseItem.title)}
-            </h2>
-            <p style={CITE_STYLE}>{decodeText(caseItem.trigger)}</p>
+            </p>
+            {origin.resolved ? (
+              <DrawerContent kind="signal" fields={originFields} />
+            ) : (
+              <p style={CITE_STYLE}>No regulatory signal record links to this case&rsquo;s document — origin not resolvable.</p>
+            )}
           </div>
           <Tag text={pill.text} variant={pill.variant} />
         </div>
@@ -633,6 +715,19 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
         <h3 id="case-language-heading" style={SUBHEADING_STYLE}>Proposed language</h3>
 
         {missingDocNote}
+
+        {/* §2.11 (amendment A18) — "View full document": available
+            whenever `doc` resolves, at every stage (never gated on
+            `editing`/`doc.redline`, unlike the block below) — placed
+            adjacent to this section's own RedlineDiffView (C9). No
+            trailing arrow glyph (this control does not leave the current
+            Drawer, unlike the closed-state "Open the document →" link
+            below), never `variant="primary"` (AC-A18-6). */}
+        {doc && onViewFullDocument ? (
+          <div style={ACTIONS_ROW_STYLE}>
+            <Button variant="ghost" label="View full document" onPress={onViewFullDocument} />
+          </div>
+        ) : null}
 
         {!editing ? (
           doc?.redline ? (

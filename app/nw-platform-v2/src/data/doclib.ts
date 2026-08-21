@@ -56,6 +56,27 @@ export interface DocRedline {
   note: string;
   old: string;
   nw: string;
+  /**
+   * Present only on `mrm-change-draft` (demo-narrator dispatch, boot-
+   * state gap flagged against Story A step 3: "Rachel sees the OnSide
+   * draft, what Priya changed" — a claim only provable if a second,
+   * genuinely different text exists to diff against `nw`). Not read by
+   * any runtime component: `case.lang` is what actually diverges from
+   * `case.base` on-screen, and it diverges live, via the shipped
+   * `save-language` action (`screens/Cases.tsx`'s `performAction` for
+   * `kind === 'save-language'`) when the analyst-role presenter types
+   * into `CaseDetail.tsx`'s free-text edit control at the `analyst`
+   * stage — `case.base` stays `nw` (OnSide's original draft) and
+   * `case.lang` becomes whatever text is typed there. This field is the
+   * canonical, rehearsed text a presenter playing P. Raman (Risk
+   * Analyst) types/pastes at that beat, so Story A's script quotes an
+   * authored string instead of an ad-libbed one, and the diff Rachel
+   * (R. Fischer, CRO) later reviews at the `cro` stage is reproducible
+   * run to run. A credible small analyst refinement of `nw`, not a
+   * rewrite — see the two edits documented at the `mrm-change-draft`
+   * entry below.
+   */
+  analystEdit?: string;
 }
 
 /** A single document-library entry, keyed by id in {@link DOCLIB}. */
@@ -397,7 +418,8 @@ export const DOCLIB: Record<string, DocEntry> = {
  secs:[['Status','Formal approval gate for model changes before deployment: change classification, required approvals by tier, and rollback provisions.']],
  redline:{note:'Proposed insertion into the Model Risk Management Policy §3 (Governance) · closes MRM-09 · drafted by OnSide',
   old:'Model owners deploy changes to production models under existing change-management procedures.',
-  nw:'No change to a tiered production model reaches production without classification by materiality, approval at the level its tier requires, a documented rollback position, and a record of the approval in the model inventory. Immaterial changes are logged and reviewed in aggregate at the next MRM Committee.'}},
+  nw:'No change to a tiered production model reaches production without classification by materiality, approval at the level its tier requires, a documented rollback position, and a record of the approval in the model inventory. Immaterial changes are logged and reviewed in aggregate at the next MRM Committee.',
+  analystEdit:'No change to a tiered production model reaches production without classification by materiality, approval at the level its tier requires under the Model Tiering Matrix, a documented, tested rollback position, and a record of the approval in the model inventory. Immaterial changes are logged and reviewed in aggregate at the next scheduled MRM Committee meeting.'}},
 'tprm-program':{t:'Third-Party Risk Management Program',v:'v2.0',dom:'tprm',type:'Policy',owner:'P. Nguyen · ISD',status:'warn',line:'Exit-planning section in draft · see redline',obl:['TPRM-01','TPRM-03','TPRM-05','TPRM-12'],
  secs:[['1. Purpose','Establishes lifecycle risk management for third-party relationships per the 2023 Interagency Guidance: planning, due diligence, contracting, monitoring, and termination.'],
  ['2. Risk-based approach','Oversight intensity scales with the risk and criticality of each relationship; critical activities receive board-level visibility.'],
