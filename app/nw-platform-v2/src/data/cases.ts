@@ -184,6 +184,34 @@ export const CASE_OWNER: Record<string, string> = {
   'rege-proc': 'M. Okafor · CCO',
 };
 
+/**
+ * PI2-D46 (user ruling, resolving AC-r02-D-GATE, r02_one_case_page.md
+ * "deadline-driven case leg"): "Mark complete" gates on the role the case
+ * ALREADY carries — CASE_OWNER's existing owner strings, mapped to real,
+ * registered `StudioUser.roleKey` values (data/studio.ts USERS). Declared
+ * explicit DATA beside `CASE_OWNER` (the data it interprets), per the
+ * ruling's own instruction — never a runtime string-parse scattered
+ * across components. Only `'R. Fischer · CRO'` resolves today (to
+ * `'cro'`, `USERS[0]`); `'P. Nguyen · ISD'`, `'M. Okafor · CCO'`, and
+ * `'A. Kaur · MRM'` name roles with no corresponding `USERS` entry and
+ * are deliberately ABSENT from this map — exactly the gap
+ * AC-r02-D-GATE's own referral documented (r02_one_case_page.md
+ * "deadline-driven case leg" §AC-r02-D-GATE). `ownerRoleKey()` returns
+ * `null` for any unmapped owner string; the deadline-leg's action-gating
+ * logic (`views/CaseDetail.tsx`'s `DeadlineCaseDetail`) renders the
+ * honest, absent-controls wait note for every viewer in that case — never
+ * a disabled or lying "Mark complete" control (PI2-D24).
+ */
+export const OWNER_ROLE_KEY: Record<string, string> = {
+  'R. Fischer · CRO': 'cro',
+};
+
+/** Resolves a case-owner string (`CASE_OWNER`'s / `DeadlineDrivenCase.owner`'s
+ * shape) to a registered `roleKey`, or `null` when unmapped (PI2-D46). */
+export function ownerRoleKey(owner: string): string | null {
+  return OWNER_ROLE_KEY[owner] ?? null;
+}
+
 export function stamp(): string {
   return 'Aug 15, 2026 · ' + CLOCK.next() + ' ET';
 }
@@ -403,6 +431,30 @@ export const DEADLINE_DRIVEN_CASE_FIXTURE: DeadlineDrivenCase = {
     },
   ],
 };
+
+/**
+ * Makes `DEADLINE_DRIVEN_CASE_FIXTURE` reachable in the UI
+ * (r02_one_case_page.md "deadline-driven case leg" section's own scope
+ * note on this dispatch: "extend the seed with at least one deadline case
+ * reachable in the UI if none is, per the fixture's own intent"). Builds a
+ * FRESH deep copy on every call — never the shared fixture object
+ * reference — so a UI action ("Mark complete", `screens/Cases.tsx`) can
+ * never mutate the read-only fixture other tests import directly; same
+ * discipline `seedCases()` already applies for `CASES`/`DOCLIB`-derived
+ * cases. Never routed through `seedCases()`/`CASES` (this leg's own file
+ * header, above: "additive exports, never routed through
+ * seedCases()/CASES").
+ */
+export let DEADLINE_CASES: DeadlineDrivenCase[] = [];
+
+export function seedDeadlineCases(): void {
+  DEADLINE_CASES = [
+    {
+      ...DEADLINE_DRIVEN_CASE_FIXTURE,
+      history: DEADLINE_DRIVEN_CASE_FIXTURE.history.map((entry) => ({ ...entry })),
+    },
+  ];
+}
 
 /**
  * Widened case-type union (PI2-D2) — additive only. `Case` (drafted-

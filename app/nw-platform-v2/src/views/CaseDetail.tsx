@@ -169,8 +169,8 @@ import type { ButtonVariant } from '../components/primitives/Button';
 import { Tag } from '../components/primitives/Tag';
 import type { NonRaciTagVariant } from '../components/primitives/Tag';
 import { Label } from '../components/primitives/Label';
-import { APPROVAL, CASE_STAGES, CASE_STAGES_B, tierOf } from '../data/cases';
-import type { Case } from '../data/cases';
+import { APPROVAL, CASE_STAGES, CASE_STAGES_B, ownerRoleKey, tierOf } from '../data/cases';
+import type { Case, DeadlineDrivenCase } from '../data/cases';
 import type { DocEntry } from '../data/doclib';
 import type { StudioUser } from '../data/studio';
 import { DOMAINS } from '../data/onside';
@@ -866,6 +866,169 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
         <div style={HISTORY_LIST_STYLE}>
           {caseItem.history.map((entry, index) => (
             // eslint-disable-next-line react/no-array-index-key -- history is prepended (unshift) per action; entries never reorder independently of that append, so index is a stable enough key for this session-local list
+            <div key={index} style={HISTORY_ROW_STYLE}>
+              <Label text={entry.when} variant="eyebrow" surface="panel" />
+              <Label text={entry.what} variant="body-secondary" surface="panel" />
+              <Label text={`${entry.who}${entry.role ? ` · ${entry.role}` : ''}${entry.note ? ` · ${entry.note}` : ''}`} variant="body-secondary" surface="panel" />
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/**
+ * DEADLINE-DRIVEN CASE LEG (PI2-D2 leg (b), r02_one_case_page.md
+ * "Acceptance criteria — deadline-driven case leg," AC-r02-D1..D10).
+ *
+ * Reuse by SUBTRACTION from `CaseDetail` above — the same discipline the
+ * human-contributed-edit leg (A17) applies, not a `Case`-shaped extension
+ * (`DeadlineDrivenCase` carries no `stage`/`tier`/`base`/`lang`,
+ * `data/cases.ts`:359-375):
+ *  - AC-r02-D1: the origin field group (PI2-D31) renders verbatim,
+ *    resolved via `resolveOriginSignal(caseItem.doc)` exactly as
+ *    `CaseDetail` above does, populated for the shipped fixture.
+ *  - AC-r02-D2: exactly ONE C8 field row (`label: 'Deadline', value:
+ *    caseItem.deadline`) renders where "Proposed language" sits for the
+ *    other two legs. No `RedlineDiffView` (C9) import or render exists
+ *    anywhere in this function — there is no proposed language to diff
+ *    for this case type.
+ *  - AC-r02-D3: `status` renders through the SAME Tag slot `stagePill()`
+ *    already occupies (`deadlineStatusPill` below) — no new
+ *    `NonRaciTagVariant` value.
+ *  - AC-r02-D4/D5/D6: exactly one primary "Mark complete" Button at
+ *    `status: 'tracking'` for a gating viewer; zero action Buttons at
+ *    `status: 'completed'` for ANY viewer; the same wait-note SHAPE every
+ *    other non-acting case viewer already gets for a non-gating viewer at
+ *    `status: 'tracking'` — "Mark complete" never renders `disabled`.
+ *  - AC-r02-D7 (A19, extended): no CEO-specific branch, copy, or
+ *    component exists anywhere below — the CEO fixture's absence of
+ *    "Mark complete" falls out of `ownerRoleKey`/`canAct` by
+ *    construction (no literal `'ceo'` appears in this function).
+ *  - AC-r02-D9: no "View full document" Button renders on this leg's
+ *    path (A18 not extended here, r02_one_case_page.md's own text).
+ *  - AC-r02-D10 (D26): the Deadline field row's value and the status Tag
+ *    are DATA only — no prose sentence narrating what a deadline-driven
+ *    case is or how tracking works anywhere below.
+ *
+ * Action gating (AC-r02-D-GATE, PI2-D46 user ruling): "Mark complete"
+ * gates on `ownerRoleKey(caseItem.owner)` (data/cases.ts) — the case
+ * record's OWN existing owner data, mapped to a real, registered
+ * `StudioUser.roleKey`. Where the owner's abbreviation maps to no
+ * registered roleKey, `ownerRoleKey` returns `null`, `canAct` is `false`
+ * for every viewer, and the absent-controls wait note below renders for
+ * everyone — honest, never a lying or disabled "Mark complete".
+ *
+ * Irreversibility gate (persona directive 6): this component never
+ * mutates case data itself — every "Mark complete" press calls
+ * `onAction('mark-complete')`; `Cases.tsx`'s `performDeadlineAction` (the
+ * same single-in-flight / request-key-dedup pipeline `performAction`
+ * already uses for the other two legs) is the sole commit path. The
+ * Button shows `loading` (and is disabled) exactly while this case's own
+ * action is mid-commit — never optimistically "done" before the commit
+ * resolves.
+ *
+ * Accessibility gate (persona directive 7): back Button and "Mark
+ * complete" are real `<button>` elements; status meaning is paired with
+ * text via `Tag` (never color-only); history rows render via `Label`
+ * (P3), the identical shape `CaseDetail`'s own history list above uses.
+ */
+export type DeadlineActionKind = 'mark-complete';
+
+export interface DeadlineCaseDetailProps {
+  caseItem: DeadlineDrivenCase;
+  currentUser: StudioUser;
+  onBack: () => void;
+  /** Single commit pipeline — see this function's own header
+   * "Irreversibility gate," mirrors `CaseDetail`'s `onAction`. */
+  onAction: (kind: DeadlineActionKind) => void;
+  /** The one deadline-case action currently mid-commit for this case, or null. */
+  pendingAction: DeadlineActionKind | null;
+}
+
+/** AC-r02-D3 — the SAME Tag slot `stagePill()` already occupies, mapped
+ * from `status` instead of `stage`: no new `NonRaciTagVariant` value. */
+function deadlineStatusPill(status: DeadlineDrivenCase['status']): { text: string; variant: NonRaciTagVariant } {
+  if (status === 'completed') return { text: 'Completed', variant: 'status-positive' };
+  return { text: 'Tracking', variant: 'status-caution' };
+}
+
+export function DeadlineCaseDetail({ caseItem, currentUser, onBack, onAction, pendingAction }: DeadlineCaseDetailProps) {
+  const pill = deadlineStatusPill(caseItem.status);
+  const gatingRoleKey = ownerRoleKey(caseItem.owner);
+  const canAct = gatingRoleKey !== null && gatingRoleKey === currentUser.roleKey;
+  const isBusy = pendingAction === 'mark-complete';
+
+  const origin = resolveOriginSignal(caseItem.doc);
+  const originFields: DrawerContentField[] = origin.resolved
+    ? [
+        { label: 'Source', value: origin.signal.sc },
+        { label: 'Date', value: origin.signal.age },
+        { label: 'Signal', value: decodeText(origin.signal.t) },
+        { label: 'Note', value: decodeText(origin.signal.read) },
+      ]
+    : [];
+
+  function renderActions() {
+    // AC-r02-D5: zero action Buttons at 'completed', for ANY viewer.
+    if (caseItem.status === 'completed') return null;
+    if (!canAct) {
+      // AC-r02-D6: absent, never disabled — the same wait-note SHAPE
+      // every other non-acting case viewer already gets.
+      return (
+        <div style={ACTIONS_ROW_STYLE}>
+          <p style={WAIT_NOTE_STYLE}>
+            This case is with <strong style={SCREEN_TEXT}>{decodeText(caseItem.owner)}</strong>.
+          </p>
+        </div>
+      );
+    }
+    // AC-r02-D4: exactly one primary Button; nothing else competes for
+    // primary weight in the same region.
+    return (
+      <div style={ACTIONS_ROW_STYLE}>
+        <Button variant="primary" label="Mark complete" loading={isBusy} disabled={isBusy} onPress={() => onAction('mark-complete')} />
+      </div>
+    );
+  }
+
+  return (
+    <div style={SECTION_GAP} data-lf-view="deadline-case-detail">
+      <div>
+        <Button variant="ghost" label="← All cases" icon="chevron-left" onPress={onBack} />
+      </div>
+
+      <section aria-labelledby="deadline-case-detail-title" style={CARD_STYLE}>
+        <div style={HEADER_ROW_STYLE}>
+          <div>
+            <Label text="Case · deadline tracked by OnSide" variant="eyebrow" surface="panel" />
+            <p id="deadline-case-detail-title" style={TITLE_STYLE}>
+              {caseItem.id} · {decodeText(caseItem.title)}
+            </p>
+            {origin.resolved ? (
+              <DrawerContent kind="signal" fields={originFields} />
+            ) : (
+              <p style={CITE_STYLE}>No regulatory signal record links to this case&rsquo;s document — origin not resolvable.</p>
+            )}
+          </div>
+          <Tag text={pill.text} variant={pill.variant} />
+        </div>
+      </section>
+
+      <section aria-labelledby="deadline-case-deadline-heading" style={CARD_STYLE}>
+        <h3 id="deadline-case-deadline-heading" style={SUBHEADING_STYLE}>Deadline</h3>
+        <DrawerContent kind="doc" fields={[{ label: 'Deadline', value: caseItem.deadline }]} />
+        {renderActions()}
+      </section>
+
+      {/* A14 (design_system_spec.md §2.7): every Label below renders inside
+          CARD_STYLE (spreads PANEL_STYLE) — panel-seated. */}
+      <section aria-labelledby="deadline-case-history-heading" style={CARD_STYLE}>
+        <h3 id="deadline-case-history-heading" style={SUBHEADING_STYLE}>Case history</h3>
+        <div style={HISTORY_LIST_STYLE}>
+          {caseItem.history.map((entry, index) => (
+            // eslint-disable-next-line react/no-array-index-key -- same rationale as CaseDetail's own history list above: prepend-only, index stable enough per session
             <div key={index} style={HISTORY_ROW_STYLE}>
               <Label text={entry.when} variant="eyebrow" surface="panel" />
               <Label text={entry.what} variant="body-secondary" surface="panel" />

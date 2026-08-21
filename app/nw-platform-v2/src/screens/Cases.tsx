@@ -151,10 +151,10 @@ import { Toast } from '../components/Toast';
 import { Button } from '../components/primitives/Button';
 import { Tag } from '../components/primitives/Tag';
 import type { NonRaciTagVariant } from '../components/primitives/Tag';
-import { CaseDetail } from '../views/CaseDetail';
-import type { CaseActionKind } from '../views/CaseDetail';
-import { APPROVAL, CASES, isUntouched, seedCases, stamp, tierOf } from '../data/cases';
-import type { Case } from '../data/cases';
+import { CaseDetail, DeadlineCaseDetail } from '../views/CaseDetail';
+import type { CaseActionKind, DeadlineActionKind } from '../views/CaseDetail';
+import { APPROVAL, CASES, DEADLINE_CASES, isUntouched, seedCases, seedDeadlineCases, stamp, tierOf } from '../data/cases';
+import type { Case, CaseHistoryEntry, DeadlineDrivenCase } from '../data/cases';
 import { DOCLIB } from '../data/doclib';
 import { CURRENT } from '../data/studio';
 import type { StudioUser } from '../data/studio';
@@ -170,6 +170,12 @@ import {
 // See file header "CASES SEEDING."
 if (CASES.length === 0) {
   seedCases(DOCLIB);
+}
+// Makes the deadline-driven case leg (PI2-D2 leg (b)) reachable in the UI
+// — same idempotent-guard shape as CASES above; see
+// data/cases.ts's `seedDeadlineCases` header.
+if (DEADLINE_CASES.length === 0) {
+  seedDeadlineCases();
 }
 
 const ENTITY_MAP: Record<string, string> = {
@@ -209,6 +215,15 @@ function waitingOnRoleKey(stage: string): string | null {
   if (stage === 'cro' || stage === 'final' || stage === 'committee') return 'cro';
   if (stage === 'legal') return 'legal';
   return null;
+}
+
+/** PI2-D2 leg (b), AC-r02-D3 — same variant mapping as
+ * `views/CaseDetail.tsx`'s `deadlineStatusPill`, duplicated locally for
+ * this screen's own list column, matching the existing `stagePill()`
+ * duplication precedent between the two files above. */
+function deadlineStatusPill(status: DeadlineDrivenCase['status']): { text: string; variant: NonRaciTagVariant } {
+  if (status === 'completed') return { text: 'Completed', variant: 'status-positive' };
+  return { text: 'Tracking', variant: 'status-caution' };
 }
 
 /** Simulated commit latency for every case-stage transition below — same
@@ -284,6 +299,15 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed read fresh from closure, not tracked as a re-trigger dep
   }, [deepLink?.nonce]);
   const [pendingAction, setPendingAction] = useState<{ caseId: string; kind: CaseActionKind } | null>(null);
+  // PI2-D2 leg (b) — a SEPARATE single-in-flight pipeline for the
+  // deadline-driven leg's own action set (`DeadlineActionKind`), never
+  // mixed into `pendingAction` above: the two legs are distinct, non-
+  // overlapping data models (`data/cases.ts`'s own "no field merge"
+  // discipline) with distinct id spaces, and only one Drawer/case detail
+  // is ever open at a time, so independent single-flight guards are
+  // sufficient — no case action can race a deadline-case action through
+  // this screen's UI.
+  const [pendingDeadlineAction, setPendingDeadlineAction] = useState<{ caseId: string; kind: DeadlineActionKind } | null>(null);
   // §2.11 (amendment A18) — "View full document" in-drawer swap: which of
   // the two Drawer content states (case detail vs. full document) is
   // showing. Reset whenever the open case changes (a fresh case never
@@ -300,10 +324,22 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
   // timer and can vanish almost immediately.
   const [toast, setToast] = useState<{ key: number; variant: 'success' | 'info'; message: string } | null>(null);
   const requestSeqRef = useRef(0);
-  // PI2-D14 host migration — see the `displayCase` derivation below.
-  const lastSelectedCaseRef = useRef<Case | null>(null);
+  // PI2-D14 host migration — see the `displaySelected`/`displayCase`/
+  // `displayDeadlineCase` derivation below. A single union-typed ref (not
+  // two independent per-type refs) so the closing-transition freeze
+  // always reflects whichever case was ACTUALLY last opened, regardless
+  // of leg — two independent refs would each keep their own stale value
+  // and could render both a `Case` and a `DeadlineDrivenCase` at once
+  // when a viewer opens one leg's case, closes it, then opens the
+  // other's.
+  const lastSelectedRef = useRef<{ kind: 'case'; item: Case } | { kind: 'deadline'; item: DeadlineDrivenCase } | null>(null);
 
-  function logEntry(c: Case, what: string, note: string): void {
+  /** Reused verbatim by both legs' commit pipelines (AC-r02-D8: "reusing
+   * Cases.tsx's existing logEntry-shaped write... with no new field") —
+   * typed structurally over `{ history: CaseHistoryEntry[] }` rather than
+   * `Case` specifically, since `DeadlineDrivenCase` carries the identical
+   * `history` field (`data/cases.ts`) with no shape change. */
+  function logEntry(c: { history: CaseHistoryEntry[] }, what: string, note: string): void {
     c.history.unshift({ when: stamp(), who: currentUser.name, role: currentUser.role, what, note });
   }
 
@@ -332,6 +368,50 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
       setRenderTick((t) => t + 1);
       setToast({ key: requestKey, variant: 'success', message: toastMessage(c) });
     }, ACTION_COMMIT_DELAY_MS);
+  }
+
+  /** PI2-D2 leg (b)'s own commit pipeline — same pessimistic-render /
+   * single-in-flight / request-key-dedup shape as `performAction` above
+   * (persona directive 6, "Irreversibility gate"), against `DEADLINE_CASES`
+   * instead of `CASES`. Shares `requestSeqRef` with `performAction` (one
+   * globally monotonic counter is simpler than two and no less correct —
+   * a stale commit from either pipeline is still detected as superseded). */
+  function performDeadlineAction(caseId: string, kind: DeadlineActionKind, mutate: (c: DeadlineDrivenCase) => void, toastMessage: (c: DeadlineDrivenCase) => string): void {
+    if (pendingDeadlineAction !== null) return; // single in-flight
+    const c = DEADLINE_CASES.find((x) => x.id === caseId);
+    if (!c) return;
+    const requestKey = ++requestSeqRef.current;
+    setPendingDeadlineAction({ caseId, kind });
+    window.setTimeout(() => {
+      if (requestSeqRef.current !== requestKey) return; // superseded — stale commit is a no-op
+      mutate(c);
+      setPendingDeadlineAction(null);
+      setRenderTick((t) => t + 1);
+      setToast({ key: requestKey, variant: 'success', message: toastMessage(c) });
+    }, ACTION_COMMIT_DELAY_MS);
+  }
+
+  /** AC-r02-D8: "Mark complete" appends exactly ONE `CaseHistoryEntry` to
+   * `history[]` (one action, one write, no duplicate on re-render) — no
+   * committee-agenda entry is composed (r06 Part 1 has no `tier` to gate
+   * on for this type) and no print-stamp code path is touched (r06 Part 2
+   * is unrelated by subject); neither `tierOf`/`APPROVAL.committee` nor
+   * any print-footer helper is referenced anywhere in this function. */
+  function handleDeadlineAction(kind: DeadlineActionKind): void {
+    if (!selectedCaseId) return;
+    const caseId = selectedCaseId;
+
+    if (kind === 'mark-complete') {
+      performDeadlineAction(
+        caseId,
+        kind,
+        (c) => {
+          c.status = 'completed';
+          logEntry(c, 'Marked complete', '');
+        },
+        () => 'Marked complete.',
+      );
+    }
   }
 
   function handleAction(kind: CaseActionKind, payload?: string): void {
@@ -496,8 +576,20 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
     }
   }
 
-  const liveSelectedCase = selectedCaseId ? (CASES.find((c) => c.id === selectedCaseId) ?? null) : null;
-  if (liveSelectedCase) lastSelectedCaseRef.current = liveSelectedCase;
+  // PI2-D2 leg (b): `selectedCaseId` may name either a `Case` or a
+  // `DeadlineDrivenCase` — the two id spaces are disjoint by construction
+  // (CASE-2026-001..008 vs. CASE-2026-102 today), so at most one of the
+  // two lookups below ever matches.
+  const liveSelected: { kind: 'case'; item: Case } | { kind: 'deadline'; item: DeadlineDrivenCase } | null = selectedCaseId
+    ? (() => {
+        const c = CASES.find((x) => x.id === selectedCaseId);
+        if (c) return { kind: 'case' as const, item: c };
+        const d = DEADLINE_CASES.find((x) => x.id === selectedCaseId);
+        if (d) return { kind: 'deadline' as const, item: d };
+        return null;
+      })()
+    : null;
+  if (liveSelected) lastSelectedRef.current = liveSelected;
   // PI2-D14 host migration: keeps the Drawer's title/body populated with
   // the last-opened case through its ~200ms closing transition instead of
   // blanking the instant `selectedCaseId` clears — same pattern
@@ -507,7 +599,9 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
   // regardless of what `children` it is given (`Drawer.tsx` returns null
   // in that phase), so this never resurrects a case after the Drawer is
   // actually gone.
-  const displayCase = liveSelectedCase ?? lastSelectedCaseRef.current;
+  const displaySelected = liveSelected ?? lastSelectedRef.current;
+  const displayCase = displaySelected?.kind === 'case' ? displaySelected.item : null;
+  const displayDeadlineCase = displaySelected?.kind === 'deadline' ? displaySelected.item : null;
   const displayDoc = displayCase ? DOCLIB[displayCase.doc] : undefined;
   const openCases = CASES.filter((c) => c.stage !== 'closed' && c.stage !== 'rejected');
   const doneCases = CASES.filter((c) => c.stage === 'closed' || c.stage === 'rejected');
@@ -539,6 +633,22 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
   ];
 
   const rowAction: DataTableRowAction<Case> = {
+    label: () => 'Open',
+    onPress: (row) => setSelectedCaseId(row.id),
+  };
+
+  // PI2-D2 leg (b) — deadline-driven cases get their own small list (a
+  // distinct data model, per data/cases.ts's "no field merge" discipline;
+  // reusing `columns`/`rowAction` above would require coercing
+  // `DeadlineDrivenCase` into `Case`'s column shape it does not have).
+  const deadlineColumns: DataTableColumn<DeadlineDrivenCase>[] = [
+    { id: 'id', header: 'Case', sortable: true, sortValue: (row) => row.id, render: (row) => <strong>{row.id}</strong> },
+    { id: 'title', header: 'Title', sortable: true, sortValue: (row) => decodeText(row.title), render: (row) => <span>{decodeText(row.title)}</span> },
+    { id: 'status', header: 'Status', render: (row) => { const pill = deadlineStatusPill(row.status); return <Tag text={pill.text} variant={pill.variant} />; } },
+    { id: 'owner', header: 'Owner', sortable: true, sortValue: (row) => decodeText(row.owner), render: (row) => <span>{decodeText(row.owner)}</span> },
+  ];
+
+  const deadlineRowAction: DataTableRowAction<DeadlineDrivenCase> = {
     label: () => 'Open',
     onPress: (row) => setSelectedCaseId(row.id),
   };
@@ -590,6 +700,28 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
           </div>
         </section>
       ) : null}
+
+      {/* PI2-D2 leg (b) — makes DEADLINE_CASES reachable (see this file's
+          seeding guard, above); own section, own DataTable (distinct data
+          model from `Case`, see `deadlineColumns` above). */}
+      {DEADLINE_CASES.length > 0 ? (
+        <section aria-labelledby="cases-deadline-heading" style={SECTION_STYLE}>
+          <h2 id="cases-deadline-heading" style={SUBHEADING_STYLE}>
+            Deadline cases · {DEADLINE_CASES.length}
+          </h2>
+          <div style={SCROLL_WRAP_STYLE}>
+            <DataTable
+              caption="Deadline cases"
+              columns={deadlineColumns}
+              rows={DEADLINE_CASES}
+              getRowId={(row) => row.id}
+              rowAction={deadlineRowAction}
+              emptyMessage="No deadline cases."
+              defaultSortColumnId="id"
+            />
+          </div>
+        </section>
+      ) : null}
     </main>
 
       {/* PI2-D14 host migration — the one-case-page side-car: the shared
@@ -607,11 +739,24 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
               `${decodeText(displayDoc.t)} — full document`
             : displayCase
               ? `${displayCase.id} · ${decodeText(displayCase.title)}`
-              : ''
+              : displayDeadlineCase
+                ? `${displayDeadlineCase.id} · ${decodeText(displayDeadlineCase.title)}`
+                : ''
         }
         onClose={() => setSelectedCaseId(null)}
       >
-        {displayCase ? (
+        {displayDeadlineCase ? (
+          // PI2-D2 leg (b) — the deadline-driven case leg's own render
+          // path, entirely separate from `CaseDetail` below (no
+          // `RedlineDiffView`/"View full document" reachable from here).
+          <DeadlineCaseDetail
+            caseItem={displayDeadlineCase}
+            currentUser={currentUser}
+            onBack={() => setSelectedCaseId(null)}
+            onAction={handleDeadlineAction}
+            pendingAction={pendingDeadlineAction && pendingDeadlineAction.caseId === displayDeadlineCase.id ? pendingDeadlineAction.kind : null}
+          />
+        ) : displayCase ? (
           <>
             {/* §2.11 (amendment A18) — CaseDetail stays MOUNTED (CSS-hidden,
                 not conditionally unmounted) while the full-document view

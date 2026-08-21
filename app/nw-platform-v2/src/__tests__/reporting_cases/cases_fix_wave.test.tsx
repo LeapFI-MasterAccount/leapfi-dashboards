@@ -423,7 +423,7 @@ describe("PI2-D5 — 'case'-kind deep link (App.tsx KIND VOCABULARY: id = the Ca
     // pre-populated with the exact matching case, not that the list
     // disappears.
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Open cases' })).toBeInTheDocument();
     expect(onDeepLinkConsumed).toHaveBeenCalledWith(1);
   });
 
@@ -439,7 +439,7 @@ describe("PI2-D5 — 'case'-kind deep link (App.tsx KIND VOCABULARY: id = the Ca
       />,
     );
 
-    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Open cases' })).toBeInTheDocument();
     expect(document.querySelector('[data-lf-view="case-detail"]')).toBeNull();
     expect(onDeepLinkConsumed).not.toHaveBeenCalled();
   });
@@ -456,7 +456,7 @@ describe("PI2-D5 — 'case'-kind deep link (App.tsx KIND VOCABULARY: id = the Ca
       />,
     );
 
-    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Open cases' })).toBeInTheDocument();
     expect(onDeepLinkConsumed).toHaveBeenCalledWith(3);
   });
 });
