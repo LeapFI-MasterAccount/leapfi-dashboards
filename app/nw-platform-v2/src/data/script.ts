@@ -161,11 +161,123 @@ export const SCRIPT_CEO: ScriptStep[] = [
   },
 ];
 
+/**
+ * SCRIPT_EXAMINER — the L12 demo re-script (call-17-demo-flow-nist-riskead-
+ * tprm.md; DECISIONS.md D16-D24), authored by Marisol Vance. Proves swap
+ * rule 1 for real (script.ts's own header, above): this second script cost
+ * exactly one array literal plus one `SCRIPTS` registry entry below — no
+ * other export in this file, and no line in `PresenterRail.tsx`, changed.
+ *
+ * SOURCE: call-17 has no §1 "Say in one line"/"Do" table of its own (that
+ * table only exists for the CEO script, `demo_script_draft.md` §1) — its
+ * source is prose requirement statements (call-17 "Requirement statement"
+ * + `DECISIONS.md` D16-D24). `say`/`do` below are authored fresh at this
+ * file's own established grain (one spoken line; short imperative `do`
+ * clauses), in the same presenter register `SCRIPT_CEO` already ships —
+ * never a longer monologue.
+ *
+ * ARC: presenter-driven, single fixed sequence, 3 beats (D24; no
+ * interaction-mode build). "Risk Lead" in step 2 is Rachel Fischer, CRO —
+ * the shell's already-default persona; zero persona-switch beats anywhere
+ * (D19, D20).
+ *
+ * CLICK-PATH FIDELITY — every target/do claim below is walked against the
+ * shipped build at this lane's base commit (68f5127 + grammar commit
+ * f2e8191). Per-step citations:
+ *
+ * Step 1 (`onside:overview`, D17): lands on the already-shipped
+ * `OnSideOverview.tsx` — KPI strip + all-domain posture grid, the
+ * "multiple frameworks and domains" view call-17 asks for (no dedicated
+ * NIST screen exists or is needed — NIST is a crosswalk annotation on the
+ * AI-gov domain's own `inst` field, `data/onside.ts:87`, not a standalone
+ * module). The gap-KPI sub-click (D21) is real and wired:
+ * `OnSideOverview.tsx:685` — `KpiNavCard label="Gaps to your targets"
+ * ... onOpen={() => onNavigate('onside.documents')}` — a genuine
+ * `onside.documents` navigation, not a placeholder. The two example gap
+ * figures are read off the live domain data, not invented: `data/onside.ts`
+ * tprm `appl: 33, tot: 33, met: 24` (line 106) and aigov `appl: 214,
+ * tot: 230, met: 110` (line 88) — both domains this arc's own step 3
+ * revisits, so the gap named here pays off at the close (D21).
+ *
+ * Step 2 (`onside:case:<id>`, D18, D19): `resolveTarget` drops the `<id>`
+ * segment at the RAIL-10 seam and lands generically on `'cases'` — the
+ * `do` field is therefore the explicit, VERIFIED click call-17 Step 2
+ * names ("Cases → open the CRO-routed case at the top of the list"), not a
+ * deep link the grammar can't carry. RE-WALKED against the now-shipped L2
+ * CRO/Priya routing rule (closing D18's own gap-flag): `data/cases.ts`'s
+ * `seedCases()` assigns ids in doc-array order (`irp`=CASE-2026-001,
+ * `tprm-program`=002, ..., lines 476-486) and routes every board/exec-tier
+ * case to `stage: 'cro'` (lines 552-591, `CASE_TIER`, lines 68-76) —
+ * `irp` is tier `'exec'`, so CASE-2026-001 IS one of the CRO-routed cases.
+ * `screens/Cases.tsx`'s "Open cases" table is unfiltered by role
+ * (`openCases`, line 733) and always sorts ascending by id
+ * (`defaultSortColumnId="id"`, line 825; ascending is `DataTable.tsx`'s own
+ * un-set default, line 462) — so CASE-2026-001 renders as literally the
+ * first row, and it is CRO-routed: the do-field's claim holds against the
+ * shipped build. Target below names that real, verified id explicitly.
+ * Rachel Fischer is `USERS[0]`/`CURRENT`, roleKey `'cro'`
+ * (`data/studio.ts:37`) and the shell's already-default persona
+ * (`App.tsx`, "PERSONA/USER-SWITCHER WIRING" note) — no switch beat.
+ *
+ * Step 3 (`onside:dom-tprm`, D16, D23): resolves via the existing RAIL-10
+ * `dom-` rule (`target.startsWith('onside:dom-')`, this file, the branch
+ * above) onto `'onside.documents'`. CORRECTION found during this walk,
+ * disclosed rather than silently routed around: `OBL` (`data/onside.ts:311`)
+ * — the source `OnSideDocuments.tsx`'s "Domain impact" section iterates
+ * (line 1047) — has ONLY `tprm` and `mrm` keys (the two `deep: true`
+ * domains); AI-gov has no obligation register there, so D23's "same close
+ * beat...one step, two names" cannot mean a single-screen reveal — no such
+ * screen ships. The real, shipped AI-gov "flagship" content instead lives
+ * on `OnSideOverview.tsx`'s Domains accordion (`views/DomainsAccordion.tsx`,
+ * reachable via Sidebar's already-wired `'onside.overview'` child,
+ * `Sidebar.tsx:300`): clicking the "AI Governance" domain-posture card
+ * (`OnSideOverview.tsx:604-612`, `openDomain`) expands its accordion row,
+ * which — since `aigov` is absent from `OBL` — renders the `DOM_OPEN`
+ * "Top open items" branch (`DomainsAccordion.tsx:428-441`, real content:
+ * `data/onside.ts:372-375`, the IRP-escalation/governance-charter/"104 of
+ * 214 controls" items) plus the domain's own footer line, which carries
+ * the literal ratified vocabulary — `data/onside.ts:87`'s `inst` field,
+ * "CRI FS AI RMF (flagship framework · 230 controls)" — and the 110/230
+ * figures (`DomainsAccordion.tsx:388,446`). This keeps D23's substance (one
+ * close beat, TPRM = full deep-dive register, AI-gov = a lighter,
+ * real-content callout, not a second parallel deep-dive) while being
+ * honest that it spans two already-visited screens via one real, existing
+ * click (Sidebar), not an invented same-page reveal — flagged here for the
+ * owning authority (Marisol Vance's own prior D23 ruling) in case the
+ * one-screen framing was load-bearing for a reason this walk doesn't see;
+ * not silently resolved as an invented screen.
+ */
+export const SCRIPT_EXAMINER: ScriptStep[] = [
+  {
+    id: 'examiner-01-overview',
+    title: 'Full posture, one glance',
+    say: 'Every framework, every regulator, one posture — judged against the targets we set, gaps named out loud instead of buried in a binder.',
+    do: "OnSide → Overview; scan the domain-posture grid across every framework and body; click 'Gaps to your targets' in the KPI strip and name one real gap on record — TPRM 24 of 33 obligations met, or AI-gov 110 of 230 controls met.",
+    target: 'onside:overview',
+  },
+  {
+    id: 'examiner-02-risklead',
+    title: "The Risk Lead's queue",
+    say: "Rachel, the CRO, didn't have to go looking — the system already routed this to her queue and logged who sent it, and why.",
+    do: 'Cases → open the CRO-routed case at the top of the list.',
+    target: 'onside:case:CASE-2026-001',
+  },
+  {
+    id: 'examiner-03-tprm',
+    title: 'TPRM deep-dive, AI-gov flagship',
+    say: 'Third-party risk gets the full obligation register, gaps and all — and right beside it, the flagship AI-governance framework, judged the identical way.',
+    do: "OnSide → Documents → Domain impact; open Third-Party Risk Management's obligation register (the deep-dive). Then Sidebar → OnSide → Overview → click 'AI Governance' to expand its flagship-framework callout (110 of 230 controls met).",
+    target: 'onside:dom-tprm',
+  },
+];
+
 export const SCRIPTS = {
   ceo: { label: 'CEO — NorthWinds day one', steps: SCRIPT_CEO },
+  examiner: { label: 'Examiner — NIST posture · Risk Lead · TPRM/AI-gov', steps: SCRIPT_EXAMINER },
   // future: cpo: { label: 'CPO — persona flow', steps: SCRIPT_CPO } — swap
-  // rule 1 (§3): this is the entire cost of a second script. No other
-  // export in this file, and no line in PresenterRail.tsx, changes.
+  // rule 1 (§3): this is the entire cost of a second script, now proven
+  // twice over (examiner, above, was the first proof). No other export in
+  // this file, and no line in PresenterRail.tsx, changes.
 } satisfies Record<string, ScriptDef>;
 
 export type ScriptKey = keyof typeof SCRIPTS;
@@ -182,6 +294,7 @@ export type ScriptTargetId =
   | 'studio.investment-design'
   | 'studio.roadmap'
   | 'cases' // RAIL-10: onside:case:<id> deep links land on the built Cases screen
+  | 'onside.overview' // D17: onside:overview → the already-shipped OnSideOverview screen
   | 'board-deck';
 
 /**
@@ -224,6 +337,13 @@ export function resolveTarget(target: string): ScriptTargetId | null {
   if (target.startsWith('onside:src:')) return 'onside.feed';
   if (target.startsWith('onside:case:')) return 'cases';
   if (target.startsWith('onside:dom-')) return 'onside.documents';
+  // D17: onside:overview → the already-shipped OnSideOverview screen (its
+  // own region map — KPI strip + all-domain posture grid — IS the
+  // "at-a-glance view of multiple frameworks and domains" call-17 asks for;
+  // no dedicated NIST screen needed). RAIL-10-style: one additive branch
+  // resolving a grammatically-valid onside:<view> token onto a real, built
+  // screen id, nothing fabricated.
+  if (target === 'onside:overview') return 'onside.overview';
   if (target.startsWith('onside:')) return null;
 
   if (target === 'deck:board') return 'board-deck';
