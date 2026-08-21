@@ -18,7 +18,12 @@
  *    cards (base kpi() helper, 4194)
  *  - B-dead-interactions-16  RegulatoryFeedLifecycle's "Newly proposed"
  *    rows hop into Sources & connectors (base every NEW_RULES row: onclick
- *    onsideShow('feed-sources'), 3466)
+ *    onsideShow('feed-sources'), 3466). L3 UPDATE (PI-3, D6/call-07):
+ *    Sources & connectors relocated to `SettingsToggles.tsx` — this row
+ *    action now closes any open Drawer content, then fires a real
+ *    cross-screen `onDeepLink` at Settings (OnSideFeed.tsx's own header),
+ *    covered below against that new contract instead of the old
+ *    same-screen scroll/focus.
  *  - A-overlap-06  OnSideFeed's signal DataTable gets the same
  *    overflow-x:auto wrapper every sibling table uses (base
  *    .raci-wrap{overflow-x:auto}, 146)
@@ -215,16 +220,25 @@ describe('B-dead-interactions-14 · OnSideOverview KPI tiles are clickable nav c
   })
 })
 
-describe('B-dead-interactions-16 · RegulatoryFeedLifecycle "Newly proposed" rows hop into Sources & connectors', () => {
-  it('pressing a newly-proposed row scrolls the Sources & connectors section into view', async () => {
+describe('B-dead-interactions-16 · RegulatoryFeedLifecycle "Newly proposed" rows hop into Sources & connectors (L3: now in Settings)', () => {
+  it('pressing a newly-proposed row fires a real cross-screen deep link at Settings (Sources & connectors\' new home)', async () => {
     const user = userEvent.setup()
-    const scrollSpy = vi.spyOn(Element.prototype, 'scrollIntoView')
+    const onDeepLink = vi.fn()
+    render(<OnSideFeed onDeepLink={onDeepLink} />)
+    const newRulesTable = screen.getByRole('table', { name: 'Newly proposed rulemakings' })
+    const row = within(newRulesTable).getAllByRole('row')[1] as HTMLElement
+    await user.click(within(row).getByRole('button', { name: 'View source' }))
+    expect(onDeepLink).toHaveBeenCalledWith({ screen: 'settings.toggles', kind: 'feed-source', id: 'sources' })
+  })
+
+  it('with no onDeepLink wired, pressing a newly-proposed row is a harmless no-op — never a crash', async () => {
+    const user = userEvent.setup()
     renderFeed()
     const newRulesTable = screen.getByRole('table', { name: 'Newly proposed rulemakings' })
     const row = within(newRulesTable).getAllByRole('row')[1] as HTMLElement
-    scrollSpy.mockClear()
     await user.click(within(row).getByRole('button', { name: 'View source' }))
-    expect(scrollSpy).toHaveBeenCalled()
+    // No assertion beyond "did not throw" — this is the file-header-flagged
+    // STOP-item (App.tsx doesn't yet spread deepLinkProps onto Settings).
   })
 })
 

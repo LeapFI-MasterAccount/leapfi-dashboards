@@ -20,18 +20,11 @@ describe('OnSide · Ownership — "Ask OnSide" entry affordance', () => {
     expect(document.querySelectorAll('[data-lf-composite="drawer"]')).toHaveLength(1);
   });
 
-  it('opening a RACI row while the chat is open swaps the SAME Drawer to the document detail', async () => {
-    const user = userEvent.setup();
-    render(<OnSideOwnership />);
-    await user.click(screen.getByRole('button', { name: 'Ask OnSide' }));
-    await screen.findByRole('heading', { name: 'OnSide chat' });
-
-    const table = screen.getByRole('table', { name: 'RACI · policy ownership matrix' });
-    const cell = table.querySelector('tbody tr td, tbody tr th');
-    // Whole-row click affordance (file header) — click the row itself.
-    const row = cell?.closest('tr');
-    if (row) await user.click(row);
-
-    expect(document.querySelectorAll('[data-lf-composite="drawer"]')).toHaveLength(1);
-  });
+  // L3 UPDATE (PI-3, D6/call-08) — the former "opening a RACI row while the
+  // chat is open swaps the SAME Drawer to the document detail" test moved:
+  // the RACI matrix no longer renders on this screen (relocated to
+  // `SettingsToggles.tsx`, which has no chat entry point of its own, so
+  // there is no same-screen chat/RACI-doc mutual-exclusivity scenario to
+  // pin there either) — see `src/__tests__/shell/settings-raci.test.tsx`
+  // for this screen's replacement RACI coverage.
 });

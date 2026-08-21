@@ -1,6 +1,13 @@
 /**
- * RegulatoryFeedSources — view composed into `OnSideFeed.tsx` (Step 2 script
- * screen), below its existing, unchanged FilterBar+DataTable signal feed.
+ * RegulatoryFeedSources — view composed into `SettingsToggles.tsx` as an
+ * additional stacked card section (PI-3, D6/call-07, sprint-plan.md Sprint
+ * 2 L3: "Sources and connectors moved to settings"). Originally composed
+ * into `OnSideFeed.tsx` (Step 2 script screen) below its FilterBar+DataTable
+ * signal feed — L3 relocated the MOUNT POINT only; this component's own
+ * markup, data derivation, and prop surface (`onOpenSource`/
+ * `onOpenInstrument`) are unchanged, consumed by `SettingsToggles.tsx` now
+ * instead of `OnSideFeed.tsx` (D6: reuse the existing wiring seam, never
+ * re-invent it — see that screen's own header for its Drawer wiring).
  * Dispatch: parity_ia_addendum.md Batch 2 ("OnSide · Regulatory feed
  * parity"), §1.1 rows `feed-sources` + `src:`.
  *
@@ -12,31 +19,24 @@
  * alerts card, then the 15 `SRC_ROWS` sources rendered as one DataTable
  * (C6) per `SRC_LAYERS` group (Financial / Systemic / Regional), matching
  * `osSources()`'s own per-layer `<table>` split (3396-3399). Row action
- * opens the source's detail — per this dispatch's TASK line, that detail
- * is meant to render inside `OnSideFeed.tsx`'s *existing* shared Drawer
- * (survey_map.md §d-5: never a second drawer instance), not a Drawer owned
- * by this file.
+ * opens the source's detail — that detail renders inside the mounting
+ * screen's *existing* shared Drawer (survey_map.md §d-5: never a second
+ * drawer instance), not a Drawer owned by this file.
  *
- * ALLOWLIST BOUNDARY (STOP-item, read before wiring this in) — this
- * dispatch's file ALLOWLIST is this file plus RegulatoryFeedLifecycle.tsx
- * and RegulatoryFeedInforce.tsx only. `OnSideFeed.tsx` is an existing,
- * already-shipped screen; the persona's HARD RULES forbid touching it
- * ("never touch ... existing screens"). parity_ia_addendum.md's own
- * "Method note" (top of file) and its Batch 2 section both describe the
- * `OnSideFeed.tsx` Drawer/selectedRow extension as "one small,
- * explicitly-flagged wiring edit ... follow-up integration work, not part
- * of the [batch] allowlist." This file therefore does NOT import or modify
- * `OnSideFeed.tsx`. Instead it exposes exactly the seam a follow-up wiring
- * dispatch needs: an `onOpenSource` callback fired with a fully-formed
- * `SourceDetailRow` (see below) on every source row's "Open" press. That
- * follow-up dispatch's job is to extend `OnSideFeed.tsx`'s `selectedRow`
- * union type to also accept `SourceDetailRow`, pass this component
- * `onOpenSource={(row) => { setSelectedRow(row); setDrawerOpen(true); }}`,
- * and branch `drawerFields`/`drawerTags` on which shape `selectedRow` is —
- * exactly the "small, additive edit, existing Drawer instance reused"
- * the addendum describes. Flagging explicitly rather than silently
- * building it, per persona directive 4 (STOP-and-report on an ALLOWLIST
- * boundary, don't improvise past it).
+ * ALLOWLIST BOUNDARY (historical, kept for record) — this component was
+ * originally built with no access to `OnSideFeed.tsx` and so could only
+ * expose the `onOpenSource`/`onOpenInstrument` seam, not wire a Drawer
+ * itself; that seam is exactly what let the L3 relocation move this
+ * component's MOUNT POINT to a different screen (`SettingsToggles.tsx`)
+ * with zero changes to this file — the seam was screen-agnostic by
+ * construction. `SourceDetailRow` (below) is the fully-formed payload
+ * fired on every source row's "Open" press; `onOpenInstrument` fires with
+ * an `INSTR` key on an in-cell instrument link press. Whichever screen
+ * mounts this component owns the Drawer, its `selection` union, and the
+ * per-source alert Toast copy this file itself still renders (`toggleAlert`
+ * below) — the mounting screen's `onToggleAlert` closure only refreshes its
+ * own display copy of `alertOn`, exactly as `SettingsToggles.tsx`'s header
+ * documents.
  *
  * `SourceDetailRow` carries the six fields this dispatch's TASK line names
  * for the Drawer detail verbatim: "source name, layer, method, 30-day
