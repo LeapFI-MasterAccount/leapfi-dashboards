@@ -24,7 +24,7 @@
  * leaks into sibling suites (tests observe, never adapt, D17).
  */
 import { afterEach, describe, expect, it } from 'vitest'
-import { DEFAULT_VISIBLE_KEYS, resolveVisibleKeys } from '../../views/HomeCustomizeBar'
+import { DEFAULT_VISIBLE_KEYS, HOME_PANEL_DEFS, resolveVisibleKeys } from '../../views/HomeCustomizeBar'
 import { HOME_ORDER, HP } from '../../data/misc'
 
 const TEST_ROLES = [
@@ -42,23 +42,25 @@ afterEach(() => {
 })
 
 describe('resolveVisibleKeys healing vs base homeOrder (base 4126–4133)', () => {
-  // HF1 (user ruling 2026-08-21): 'aigov' ("AI Governance") joins the
-  // customizable universe as the sixth key, default position 1 — the
-  // formerly-ungated Home flagship callout is now Customize-gated.
-  it('the 6-key universe is HP (base 4125) minus kpis, in HP order — aigov first (HF1)', () => {
+  // HF1b (user ruling 2026-08-21, superseding HF1's default-shown reading):
+  // 'aigov' ("AI Governance") stays in the customizable 6-key universe
+  // (the Customize chip list) but is EXCLUDED from the shipped default
+  // visible set — hidden until a user explicitly toggles it on.
+  it('the 6-key universe is HP (base 4125) minus kpis, in HP order — aigov stays toggleable but the shipped default EXCLUDES it (HF1b)', () => {
     expect(HP.map((p) => p[0])).toEqual(['kpis', 'aigov', 'posture', 'legis', 'invest', 'queue', 'qa'])
-    expect([...DEFAULT_VISIBLE_KEYS]).toEqual(['aigov', 'posture', 'legis', 'invest', 'queue', 'qa'])
+    expect(HOME_PANEL_DEFS.map((p) => p.key)).toEqual(['aigov', 'posture', 'legis', 'invest', 'queue', 'qa'])
+    expect([...DEFAULT_VISIBLE_KEYS]).toEqual(['posture', 'legis', 'invest', 'queue', 'qa'])
   })
 
-  it('a never-customized role heals to all 6 panels in HP order (base 4128–4131: no stored sequence -> every key appended)', () => {
+  it('a never-customized role heals to the 5 default panels in HP order — never aigov uninvited (base 4128–4131 healing; HF1b default-hidden)', () => {
     expect(HOME_ORDER['test-fresh-role']).toBeUndefined()
-    expect(resolveVisibleKeys('test-fresh-role')).toEqual(['aigov', 'posture', 'legis', 'invest', 'queue', 'qa'])
+    expect(resolveVisibleKeys('test-fresh-role')).toEqual(['posture', 'legis', 'invest', 'queue', 'qa'])
   })
 
   it('healing returns a fresh array — later mutation cannot corrupt the default set', () => {
     const first = resolveVisibleKeys('test-fresh-role')
     first.push('posture')
-    expect(resolveVisibleKeys('test-fresh-role')).toEqual(['aigov', 'posture', 'legis', 'invest', 'queue', 'qa'])
+    expect(resolveVisibleKeys('test-fresh-role')).toEqual(['posture', 'legis', 'invest', 'queue', 'qa'])
   })
 
   it('a role customized to EMPTY stays empty — stored sequence is authoritative (dispatch pin; port amendment to base 4129)', () => {
@@ -69,6 +71,11 @@ describe('resolveVisibleKeys healing vs base homeOrder (base 4126–4133)', () =
   it('a customized subset keeps exactly the stored keys in stored order (base 4130: stored.forEach preserves pick order)', () => {
     HOME_ORDER['test-subset-role'] = ['queue', 'posture']
     expect(resolveVisibleKeys('test-subset-role')).toEqual(['queue', 'posture'])
+  })
+
+  it("a stored layout containing 'aigov' keeps it in stored order — default-hidden never overrides an explicit opt-in already committed (HF1b: stored layouts stay authoritative)", () => {
+    HOME_ORDER['test-subset-role'] = ['queue', 'aigov', 'posture']
+    expect(resolveVisibleKeys('test-subset-role')).toEqual(['queue', 'aigov', 'posture'])
   })
 
   it('a stored key no longer in the catalog is dropped, never orphaned onto the page (base 4130: keys.indexOf(k)>=0 guard)', () => {

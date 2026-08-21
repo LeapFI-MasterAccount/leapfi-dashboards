@@ -109,9 +109,11 @@
  * formerly-ungated `AigovFlagshipCallout` this file rendered
  * unconditionally is DELETED from this screen. It now lives in
  * `views/HomePanels.tsx` (`AigovFlagshipPanel`) as the sixth
- * Customize-gated panel key, 'aigov' — default-shown at position 1 for
- * roles with no stored layout, toggled/ordered by `HomeCustomizeBar`
- * exactly like the existing five.
+ * Customize-gated panel key, 'aigov' — default-HIDDEN (HF1b user ruling,
+ * same day, superseding HF1's default-shown reading: opt-in via Customize
+ * only, seated at position 1 WHEN toggled on; see HomeCustomizeBar.tsx
+ * `DEFAULT_VISIBLE_KEYS`), toggled/ordered by `HomeCustomizeBar` like the
+ * existing five.
  *
  * Layout constants (240px sidebar column, 2rem content padding, 1.5rem
  * title size): design_system_spec.md §1.4 states this document carries no

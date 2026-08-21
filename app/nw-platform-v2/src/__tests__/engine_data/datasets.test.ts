@@ -226,7 +226,7 @@ describe('data/misc.ts vs base 3613–3647 / 4020–4121 / 4122–4125 / 4357–
     ])
   })
 
-  it('HP is the 7-entry home catalog: base 4125 plus the call-03-renamed "legis" label and the HF1-added "aigov" entry (user ruling 2026-08-21: the flagship callout is Customize-gated, sixth managed key, default position 1)', () => {
+  it('HP is the 7-entry home catalog: base 4125 plus the call-03-renamed "legis" label and the HF1-added "aigov" entry (HF1b user ruling 2026-08-21: Customize-gated, sixth managed key, default-HIDDEN — opt-in via Customize; position 1 when shown)', () => {
     expect(HP).toEqual([
       ['kpis', 'home-kpis', 'Top metrics'],
       ['aigov', 'hp-aigov', 'AI Governance'],

@@ -11,8 +11,10 @@
  *
  * HF1 (user ruling 2026-08-21): a SIXTH gated panel, 'aigov' ("AI
  * Governance") — the flagship StatCard callout formerly rendered
- * unconditionally by `Home.tsx` — now renders here, default-shown at
- * position 1, toggled/ordered like the other five. See
+ * unconditionally by `Home.tsx` — now renders here. HF1b (same-day user
+ * ruling, superseding HF1's default-shown reading): default-HIDDEN,
+ * opt-in via Customize only, seated at position 1 WHEN toggled on (see
+ * HomeCustomizeBar.tsx `DEFAULT_VISIBLE_KEYS`). See
  * `AigovFlagshipPanel`'s own header below.
  *
  * call-03 RENAME (planning/call-03-regulatory-radar-rename.md;
@@ -772,8 +774,8 @@ function YourQueuePanel({
 
 // HF1 (user ruling 2026-08-21, superseding L10's always-visible reading of
 // call-15 / DECISIONS.md D3's placement half): the AI-gov flagship callout
-// is Customize-gated — the sixth panel key, 'aigov', default-shown at
-// position 1. See `AigovFlagshipPanel` below.
+// is Customize-gated — the sixth panel key, 'aigov'; HF1b: default-hidden,
+// position 1 when the user toggles it on. See `AigovFlagshipPanel` below.
 const AIGOV_DOMAIN = DOMAINS.find((d) => d.key === 'aigov');
 
 // L10 — a single-card row (C1's own "1-3 per row" composition note, §2.2):
@@ -790,8 +792,9 @@ const aigovCalloutRowStyle: CSSProperties = {
  * `AigovFlagshipCallout` per the HF1 user ruling (2026-08-21): the Home
  * content area below the greeting contains NOTHING not configured via
  * Customize, so the callout is now rendered here as the 'aigov' panel —
- * toggled/ordered by `HomeCustomizeBar` exactly like the other five,
- * SHOWN by default at position 1 (`HP`'s own order, data/misc.ts).
+ * toggled/ordered by `HomeCustomizeBar` exactly like the other five.
+ * HF1b (same-day user ruling): default-HIDDEN — it renders only after a
+ * user explicitly toggles it on in Customize, landing at position 1.
  *
  * Every literal is sourced from `data/onside.ts` DOMAINS['aigov'] — never
  * fabricated: `label` is the domain's own name, `value` its own `met`

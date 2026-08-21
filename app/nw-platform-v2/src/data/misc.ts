@@ -275,10 +275,16 @@ export const HP: HomePanel[] = [
   ['kpis', 'home-kpis', 'Top metrics'],
   // HF1 (user ruling 2026-08-21, superseding L10's always-visible reading
   // of call-15): the AI-gov flagship callout joins the Customize-gated
-  // panel set as the sixth key. This single entry sets the toggle order,
-  // the section <h2> text, and the shipped default position (first visible
-  // panel — 'kpis' is excluded from the managed set already). Label matches
-  // HomePanels.tsx's own DOM_SHORT.aigov display name.
+  // panel set as the sixth key. This entry sets the toggle order and the
+  // section <h2> text ('kpis' is excluded from the managed set already).
+  // HF1b (same-day user ruling, superseding HF1's default-shown reading):
+  // the panel is default-HIDDEN — opt-in via Customize only; it seats at
+  // position 1 WHEN toggled on. Default visibility lives in
+  // HomeCustomizeBar.tsx's DEFAULT_VISIBLE_KEYS (which excludes 'aigov'),
+  // NOT in HOME_HIDE below (never read by the twin, and per-role runtime
+  // state in the base engine — see HomeCustomizeBar.tsx "STATE
+  // OWNERSHIP"). Label matches HomePanels.tsx's own DOM_SHORT.aigov
+  // display name.
   ['aigov', 'hp-aigov', 'AI Governance'],
   ['posture', 'hp-posture', 'Risk posture'],
   // call-03 rename (planning/call-03-regulatory-radar-rename.md;
