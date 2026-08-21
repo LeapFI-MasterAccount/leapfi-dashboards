@@ -38,6 +38,12 @@ beforeEach(() => {
   for (const key of Object.keys(HOME_ORDER)) {
     delete HOME_ORDER[key]
   }
+  // L11 (D13): HomeCustomizeBar.tsx's commitVisibleKeys now also persists
+  // to localStorage (state/demoStore.ts) — without clearing it here too,
+  // a later test's customization would leak into this file's "never-
+  // customized boot" assertions via the persisted fallback, the same
+  // isolation precedent theme-toggle.test.tsx already establishes.
+  window.localStorage.clear()
 })
 
 function panelKeysInOrder(container: HTMLElement): string[] {

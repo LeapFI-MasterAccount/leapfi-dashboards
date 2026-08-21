@@ -126,6 +126,14 @@
  * Irreversibility gate: N/A — every action here is a reversible display
  * preference, not a claim about a server-side operation's completion.
  *
+ * PERSISTENCE (L11, call-10, DECISIONS.md D13): `resolveVisibleKeys`/
+ * `commitVisibleKeys` above now also read/write `state/demoStore.ts`'s
+ * persona-keyed localStorage layer (`getPersistedHomeOrder`/
+ * `persistHomeOrder`) — see that file's "Home layout persistence" section
+ * header for the full mechanism, the repro-check that motivated it, and
+ * why only the 'ceo' (Adam) role carries an explicit seed entry. This
+ * file's own read/write call sites are otherwise unchanged.
+ *
  * Test coverage — the "no executable test run" STOP-item this header
  * previously carried is now stale: a test runner (vitest) is installed and
  * this file has an executable suite,
@@ -145,6 +153,7 @@ import { Chip } from '../components/primitives/Chip';
 import { Label } from '../components/primitives/Label';
 import { HP, HOME_ORDER } from '../data/misc';
 import { PANEL_STYLE } from '../theme/panelStyle';
+import { getPersistedHomeOrder, persistHomeOrder } from '../state/demoStore';
 
 export type HomePanelKey = 'posture' | 'legis' | 'invest' | 'queue' | 'qa';
 
@@ -167,7 +176,11 @@ export const DEFAULT_VISIBLE_KEYS: readonly HomePanelKey[] = HOME_PANEL_DEFS.map
  * once customized (even to `[]`, after "Clear all"), the stored sequence —
  * filtered to still-valid keys — is authoritative. */
 export function resolveVisibleKeys(roleKey: string): HomePanelKey[] {
-  const stored = HOME_ORDER[roleKey];
+  // L11 (call-10, DECISIONS.md D13): HOME_ORDER[roleKey] (this session's
+  // in-memory customization) wins if present; else a prior session's
+  // persisted order or this role's persona seed (state/demoStore.ts
+  // "Home layout persistence"); else the full shipped default, unchanged.
+  const stored = HOME_ORDER[roleKey] ?? getPersistedHomeOrder(roleKey);
   if (stored === undefined) return [...DEFAULT_VISIBLE_KEYS];
   const out: HomePanelKey[] = [];
   stored.forEach((k) => {
@@ -178,9 +191,12 @@ export function resolveVisibleKeys(roleKey: string): HomePanelKey[] {
 
 /** Port of the write side of `homePanelToggle()`/`homePanelsClear()`/
  * `homePanelsReset()` (source 4149-4172), expressed as one idempotent "set
- * the next visible sequence" operation. */
+ * the next visible sequence" operation. L11 (D13): also persists to
+ * localStorage (state/demoStore.ts `persistHomeOrder`) so the choice
+ * survives a real page refresh/re-login, not just in-session navigation. */
 export function commitVisibleKeys(roleKey: string, nextVisibleKeys: readonly HomePanelKey[]): void {
   HOME_ORDER[roleKey] = [...nextVisibleKeys];
+  persistHomeOrder(roleKey, nextVisibleKeys);
 }
 
 export interface HomeCustomizeBarProps {
