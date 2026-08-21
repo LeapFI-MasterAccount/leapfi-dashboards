@@ -406,6 +406,15 @@ export function OnSideOverview({ onNavigate, deepLink, onDeepLink, onDeepLinkCon
   useDemoStore();
   const [expandedDomainKeys, setExpandedDomainKeys] = useState<ReadonlySet<string>>(new Set());
   const [pendingScrollKey, setPendingScrollKey] = useState<string | null>(null);
+  // §2.9 — the "Ask OnSide" chat as a second, mutually-exclusive content
+  // target on this SAME shared Drawer (never a second instance). Bumping
+  // `chatOpenNonce` forces AskChatPanel to remount fresh on every open
+  // (§2.9.5 fresh-open reseed, AC-A16-8). Declared here (ahead of every
+  // page-node scroll/focus handoff and deep-link consumer effect below) so
+  // each of them can clear it FIRST — §2.9.1 item 2 / A16 exclusivity
+  // intent, HOSTILE-REVIEW FIX WAVE finding H1's sweep on this screen.
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpenNonce, setChatOpenNonce] = useState(0);
   // The store's live session scope events (base SCOPE_EVENTS) — see the
   // ONSIDE-02 / STU-01 file-header note.
   const scopeEvents = getScopeEvents();
@@ -424,6 +433,13 @@ export function OnSideOverview({ onNavigate, deepLink, onDeepLink, onDeepLinkCon
   // Domains accordion, not a separate screen.
   const domainsSectionRef = useRef<HTMLElement | null>(null);
   const scrollToDomains = () => {
+    // §2.9 chat-drawer mutual-exclusivity (design_system_spec.md §2.9.1
+    // item 2 / A16 exclusivity intent) — sweep finding, same concept as
+    // HOSTILE-REVIEW FIX WAVE finding H1 (OnSideFeed.tsx): this handoff
+    // moves focus to a PAGE node, never a Drawer content swap — close any
+    // open Drawer content (chat included) first, then focus. Idempotent
+    // when nothing is open.
+    setChatOpen(false);
     domainsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     domainsSectionRef.current?.focus();
   };
@@ -435,12 +451,6 @@ export function OnSideOverview({ onNavigate, deepLink, onDeepLink, onDeepLinkCon
   // screen's Drawer reads the live OBL/DOCLIB singletons directly rather
   // than caching a stale row snapshot across the Adopt cascade.
   const [openObligationTarget, setOpenObligationTarget] = useState<{ domain: string; id: string } | null>(null);
-  // §2.9 — the "Ask OnSide" chat as a second, mutually-exclusive content
-  // target on this SAME shared Drawer (never a second instance). Bumping
-  // `chatOpenNonce` forces AskChatPanel to remount fresh on every open
-  // (§2.9.5 fresh-open reseed, AC-A16-8).
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatOpenNonce, setChatOpenNonce] = useState(0);
   const [adoptingDocId, setAdoptingDocId] = useState<string | null>(null);
   const [adoptToast, setAdoptToast] = useState<string | null>(null);
   const requestSeqRef = useRef(0);
@@ -516,6 +526,12 @@ export function OnSideOverview({ onNavigate, deepLink, onDeepLink, onDeepLinkCon
   useEffect(() => {
     if (!deepLink || deepLink.kind !== 'domain') return;
     const domainKey = deepLink.id;
+    // §2.9 chat-drawer mutual-exclusivity (design_system_spec.md §2.9.1
+    // item 2 / A16 exclusivity intent) — sweep finding, same concept as
+    // HOSTILE-REVIEW FIX WAVE finding H1: `setPendingScrollKey` below
+    // drives `DomainsAccordion.tsx`'s own page-node scroll/focus handoff,
+    // never a Drawer content swap — close any open chat first.
+    setChatOpen(false);
     setExpandedDomainKeys((prev) => (prev.has(domainKey) ? prev : new Set(prev).add(domainKey)));
     setPendingScrollKey(domainKey);
     onDeepLinkConsumed?.(deepLink.nonce);
@@ -534,6 +550,14 @@ export function OnSideOverview({ onNavigate, deepLink, onDeepLink, onDeepLinkCon
     if (!deepLink || deepLink.kind !== 'control') return;
     const domainKey = resolveControlDomain(deepLink.id);
     if (domainKey) {
+      // §2.9 chat-drawer mutual-exclusivity — close any open chat FIRST:
+      // the accordion-row scroll/focus below is a page-node handoff
+      // (never a Drawer content swap, HOSTILE-REVIEW FIX WAVE finding H1's
+      // concept), and `setOpenObligationTarget` swaps this SAME shared
+      // Drawer's content — if chat stayed open, its title would keep
+      // masking the obligation content (`drawerTitle` picks `chatOpen`
+      // first), the same leak class as finding H2.
+      setChatOpen(false);
       setExpandedDomainKeys((prev) => (prev.has(domainKey) ? prev : new Set(prev).add(domainKey)));
       setPendingScrollKey(domainKey);
       setOpenObligationTarget({ domain: domainKey, id: deepLink.id });
@@ -564,6 +588,10 @@ export function OnSideOverview({ onNavigate, deepLink, onDeepLink, onDeepLinkCon
     const domainKey = sep === -1 ? deepLink.id : deepLink.id.slice(0, sep);
     const oblId = sep === -1 ? '' : deepLink.id.slice(sep + 1);
     if (oblId && OBL[domainKey]?.some((row) => row.id === oblId)) {
+      // §2.9 chat-drawer mutual-exclusivity — same guarantee as the
+      // 'control' effect above (page-node scroll/focus + a Drawer
+      // content-swap must never happen behind a still-open chat).
+      setChatOpen(false);
       setExpandedDomainKeys((prev) => (prev.has(domainKey) ? prev : new Set(prev).add(domainKey)));
       setPendingScrollKey(domainKey);
       setOpenObligationTarget({ domain: domainKey, id: oblId });
@@ -573,6 +601,11 @@ export function OnSideOverview({ onNavigate, deepLink, onDeepLink, onDeepLinkCon
   }, [deepLink?.nonce]);
 
   const openDomain = (key: string) => {
+    // §2.9 chat-drawer mutual-exclusivity — same close-first guarantee as
+    // `scrollToDomains` above (this is `DomainPostureCard`'s own press
+    // handler, ONSIDE-14 — a page-node scroll/focus handoff, never a
+    // Drawer content swap).
+    setChatOpen(false);
     setExpandedDomainKeys((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
     setPendingScrollKey(key);
   };

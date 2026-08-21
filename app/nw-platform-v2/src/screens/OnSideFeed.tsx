@@ -562,10 +562,30 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
   // suggestion Chips, no carried-forward transcript) even on a same-screen
   // re-open with no navigation in between.
   const [chatOpenNonce, setChatOpenNonce] = useState(0);
+
+  // §2.9 chat-drawer mutual-exclusivity (design_system_spec.md §2.9.1 item
+  // 2 / A16 exclusivity intent) — HOSTILE-REVIEW FIX WAVE finding H1: a
+  // page-node scroll/focus handoff (below) is NOT a Drawer content swap
+  // (unlike the 'signal'/'feed-source'/'source'/'instrument' selections,
+  // which overwrite this screen's discriminated `selection` union and so
+  // inherit RPT-05's own focus handling for free). Moving focus to a page
+  // node while ANY Drawer content — chat included — is still open+
+  // aria-modal leaves the dialog open with focus outside its own subtree.
+  // `handleDrawerClose` is declared here (ahead of every page-node
+  // scroll/focus handoff below) so each of them can close the Drawer FIRST,
+  // then focus — the same "close it first, then focus" pattern this file
+  // already used at the "Open in Sources & connectors →" drawer action,
+  // now owned by the handoff functions themselves so every caller gets it
+  // for free, not just that one call site.
+  const handleDrawerClose = () => setDrawerOpen(false);
+
   // B-dead-interactions-16 — scroll/focus target for RegulatoryFeedSources'
   // "Sources & connectors" section, below the fold.
   const sourcesSectionRef = useRef<HTMLDivElement | null>(null);
   const handleOpenSources = () => {
+    // §2.9 — close any open Drawer content (chat included) before moving
+    // focus to this page node. Idempotent/harmless when nothing is open.
+    handleDrawerClose();
     sourcesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     sourcesSectionRef.current?.focus();
   };
@@ -577,6 +597,11 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
   // section earlier in this screen's own 1→2→3 section order).
   const lifecycleSectionRef = useRef<HTMLDivElement | null>(null);
   const handleOpenLifecycle = () => {
+    // §2.9 — same close-first-then-focus guarantee as handleOpenSources
+    // above (HOSTILE-REVIEW FIX WAVE finding H1: this was the one caller
+    // that used to skip it — the chat's own scripted 'onside-reg-lifecycle'
+    // entry fires exactly this same-screen 'section' deep link).
+    handleDrawerClose();
     lifecycleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     lifecycleSectionRef.current?.focus();
   };
@@ -703,8 +728,6 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
     setSelection({ kind: 'instrument', instrumentKey, instrument });
     setDrawerOpen(true);
   };
-
-  const handleDrawerClose = () => setDrawerOpen(false);
 
   /** §2.9.5 entry affordance — "Ask OnSide" utility-corner trigger. Always
    * opens (or content-swaps, §2.9.1 item 2) at the fresh idle state. */
