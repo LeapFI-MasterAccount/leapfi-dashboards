@@ -7,8 +7,10 @@
  * S1.1-03).
  *
  * Pins:
- *  - AC-S1.1-03-1: `stagePill` renders "Not decided yet" (`count` variant)
- *    for an untouched analyst-stage case, and "Back with the analyst"
+ *  - AC-S1.1-03-1: `stagePill` renders "Open item" (`count` variant) —
+ *    renamed from "Not decided yet" per `DECISIONS.md` call-06/L2 exit
+ *    criteria (the label call-notes flagged as ambiguous) — for an
+ *    untouched analyst-stage case, and "Back with the analyst"
  *    (`status-caution`) for a touched one returned to analyst stage.
  *  - AC-S1.1-03-2: the `Cases` list header renders the "N of M have been
  *    decided yet" / "N cases are waiting on you" text exactly when
@@ -51,15 +53,15 @@ describe('Cases stagePill (Cases.tsx ~196-205) — regression guard', () => {
     seedCases(DOCLIB);
   });
 
-  it('AC-S1.1-03-1: an untouched analyst-stage case renders "Not decided yet"', () => {
+  it('AC-S1.1-03-1: an untouched analyst-stage case renders "Open item"', () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} />);
 
     // PI2-D45 (USER OVERRIDE): only the 3 proc-tier cases boot stage
     // 'analyst', edited: false, history.length === 1 — the `isUntouched`
     // case (Cases.tsx:192-193). CASE-2026-001 ('irp', exec tier) now boots
     // pre-routed to 'cro'; CASE-2026-003 ('aa-procedure', proc tier) is
-    // still untouched.
-    expect(stageCellText('CASE-2026-003')).toBe('Not decided yet');
+    // still untouched. "Open item" replaces "Not decided yet" (call-06).
+    expect(stageCellText('CASE-2026-003')).toBe('Open item');
   });
 
   it('AC-S1.1-03-1: a touched case returned to analyst stage renders "Back with the analyst"', () => {
@@ -90,7 +92,7 @@ describe('Cases stagePill (Cases.tsx ~196-205) — regression guard', () => {
   it('AC-S1.1-03-1: an edited analyst-stage case (history.length <= 1) also renders "Back with the analyst"', () => {
     // Second discriminator inside `isUntouched`: `!c.edited`. A case with
     // `edited: true` fails `isUntouched` even with a single history
-    // entry, so it must NOT render the count-variant "Not decided yet"
+    // entry, so it must NOT render the count-variant "Open item"
     // pill either.
     //
     // PI2-D45 (USER OVERRIDE): CASE-2026-002 ('tprm-program', exec tier)

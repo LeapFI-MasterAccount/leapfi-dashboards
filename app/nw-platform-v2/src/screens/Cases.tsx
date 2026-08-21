@@ -170,12 +170,14 @@ import { Toast } from '../components/Toast';
 import { Button } from '../components/primitives/Button';
 import { Tag } from '../components/primitives/Tag';
 import type { NonRaciTagVariant } from '../components/primitives/Tag';
-import { CaseDetail, DeadlineCaseDetail } from '../views/CaseDetail';
-import type { CaseActionKind, DeadlineActionKind } from '../views/CaseDetail';
+import { Label } from '../components/primitives/Label';
+import { Input } from '../components/primitives/Input';
+import { CaseDetail, DeadlineCaseDetail, CARD_STYLE } from '../views/CaseDetail';
+import type { CaseActionKind, DeadlineActionKind, ReassignMode } from '../views/CaseDetail';
 import { APPROVAL, CASES, DEADLINE_CASES, isUntouched, seedCases, seedDeadlineCases, stamp, tierOf } from '../data/cases';
 import type { Case, CaseHistoryEntry, DeadlineDrivenCase } from '../data/cases';
 import { DOCLIB } from '../data/doclib';
-import { CURRENT } from '../data/studio';
+import { CURRENT, USERS } from '../data/studio';
 import type { StudioUser } from '../data/studio';
 import {
   notifyCaseAdopted,
@@ -225,7 +227,7 @@ function stagePill(c: Case): { text: string; variant: NonRaciTagVariant } {
   if (c.stage === 'legal') return { text: 'With counsel', variant: 'status-caution' };
   if (c.stage === 'committee') return { text: `At ${APPROVAL.committee}`, variant: 'status-caution' };
   if (c.stage === 'final') return { text: 'Conditional · final approval open', variant: 'status-caution' };
-  if (isUntouched(c)) return { text: 'Not decided yet', variant: 'count' };
+  if (isUntouched(c)) return { text: 'Open item', variant: 'count' };
   return { text: 'Back with the analyst', variant: 'status-caution' };
 }
 
@@ -235,6 +237,17 @@ function waitingOnRoleKey(stage: string): string | null {
   if (stage === 'cro' || stage === 'final' || stage === 'committee') return 'cro';
   if (stage === 'legal') return 'legal';
   return null;
+}
+
+/** D11 (call-13) — formats a candidate `StudioUser` into `Case.owner`'s
+ * own existing string convention ("R. Fischer · CRO" / "P. Raman ·
+ * Risk Analyst" — `data/cases.ts` `CASE_OWNER`, `stageOwnerLabel` in this
+ * file and `../views/CaseDetail.tsx`): initial + last name + " · " + role.
+ * No new field, no new string shape — the reassignment write lands in the
+ * SAME `owner: string` the rest of this codebase already reads/renders. */
+function formatOwnerLabel(user: StudioUser): string {
+  const last = user.name.trim().split(/\s+/).slice(-1)[0] ?? user.name;
+  return `${user.first.charAt(0)}. ${last} · ${user.role}`;
 }
 
 /** PI2-D2 leg (b), AC-r02-D3 — same variant mapping as
@@ -275,6 +288,15 @@ const SECTION_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column',
 const NOTE_STYLE: CSSProperties = { margin: 0, fontSize: '0.875rem', color: 'var(--ink2)', maxWidth: '52rem' };
 const SCROLL_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 const CITE_STYLE: CSSProperties = { margin: '0.15rem 0 0', fontSize: '0.8125rem', color: 'var(--ink2)' };
+// D11 (call-13) — reassign/request-transfer picker view. Same
+// list/row/actions anatomy as `views/NotificationBellPanel.tsx`'s own
+// candidate-row list (Label(s) + Button variant="row" per row), reused
+// rather than a new named list composite.
+const REASSIGN_HEADING_STYLE: CSSProperties = SUBHEADING_STYLE;
+const REASSIGN_LIST_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem', margin: '0.25rem 0 0', padding: 0, listStyle: 'none' };
+const REASSIGN_ROW_STYLE: CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', padding: '0.5rem 0', borderBottom: '1px solid var(--border)' };
+const REASSIGN_ROW_TEXT_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.1rem' };
+const REASSIGN_ACTIONS_STYLE: CSSProperties = { display: 'flex', gap: '0.625rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.75rem' };
 
 export interface CasesProps {
   /** NOT for rendering `<Topbar>` (App.tsx's Shell owns that; see file header) — this screen reads `topbar.profileMenuItems` internally for CS-08's switch-user doclinks inside `CaseDetail`. */
@@ -337,6 +359,20 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
   useEffect(() => {
     setViewingFullDocument(false);
   }, [selectedCaseId]);
+  // D11 (call-13) — a THIRD instance of the same in-drawer content-swap
+  // pattern `viewingFullDocument` above establishes (A18): which candidate
+  // owner is picked and the required reason, for whichever of the two
+  // identical-UI entry points ("Reassign"/"Request transfer",
+  // `CaseDetail.tsx`'s `onOpenReassign`) opened it. Reset on a fresh case
+  // open exactly like `viewingFullDocument`.
+  const [reassignMode, setReassignMode] = useState<ReassignMode | null>(null);
+  const [reassignOwnerId, setReassignOwnerId] = useState<string | null>(null);
+  const [reassignReason, setReassignReason] = useState('');
+  useEffect(() => {
+    setReassignMode(null);
+    setReassignOwnerId(null);
+    setReassignReason('');
+  }, [selectedCaseId]);
   const [renderTick, setRenderTick] = useState(0);
   // `key` (CS-09): a fresh value per committed action, used as the Toast's
   // React key so a replacement message REMOUNTS the Toast and re-arms its
@@ -388,6 +424,35 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
       setRenderTick((t) => t + 1);
       setToast({ key: requestKey, variant: 'success', message: toastMessage(c) });
     }, ACTION_COMMIT_DELAY_MS);
+  }
+
+  /** D11 (call-13) — commits the picked owner through the SAME
+   * `performAction` pessimistic pipeline every other stage transition
+   * uses (single in-flight `pendingAction`, request-key dedup — the
+   * double-press guarantee is inherited, not rebuilt). Writes exactly one
+   * `CaseHistoryEntry` (no new field, D11) and mutates the existing
+   * `owner: string` (no new field, D11); only the `what` phrasing and
+   * toast copy differ between "reassign" and "request-transfer" — the
+   * IDENTICAL picker/confirm UI drives both (D11's own text). The picker
+   * state resets HERE, inside the commit callback, so it swaps back to
+   * the case view only once the mutation has actually landed (Core
+   * Principle 1) — never on button press. */
+  function performReassign(caseId: string, mode: ReassignMode, ownerId: string, reason: string): void {
+    const nextOwner = USERS.find((u) => u.id === ownerId);
+    if (!nextOwner || !reason.trim()) return;
+    performAction(
+      caseId,
+      mode,
+      (c) => {
+        const formatted = formatOwnerLabel(nextOwner);
+        logEntry(c, mode === 'reassign' ? `Reassigned to ${nextOwner.name}` : `Transfer requested to ${nextOwner.name}`, reason.trim());
+        c.owner = formatted;
+        setReassignMode(null);
+        setReassignOwnerId(null);
+        setReassignReason('');
+      },
+      () => (mode === 'reassign' ? `Reassigned to ${nextOwner.name}.` : `Transfer request sent to ${nextOwner.name}.`),
+    );
   }
 
   /** PI2-D2 leg (b)'s own commit pipeline — same pessimistic-render /
@@ -682,7 +747,17 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
           <span>{decodeText(row.title)}</span>
           {waitingOnRoleKey(row.stage) === currentUser.roleKey ? (
             <span style={{ marginLeft: '0.5rem' }}>
-              <Tag text="Waiting on you" variant="hitl" />
+              {/* D12 — an untouched/open-item row (isUntouched(row)) has
+                  no one actually assigned to it yet; "Waiting on you"
+                  names a person who does not exist for that row, directly
+                  contradicting the Stage column's own "Open item" pill on
+                  the SAME row. "Needs assignment" (count variant, matching
+                  the Stage column's own choice for this identical state)
+                  states the real, ownerless condition instead — the two
+                  columns can never contradict each other again. Assigned
+                  rows (every other `waitingOnRoleKey` match) are
+                  unchanged. */}
+              {isUntouched(row) ? <Tag text="Needs assignment" variant="count" /> : <Tag text="Waiting on you" variant="hitl" />}
             </span>
           ) : null}
           <div style={CITE_STYLE}>{decodeText(row.trigger).split(' · ')[0]}</div>
@@ -799,11 +874,15 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
           viewingFullDocument && displayDoc
             ? // §2.11 (amendment A18) — RPT-05 title-keyed in-drawer swap.
               `${decodeText(displayDoc.t)} — full document`
-            : displayCase
-              ? `${displayCase.id} · ${decodeText(displayCase.title)}`
-              : displayDeadlineCase
-                ? `${displayDeadlineCase.id} · ${decodeText(displayDeadlineCase.title)}`
-                : ''
+            : reassignMode && displayCase
+              ? // D11 — same RPT-05 title-keyed in-drawer swap class as the
+                // full-document view above (a third instance of the pattern).
+                `${displayCase.id} · ${reassignMode === 'reassign' ? 'Reassign' : 'Request transfer'}`
+              : displayCase
+                ? `${displayCase.id} · ${decodeText(displayCase.title)}`
+                : displayDeadlineCase
+                  ? `${displayDeadlineCase.id} · ${decodeText(displayDeadlineCase.title)}`
+                  : ''
         }
         onClose={() => setSelectedCaseId(null)}
       >
@@ -827,7 +906,7 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
                 is what preserves the case's own action-region state (e.g.
                 a mid-edit textarea) underneath the swap, per §2.11's own
                 text, rather than discarding it on remount. */}
-            <div style={viewingFullDocument ? { display: 'none' } : undefined}>
+            <div style={viewingFullDocument || reassignMode !== null ? { display: 'none' } : undefined}>
               <CaseDetail
                 caseItem={displayCase}
                 doc={displayDoc}
@@ -852,6 +931,13 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
                 // §2.11 — only offered when this case's document actually
                 // resolves (never a dead click on a data-integrity gap).
                 {...(displayDoc ? { onViewFullDocument: () => setViewingFullDocument(true) } : {})}
+                // D11 — always offered (unrestricted; see CaseDetail.tsx's
+                // own header note on why this is not stage-gated).
+                onOpenReassign={(mode) => {
+                  setReassignOwnerId(null);
+                  setReassignReason('');
+                  setReassignMode(mode);
+                }}
               />
             </div>
             {viewingFullDocument && displayDoc ? (
@@ -862,6 +948,53 @@ export function Cases({ topbar, onNavigate, currentUser = CURRENT, initialCaseId
                   <Button variant="ghost" label="← Back to case" icon="chevron-left" onPress={() => setViewingFullDocument(false)} />
                 </div>
                 <DocumentBody docId={displayCase.doc} decodeText={decodeText} />
+              </div>
+            ) : null}
+            {reassignMode ? (
+              // D11 — third instance of the A18 in-drawer content-swap
+              // pattern: "Reassign"/"Request transfer" swap the Drawer's
+              // content to this picker view, then swap back once the
+              // commit lands (`performReassign`'s own reset, never on
+              // press — Core Principle 1).
+              <div>
+                <div>
+                  <Button variant="ghost" label="← Back to case" icon="chevron-left" onPress={() => setReassignMode(null)} />
+                </div>
+                <section aria-labelledby="case-reassign-heading" style={CARD_STYLE}>
+                  <h3 id="case-reassign-heading" style={REASSIGN_HEADING_STYLE}>
+                    {reassignMode === 'reassign' ? 'Reassign this case' : 'Request transfer'}
+                  </h3>
+                  <Label text="New owner" variant="eyebrow" surface="panel" />
+                  <ul role="list" style={REASSIGN_LIST_STYLE}>
+                    {USERS.map((user) => (
+                      <li key={user.id} style={REASSIGN_ROW_STYLE}>
+                        <span style={REASSIGN_ROW_TEXT_STYLE}>
+                          <Label text={user.name} variant="body-secondary" surface="panel" />
+                          <Label text={user.role} variant="body-secondary" surface="panel" />
+                        </span>
+                        <Button
+                          variant="row"
+                          label={reassignOwnerId === user.id ? 'Selected' : 'Select'}
+                          onPress={() => setReassignOwnerId(user.id)}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                  <Input label="Reason" value={reassignReason} onChange={setReassignReason} surface="panel" />
+                  <div style={REASSIGN_ACTIONS_STYLE}>
+                    <Button
+                      variant="primary"
+                      label={reassignMode === 'reassign' ? 'Confirm reassignment' : 'Send transfer request'}
+                      loading={pendingAction !== null && pendingAction.caseId === displayCase.id && pendingAction.kind === reassignMode}
+                      disabled={!reassignOwnerId || !reassignReason.trim() || pendingAction !== null}
+                      onPress={() => {
+                        if (!reassignOwnerId) return;
+                        performReassign(displayCase.id, reassignMode, reassignOwnerId, reassignReason);
+                      }}
+                    />
+                    <Button variant="ghost" label="Cancel" disabled={pendingAction !== null} onPress={() => setReassignMode(null)} />
+                  </div>
+                </section>
               </div>
             ) : null}
           </>

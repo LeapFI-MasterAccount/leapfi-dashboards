@@ -190,7 +190,19 @@ export type CaseActionKind =
   | 'condition-met'
   | 'reopen'
   | 'save-language'
-  | 'revert-language';
+  | 'revert-language'
+  // D11 (call-13) — reassignment/transfer-request commits, routed through
+  // the SAME `Cases.tsx` `performAction` pessimistic-commit pipeline as
+  // every other stage transition (Irreversibility gate, persona directive
+  // 6). Both share `pendingAction`'s single-in-flight guard with the rest
+  // of this union — never a bespoke commit path for this one action.
+  | 'reassign'
+  | 'request-transfer';
+
+/** D11 (call-13) — the two candidate-owner-picker entry points share
+ * identical UI ("only the initiator and history phrasing differ — not a
+ * second component"); this union names which one a press opened. */
+export type ReassignMode = 'reassign' | 'request-transfer';
 
 export interface CaseDetailProps {
   caseItem: Case;
@@ -234,6 +246,13 @@ export interface CaseDetailProps {
    * is supplied — omit and the Button does not render, never a dead
    * click, matching this file's other optional-callback props. */
   onViewFullDocument?: () => void;
+  /** D11 (call-13, §2.11/A18-class in-drawer content swap) — the
+   * "Reassign"/"Request transfer" triggers. Fires the composing screen's
+   * (`Cases.tsx`) swap to the owner-picker view, exactly mirroring
+   * `onViewFullDocument`'s own optional-callback discipline: rendered only
+   * when this callback is supplied, so an uncomposed caller (every
+   * pre-existing base-anchor test) never renders a dead click. */
+  onOpenReassign?: (mode: ReassignMode) => void;
 }
 
 const DOMAIN_LABEL: Record<string, string> = Object.fromEntries(DOMAINS.map((d) => [d.key, d.name]));
@@ -271,7 +290,7 @@ function stagePill(c: Case): { text: string; variant: NonRaciTagVariant } {
   if (c.stage === 'legal') return { text: 'With counsel', variant: 'status-caution' };
   if (c.stage === 'committee') return { text: `At ${APPROVAL.committee}`, variant: 'status-caution' };
   if (c.stage === 'final') return { text: 'Conditional · final approval open', variant: 'status-caution' };
-  if (isUntouched(c)) return { text: 'Not decided yet', variant: 'count' };
+  if (isUntouched(c)) return { text: 'Open item', variant: 'count' };
   return { text: 'Back with the analyst', variant: 'status-caution' };
 }
 
@@ -341,7 +360,7 @@ const CONDITION_LIST_STYLE: CSSProperties = { display: 'flex', flexDirection: 'c
 const HISTORY_LIST_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.875rem' };
 const HISTORY_ROW_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.15rem', borderLeft: '2px solid var(--border)', paddingLeft: '0.75rem' };
 
-export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendingAction, onNavigate, onDeepLink, onSwitchUser, onViewFullDocument }: CaseDetailProps) {
+export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendingAction, onNavigate, onDeepLink, onSwitchUser, onViewFullDocument, onOpenReassign }: CaseDetailProps) {
   const [editing, setEditing] = useState(false);
   const [draftLang, setDraftLang] = useState(caseItem.lang);
   const [pickingCondition, setPickingCondition] = useState(false);
@@ -669,6 +688,21 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
           <div style={META_LABEL_WRAP}>
             <Label text="Policy owner" variant="eyebrow" surface="panel" />
             <span style={META_VALUE_STYLE}>{decodeText(caseItem.owner)}</span>
+            {/* D11 (call-13) — the owner field was static read-only text
+                until this dispatch; unrestricted to every viewer (this
+                field carries no existing per-viewer gate the way the
+                per-stage workflow actions above do — "Policy owner" and
+                "Currently with" are already two distinct fields in this
+                view, and D11 ties this action to the former, not the
+                stage-gated action set). Omitted (never rendered) when the
+                composing screen supplies no `onOpenReassign` — same
+                dead-click discipline as `onViewFullDocument` above. */}
+            {onOpenReassign ? (
+              <span style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                <Button variant="ghost" label="Reassign" disabled={isPending} onPress={() => onOpenReassign('reassign')} />
+                <Button variant="ghost" label="Request transfer" disabled={isPending} onPress={() => onOpenReassign('request-transfer')} />
+              </span>
+            ) : null}
           </div>
           <div style={META_LABEL_WRAP}>
             <Label text="Currently with" variant="eyebrow" surface="panel" />
