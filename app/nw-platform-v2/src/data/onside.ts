@@ -64,7 +64,30 @@ export interface OnsideDomain {
   why: string;
 }
 
+// L10 AI GOVERNANCE FLAGSHIP ELEVATION (call-15; DECISIONS.md D3): "AI-gov
+// ... gets prominence elevation only (Home StatCard callout reusing C1/A8's
+// `qualifier`; `DOMAINS` reordering, data-only; demo-arc close-beat
+// placement, Marisol's lane) — no dedicated nav tile." `aigov` is moved to
+// the front of this array — DATA-ONLY, every field byte-identical to
+// before (see `onside-domains-aigov-order.test.ts`'s own "spot-checked"
+// pin) — the maximal-prominence position for every consumer that iterates
+// DOMAINS in its own array order without re-sorting (e.g.
+// `OnSideOverview.tsx`'s `DOMAINS.map(...)` posture-card grid). Consumers
+// that sort by another key (e.g. `HomePanels.tsx` PostureBand's own
+// `DataTable` — alphabetical by name via its `defaultSortColumnId`) are
+// unaffected by this reorder, as expected of a data-only change. Exact
+// front-of-array placement (vs. e.g. second) is this dispatch's own
+// implementer judgment call — D3 names "reordering" for prominence but
+// pins no specific index, the same category as this file's sibling
+// screens' documented px/layout judgment calls; "flagship" reads most
+// honestly as first, not second.
 export const DOMAINS: OnsideDomain[] = [
+  {
+    key: 'aigov', name: 'AI Governance', bodies: 'NCUA · Interagency',
+    inst: 'CRI FS AI RMF (flagship framework · 230 controls) · NIST AI RMF catalog',
+    appl: 214, tot: 230, met: 110, target: 3, owner: 'R. Fischer · CRO', docs: 102, ev: 31,
+    why: 'Target <b>3</b> for the current use-case set; 214 of 230 controls apply to the declared portfolio. The target steps to 4 when agentic workflows enter production.',
+  },
   {
     key: 'bsa', name: 'BSA / AML Program', bodies: 'FinCEN · FFIEC',
     inst: '31 CFR Ch. X · FFIEC BSA/AML Examination Manual',
@@ -100,12 +123,6 @@ export const DOMAINS: OnsideDomain[] = [
     inst: 'GLBA Safeguards · FFIEC CAT (sunset transition tracked)',
     appl: 52, tot: 61, met: 47, target: 4, owner: 'P. Nguyen · ISD', docs: 88, ev: 52,
     why: 'Target <b>4</b> on the <b>52 of 61</b> obligations that apply: nine are excluded with documented rationale because NorthWinds does not perform the complex activities they govern.',
-  },
-  {
-    key: 'aigov', name: 'AI Governance', bodies: 'NCUA · Interagency',
-    inst: 'CRI FS AI RMF (flagship framework · 230 controls) · NIST AI RMF catalog',
-    appl: 214, tot: 230, met: 110, target: 3, owner: 'R. Fischer · CRO', docs: 102, ev: 31,
-    why: 'Target <b>3</b> for the current use-case set; 214 of 230 controls apply to the declared portfolio. The target steps to 4 when agentic workflows enter production.',
   },
   {
     key: 'capital', name: 'Capital Adequacy · CBLR', bodies: 'NCUA · FDIC',
