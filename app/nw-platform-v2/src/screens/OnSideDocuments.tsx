@@ -620,6 +620,16 @@ export function OnSideDocuments({ deepLink, onDeepLink, onDeepLinkConsumed }: On
 
   const handleViewImpact = () => {
     if (!toast || toast.cascade.length === 0) return;
+    // §2.9 chat-drawer mutual-exclusivity (design_system_spec.md §2.9.1
+    // item 2 / A16 exclusivity intent) — sweep finding, same concept as
+    // HOSTILE-REVIEW FIX WAVE finding H1 (OnSideFeed.tsx): this handoff
+    // moves focus to a PAGE node (a domain-impact section), not a Drawer
+    // content swap. The Toast (`z-index: 120`) renders above the Drawer/
+    // scrim (`z-index: 50`/`40`), so this link stays a real click target
+    // even while the chat Drawer is open — never move focus outside an
+    // open aria-modal Drawer; close it first, then focus. Idempotent when
+    // nothing is open.
+    handleDrawerClose();
     const domains = Array.from(new Set(toast.cascade.map((c) => c.domain)));
     setUpdatingObligationIds(new Set(toast.cascade.map((c) => c.oblId)));
     if (updatingTimeoutRef.current !== undefined) window.clearTimeout(updatingTimeoutRef.current);
@@ -882,7 +892,16 @@ export function OnSideDocuments({ deepLink, onDeepLink, onDeepLinkConsumed }: On
             <DocLink
               label="Open document"
               onPress={() => {
+                // §2.9 chat-drawer mutual-exclusivity (HOSTILE-REVIEW FIX
+                // WAVE finding H2) — this was the one content-opener in
+                // this file that omitted `setChatOpen(false)`, unlike
+                // every other one (row-open, gapRowAction's doc branch,
+                // openObligationDrawer, the 'document' deep-link effect).
+                // Without it, a still-`chatOpen` Drawer silently swapped
+                // back to a fresh chat once Adopt/Reject cleared
+                // `openDocId`/`openObligation`, instead of closing.
                 setOpenObligation(null);
+                setChatOpen(false);
                 setOpenDocId(g.doc);
               }}
             />
