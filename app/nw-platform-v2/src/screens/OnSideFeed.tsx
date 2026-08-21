@@ -288,6 +288,14 @@ interface SignalRow {
   note: string;
   /** Raw, unexecuted source-code action token (see file header) — never rendered. */
   action: string;
+  /** L8 exit criterion 7 (call-11, `01-architecture.md` row 11) —
+   * plain-language, compliance-audience alert description, additive and
+   * optional (same class as A20's `ChatEntry.response?` precedent).
+   * Scripted/authored content (`data/onside.ts`'s `SrcItem` 6th tuple
+   * element) — never generated at runtime; no such machinery exists in
+   * this SPA. Rendered in the signal Drawer only (see `drawerFields`
+   * below), not a new surface. */
+  description?: string;
 }
 
 /** L3 UPDATE (see file header) — discriminated selection for the single
@@ -318,7 +326,7 @@ const ALL_SIGNAL_ROWS: SignalRow[] = (() => {
     const rowMeta = SOURCE_ROW_BY_NORMALIZED_NAME.get(normalizedSource);
     const layerKey = rowMeta?.l ?? 'Unknown';
     entry.items.forEach((item, index) => {
-      const [daysAgo, date, title, note, action] = item;
+      const [daysAgo, date, title, note, action, description] = item;
       const { badge, text } = parseNoteBadge(note);
       rows.push({
         id: `${normalizedSource}::${index}`,
@@ -330,6 +338,7 @@ const ALL_SIGNAL_ROWS: SignalRow[] = (() => {
         badge,
         note: normalizeAmp(text),
         action,
+        ...(description !== undefined ? { description: normalizeAmp(description) } : {}),
       });
     });
   }
@@ -652,6 +661,10 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
             { label: 'Regulatory layer', value: LAYER_LABEL_BY_KEY.get(selection.row.layer) ?? selection.row.layer },
             { label: 'Date', value: selection.row.date },
             { label: 'Signal', value: selection.row.title },
+            // call-11 (L8 exit criterion 7) — additive description field,
+            // rendered only when authored (never a fabricated summary for
+            // a signal this content pass did not cover).
+            ...(selection.row.description ? [{ label: 'Description', value: selection.row.description }] : []),
             { label: 'Note', value: selection.row.note },
           ]
         : selection.kind === 'chat'

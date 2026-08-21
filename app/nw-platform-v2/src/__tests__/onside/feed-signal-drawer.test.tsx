@@ -13,10 +13,20 @@
  *
  * Drawer contract pinned here is the PRE-W1 signal contract (OnSideFeed
  * W1 header: "the signal branch's title/fields/tags are unchanged"):
- * title `Signal — {source}`, exactly five fields (Source, Regulatory
- * layer, Date, Signal, Note).
+ * title `Signal — {source}`, five fields (Source, Regulatory layer, Date,
+ * Signal, Note).
  *
  * D18: nothing here touches Home's demo-entry affordance.
+ *
+ * L8 exit criterion 7 (call-11, `01-architecture.md` row 11) — DELIBERATE
+ * AMENDMENT to the pinned five-field contract above, not a regression: a
+ * sixth, additive "Description" field (`SignalRow.description`, sourced
+ * from `data/onside.ts`'s `SrcItem` 6th tuple element) now renders between
+ * Signal and Note for every signal this content pass authored a summary
+ * for — which is every seeded signal, so both fixtures below now carry
+ * six fields, not five. The field is OPTIONAL at the type level (omitted
+ * for a hypothetical future signal with no authored description); this
+ * assertion is scoped to fixtures that DO carry one.
  */
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
@@ -77,7 +87,7 @@ describe('OnSide feed · signal table (base 3243–3299 data, 3243–3403 region
     expect(fedRow?.textContent).not.toContain('<span')
   })
 
-  it('row-level Review opens the shared Drawer titled "Signal — {source}" with the five pre-W1 fields (base 3243–3403 + §d-5; pre-W1 signal contract)', async () => {
+  it('row-level Review opens the shared Drawer titled "Signal — {source}" with the six current fields (base 3243–3403 + §d-5, pre-W1 contract + call-11 Description)', async () => {
     const user = userEvent.setup()
     renderFeed()
     const reviewButtons = within(getSignalsTable()).getAllByRole('button', {
@@ -96,7 +106,7 @@ describe('OnSide feed · signal table (base 3243–3299 data, 3243–3403 region
     const fieldLabels = within(dialog)
       .getAllByRole('term')
       .map((dt) => dt.textContent)
-    expect(fieldLabels).toEqual(['Source', 'Regulatory layer', 'Date', 'Signal', 'Note'])
+    expect(fieldLabels).toEqual(['Source', 'Regulatory layer', 'Date', 'Signal', 'Description', 'Note'])
 
     const fieldValues = within(dialog)
       .getAllByRole('definition')
@@ -106,6 +116,7 @@ describe('OnSide feed · signal table (base 3243–3299 data, 3243–3403 region
       'Financial · banking regulators',
       'Aug 14, 2026',
       'Letter to Credit Unions 26-CU-07 · AI use in member service',
+      SRC_ITEMS['NCUA · 12 CFR Ch. VII']!.items[0]![5],
       'Mapped to Consumer / UDAAP and AI Governance',
     ])
   })
@@ -146,6 +157,7 @@ describe("PI2-D5 — 'signal'-kind deep link (App.tsx KIND VOCABULARY; r09 accep
       'Financial · banking regulators',
       'Aug 12, 2026',
       'Bulletin 2026-24 · risk management of AI-assisted underwriting',
+      SRC_ITEMS['OCC · 12 CFR Ch. I']!.items[0]![5],
       'Mapped to Model Risk and Fair Lending registers',
     ])
     expect(screen.getAllByRole('dialog')).toHaveLength(1)

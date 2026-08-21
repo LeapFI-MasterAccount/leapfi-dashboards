@@ -402,8 +402,19 @@ export const GAP_DOM: Record<string, string> = {
 
 /* ============ regulatory source feed — source lines 3243-3299 ============ */
 
-/** [daysAgo, date, title, note, action] — `action` is a verbatim source-code string (e.g. "goOnside('dom-mrm')"), not executable here. */
-export type SrcItem = [number, string, string, string, string];
+/** [daysAgo, date, title, note, action, description?] — `action` is a
+ * verbatim source-code string (e.g. "goOnside('dom-mrm')"), not executable
+ * here. `description` (call-11, `01-architecture.md` row 11) is an
+ * additive, optional field — same class as A20's `ChatEntry.response?`
+ * precedent — carrying a plain-language, compliance-audience summary of
+ * what the alert means and why it is relevant, replacing the "opaque
+ * technical name" Dan Scheffler's own feedback names
+ * (`call-11-llm-alert-descriptions.md`). Authored/scripted content for the
+ * seeded signals below, not runtime LLM generation (no generation
+ * machinery exists in this SPA) — the open question of an actual LLM
+ * pipeline (model, prompt, caching, regeneration) is explicitly out of
+ * this dispatch's scope, named in that file's own "Open questions". */
+export type SrcItem = [number, string, string, string, string, string?];
 
 export interface SrcItemsEntry {
   d: string;
@@ -414,116 +425,116 @@ export const SRC_ITEMS: Record<string, SrcItemsEntry> = {
   'OCC · 12 CFR Ch. I': {
     d: 'National-bank rules, versioned through the eCFR API with same-day change detection.',
     items: [
-      [3, 'Aug 12, 2026', 'Bulletin 2026-24 · risk management of AI-assisted underwriting', 'Mapped to Model Risk and Fair Lending registers', "goOnside('dom-mrm')"],
-      [17, 'Jul 29, 2026', '12 CFR 30 Appendix B · safety and soundness standards refresh', 'No change to obligations in scope', "onsideShow('feed-inforce')"],
-      [58, 'Jun 18, 2026', 'Semiannual risk perspective · third-party concentration', 'Fed the TPRM critical-vendor review', "goOnside('dom-tprm')"],
+      [3, 'Aug 12, 2026', 'Bulletin 2026-24 · risk management of AI-assisted underwriting', 'Mapped to Model Risk and Fair Lending registers', "goOnside('dom-mrm')", 'The OCC wants documented risk controls wherever AI models influence underwriting decisions — this bulletin is why the Model Risk and Fair Lending teams are both reviewing every AI-touched lending model this quarter.'],
+      [17, 'Jul 29, 2026', '12 CFR 30 Appendix B · safety and soundness standards refresh', 'No change to obligations in scope', "onsideShow('feed-inforce')", "A routine refresh of the OCC's safety-and-soundness expectations; reviewed and confirmed it adds no new obligation to the bank's existing scope."],
+      [58, 'Jun 18, 2026', 'Semiannual risk perspective · third-party concentration', 'Fed the TPRM critical-vendor review', "goOnside('dom-tprm')", "The OCC's twice-yearly risk report flagged industry-wide concentration risk among critical technology vendors — feeding directly into the third-party risk program's own critical-vendor review."],
     ],
   },
   'FDIC · 12 CFR Ch. III': {
     d: 'State non-member bank rules, versioned through the eCFR API.',
     items: [
-      [3, 'Aug 12, 2026', 'Joint NPRM with the Federal Reserve · Regulation O', 'Comment window open · position in drafting', "onsideShow('feed-lifecycle')"],
-      [26, 'Jul 20, 2026', 'FIL-31-2026 · model risk expectations for smaller institutions', 'Cross-checked against the 2026-13 register', "goOnside('dom-mrm')"],
-      [71, 'Jun 5, 2026', 'Part 364 appendix · information security standards', 'GLBA program verified current', "goOnside('dom-infosec')"],
+      [3, 'Aug 12, 2026', 'Joint NPRM with the Federal Reserve · Regulation O', 'Comment window open · position in drafting', "onsideShow('feed-lifecycle')", 'A joint FDIC/Federal Reserve proposal would tighten rules on extensions of credit to bank insiders; the comment window is open and a position is being drafted before it becomes final.'],
+      [26, 'Jul 20, 2026', 'FIL-31-2026 · model risk expectations for smaller institutions', 'Cross-checked against the 2026-13 register', "goOnside('dom-mrm')", "FDIC guidance tailoring model-risk expectations to smaller institutions; checked against the bank's own model-risk obligations (Interagency Guidance 2026-13) and confirmed already aligned."],
+      [71, 'Jun 5, 2026', 'Part 364 appendix · information security standards', 'GLBA program verified current', "goOnside('dom-infosec')", "FDIC information-security standards required under GLBA; the bank's information-security program was verified current against this appendix, no gap found."],
     ],
   },
   'NCUA · 12 CFR Ch. VII': {
     d: 'Credit-union rules from your chartering regulator, versioned through the eCFR API.',
     items: [
-      [1, 'Aug 14, 2026', 'Letter to Credit Unions 26-CU-07 · AI use in member service', 'Mapped to Consumer / UDAAP and AI Governance', "goOnside('dom-consumer')"],
-      [12, 'Aug 3, 2026', 'Part 748 appendix A · response programme expectations', 'Feeds the incident-response escalation gap', "goOnside('dom-infosec')"],
-      [40, 'Jul 6, 2026', 'AI Resource Hub update · supervisory expectations', 'Tracked against the CRI crosswalk', "goOnside('dom-aigov')"],
+      [1, 'Aug 14, 2026', 'Letter to Credit Unions 26-CU-07 · AI use in member service', 'Mapped to Consumer / UDAAP and AI Governance', "goOnside('dom-consumer')", "NCUA guidance on credit unions' use of AI in serving members, mapped into both the Consumer/UDAAP and AI Governance registers since it touches both."],
+      [12, 'Aug 3, 2026', 'Part 748 appendix A · response programme expectations', 'Feeds the incident-response escalation gap', "goOnside('dom-infosec')", "NCUA's expectations for a member-notification response program after a security incident — feeding directly into closing the incident-response escalation gap already tracked."],
+      [40, 'Jul 6, 2026', 'AI Resource Hub update · supervisory expectations', 'Tracked against the CRI crosswalk', "goOnside('dom-aigov')", "An update to the NCUA's AI supervisory-expectations resource hub, tracked against the bank's own AI regulatory crosswalk."],
     ],
   },
   OFAC: {
     d: 'Sanctions programmes and list updates from Treasury.',
     items: [
-      [8, 'Aug 7, 2026', 'SDN list update · 41 additions, 6 removals', 'Screening configuration re-verified same day', "goOnside('dom-bsa')"],
-      [22, 'Jul 24, 2026', 'General License 12B · wind-down authorisation', 'No member exposure identified', "goOnside('dom-bsa')"],
-      [63, 'Jun 13, 2026', 'Sectoral determination · technology services', 'Vendor inventory screened, no matches', "goOnside('dom-tprm')"],
+      [8, 'Aug 7, 2026', 'SDN list update · 41 additions, 6 removals', 'Screening configuration re-verified same day', "goOnside('dom-bsa')", "Treasury's Specially Designated Nationals sanctions list changed — 41 names added, 6 removed — and the bank's screening configuration was re-verified the same day to catch it."],
+      [22, 'Jul 24, 2026', 'General License 12B · wind-down authorisation', 'No member exposure identified', "goOnside('dom-bsa')", 'A new OFAC general license authorizing a wind-down of certain restricted activity; reviewed for member exposure and none was found.'],
+      [63, 'Jun 13, 2026', 'Sectoral determination · technology services', 'Vendor inventory screened, no matches', "goOnside('dom-tprm')", 'OFAC designated a new sanctioned sector in technology services; the vendor inventory was screened against it and no matches were found.'],
     ],
   },
   'SEC & FINRA': {
     d: 'Markets rules in scope for the CUSO broker-dealer relationship.',
     items: [
-      [19, 'Jul 27, 2026', 'FINRA Regulatory Notice 26-14 · supervision of AI tools', 'Reviewed for CUSO applicability', "goOnside('dom-aigov')"],
-      [55, 'Jun 21, 2026', 'SEC marketing rule FAQ update', 'No change to obligations in scope', "onsideShow('feed-inforce')"],
+      [19, 'Jul 27, 2026', 'FINRA Regulatory Notice 26-14 · supervision of AI tools', 'Reviewed for CUSO applicability', "goOnside('dom-aigov')", 'FINRA guidance on supervising AI tools used in securities activity; reviewed for whether it applies through the credit union service organization (CUSO) relationship.'],
+      [55, 'Jun 21, 2026', 'SEC marketing rule FAQ update', 'No change to obligations in scope', "onsideShow('feed-inforce')", "The SEC updated its FAQ on the marketing rule; reviewed and confirmed it introduces no change to the bank's obligations already in scope."],
     ],
   },
   'FFIEC · incl. NIST frameworks': {
     d: 'Examination handbooks and supervisory expectation, ranked below binding rules.',
     items: [
-      [5, 'Aug 10, 2026', 'CAT sunset transition · successor mapping guidance', 'InfoSec mapping in progress', "goOnside('dom-infosec')"],
-      [30, 'Jul 16, 2026', 'BSA/AML Examination Manual · model validation section', 'Fed the transaction-monitoring validation item', "goOnside('dom-bsa')"],
-      [88, 'May 19, 2026', 'NIST AI RMF crosswalk refresh', 'Mapped into the AI Governance catalog', "goOnside('dom-aigov')"],
+      [5, 'Aug 10, 2026', 'CAT sunset transition · successor mapping guidance', 'InfoSec mapping in progress', "goOnside('dom-infosec')", "Guidance on the sunset of the Cybersecurity Assessment Tool (CAT) and its successor framework; the information-security team is mapping controls to the replacement now."],
+      [30, 'Jul 16, 2026', 'BSA/AML Examination Manual · model validation section', 'Fed the transaction-monitoring validation item', "goOnside('dom-bsa')", 'An update to the model-validation section of the BSA/AML Examination Manual, feeding directly into the transaction-monitoring model’s own validation work.'],
+      [88, 'May 19, 2026', 'NIST AI RMF crosswalk refresh', 'Mapped into the AI Governance catalog', "goOnside('dom-aigov')", "A refreshed crosswalk between the NIST AI Risk Management Framework and the bank's own controls, now mapped into the AI Governance catalog."],
     ],
   },
   FHFA: {
     d: 'Housing-finance scope, monitored for mortgage-related obligations.',
     items: [
-      [34, 'Jul 12, 2026', 'Advisory bulletin · third-party model oversight', 'Reviewed, no direct applicability at this tier', "goOnside('dom-tprm')"],
-      [96, 'May 11, 2026', 'Fair lending examination guidance update', 'Cross-read into the Fair Lending register', "goOnside('dom-fairlend')"],
+      [34, 'Jul 12, 2026', 'Advisory bulletin · third-party model oversight', 'Reviewed, no direct applicability at this tier', "goOnside('dom-tprm')", "FHFA advisory on overseeing third-party models used in mortgage finance; reviewed and found not directly applicable at this institution's asset tier."],
+      [96, 'May 11, 2026', 'Fair lending examination guidance update', 'Cross-read into the Fair Lending register', "goOnside('dom-fairlend')", "Updated fair-lending examination guidance from the housing-finance regulator, cross-read into the bank's own Fair Lending obligations register."],
     ],
   },
   'Bills working through government': {
     d: 'Federal bills tracked from introduction through enactment, so a position can be formed while it still matters.',
     items: [
-      [4, 'Aug 11, 2026', 'S. 4127 · Financial AI Accountability Act · reported out of committee', 'Watchlist · would touch AI Governance and Model Risk', "onsideShow('feed-lifecycle')"],
-      [15, 'Jul 31, 2026', 'H.R. 8802 · data-broker restrictions · floor vote scheduled', 'Watchlist · privacy and vendor implications', "goOnside('dom-infosec')"],
-      [47, 'Jun 29, 2026', 'S. 3910 · consumer credit transparency · hearing held', 'No action while in committee', "onsideShow('feed-lifecycle')"],
+      [4, 'Aug 11, 2026', 'S. 4127 · Financial AI Accountability Act · reported out of committee', 'Watchlist · would touch AI Governance and Model Risk', "onsideShow('feed-lifecycle')", 'A federal bill that would create new AI-accountability requirements for financial institutions has cleared committee; watchlisted since it would touch both AI Governance and Model Risk if enacted.'],
+      [15, 'Jul 31, 2026', 'H.R. 8802 · data-broker restrictions · floor vote scheduled', 'Watchlist · privacy and vendor implications', "goOnside('dom-infosec')", 'A House bill restricting data-broker practices has a floor vote scheduled; watchlisted for privacy and third-party vendor implications.'],
+      [47, 'Jun 29, 2026', 'S. 3910 · consumer credit transparency · hearing held', 'No action while in committee', "onsideShow('feed-lifecycle')", 'A Senate bill on consumer credit transparency had its hearing; no action is needed while it remains in committee.'],
     ],
   },
   'State governments & laws': {
     d: 'Statutes and rulemaking across the TX, OK, and NM footprint, plus 50-state tracking for expansion.',
     items: [
-      [5, 'Aug 9, 2026', 'NM HB 210 · passed Senate 34-6', 'Vendor disclosure clause pre-drafted', "openInstr('NM AI Act')"],
-      [20, 'Jul 25, 2026', 'TX HB 149 · TRAIGA clarification awaiting floor vote', 'Governance charter language staged', "openInstr('TRAIGA')"],
-      [37, 'Jul 9, 2026', 'OK SB 1822 · AI consumer protection · in committee', 'Monitoring · Consumer and Fair Lending exposure', "onsideShow('feed-lifecycle')"],
+      [5, 'Aug 9, 2026', 'NM HB 210 · passed Senate 34-6', 'Vendor disclosure clause pre-drafted', "openInstr('NM AI Act')", "New Mexico's AI-oversight bill passed its Senate by a wide margin; a vendor-disclosure contract clause has already been pre-drafted in anticipation of it taking effect."],
+      [20, 'Jul 25, 2026', 'TX HB 149 · TRAIGA clarification awaiting floor vote', 'Governance charter language staged', "openInstr('TRAIGA')", "Texas's TRAIGA AI-governance law is awaiting a clarifying floor vote; updated governance-charter language is staged and ready to adopt once it passes."],
+      [37, 'Jul 9, 2026', 'OK SB 1822 · AI consumer protection · in committee', 'Monitoring · Consumer and Fair Lending exposure', "onsideShow('feed-lifecycle')", 'An Oklahoma AI consumer-protection bill remains in committee; monitored for exposure in both the Consumer/UDAAP and Fair Lending domains.'],
     ],
   },
   'Municipal governments': {
     d: 'Local ordinances inside the branch footprint, where obligations stack on top of state and federal rules.',
     items: [
-      [11, 'Aug 4, 2026', 'City of Albuquerque · automated-decision disclosure ordinance · first reading', 'Consumer disclosure impact assessed', "goOnside('dom-consumer')"],
-      [24, 'Jul 22, 2026', 'Travis County · vendor AI procurement standards published for comment', 'TPRM contract rider reviewed against draft', "goOnside('dom-tprm')"],
-      [69, 'Jun 7, 2026', 'City of Tulsa · privacy notice ordinance · effective', 'Privacy notice confirmed compliant', "goOnside('dom-infosec')"],
+      [11, 'Aug 4, 2026', 'City of Albuquerque · automated-decision disclosure ordinance · first reading', 'Consumer disclosure impact assessed', "goOnside('dom-consumer')", 'A first-reading Albuquerque ordinance would require disclosure whenever an automated system drives a decision affecting a member; its impact on existing consumer disclosures has already been assessed.'],
+      [24, 'Jul 22, 2026', 'Travis County · vendor AI procurement standards published for comment', 'TPRM contract rider reviewed against draft', "goOnside('dom-tprm')", "Travis County published draft AI-procurement standards for vendors; the third-party risk program's contract rider was reviewed against the draft."],
+      [69, 'Jun 7, 2026', 'City of Tulsa · privacy notice ordinance · effective', 'Privacy notice confirmed compliant', "goOnside('dom-infosec')", "Tulsa's privacy-notice ordinance is now in effect; the bank's own member privacy notice was confirmed compliant."],
     ],
   },
   'White House Executive Orders': {
     d: 'Presidential actions touching financial services, captured from the Federal Register the day they publish.',
     items: [
-      [6, 'Aug 8, 2026', 'Executive order · sanctions program modernization', 'Screening configuration re-verified same day', "onsideShow('feed-inforce')"],
-      [23, 'Jul 22, 2026', 'Executive order · digital-asset custody review directive', 'Tracking · no obligation change yet', "onsideShow('feed-lifecycle')"],
-      [98, 'May 8, 2026', 'Executive order · AI use in federal financial oversight', 'Mapped to AI Governance watchlist', "goOnside('dom-aigov')"],
+      [6, 'Aug 8, 2026', 'Executive order · sanctions program modernization', 'Screening configuration re-verified same day', "onsideShow('feed-inforce')", 'An executive order modernizing federal sanctions programs; screening configuration was re-verified the same day it published.'],
+      [23, 'Jul 22, 2026', 'Executive order · digital-asset custody review directive', 'Tracking · no obligation change yet', "onsideShow('feed-lifecycle')", 'An executive order directing a review of digital-asset custody rules; tracked for now since no obligation has changed yet.'],
+      [98, 'May 8, 2026', 'Executive order · AI use in federal financial oversight', 'Mapped to AI Governance watchlist', "goOnside('dom-aigov')", "An executive order on how federal regulators will use AI in financial oversight; added to the AI Governance watchlist since it may reshape future exam expectations."],
     ],
   },
   'Federal Reserve · 12 CFR Ch. II': {
     d: 'Binding lettered regulations, versioned through the eCFR API with same-day change detection.',
     items: [
-      [14, 'Jul 31, 2026', 'Joint NPRM with FDIC · Regulation O · extensions of credit to insiders', '<span class="tag info">New</span> Comment period open', "onsideShow('feed-lifecycle')"],
-      [45, 'Jun 30, 2026', 'RFI 2026-04 · generative &amp; agentic AI in model risk', 'Comments due Sep 30', "openInstr('RFI 2026-04')"],
-      [119, 'Apr 17, 2026', 'Interagency Guidance 2026-13 in force', 'Mapped to the Model Risk register', "goOnside('dom-mrm')"],
+      [14, 'Jul 31, 2026', 'Joint NPRM with FDIC · Regulation O · extensions of credit to insiders', '<span class="tag info">New</span> Comment period open', "onsideShow('feed-lifecycle')", 'A joint Federal Reserve/FDIC proposal would tighten rules on extensions of credit to bank insiders; the comment period just opened.'],
+      [45, 'Jun 30, 2026', 'RFI 2026-04 · generative &amp; agentic AI in model risk', 'Comments due Sep 30', "openInstr('RFI 2026-04')", 'The Federal Reserve is requesting input on how generative and agentic AI should be treated under model-risk rules; comments are due September 30.'],
+      [119, 'Apr 17, 2026', 'Interagency Guidance 2026-13 in force', 'Mapped to the Model Risk register', "goOnside('dom-mrm')", "The banking agencies' joint model-risk-management guidance (Interagency Guidance 2026-13) is now formally in force and mapped into the Model Risk obligations register."],
     ],
   },
   'FinCEN · 31 CFR Ch. X': {
     d: 'BSA program rules, CDD, and SAR/CTR requirements, versioned through the eCFR API.',
     items: [
-      [9, 'Aug 5, 2026', 'CTA / BOI scope update · litigation cycle', 'Lifecycle status tracked, never hard-coded', "onsideShow('feed-lifecycle')"],
-      [60, 'Jun 2026', 'SAR e-filing schema revision', 'Filing procedures verified current', "goOnside('dom-bsa')"],
+      [9, 'Aug 5, 2026', 'CTA / BOI scope update · litigation cycle', 'Lifecycle status tracked, never hard-coded', "onsideShow('feed-lifecycle')", 'Ongoing litigation keeps changing who must file beneficial-ownership information under the Corporate Transparency Act; the applicable scope is tracked live rather than assumed fixed.'],
+      [60, 'Jun 2026', 'SAR e-filing schema revision', 'Filing procedures verified current', "goOnside('dom-bsa')", 'FinCEN revised the electronic-filing schema for Suspicious Activity Reports; internal filing procedures were verified current against the new schema.'],
     ],
   },
   'CFPB · 12 CFR Ch. X': {
     d: 'Consumer regulations B through Z plus §1071 and §1033 rulemakings.',
     items: [
-      [8, 'Aug 6, 2026', '§1033 staged compliance dates · tier confirmation', 'Applies at our asset tier', "openInstr('1033')"],
-      [60, 'Jun 15, 2026', 'Circular 2026-C1 in force · adverse-action specificity', '2 items open in Fair Lending', "goOnside('dom-fairlend')"],
+      [8, 'Aug 6, 2026', '§1033 staged compliance dates · tier confirmation', 'Applies at our asset tier', "openInstr('1033')", "The CFPB's open-banking data-sharing rule (§1033) phases in compliance by asset size; confirmed this institution's tier is subject to it."],
+      [60, 'Jun 15, 2026', 'Circular 2026-C1 in force · adverse-action specificity', '2 items open in Fair Lending', "goOnside('dom-fairlend')", 'A new CFPB circular tightening the specificity required in adverse-action notices is now in force, leaving 2 open items in the Fair Lending register.'],
     ],
   },
   'State banking regulators': {
     d: 'NYDFS Part 500/504, CA DFPI, and CSBS/NMLS state actions for the TX · OK · NM footprint.',
     items: [
-      [5, 'Aug 9, 2026', 'NM HB 210 · passed Senate 34–6', 'Vendor disclosure clause pre-drafted', "openInstr('NM AI Act')"],
-      [20, 'Jul 25, 2026', 'TX HB 149 · awaiting floor vote', 'TRAIGA clarification tracked', "onsideShow('feed-lifecycle')"],
+      [5, 'Aug 9, 2026', 'NM HB 210 · passed Senate 34–6', 'Vendor disclosure clause pre-drafted', "openInstr('NM AI Act')", "New Mexico's AI-oversight bill passed its Senate; tracked here from the state-banking-regulator angle alongside the vendor-disclosure clause already pre-drafted for it."],
+      [20, 'Jul 25, 2026', 'TX HB 149 · awaiting floor vote', 'TRAIGA clarification tracked', "onsideShow('feed-lifecycle')", "Texas's TRAIGA clarification bill awaits its floor vote; tracked here from the state-banking-regulator perspective alongside the legislative one."],
     ],
   },
 };
