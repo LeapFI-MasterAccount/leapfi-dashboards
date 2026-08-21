@@ -402,6 +402,8 @@ import { Cases } from './screens/Cases'
 import { Reporting } from './screens/Reporting'
 import { SettingsToggles } from './screens/SettingsToggles'
 import { SettingsAbout } from './screens/SettingsAbout'
+// L9 (call-14, DECISIONS.md D3): new 8th top-level module screen.
+import { TprmDomain } from './screens/TprmDomain'
 import { Topbar } from './components/Topbar'
 import type { TopbarProfileMenuItem, TopbarProps } from './components/Topbar'
 import { PresenterRail } from './components/PresenterRail'
@@ -466,6 +468,10 @@ const SCREEN_IDS = [
   'settings.about',
   'cases',
   'board-deck',
+  // L9 (call-14, DECISIONS.md D3): TPRM's new 8th top-level Sidebar entry —
+  // a flat top-level ScreenId (no dot-nesting), matching 'reporting'/
+  // 'connect', not a child of 'onside.*'.
+  'tprm',
 ] as const
 
 export type ScreenId = (typeof SCREEN_IDS)[number]
@@ -552,6 +558,8 @@ const SCREEN_LABEL: Record<ScreenId, string> = {
   'settings.about': 'Settings · About',
   cases: 'Cases',
   'board-deck': 'Board deck',
+  // L9 (call-14, DECISIONS.md D3).
+  tprm: 'TPRM · Third-Party Risk Management',
 }
 
 function App() {
@@ -830,6 +838,13 @@ function App() {
         )
       case 'board-deck':
         return <BoardDeck onDesignPartnerRequest={handleDesignPartnerRequest} {...deepLinkProps} />
+      case 'tprm':
+        // L9 (call-14, DECISIONS.md D3) — read-only domain-scoped module,
+        // no deep-link CONSUME logic of its own; `deepLinkProps` is still
+        // spread for `onDeepLink` (this screen PRODUCES obligation/
+        // document/domain/case deep links out to the screens that consume
+        // them), matching every other routed screen's prop shape.
+        return <TprmDomain onNavigate={navigateToScreen} {...deepLinkProps} />
     }
   }
 
