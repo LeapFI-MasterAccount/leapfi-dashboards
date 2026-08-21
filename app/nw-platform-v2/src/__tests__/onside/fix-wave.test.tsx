@@ -9,7 +9,6 @@
  *  - ONSIDE-02  Adopt cascade routed through state/demoStore.applyGapClosure
  *               (base 3204-3211 "every view moves together") — Documents,
  *               Overview, and the Domains accordion agree after an adopt
- *  - ONSIDE-04  alert-toggle press keeps focus on the same button node
  *  - ONSIDE-05  lcBar "Area" scope filter scopes both lifecycle tables
  *               (base 3452-3477)
  *  - ONSIDE-06  deep-domain accordion body is gaps & partials + met pill
@@ -17,15 +16,19 @@
  *  - ONSIDE-07  Date column announces the direction actually on screen
  *  - ONSIDE-08  instrument deep-links open the INSTR detail (base
  *               instrLink/openInstr 2306, 2932-2949, 3391, 3477, 3494)
- *  - ONSIDE-09  digest/alert toasts (base setDigest/toggleSrcAlert
- *               3360-3371)
- *  - ONSIDE-10  RACI tables render in authored M order (base 3552-3562)
  *  - ONSIDE-11  adopting gen-ai-draft flips NOTHING (base applyGapClosure
  *               keys strictly on GAPS; the port's extra doc.obl branch is
  *               removed)
  *  - ONSIDE-12  status filter chip counts match the live filter yield
  *  - ONSIDE-13  focus falls back to the page heading when the Adopt
  *               removed the triggering row (Pending filter active)
+ *
+ * L3 UPDATE (PI-3, D6/call-07/call-08) — ONSIDE-04 (alert-toggle focus),
+ * ONSIDE-09 (digest/alert toasts), and ONSIDE-10 (RACI authored order) all
+ * pinned behavior on `RegulatoryFeedSources`/the RACI matrix, both
+ * relocated to `SettingsToggles.tsx`; their coverage moved to
+ * `src/__tests__/shell/settings-sources.test.tsx` and
+ * `src/__tests__/shell/settings-raci.test.tsx` respectively.
  *
  * Module singletons (DOCLIB/OBL/DOMAINS/GAPS) are mutated by adopt tests;
  * afterEach runs the store's resetDemo() (DEMO_SEED snapshot is taken at
@@ -38,7 +41,6 @@ import { OnSideFeed } from '../../screens/OnSideFeed'
 import type { OnSideFeedProps } from '../../screens/OnSideFeed'
 import { OnSideDocuments } from '../../screens/OnSideDocuments'
 import { OnSideOverview } from '../../screens/OnSideOverview'
-import { OnSideOwnership } from '../../screens/OnSideOwnership'
 import { resetDemo } from '../../state/demoStore'
 import { DOCLIB } from '../../data/doclib'
 import type { DocStatus } from '../../data/doclib'
@@ -112,56 +114,6 @@ describe('ONSIDE-07 · Date column sort announcement', () => {
     const firstBodyRow = within(table).getAllByRole('row')[1]
     expect(firstBodyRow).toHaveTextContent('NCUA · 12 CFR Ch. VII')
     expect(firstBodyRow).toHaveTextContent('Aug 14, 2026')
-  })
-})
-
-describe('ONSIDE-04 · alert toggle keeps focus (stable button node)', () => {
-  it('keeps focus on the toggle across its label flip, so the Drawer trap stays live', async () => {
-    const user = userEvent.setup()
-    renderFeed()
-    const financialTable = screen.getByRole('table', { name: 'Financial · banking regulators sources' })
-    const occRow = within(financialTable)
-      .getAllByRole('row')
-      .find((row) => row.textContent?.includes('OCC · 12 CFR Ch. I'))
-    await user.click(within(occRow as HTMLElement).getByRole('button', { name: 'Open' }))
-    const dialog = await screen.findByRole('dialog', { name: 'Source — OCC · 12 CFR Ch. I' })
-
-    await user.click(within(dialog).getByRole('button', { name: 'Turn alerts on' }))
-
-    // Same DOM node, relabeled in place — focus never dropped to body.
-    const active = document.activeElement as HTMLElement | null
-    expect(active).not.toBeNull()
-    expect(active).not.toBe(document.body)
-    expect(active?.textContent).toContain('Turn alerts off')
-    expect(dialog.contains(active)).toBe(true)
-  })
-})
-
-describe('ONSIDE-09 · digest & alert toast confirmations (base 3360-3371)', () => {
-  it('toggling a source alert fires the base toggleSrcAlert toast copy', async () => {
-    const user = userEvent.setup()
-    renderFeed()
-    const financialTable = screen.getByRole('table', { name: 'Financial · banking regulators sources' })
-    const occRow = within(financialTable)
-      .getAllByRole('row')
-      .find((row) => row.textContent?.includes('OCC · 12 CFR Ch. I'))
-    await user.click(within(occRow as HTMLElement).getByRole('button', { name: 'Open' }))
-    const dialog = await screen.findByRole('dialog', { name: 'Source — OCC · 12 CFR Ch. I' })
-
-    await user.click(within(dialog).getByRole('button', { name: 'Turn alerts on' }))
-    expect(
-      screen.getByText('Alerts on for OCC · 12 CFR Ch. I. You will be notified the moment a sweep finds a change.'),
-    ).toBeInTheDocument()
-
-    await user.click(within(dialog).getByRole('button', { name: 'Turn alerts off' }))
-    expect(screen.getByText('Alerts off for OCC · 12 CFR Ch. I. It still appears in your digest.')).toBeInTheDocument()
-  })
-
-  it('changing the digest frequency fires the base setDigest toast copy', async () => {
-    const user = userEvent.setup()
-    renderFeed()
-    await user.click(screen.getByRole('button', { name: 'Weekly' }))
-    expect(screen.getByText('Digest set to Weekly · Monday, 7:00 AM ET')).toBeInTheDocument()
   })
 })
 
@@ -266,22 +218,6 @@ describe('ONSIDE-06 · deep-domain accordion body (base domBody 3684-3687)', () 
         `${metCount} met obligations and the full register with provenance: all ${mrmDomain?.appl} enumerated`,
       ),
     ).toBeInTheDocument()
-  })
-})
-
-describe('ONSIDE-10 · RACI authored order (base osRaci 3552-3562)', () => {
-  it('renders the Model Risk group in authored M order — policy first, not alphabetical', () => {
-    // FIX WAVE (RACI DENSITY REGRESSION): the matrix is now ONE table with
-    // in-table domain group rows (DataTable's `groupKey`/`renderGroupHeader`,
-    // OnSideOwnership.tsx header), not one table per domain — the 'Model
-    // Risk Management' group row's very next sibling row is that domain's
-    // first authored document row.
-    const { container } = render(<OnSideOwnership />)
-    const mrmGroupRow = Array.from(container.querySelectorAll('tr[data-lf-group-row="true"]')).find((row) =>
-      row.textContent?.includes('Model Risk Management'),
-    )
-    expect(mrmGroupRow).toBeDefined()
-    expect(mrmGroupRow?.nextElementSibling).toHaveTextContent('Model Risk Management Policy')
   })
 })
 

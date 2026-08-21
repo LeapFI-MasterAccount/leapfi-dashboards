@@ -21,6 +21,12 @@
  * `DeckView.tsx:160` is excluded on purpose — `overflowX: 'hidden'`, not a
  * scroll wrapper (nothing to make non-shrinking).
  *
+ * L3 UPDATE (PI-3, D6/call-07/call-08, sprint-plan.md Sprint 2 L3) — the
+ * RACI matrix wrapper and the three `RegulatoryFeedSources.tsx` source-layer
+ * wrappers relocated from `OnSideOwnership.tsx`/`OnSideFeed.tsx` to
+ * `SettingsToggles.tsx`; both sites' checks below moved with them (site
+ * count/behavior unchanged, only which screen reaches them).
+ *
  * Each `it` below renders the real screen/view (no test-only wrapper
  * markup) and asserts every DOM node the component itself gave
  * `overflowX: 'auto'` also carries `flexShrink: 0` — a computed-style
@@ -29,7 +35,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { OnSideOwnership } from '../../screens/OnSideOwnership';
+import { SettingsToggles } from '../../screens/SettingsToggles';
 import { Cases } from '../../screens/Cases';
 import { InvestmentDesign } from '../../screens/InvestmentDesign';
 import { OnSideFeed } from '../../screens/OnSideFeed';
@@ -56,9 +62,9 @@ function expectAllNonShrinking(container: HTMLElement, minCount = 1) {
 }
 
 describe('SL-1 — horizontal-scroll wrappers declare flexShrink: 0 unconditionally', () => {
-  it('OnSideOwnership.tsx:514 — RACI matrix wrapper', () => {
-    const { container } = render(<OnSideOwnership />);
-    expectAllNonShrinking(container);
+  it('SettingsToggles.tsx (relocated RACI matrix wrapper) + views/RegulatoryFeedSources.tsx:197 (relocated, 3 source-layer wrappers) — 4 wrappers', () => {
+    const { container } = render(<SettingsToggles />);
+    expectAllNonShrinking(container, 4);
   });
 
   it('Cases.tsx:250 — Open/Closed cases table wrapper(s)', () => {
@@ -81,11 +87,12 @@ describe('SL-1 — horizontal-scroll wrappers declare flexShrink: 0 unconditiona
     expectAllNonShrinking(container);
   });
 
-  it('views/RegulatoryFeedLifecycle.tsx:110, RegulatoryFeedInforce.tsx:50, RegulatoryFeedSources.tsx:197 — OnSide feed sub-sections', () => {
+  it('views/RegulatoryFeedLifecycle.tsx:110, RegulatoryFeedInforce.tsx:50 — OnSide feed sub-sections (RegulatoryFeedSources relocated to Settings, L3 UPDATE)', () => {
     const { container } = render(<OnSideFeed />);
-    // "Newly proposed" + "Pending & tracked" (Lifecycle, same const twice),
-    // In force (Inforce), and each source layer (Sources) all render by
-    // default on this screen.
+    // "Newly proposed" + "Pending & tracked" (Lifecycle, same const twice)
+    // and In force (Inforce) render by default on this screen; Sources'
+    // three source-layer wrappers moved to SettingsToggles.tsx (see the
+    // SettingsToggles case above).
     expectAllNonShrinking(container, 3);
   });
 

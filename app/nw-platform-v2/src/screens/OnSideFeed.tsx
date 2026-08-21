@@ -174,78 +174,43 @@
  * outside this dispatch's allowlist).
  *
  * ──────────────────────────────────────────────────────────────────────────
- * W1 AMENDMENT — Batch 2 composition (parity_ia_addendum.md line 335,
- * "OnSide · Regulatory feed parity"; §1.1 rows `feed-sources`, `src:`,
- * `feed-lifecycle`, `feed-inforce`): the three parity views
- * (`RegulatoryFeedSources`, `RegulatoryFeedLifecycle`,
- * `RegulatoryFeedInforce`) are composed as below-the-fold sections after
- * the existing FilterBar+DataTable signal feed, in that order (1→2→3, per
- * each view's own file header). The above-the-fold region — Topbar, title,
- * FilterBar, signal DataTable, row-level "Review" primary action, and the
- * signal-shaped Drawer path — is byte-for-byte behavior-equivalent to the
- * pre-W1 file (SCRIPT SAFETY: this is the rail step-2 deep-link screen).
+ * L3 UPDATE (PI-3, D6/call-07, sprint-plan.md Sprint 2 L3) — SOURCES &
+ * CONNECTORS RELOCATED TO SETTINGS: `RegulatoryFeedSources` (and its Digest
+ * & Alerts panel) no longer composes on this screen. The W1/SEAM 2 history
+ * that used to document its wiring here (source-detail Drawer branch,
+ * `'feed-source'` deep-link consumption, the "Open in Sources & connectors
+ * →" action) is superseded — see `SettingsToggles.tsx`'s own header for the
+ * current, accurate version of that whole seam, now hosted there against
+ * the same `onOpenSource`/`onOpenInstrument` props `RegulatoryFeedSources`
+ * already exposed (D6: reuse the existing wiring seam, never re-invent).
+ * `RegulatoryFeedLifecycle` and `RegulatoryFeedInforce` are UNCHANGED and
+ * still compose here, in the same 1→2 (lifecycle→in-force) order below the
+ * signal feed (`RegulatoryFeedSources` no longer occupies the "1" slot).
  *
- * W1 — Drawer/selectedRow extension per addendum §1.1 `src:` row + Batch 2
- * wiring note: the existing single shared `<Drawer>` instance is reused
- * (never a second one, survey_map.md §d-5). `selectedRow`/`drawerOpen`
- * became a discriminated `DrawerSelection` union (`signal` | `source`);
- * the signal branch's title/fields/tags are unchanged.
- * `RegulatoryFeedSources`'s `onOpenSource` seam is wired exactly as its
- * file header prescribes: set selection, open drawer, branch
- * `drawerFields`/`drawerTags` on shape. The source detail renders the six
- * fields that view's `SourceDetailRow` carries (name, layer, method,
- * 30-day activity, connector phase, alert state) plus the alert toggle as
- * a screen-owned Button in the Drawer body (NOT a DrawerContent `actions`
- * entry — see the ONSIDE-04 note above); alert-state truth stays owned by
- * `RegulatoryFeedSources` (its bound `onToggleAlert` closure) — this
- * screen only refreshes its own display copy of `alertOn` on press so the
- * open Drawer never shows a stale toggle label.
+ * `RegulatoryFeedLifecycle`'s "Newly proposed" row action still requires an
+ * `onOpenSources: () => void` prop (that file is out of this lane's
+ * ALLOWLIST, so its own call site cannot change) — with no Sources section
+ * left on THIS screen to scroll/focus, `handleOpenSources` now closes any
+ * open Drawer content first (H1's existing "close before you move focus"
+ * discipline, preserved) and then fires this screen's own `onDeepLink`
+ * (already live-wired by App.tsx's `deepLinkProps` spread, no App.tsx edit
+ * needed) at `{ screen: 'settings.toggles', kind: 'feed-source', id:
+ * 'sources' }` — a real cross-screen navigation to where that content now
+ * lives, reusing the `'feed-source'` kind App.tsx's own KIND VOCABULARY
+ * already reserves for "the source-connector surface" (CLASS 3, "no
+ * producer yet" — this is that kind's first live producer). STOP-item,
+ * flagged not silently approximated: `SettingsToggles.tsx` does not (yet)
+ * receive `deepLinkProps` from App.tsx (out of this lane's ALLOWLIST), so
+ * this lands the operator on the right SCREEN but does not scroll/focus or
+ * pre-open a specific source there — closing that gap needs an App.tsx edit
+ * (spread `deepLinkProps` onto `<SettingsToggles />`) plus a `deepLink`
+ * consumption effect on that screen, both out of scope here.
  *
- * W1 RESOLVED (fix-wave gate dispatch, closing the STOP-item an earlier
- * revision of this header carried): `DrawerContentKind` now includes
- * `'source'` (added by the reporting batch in `DrawerContent.tsx`), so
- * the source-connector detail passes `kind="source"`; signal and
- * instrument details keep `kind="signal"` (the instrument shape still has
- * no dedicated literal — `kind` remains a non-structural `data-kind`
- * hint per DrawerContent's own header, so the nearest in-domain literal
- * stands for it, unchanged from the original W1 resolution).
- *
- * SEAM 2 RESOLVED (B3 dispatch) — this screen already declared `extends
- * DeepLinkScreenProps` (fired `onDeepLink` for the instrument-drawer
- * domain actions, ONSIDE-08/B-dead-interactions-07 note above) but never
- * READ its own incoming `deepLink` prop: a 'feed-source' deep link (App.tsx
- * header KIND VOCABULARY — id = source key, base `onsideShow('feed-
- * sources')` + source focus) landed on this screen plain, never opening the
- * named source's detail. Consumed now via the standard nonce-keyed effect
- * (App.tsx's documented CONSUME contract, same pattern
- * `InvestmentDesign.tsx`'s 'play'-kind consumption and `OnSideOverview
- * .tsx`'s 'domain'-kind consumption both already use): on a fresh
- * `deepLink.nonce` with `kind === 'feed-source'`, the matching source opens
- * in this screen's existing shared Drawer, reusing the `'source'` branch of
- * the `DrawerSelection` union (never a second Drawer instance).
- *
- * PARTIAL FIDELITY, HONESTLY SCOPED (STOP-item, not silently approximated):
- * `RegulatoryFeedSources.tsx`'s own file header ("ALLOWLIST BOUNDARY")
- * documents that this screen was deliberately never given a way to open a
- * specific source from OUTSIDE that component — `onOpenSource` only fires
- * from that component's own row click, and the per-source alert on/off
- * state (`sourceAlerts`) is local `useState` owned exclusively inside that
- * file, unreachable from here, and out of this dispatch's ALLOWLIST to
- * change. So a deep-link-opened source is built from the same static
- * `SRC_ROWS`/`SRC_LAYERS`/`SRC_ITEMS` data both files already derive their
- * own copies from (name, layer, method, 30-day activity, connector phase —
- * the five non-stateful fields; a new local `DrawerSelection` branch,
- * `'feed-source'`, keeps this shape distinct from the row-click-opened
- * `'source'` branch, which alone carries live `alertOn`/`onToggleAlert`).
- * It deliberately OMITS the "Immediate alerts" field and toggle Button
- * rather than fabricate a value this screen cannot verify is current — an
- * "Open in Sources & connectors →" action reuses the existing
- * `handleOpenSources` scroll/focus handoff (B-dead-interactions-16) so the
- * operator can reach the live, toggleable state instead. STOP-item for
- * whichever dispatch next holds `RegulatoryFeedSources.tsx`: lift
- * `sourceAlerts` to a shared/lifted store (or expose an external "open by
- * key" seam) so a deep-linked source can show and flip its real alert
- * state in one step, closing this gap fully.
+ * The former per-source, non-live `'feed-source'` Drawer branch (the
+ * "PARTIAL FIDELITY, HONESTLY SCOPED" shape that omitted "Immediate
+ * alerts") is retired along with it: that content's live, toggleable home
+ * is now Settings itself, so a same-screen non-live echo of it here would
+ * only drift from the real source of truth.
  *
  * HOSTILE-REVIEW FIX WAVE (Class A, finding A3) — PARTIALLY RESOLVED: the
  * 'section' kind (id `'lifecycle'`/`'gaps'`, both targeting `onside.feed`
@@ -260,7 +225,8 @@
  * STILL OPEN (STOP-item, a design decision, not an implementation one):
  * id `'gaps'` (fired by `InvestmentDesign.tsx`'s "See the gap queue" play-
  * drawer action) is NOT resolved here — this screen renders no "gaps"
- * content anywhere (only Sources, Lifecycle, Inforce sections), and
+ * content anywhere (only Lifecycle, Inforce sections, since L3 relocated
+ * Sources to Settings — see the L3 UPDATE note above), and
  * `HomePanels.tsx`'s own file header documents a live disagreement in
  * this codebase about where the base's "gaps" concept even belongs:
  * App.tsx's KIND VOCABULARY comment and this exact `InvestmentDesign.tsx`
@@ -286,8 +252,6 @@ import type { DrawerContentAction, DrawerContentField, DrawerContentTag } from '
 import { Button } from '../components/primitives/Button';
 import { Tag } from '../components/primitives/Tag';
 import { AskChatPanel } from '../components/AskChatPanel';
-import { RegulatoryFeedSources } from '../views/RegulatoryFeedSources';
-import type { SourceDetailRow } from '../views/RegulatoryFeedSources';
 import { RegulatoryFeedLifecycle } from '../views/RegulatoryFeedLifecycle';
 import { RegulatoryFeedInforce } from '../views/RegulatoryFeedInforce';
 import { DOMAINS, INSTR, SRC_ITEMS, SRC_ROWS, SRC_LAYERS } from '../data/onside';
@@ -326,37 +290,17 @@ interface SignalRow {
   action: string;
 }
 
-/** SEAM 2 (B3 dispatch, see file header) — the non-stateful subset of
- * `RegulatoryFeedSources.tsx`'s own `SourceDetailRow` this screen CAN
- * legitimately derive on its own (name/layer/method/activity/phase, all
- * pure functions of `SRC_ROWS`/`SRC_LAYERS`/`SRC_ITEMS`), deliberately
- * without `alertOn`/`onToggleAlert` — that pair is live state owned
- * exclusively inside `RegulatoryFeedSources.tsx`, out of this dispatch's
- * ALLOWLIST and unreachable from here (see file header "PARTIAL
- * FIDELITY, HONESTLY SCOPED"). */
-interface FeedSourceLookup {
-  name: string;
-  layerLabel: string;
-  method: string;
-  activity30d: number;
-  phaseLabel: string;
-}
-
-/** W1 — discriminated selection for the single shared Drawer (see W1
- * AMENDMENT in the file header): the pre-existing signal shape, extended
- * to also accept a source-shaped row per addendum §1.1 `src:`, (fix wave,
- * ONSIDE-08) an instrument shape for the base `openInstr` port, and (SEAM
- * 2, B3 dispatch) a deep-link-only `feed-source` shape — kept distinct
- * from `source` because it carries no live alert state (see
- * `FeedSourceLookup` above). */
+/** L3 UPDATE (see file header) — discriminated selection for the single
+ * shared Drawer: the pre-existing signal shape, plus (fix wave, ONSIDE-08)
+ * an instrument shape for the base `openInstr` port. The former `'source'`/
+ * `'feed-source'` branches (W1/SEAM 2) retired with the Sources & connectors
+ * relocation — see `SettingsToggles.tsx` for their current home. */
 /** §2.9.1 item 2 — the chat is one more discriminated content state of this
  * SAME shared Drawer, never a second Drawer instance (amendment A16,
  * PI2-D42). */
 type DrawerSelection =
   | { kind: 'signal'; row: SignalRow }
-  | { kind: 'source'; row: SourceDetailRow }
   | { kind: 'instrument'; instrumentKey: string; instrument: OnsideInstrument }
-  | { kind: 'feed-source'; lookup: FeedSourceLookup }
   | { kind: 'chat' };
 
 // normalizeAmp on the label — ONSIDE-01: the Regional layer label is the
@@ -402,34 +346,6 @@ const SOURCE_FILTER_OPTIONS: FilterOption[] = (() => {
     return { id: name, label: name, count: countBySource.get(name) ?? 0 };
   });
 })();
-
-/** SEAM 2 (B3 dispatch) — 'feed-source' deep-link lookup by normalized
- * source name (App.tsx KIND VOCABULARY: id = source key). Mirrors
- * `RegulatoryFeedSources.tsx`'s own `ALL_SOURCE_ROWS`/`activity30dFor`
- * pure derivation (same small pure computation ported independently —
- * this codebase's established precedent for a non-stateful helper needed
- * on both sides of an ALLOWLIST boundary, e.g. `HomePanels.tsx`'s
- * `waitingOnRoleKey`) rather than importing anything from that file
- * (which exports no such lookup and owns no module this screen may
- * widen). 30-day activity reuses this screen's own already-computed
- * `ALL_SIGNAL_ROWS` (identical `daysAgo`/entity-normalization semantics)
- * instead of re-deriving from `SRC_ITEMS` a second, possibly-diverging
- * way. */
-const SOURCE_LOOKUP_BY_NAME = new Map<string, FeedSourceLookup>(
-  SRC_ROWS.map((row) => {
-    const name = normalizeAmp(row.n);
-    return [
-      name,
-      {
-        name,
-        layerLabel: LAYER_LABEL_BY_KEY.get(row.l) ?? row.l,
-        method: row.m,
-        activity30d: ALL_SIGNAL_ROWS.filter((signalRow) => signalRow.source === name && signalRow.daysAgo <= 30).length,
-        phaseLabel: row.phl,
-      },
-    ];
-  }),
-);
 
 /** PI2-D5 (Sprint 1 DeepLinkKind union extension) — 'signal'-kind deep-link
  * lookup by the row's own id (`${sourceKey}::${itemIndex}`, ALL_SIGNAL_ROWS'
@@ -579,15 +495,16 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
   // for free, not just that one call site.
   const handleDrawerClose = () => setDrawerOpen(false);
 
-  // B-dead-interactions-16 — scroll/focus target for RegulatoryFeedSources'
-  // "Sources & connectors" section, below the fold.
-  const sourcesSectionRef = useRef<HTMLDivElement | null>(null);
+  // L3 UPDATE (see file header) — Sources & connectors no longer renders on
+  // this screen. `RegulatoryFeedLifecycle`'s "Newly proposed" row action
+  // still requires this callback (that file is out of ALLOWLIST); it now
+  // closes any open Drawer content first (same §2.9 discipline every other
+  // handoff on this screen uses), then fires a real cross-screen navigate
+  // to where Sources & connectors now lives. See file header for the
+  // STOP-item on why this cannot also pre-open/focus a specific source yet.
   const handleOpenSources = () => {
-    // §2.9 — close any open Drawer content (chat included) before moving
-    // focus to this page node. Idempotent/harmless when nothing is open.
     handleDrawerClose();
-    sourcesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    sourcesSectionRef.current?.focus();
+    onDeepLink?.({ screen: 'settings.toggles', kind: 'feed-source', id: 'sources' });
   };
 
   // HOSTILE-REVIEW FIX WAVE (Class A, finding A3) — scroll/focus target
@@ -605,25 +522,6 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
     lifecycleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     lifecycleSectionRef.current?.focus();
   };
-
-  // SEAM 2 (B3 dispatch, see file header) — 'feed-source' deep-link
-  // consumption: standard nonce-keyed effect (App.tsx's documented CONSUME
-  // contract), same pattern `InvestmentDesign.tsx`'s 'play'-kind and
-  // `OnSideOverview.tsx`'s 'domain'-kind consumption both already use. An
-  // id with no matching source (never expected on a real, contract-typed
-  // press, but a defensive guard rather than a crash on a malformed one)
-  // still consumes the nonce — never leaves a payload permanently pending
-  // — but opens nothing (no fabricated Drawer content for an unknown key).
-  useEffect(() => {
-    if (!deepLink || deepLink.kind !== 'feed-source') return;
-    const lookup = SOURCE_LOOKUP_BY_NAME.get(deepLink.id);
-    if (lookup) {
-      setSelection({ kind: 'feed-source', lookup });
-      setDrawerOpen(true);
-    }
-    onDeepLinkConsumed?.(deepLink.nonce);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires only on a NEW nonce, per the documented CONSUME contract (App.tsx header); onDeepLinkConsumed read fresh from closure, not tracked as a re-trigger dep
-  }, [deepLink?.nonce]);
 
   // PI2-D5 (Sprint 1 DeepLinkKind union extension) — 'signal'-kind deep-link
   // consumption: this screen's OWN primary row type, previously never
@@ -645,8 +543,10 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
   // link: id names a section key on THIS screen (App.tsx KIND VOCABULARY).
   // Only 'lifecycle' resolves to a real, unambiguous section here today —
   // scrolls/focuses `RegulatoryFeedLifecycle` via `handleOpenLifecycle`,
-  // the identical handoff `handleOpenSources` already uses for
-  // 'feed-source'. Confirmed live producers (Sprint 1 hostile review,
+  // the same "close Drawer, then move focus/navigate" discipline
+  // `handleOpenSources` also follows (though that one now navigates
+  // cross-screen instead of scrolling — see file header). Confirmed live
+  // producers (Sprint 1 hostile review,
   // finding A3): HomePanels.tsx's "Full lifecycle →" panel-header link and
   // its Strategic Signal drawer action (both id 'lifecycle') — both
   // previously landed here and opened nothing (this file's own former
@@ -711,13 +611,6 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
     },
   };
 
-  // W1 — the seam `RegulatoryFeedSources`'s file header prescribes verbatim:
-  // set selection, open the existing shared Drawer (never a second instance).
-  const handleOpenSource = (row: SourceDetailRow) => {
-    setSelection({ kind: 'source', row });
-    setDrawerOpen(true);
-  };
-
   // Fix wave (ONSIDE-08) — base openInstr port (source 2932–2949): the
   // three parity views fire this with an INSTR key; the entry renders as
   // the shared Drawer's third selection branch. Guarded on INSTR[key]
@@ -738,20 +631,17 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
   };
 
   // Signal branch below is behavior-identical to pre-W1 (same title format,
-  // same five fields, same badge Tag); the source/instrument branches are
-  // additive.
+  // same five fields, same badge Tag); the instrument branch is additive.
+  // The former source/feed-source branches (W1/SEAM 2) retired with the
+  // Sources & connectors relocation — see file header.
   const drawerTitle =
     selection === null
       ? 'Signal'
       : selection.kind === 'signal'
         ? `Signal — ${selection.row.source}`
-        : selection.kind === 'source'
-          ? `Source — ${selection.row.name}`
-          : selection.kind === 'feed-source'
-            ? `Source — ${selection.lookup.name}`
-            : selection.kind === 'chat'
-              ? ONSIDE_CHAT_MODULE_CONFIG.drawerTitle
-              : normalizeAmp(selection.instrument.n);
+        : selection.kind === 'chat'
+          ? ONSIDE_CHAT_MODULE_CONFIG.drawerTitle
+          : normalizeAmp(selection.instrument.n);
 
   const drawerFields: DrawerContentField[] =
     selection === null
@@ -764,50 +654,23 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
             { label: 'Signal', value: selection.row.title },
             { label: 'Note', value: selection.row.note },
           ]
-        : selection.kind === 'source'
-          ? [
-              { label: 'Source', value: selection.row.name },
-              { label: 'Regulatory layer', value: selection.row.layerLabel },
-              { label: 'Method', value: selection.row.method },
-              { label: '30-day activity', value: String(selection.row.activity30d) },
-              { label: 'Connector phase', value: selection.row.phaseLabel },
-              { label: 'Immediate alerts', value: selection.row.alertOn ? 'On' : 'Off' },
-            ]
-          : selection.kind === 'feed-source'
-            ? [
-                // SEAM 2 — same four static fields the row-click 'source'
-                // branch shows, deliberately WITHOUT "Immediate alerts": see
-                // file header "PARTIAL FIDELITY, HONESTLY SCOPED" for why
-                // this screen cannot verify that live value from here.
-                { label: 'Source', value: selection.lookup.name },
-                { label: 'Regulatory layer', value: selection.lookup.layerLabel },
-                { label: 'Method', value: selection.lookup.method },
-                { label: '30-day activity', value: String(selection.lookup.activity30d) },
-                { label: 'Connector phase', value: selection.lookup.phaseLabel },
-              ]
-            : selection.kind === 'chat'
-              ? [] // AskChatPanel owns its own body content — DrawerContent renders nothing for this branch (see the Drawer body below).
-              : [
-                // Base openInstr detail fields, source 2937–2947.
-                { label: 'Kind', value: normalizeAmp(selection.instrument.kind) },
-                { label: 'Issuer', value: normalizeAmp(selection.instrument.issuer) },
-                { label: 'Effective', value: normalizeAmp(selection.instrument.eff) },
-                { label: 'Source', value: normalizeAmp(selection.instrument.src) },
-                // Verbatim base review line (source 2944).
-                { label: 'Review', value: 'Nothing read from this instrument becomes authoritative before a qualified human approves it' },
-                { label: 'Summary', value: normalizeAmp(selection.instrument.sum) },
-              ];
+        : selection.kind === 'chat'
+          ? [] // AskChatPanel owns its own body content — DrawerContent renders nothing for this branch (see the Drawer body below).
+          : [
+              // Base openInstr detail fields, source 2937–2947.
+              { label: 'Kind', value: normalizeAmp(selection.instrument.kind) },
+              { label: 'Issuer', value: normalizeAmp(selection.instrument.issuer) },
+              { label: 'Effective', value: normalizeAmp(selection.instrument.eff) },
+              { label: 'Source', value: normalizeAmp(selection.instrument.src) },
+              // Verbatim base review line (source 2944).
+              { label: 'Review', value: 'Nothing read from this instrument becomes authoritative before a qualified human approves it' },
+              { label: 'Summary', value: normalizeAmp(selection.instrument.sum) },
+            ];
 
   // B-dead-interactions-07 — "Domains this instrument drives" un-flattened
   // from a joined string into real deep-link action Buttons (see file
   // header note). Only rendered when a consumer wired `onDeepLink` — never
   // a dead click if one hasn't.
-  //
-  // SEAM 2 — 'feed-source' selections add one "Open in Sources &
-  // connectors →" action, reusing the existing `handleOpenSources`
-  // scroll/focus handoff (B-dead-interactions-16) so the operator can
-  // reach the row that carries the real, toggleable alert state this
-  // screen cannot show here (file header "PARTIAL FIDELITY").
   const drawerActions: DrawerContentAction[] =
     selection !== null && selection.kind === 'instrument' && onDeepLink
       ? selection.instrument.doms.map((domKey) => ({
@@ -815,18 +678,7 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
           variant: 'ghost' as const,
           onPress: () => onDeepLink({ screen: 'onside.overview', kind: 'domain', id: domKey }),
         }))
-      : selection !== null && selection.kind === 'feed-source'
-        ? [
-            {
-              label: 'Open in Sources & connectors →',
-              variant: 'ghost' as const,
-              onPress: () => {
-                handleDrawerClose();
-                handleOpenSources();
-              },
-            },
-          ]
-        : [];
+      : [];
 
   const drawerTags: DrawerContentTag[] =
     selection === null
@@ -835,26 +687,9 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
         ? selection.row.badge
           ? [{ text: selection.row.badge, variant: 'count' }]
           : []
-        : selection.kind === 'source'
-          ? selection.row.alertOn
-            ? [{ text: 'Alerts on', variant: 'hitl' }]
-            : []
-          : selection.kind === 'feed-source'
-            ? [] // SEAM 2 — no live alert state to badge here (file header "PARTIAL FIDELITY").
-            : [{ text: 'Regulatory instrument', variant: 'count' }];
-
-  // W1 + fix wave (ONSIDE-04) — the alert toggle is a screen-owned Button at
-  // a stable JSX position in the Drawer body (see the file-header note): its
-  // label flips on every press, and DrawerContent keys `actions` Buttons by
-  // label, which remounted the pressed button and dropped focus to body.
-  // Truth still lives in `RegulatoryFeedSources` (bound `onToggleAlert`
-  // closure); this screen only refreshes its display copy so the open Drawer
-  // never shows a stale label.
-  const handleAlertTogglePress = () => {
-    if (selection === null || selection.kind !== 'source') return;
-    selection.row.onToggleAlert();
-    setSelection({ kind: 'source', row: { ...selection.row, alertOn: !selection.row.alertOn } });
-  };
+        : selection.kind === 'chat'
+          ? []
+          : [{ text: 'Regulatory instrument', variant: 'count' }];
 
   return (
     <>
@@ -880,22 +715,15 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
               emptyMessage="No signals match the selected filters."
             />
           </div>
-          {/* W1 — Batch 2 below-the-fold parity sections, order 1→2→3 per each
-              view's own file header. */}
-          <div ref={sourcesSectionRef} tabIndex={-1}>
-            <RegulatoryFeedSources onOpenSource={handleOpenSource} onOpenInstrument={handleOpenInstrument} />
-          </div>
+          {/* L3 UPDATE (see file header) — Sources & connectors (former
+              slot "1" of this 1→2→3 order) relocated to Settings; lifecycle
+              and in-force keep their below-the-fold order, one slot earlier. */}
           <div ref={lifecycleSectionRef} tabIndex={-1} data-lf-section="lifecycle">
             <RegulatoryFeedLifecycle onOpenInstrument={handleOpenInstrument} onOpenSources={handleOpenSources} />
           </div>
           <RegulatoryFeedInforce onOpenInstrument={handleOpenInstrument} />
       </main>
       <Drawer open={drawerOpen} title={drawerTitle} onClose={handleDrawerClose}>
-        {/* kind="source" for the source-connector detail (gate dispatch —
-            see W1 RESOLVED in the file header) — SEAM 2's 'feed-source'
-            branch reuses the same "source" hint (same conceptual detail,
-            partial fidelity, see file header); signal + instrument shapes
-            keep "signal" (non-structural data-attribute hint). */}
         {selection !== null && selection.kind === 'chat' ? (
           // §2.9.1 item 2 — one more content state of this SAME Drawer;
           // AskChatPanel owns its own body, no DrawerContent involved.
@@ -903,24 +731,7 @@ export function OnSideFeed({ deepLink, onDeepLink, onDeepLinkConsumed }: OnSideF
           // Chips) on every "Ask OnSide" press (§2.9.5 fresh-open reseed).
           <AskChatPanel key={chatOpenNonce} config={ONSIDE_CHAT_MODULE_CONFIG} {...(onDeepLink ? { onDeepLinkPress: onDeepLink } : {})} />
         ) : (
-          <>
-            <DrawerContent
-              kind={selection !== null && (selection.kind === 'source' || selection.kind === 'feed-source') ? 'source' : 'signal'}
-              fields={drawerFields}
-              tags={drawerTags}
-              actions={drawerActions}
-            />
-            {selection !== null && selection.kind === 'source' ? (
-              // ONSIDE-04 — stable-node alert toggle; see the file-header note.
-              <div style={{ marginTop: '1.25rem' }}>
-                <Button
-                  variant="secondary"
-                  label={selection.row.alertOn ? 'Turn alerts off' : 'Turn alerts on'}
-                  onPress={handleAlertTogglePress}
-                />
-              </div>
-            ) : null}
-          </>
+          <DrawerContent kind="signal" fields={drawerFields} tags={drawerTags} actions={drawerActions} />
         )}
       </Drawer>
     </>
