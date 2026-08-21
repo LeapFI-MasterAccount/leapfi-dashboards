@@ -182,7 +182,7 @@ import type { FilterGroup } from '../components/FilterBar';
 import { Drawer } from '../components/Drawer';
 import { DrawerContent } from '../components/DrawerContent';
 import type { DrawerContentAction, DrawerContentField, DrawerContentTag } from '../components/DrawerContent';
-import { RedlineDiffView } from '../components/RedlineDiffView';
+import { DocumentBody } from '../components/DocumentBody';
 import { Toast } from '../components/Toast';
 import { Button } from '../components/primitives/Button';
 import { Tag } from '../components/primitives/Tag';
@@ -749,6 +749,11 @@ export function OnSideDocuments({ deepLink, onDeepLink, onDeepLinkConsumed }: On
   const isDisplayDocAdopted = displayDoc ? isDocAdopted(displayDoc.id) : false;
   const isAdoptingDisplayDoc = displayDoc ? adoptingDocId === displayDoc.id : false;
 
+  // Screen-owned metadata rows only — the document's own full `secs` text
+  // is appended by the shared `DocumentBody` (design_system_spec.md
+  // §2.11/A18 export side; see that component's own file header) so this
+  // screen and `OnSideOwnership.tsx` no longer each carry their own copy
+  // of the "spread secs into fields" line.
   const drawerFields: DrawerContentField[] = displayDoc
     ? [
         { label: 'Version', value: displayDoc.v },
@@ -756,7 +761,6 @@ export function OnSideDocuments({ deepLink, onDeepLink, onDeepLinkConsumed }: On
         { label: 'Type', value: displayDoc.type },
         { label: 'Owner', value: decodeDocText(displayDoc.owner) },
         { label: 'Summary', value: decodeDocText(displayDoc.line) },
-        ...displayDoc.secs.map(([heading, body]) => ({ label: heading, value: decodeDocText(body) })),
       ]
     : [];
 
@@ -1020,24 +1024,14 @@ export function OnSideDocuments({ deepLink, onDeepLink, onDeepLinkConsumed }: On
         ) : activeDrawerKind === 'obligation' ? (
           displayObligation ? <DrawerContent kind="doc" fields={obligationDrawerFields} tags={obligationDrawerTags} actions={obligationDrawerActions} /> : null
         ) : displayDoc ? (
-          <>
-            <DrawerContent kind="doc" fields={drawerFields} tags={drawerTags} actions={drawerActions} />
-            {displayDoc.redline ? (
-              <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
-                <RedlineDiffView
-                  before={decodeDocText(displayDoc.redline.old)}
-                  after={decodeDocText(displayDoc.redline.nw)}
-                  hitl
-                  hitlText={isDisplayDocAdopted ? 'Adopted' : 'HITL review'}
-                />
-                {/* FIX WAVE (Class C, C1): rendered inside the shared
-                    Drawer, whose root background is var(--panel) —
-                    --ink2 fails AA there in light theme; --chart-axis is
-                    the prescribed panel-seated substitute. */}
-                <p style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: 'var(--chart-axis)' }}>{decodeDocText(displayDoc.redline.note)}</p>
-              </div>
-            ) : null}
-          </>
+          <DocumentBody
+            docId={displayDoc.id}
+            metadataFields={drawerFields}
+            tags={drawerTags}
+            actions={drawerActions}
+            redlineHitlText={isDisplayDocAdopted ? 'Adopted' : 'HITL review'}
+            decodeText={decodeDocText}
+          />
         ) : null}
       </Drawer>
 
