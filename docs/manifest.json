@@ -1,5 +1,5 @@
 {
-  "revision": 87,
+  "revision": 88,
   "updated": "2026-08-21",
   "dashboards": [
     {
@@ -96,7 +96,7 @@
       "title": "LeapFI Platform \u00b7 NorthWinds Credit Union (V2)",
       "order": 999,
       "url": "https://leapfi-masteraccount.github.io/leapfi-dashboards/leapfi-platform-v2.html",
-      "kb": 785.9
+      "kb": 787.0
     }
   ]
 }
