@@ -561,7 +561,14 @@ export function RegulatoryFeedSources({ onOpenSource, onOpenInstrument }: Regula
                 <Chip key={label} text={label} variant="filter" selected={frequency === label} onPress={() => handleFrequencyPress(label)} />
               ))}
             </div>
-            <p style={DIGEST_HINT_STYLE}>Next send: {freqWhenFor(frequency)}</p>
+            {/* HR-DATA-02: this hint must not keep asserting a scheduled
+                send once the management row below has flipped the digest
+                to "Disabled" (`digestEnabled`) — the two adjacent,
+                simultaneously-visible claims previously contradicted each
+                other. */}
+            <p style={DIGEST_HINT_STYLE}>
+              {digestEnabled ? `Next send: ${freqWhenFor(frequency)}` : 'Next send: paused — digest disabled'}
+            </p>
           </div>
 
           <div style={DIGEST_FIELD_STYLE}>
@@ -578,11 +585,21 @@ export function RegulatoryFeedSources({ onOpenSource, onOpenInstrument }: Regula
 
           <div style={DIGEST_FIELD_STYLE}>
             <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink)' }}>In this digest</span>
-            <p style={DIGEST_COUNT_STYLE}>{digestCount}</p>
+            {/* HR-DATA-02: same state-coherence fix as "Next send" above —
+                a disabled digest sends nothing, so this panel must not
+                keep presenting a live item count as if it will be
+                delivered. */}
+            <p style={DIGEST_COUNT_STYLE}>{digestEnabled ? digestCount : 0}</p>
             <p style={DIGEST_HINT_STYLE}>
-              item{digestCount === 1 ? '' : 's'} captured in the{' '}
-              {frequency === 'Real-time' ? 'last sweep' : freqDaysFor(frequency) === 1 ? 'last day' : `last ${freqDaysFor(frequency)} days`}
-              {deliveryBindingOnly ? ' · binding rules only' : ''}
+              {digestEnabled ? (
+                <>
+                  item{digestCount === 1 ? '' : 's'} captured in the{' '}
+                  {frequency === 'Real-time' ? 'last sweep' : freqDaysFor(frequency) === 1 ? 'last day' : `last ${freqDaysFor(frequency)} days`}
+                  {deliveryBindingOnly ? ' · binding rules only' : ''}
+                </>
+              ) : (
+                'digest disabled — nothing will be sent'
+              )}
             </p>
           </div>
         </div>

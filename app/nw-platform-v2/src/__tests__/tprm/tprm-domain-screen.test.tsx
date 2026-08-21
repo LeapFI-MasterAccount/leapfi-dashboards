@@ -87,6 +87,38 @@ describe('TprmDomain · obligations DataTable (D3: "DataTable(obligations, tprm-
     await user.click(within(row as HTMLElement).getByRole('button', { name: 'Open' }));
     expect(onNavigate).toHaveBeenCalledWith('onside.overview');
   });
+
+  // HR-SHELL-01: the posture row above states the FULL register
+  // (domain.appl/tot/met — 33/33/24), but this table only ever renders the
+  // 12-row representative subset (`OBL['tprm']`). Left undisclosed, "Gaps &
+  // partials · 6 of 12 obligations" directly under "33 obligations in
+  // scope" states two different denominators for the same noun
+  // ("obligations") with nothing telling the reader which is the real
+  // register size — exactly the discrepancy `views/DomainsAccordion.tsx`'s
+  // own identical pattern already discloses via a "shown obligations"
+  // heading qualifier and a footer reconciliation pill.
+  it('HR-SHELL-01: discloses that the obligations table shows a subset, and reconciles it against the domain\'s real register size', () => {
+    renderScreen();
+    // The posture row's own denominator (the thing a reader could
+    // mistakenly compare the table heading's "12" against).
+    expect(screen.getByText(new RegExp(`${TPRM.appl} obligations in scope`))).toBeInTheDocument();
+    // The table heading now says "shown obligations", not a bare
+    // "obligations" that invites a false apples-to-apples comparison
+    // against the posture row's 33.
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: `Gaps & partials · ${TPRM_OPEN_OBLIGATIONS.length} of ${TPRM_OBLIGATIONS.length} shown obligations`,
+      }),
+    ).toBeInTheDocument();
+    // A reconciliation statement names the real, full-register count (the
+    // posture row's own `domain.appl`) so the 12-vs-33 gap is explained,
+    // not silent.
+    const metShown = TPRM_OBLIGATIONS.filter((row) => row.st === 'met').length;
+    expect(
+      screen.getByText(`${metShown} met obligations shown here and the full register with provenance: all ${TPRM.appl} enumerated`),
+    ).toBeInTheDocument();
+  });
 });
 
 describe('TprmDomain · documents DataTable (D3: "DataTable(documents) with the Domain filter" -> Domain-filtered to tprm)', () => {

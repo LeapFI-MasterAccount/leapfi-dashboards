@@ -166,13 +166,19 @@ describe('F1 exact repro — save-language stale Sidebar badge (S1.1-04)', () =>
     expect(targetCase.edited).toBe(true);
     const expectedCount = CASES.filter(isUntouched).length;
     expect(expectedCount).toBe(startCount - 1); // 2
+    // HR-DATA-01: the header sentence states the true DECIDED count (the
+    // complement of the undecided count within the open set), not the
+    // undecided count itself — the badge (asserted below) still shows the
+    // undecided count unchanged.
+    const openCasesCount = CASES.filter((c) => c.stage !== 'closed' && c.stage !== 'rejected').length;
+    const expectedDecidedCount = openCasesCount - expectedCount;
 
     // Cases.tsx's OWN local `renderTick` state re-renders its own header —
     // this update is real and immediate, no cross-screen navigation
     // required (only back to Cases' own list sub-view, which stays
     // mounted the entire time — Cases itself never unmounts here).
     fireEvent.click(screen.getByRole('button', { name: '← All cases' }));
-    expect(screen.getByText(new RegExp(`${expectedCount} of \\d+ have been decided yet`))).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`${expectedDecidedCount} of \\d+ have been decided yet`))).toBeInTheDocument();
 
     // The Sidebar badge lives in the App shell (a SIBLING component tree,
     // not re-rendered by Cases' own local state) — F1's own finding: with

@@ -116,21 +116,30 @@ describe('Cases list header (Cases.tsx 492-493, 557-558) — undecided/waiting t
     seedCases(DOCLIB);
   });
 
-  it('AC-S1.1-03-2: renders "N of M have been decided yet" when undecidedCount > 0 and < openCases.length', () => {
+  it('AC-S1.1-03-2 / HR-DATA-01: renders "N of M have been decided yet" with N = the actual DECIDED count, when undecidedCount > 0 and < openCases.length', () => {
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} />);
 
     // PI2-D45 (USER OVERRIDE): only the 3 proc-tier cases boot untouched
     // ('analyst', edited: false, history.length 1) — the 5 board/exec-tier
     // cases boot already routed to 'cro', so undecidedCount is 3, not 8
     // (never equal to openCases.length === 8), landing on the "N of M"
-    // branch rather than "None" (Cases.tsx:557).
-    expect(screen.getByText(/3 of 8 have been decided yet\./)).toBeInTheDocument();
+    // branch rather than "None" (Cases.tsx:557). HR-DATA-01: N is the
+    // DECIDED count (openCases.length - undecidedCount = 8 - 3 = 5), never
+    // the undecided count itself — the prior "3 of 8 have been decided
+    // yet." literally claimed the 3 cases that are NOT decided ARE
+    // decided, while the 5 actually-decided cases (routed to 'cro') went
+    // uncounted.
+    expect(screen.getByText(/5 of 8 have been decided yet\./)).toBeInTheDocument();
+    expect(screen.queryByText(/3 of 8 have been decided yet\./)).not.toBeInTheDocument();
   });
 
-  it('AC-S1.1-03-2: switches to "N of M have been decided yet" once fewer than all cases are undecided', () => {
+  it('AC-S1.1-03-2 / HR-DATA-01: the decided count rises (not falls) as fewer cases remain undecided', () => {
     // PI2-D45 (USER OVERRIDE): CASE-2026-001 ('irp') already boots routed
     // to 'cro' (not `isUntouched`) — toggle a still-`analyst`-stage
-    // proc-tier case instead, dropping undecidedCount from 3 to 2.
+    // proc-tier case instead, dropping undecidedCount from 3 to 2, which
+    // must RAISE the rendered decided count from 5 to 6 (never drop it to
+    // 2 — that would be the undecided count leaking into the sentence
+    // again).
     const target = CASES.find((c) => c.id === 'CASE-2026-003');
     expect(target).toBeDefined();
     if (target) {
@@ -139,7 +148,21 @@ describe('Cases list header (Cases.tsx 492-493, 557-558) — undecided/waiting t
 
     render(<Cases topbar={topbarFixture()} onNavigate={() => {}} />);
 
-    expect(screen.getByText(/2 of 8 have been decided yet\./)).toBeInTheDocument();
+    expect(screen.getByText(/6 of 8 have been decided yet\./)).toBeInTheDocument();
+    expect(screen.queryByText(/2 of 8 have been decided yet\./)).not.toBeInTheDocument();
+  });
+
+  it('HR-DATA-01: the rendered decided count matches an independent count of cases actually routed past the analyst stage (cross-check against the visible list, not the formula)', () => {
+    render(<Cases topbar={topbarFixture()} onNavigate={() => {}} />);
+
+    // Independently recomputed from the case list itself (not by reading
+    // `undecidedCount`/`decidedCount` from the component) — the boot state
+    // has exactly 5 open cases routed onward to 'cro' and 3 still
+    // untouched at 'analyst', so a viewer counting the Stage column by
+    // hand gets 5 decided, matching the header sentence.
+    const trulyDecided = CASES.filter((c) => c.stage !== 'closed' && c.stage !== 'rejected' && c.stage !== 'analyst').length;
+    expect(trulyDecided).toBe(5);
+    expect(screen.getByText(new RegExp(`${trulyDecided} of 8 have been decided yet\\.`))).toBeInTheDocument();
   });
 
   it('AC-S1.1-03-2: omits the "have been decided yet" text entirely when undecidedCount is 0', () => {
