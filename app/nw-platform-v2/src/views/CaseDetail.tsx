@@ -161,6 +161,8 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Drawer } from '../components/Drawer';
+import { DrawerContent } from '../components/DrawerContent';
+import type { DrawerContentField } from '../components/DrawerContent';
 import { RedlineDiffView } from '../components/RedlineDiffView';
 import { Button } from '../components/primitives/Button';
 import type { ButtonVariant } from '../components/primitives/Button';
@@ -172,6 +174,7 @@ import type { Case } from '../data/cases';
 import type { DocEntry } from '../data/doclib';
 import type { StudioUser } from '../data/studio';
 import { DOMAINS } from '../data/onside';
+import { resolveOriginSignal } from '../data/originSignal';
 import { PANEL_STYLE } from '../theme/panelStyle';
 import type { DeepLinkRequest } from '../App';
 
@@ -559,6 +562,43 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
     return null;
   }
 
+  // PI2-D31 origin field group (design_system_spec.md §2.10 preamble /
+  // §2.10.1 item 5, amendment A17) — replaces the standalone `trigger`
+  // paragraph below with four DrawerContent (C8) field rows (Source/Date/
+  // Signal/Note), fed by lane 1's read-only resolver (data/originSignal.ts)
+  // against this case's own document id. AC-r02-2 (cited by A17 item 5,
+  // reused verbatim): an unresolvable origin renders the group's empty-
+  // state message and ZERO field rows, never a blank row set — handled
+  // below by rendering no DrawerContent at all in that branch.
+  //
+  // STOP-flagged (task 4, this dispatch's own evidence return — not
+  // resolved here): A17/PI2-D31 also specify the Signal row as an inline
+  // 'signal'-kind deep link (DrawerContentField.onPress). That wiring is
+  // deliberately withheld: the live 'signal'-kind deep-link consumer
+  // (OnSideFeed.tsx's SIGNAL_ROW_BY_ID, built from data/onside.ts's
+  // SRC_ITEMS/SRC_ROWS, keyed `${sourceKey}::${itemIndex}`) reads a
+  // structurally different, non-overlapping dataset from the one this
+  // resolver correctly reads for doc-linkage (data/misc.ts's
+  // SIGNAL[].touch) — the former carries no document-touch field at all,
+  // the latter carries no id in the former's id space, and several
+  // entries only correlate by loose, non-identical title text (a genuine
+  // content contradiction, not a mechanical re-point). Wiring onPress
+  // today would fire a deep link OnSideFeed's own consumer silently
+  // resolves to nothing ("a stale/unknown id still consumes the nonce but
+  // opens nothing," OnSideFeed.tsx's own comment) — a lying control
+  // (PI2-D24) Core Principle 3 forbids shipping. The Signal row therefore
+  // renders as plain text, identical in kind to Source/Date/Note, pending
+  // a design/data ruling on which dataset is authoritative.
+  const origin = resolveOriginSignal(caseItem.doc);
+  const originFields: DrawerContentField[] = origin.resolved
+    ? [
+        { label: 'Source', value: origin.signal.sc },
+        { label: 'Date', value: origin.signal.age },
+        { label: 'Signal', value: decodeText(origin.signal.t) },
+        { label: 'Note', value: decodeText(origin.signal.read) },
+      ]
+    : [];
+
   const missingDocNote = !doc ? (
     <p style={WAIT_NOTE_STYLE}>No document library entry matches this case&rsquo;s document id (&ldquo;{caseItem.doc}&rdquo;) — the before/after language below cannot be shown.</p>
   ) : null;
@@ -590,7 +630,11 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
             <p id="case-detail-title" style={TITLE_STYLE}>
               {caseItem.id} · {decodeText(caseItem.title)}
             </p>
-            <p style={CITE_STYLE}>{decodeText(caseItem.trigger)}</p>
+            {origin.resolved ? (
+              <DrawerContent kind="signal" fields={originFields} />
+            ) : (
+              <p style={CITE_STYLE}>No regulatory signal record links to this case&rsquo;s document — origin not resolvable.</p>
+            )}
           </div>
           <Tag text={pill.text} variant={pill.variant} />
         </div>

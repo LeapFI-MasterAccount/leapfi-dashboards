@@ -182,19 +182,27 @@ describe('A19 (design_system_spec.md §2.10.2) — CEO / non-acting-role absent-
     }
   });
 
-  it('AC-A19-4 (partial — origin field group deferred, see this lane\'s STOP report): the redline and case-history read regions render byte-identical text for a CEO fixture and an acting-role fixture on the same case', () => {
+  it('AC-A19-4: the origin field group, redline, and case-history read regions render byte-identical text for a CEO fixture and an acting-role fixture on the same case', () => {
+    // PI2-D44 dispatch (docflow/integration): the origin field group (PI2-D31,
+    // §2.10 preamble) is now built (case_origin_field_group.test.tsx) — this
+    // closes the "origin field group deferred" half this test previously
+    // left open, per §2.10.2's "read surfaces are never role-gated" rule.
     const caseForCro = draftedRedlineCase('cro');
     const caseForCeo = draftedRedlineCase('cro');
 
     const { unmount } = renderCase(caseForCro, CRO);
+    const croOrigin = document.querySelector('[data-lf-composite="drawer-content"][data-kind="signal"]')?.textContent;
     const croRedline = document.querySelector('[data-lf-composite="redline-diff-view"]')?.textContent;
     const croHistory = screen.getByRole('heading', { name: 'Case history' }).closest('section')?.textContent;
     unmount();
 
     renderCase(caseForCeo, CEO);
+    const ceoOrigin = document.querySelector('[data-lf-composite="drawer-content"][data-kind="signal"]')?.textContent;
     const ceoRedline = document.querySelector('[data-lf-composite="redline-diff-view"]')?.textContent;
     const ceoHistory = screen.getByRole('heading', { name: 'Case history' }).closest('section')?.textContent;
 
+    expect(croOrigin).toBeTruthy();
+    expect(ceoOrigin).toBe(croOrigin);
     expect(croRedline).toBeTruthy();
     expect(ceoRedline).toBe(croRedline);
     expect(croHistory).toBeTruthy();
