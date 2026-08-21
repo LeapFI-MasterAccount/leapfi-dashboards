@@ -47,7 +47,7 @@ afterEach(() => {
 })
 
 describe('call-03 rename — the panel\'s own DataTable caption and Drawer title read "Regulatory Radar" (formerly "Strategic Signal")', () => {
-  it('renders the DataTable\'s accessible name and the open drawer\'s title as "Regulatory Radar", never the old name — this dispatch\'s two OWNED literal strings (see HomePanels.tsx file header for the OUT-OF-ALLOWLIST `data/misc.ts` panel-heading finding this test deliberately does NOT cover)', async () => {
+  it('renders the DataTable\'s accessible name and the open drawer\'s title as "Regulatory Radar", never the old name — this dispatch\'s two OWNED literal strings (see `home-panel-legis-label-rename.test.tsx` for the section-<h2>/toggle-label rename that closed the former OUT-OF-ALLOWLIST `data/misc.ts` panel-heading finding; the drawer-title query below is scoped to the dialog specifically because the panel\'s own <h2> now ALSO reads "Regulatory Radar")', async () => {
     const user = userEvent.setup()
     render(<HomePanels visibleKeys={['legis']} currentRoleKey="cro" onNavigate={noNavigate} />)
 
@@ -58,7 +58,8 @@ describe('call-03 rename — the panel\'s own DataTable caption and Drawer title
     expect(row).not.toBeNull()
     await user.click(within(row as HTMLElement).getByRole('button', { name: 'Review' }))
 
-    expect(screen.getByRole('heading', { name: /^Regulatory Radar/ })).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByRole('heading', { name: /^Regulatory Radar/ })).toBeInTheDocument()
   })
 })
 
