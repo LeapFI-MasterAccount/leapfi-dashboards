@@ -21,7 +21,7 @@
  * link, until that STOP is resolved by a design/data ruling.
  */
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { CaseDetail } from '../../views/CaseDetail';
 import type { Case } from '../../data/cases';
 import { HUMAN_CONTRIBUTED_EDIT_CASE_FIXTURE } from '../../data/cases';
@@ -75,10 +75,22 @@ describe('PI2-D31 origin field group (design_system_spec.md §2.10 preamble, AC-
     expect(screen.getByText('Note')).toBeInTheDocument();
     expect(screen.getByText(signalEntry.read)).toBeInTheDocument();
 
-    // The old standalone trigger paragraph (caseItem.trigger rendered
-    // directly) is gone from the case-detail header — replaced by the
-    // field group above.
-    expect(screen.queryByText(caseItem.trigger)).not.toBeInTheDocument();
+    // The old standalone trigger paragraph (caseItem.trigger rendered as a
+    // bare, unlabeled paragraph directly under the case header) is still
+    // gone — but r05 (r05_whole_trail.md, "Requirement statement," AC-r05-1
+    // implementation, `views/CaseDetail.tsx`'s "Requirement" section)
+    // reintroduces the SAME string in a distinct, labeled field group. This
+    // assertion pins the SHAPE of that reintroduction, not blanket absence:
+    // the trigger value renders exactly once, inside a `kind="doc"`
+    // DrawerContent field group carrying its own "Cited requirement" label
+    // — never as a second, unlabeled copy sitting alongside the `kind=
+    // "signal"` origin group asserted above.
+    const triggerNodes = screen.getAllByText(caseItem.trigger);
+    expect(triggerNodes).toHaveLength(1);
+    const requirementFieldGroup = triggerNodes[0]!.closest('[data-lf-composite="drawer-content"]');
+    expect(requirementFieldGroup).not.toBeNull();
+    expect(requirementFieldGroup).toHaveAttribute('data-kind', 'doc');
+    expect(within(requirementFieldGroup as HTMLElement).getByText('Cited requirement')).toBeInTheDocument();
   });
 
   it('AC-r02-2: unresolvable origin renders the empty-state message and ZERO field rows, never a blank row set', () => {

@@ -730,6 +730,22 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
               <span style={META_VALUE_STYLE}>D. Reyes · {caseItem.opinion}</span>
             </div>
           ) : null}
+          {/* r05 whole-trail element 5 — "Document version: which policy
+              document version this wording landed in" (r05_whole_trail.md
+              "Required display elements" item 5), unconditional on `doc`
+              resolving (not gated on `onNavigate`, unlike the title-link
+              field below, and not gated on `caseItem.stage === 'closed'`
+              the way the pre-existing "Adopted as {doc.v}" closed-state
+              sentence further down is) — an examiner reading this page at
+              any stage sees which document version the case's proposed
+              language belongs to. D26: a data-bearing label + the raw
+              version value, no narration. */}
+          {doc ? (
+            <div style={META_LABEL_WRAP}>
+              <Label text="Document version" variant="eyebrow" surface="panel" />
+              <span style={META_VALUE_STYLE}>{doc.v}</span>
+            </div>
+          ) : null}
           {/* Base Document meta row + openDocView doclink (2892-area meta —
               CS-08). Twin target: the OnSide · Documents screen; the
               per-document deep link lives in that screen, outside this
@@ -743,6 +759,31 @@ export function CaseDetail({ caseItem, doc, currentUser, onBack, onAction, pendi
             </div>
           ) : null}
         </div>
+      </section>
+
+      {/* r05 whole-trail element 1 — "Requirement statement: what the rule
+          or control required before OnSide drafted a response"
+          (r05_whole_trail.md "Required display elements" item 1). Data
+          source: `caseItem.trigger` (`CASE_TRIGGER` in data/cases.ts,
+          "case history fields already present in data/cases.ts" per that
+          file's own "UI layer (composable, largely already built)" note)
+          — distinct from the PI2-D31 origin group's Signal/Note fields
+          above (those carry the regulatory SIGNAL entry's own read-note;
+          this carries the case's own citation + compliance-gap statement,
+          a different string for every fixture checked). Not rendered
+          anywhere else in this component's main body today — the only
+          other place `caseItem.trigger` appears is the nested email-
+          preview Drawer (`emailOpen`, below), a secondary, non-print
+          surface. D26: one data-bearing label + the raw trigger value. */}
+      <section aria-labelledby="case-requirement-heading" style={CARD_STYLE}>
+        <h3 id="case-requirement-heading" style={SUBHEADING_STYLE}>Requirement</h3>
+        {/* Field label is "Cited requirement" rather than a second
+            "Requirement" string — the section's own <h3> above already
+            carries that word as this region's accessible heading; a
+            field row repeating it verbatim would be a duplicate text
+            node with no distinguishing accessible name (screen-reader
+            heading navigation + `getByText` queries alike). */}
+        <DrawerContent kind="doc" fields={[{ label: 'Cited requirement', value: decodeText(caseItem.trigger) }]} />
       </section>
 
       <section aria-labelledby="case-language-heading" style={CARD_STYLE}>
