@@ -738,9 +738,22 @@ export function StudioAsk({ onNavigate, onDeepLink, entries = STUDIO_CHAT_MODULE
     );
   }
 
-  function renderEntryOpportunityStatus(opportunityId: string) {
+  /** Section 2.9.9(c) — the "Detail →" action fires the entry's own
+   * AUTHORED `deepLinks[0]` (label + request) when present — the authored
+   * link is the contract, not a payload-equivalent reconstruction. Falls
+   * back to the spec-literal "Detail →" reconstruction only when the
+   * entry carries no `deepLinks` (`deepLinks` stays optional, §2.9.10). */
+  function renderEntryOpportunityStatus(entry: ChatEntry, opportunityId: string) {
     const opportunity = OPPS.find((o) => o.n === opportunityId);
     const L = getLiveLevers();
+    const authoredLink = entry.deepLinks?.[0];
+    const detailAction: DrawerContentAction = authoredLink
+      ? { label: authoredLink.label, variant: 'secondary', onPress: () => onDeepLink?.(authoredLink.request) }
+      : {
+          label: 'Detail →',
+          variant: 'secondary',
+          onPress: () => onDeepLink?.({ screen: 'studio.investment-design', kind: 'play', id: opportunityId }),
+        };
     return (
       <>
         <h2 style={SECTION_HEADING_STYLE}>
@@ -757,13 +770,7 @@ export function StudioAsk({ onNavigate, onDeepLink, entries = STUDIO_CHAT_MODULE
                 kind="play"
                 fields={opportunityFields(opportunity)}
                 tags={opportunityTags(opportunity, L.threshold)}
-                actions={[
-                  {
-                    label: 'Detail →',
-                    variant: 'secondary',
-                    onPress: () => onDeepLink?.({ screen: 'studio.investment-design', kind: 'play', id: opportunity.n }),
-                  },
-                ]}
+                actions={[detailAction]}
               />
             </section>
           </>
@@ -772,8 +779,21 @@ export function StudioAsk({ onNavigate, onDeepLink, entries = STUDIO_CHAT_MODULE
     );
   }
 
-  function renderEntryComplianceAttainment(domainKey: string) {
+  /** Section 2.9.9(d) — the "See in OnSide" action fires the entry's own
+   * AUTHORED `deepLinks[0]` (label + request) when present, same
+   * discipline as `renderEntryOpportunityStatus`. Falls back to the
+   * spec-literal "See in OnSide" reconstruction only when the entry
+   * carries no `deepLinks`. */
+  function renderEntryComplianceAttainment(entry: ChatEntry, domainKey: string) {
     const domain = DOMAINS.find((d) => d.key === domainKey);
+    const authoredLink = entry.deepLinks?.[0];
+    const seeInOnsideAction: DrawerContentAction = authoredLink
+      ? { label: authoredLink.label, variant: 'secondary', onPress: () => onDeepLink?.(authoredLink.request) }
+      : {
+          label: 'See in OnSide',
+          variant: 'secondary',
+          onPress: () => onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: domainKey }),
+        };
     return (
       <>
         <h2 style={SECTION_HEADING_STYLE}>
@@ -790,13 +810,7 @@ export function StudioAsk({ onNavigate, onDeepLink, entries = STUDIO_CHAT_MODULE
                 kind="domain"
                 fields={domainFields(domain)}
                 tags={domainTags(domain)}
-                actions={[
-                  {
-                    label: 'See in OnSide',
-                    variant: 'secondary',
-                    onPress: () => onDeepLink?.({ screen: 'onside.overview', kind: 'domain', id: domain.key }),
-                  },
-                ]}
+                actions={[seeInOnsideAction]}
               />
             </section>
           </>
@@ -821,7 +835,7 @@ export function StudioAsk({ onNavigate, onDeepLink, entries = STUDIO_CHAT_MODULE
           return (
             <>
               {renderEntryProse(turn.entry)}
-              {renderEntryOpportunityStatus(response.opportunityId)}
+              {renderEntryOpportunityStatus(turn.entry, response.opportunityId)}
             </>
           );
         }
@@ -829,7 +843,7 @@ export function StudioAsk({ onNavigate, onDeepLink, entries = STUDIO_CHAT_MODULE
           return (
             <>
               {renderEntryProse(turn.entry)}
-              {renderEntryComplianceAttainment(response.domainKey)}
+              {renderEntryComplianceAttainment(turn.entry, response.domainKey)}
             </>
           );
         }

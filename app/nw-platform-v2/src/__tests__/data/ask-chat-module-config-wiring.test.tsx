@@ -160,6 +160,18 @@ describe('Ask Studio (amendment A20) — a scripted deep link fires the existing
     expect(onDeepLink).toHaveBeenCalledTimes(1);
     expect(onDeepLink).toHaveBeenCalledWith(playLink.request);
   });
+
+  it('selecting the "See in OnSide" action on a real compliance-attainment answer calls onDeepLink with the exact request payload authored in data/askChat.ts, labeled with the entry\'s own authored deepLink label (Section 2.9.9(d))', () => {
+    const onDeepLink = vi.fn();
+    const entry = STUDIO_CHAT.entries.find((e) => e.id === 'studio-fairlend-attainment')!;
+    const domainLink = entry.deepLinks![0]!;
+    render(<StudioAsk onNavigate={() => {}} onDeepLink={onDeepLink} />);
+    askOnStudioAsk(entry.question);
+    const link = screen.getByRole('button', { name: new RegExp(domainLink.label) });
+    fireEvent.click(link);
+    expect(onDeepLink).toHaveBeenCalledTimes(1);
+    expect(onDeepLink).toHaveBeenCalledWith(domainLink.request);
+  });
 });
 
 describe('Context scoping — OnSide content and Studio content never cross into the other module\'s chat', () => {
