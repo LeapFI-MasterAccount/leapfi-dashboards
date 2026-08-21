@@ -244,6 +244,24 @@ export function notifyCaseRejected(c: CaseRef): void {
   notify('analyst', 'Returned to redraft · ' + c.title, c.id, 'app');
 }
 
+/** SO3 badge-notify sweep: a genuinely-missing store write helper. The six
+ * `notifyCaseX` helpers above all pair a base-anchored notify() TITLE with
+ * their emit() (base source 2691/2707/2715/2724/2749/2758) — but
+ * `save-language`/`revert-language`/`attach-minutes`/`reopen` have no base
+ * notify() call site at all (no source anchor, no title to port), while
+ * still mutating `stage`/`edited`/`history` — the exact fields
+ * `data/cases.ts` `isUntouched` and `views/CaseDetail.tsx`
+ * (`views/HomePanels.tsx`) `waitingOnRoleKey` read. Bumping the bell with a
+ * fabricated title would be inventing UI the base never had; the store's
+ * OWN existing pattern for a state-only sync with no notification is a
+ * bare `emit()` (`acceptOpportunity`/`applyGapClosure`/`undoGapClosure`/
+ * `resetDemo`/`setDemoSliders` above all call it directly, no `notify()`).
+ * This just exposes that same primitive under a name `Cases.tsx`'s
+ * `performAction` mutate functions can call — no new store machinery. */
+export function syncCaseState(): void {
+  emit();
+}
+
 /** Base openNotif (source 2644–2647): opening a notification marks it
  * read. The base flips the clicked row (`x.read=true`); from the shell we
  * know (case, role), so the first unread match flips — identical for the
