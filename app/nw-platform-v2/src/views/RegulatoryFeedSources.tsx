@@ -110,6 +110,30 @@
  * Tests: this worktree now carries Vitest + Testing Library — regression
  * coverage lives in `src/__tests__/onside/` (the earlier "no test runner
  * installed" STOP-item recorded here is resolved and removed).
+ *
+ * PI-3, L7 (call-12) — AD-recipient digest management (`DECISIONS.md` D7,
+ * `02-sprint-plan.md` L7 row). Extends THIS panel's Digest & alerts card
+ * (never a second digest UI — D7's explicit dependency note). Shape, named
+ * verbatim by D7: Input (P6, recipient entry) + Chip (P5, `filter`,
+ * reusing this file's own frequency-Chip toggle pattern immediately above)
+ * + DataTable (C6, one row per digest). Recipients are sourced from
+ * `data/studio.ts`'s `USERS` array (the "Active Directory mock" roster) —
+ * a roster Chip group is both the add AND the remove affordance (press an
+ * unselected Chip to add, press a selected Chip to remove), and the Input
+ * is a second, AD-lookup-only add path (exact case-insensitive match on
+ * name/first-name/email against the SAME roster) — never unconstrained
+ * free text (D7). **Cardinality cap (D7): single digest configuration
+ * only** — the management DataTable always renders exactly one row (no
+ * "add digest" affordance exists anywhere); its row action is enable/
+ * disable, not delete (no digest-deletion capability is built — D7 caps
+ * this to edit fields / remove-recipient / enable-disable, explicitly NOT
+ * multi-digest CRUD). Recipient/enable state defaults empty/Active — no
+ * base-engine precedent carries a seeded recipient list or an enabled
+ * flag (`DIGEST` has no such fields), so an honest empty start (never a
+ * fabricated preselection) is this file's own call, matching this panel's
+ * existing "0 sources set to alert immediately" honest-empty precedent.
+ * Toasts reuse the existing `showToast`/`toast` machinery verbatim.
+ * Tests: `src/__tests__/shell/settings-digest-recipients.test.tsx`.
  */
 import { useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -117,11 +141,14 @@ import { DataTable } from '../components/DataTable';
 import type { DataTableColumn, DataTableRowAction } from '../components/DataTable';
 import { Toast } from '../components/Toast';
 import { Chip } from '../components/primitives/Chip';
+import { Input } from '../components/primitives/Input';
 import { Switch } from '../components/primitives/Switch';
 import { Tag } from '../components/primitives/Tag';
 import type { NonRaciTagVariant } from '../components/primitives/Tag';
 import { DIGEST, FREQ, INSTR, SRC_ITEMS, SRC_LAYERS, SRC_ROWS } from '../data/onside';
 import type { SrcRow } from '../data/onside';
+import { USERS } from '../data/studio';
+import type { StudioUser } from '../data/studio';
 import { PANEL_STYLE } from '../theme/panelStyle';
 
 const ENTITY_MAP: Record<string, string> = { '&amp;': '&', '&ndash;': '–' };
@@ -216,6 +243,13 @@ const DIGEST_GRID_STYLE: CSSProperties = {
 const DIGEST_FIELD_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
 const CHIP_ROW_STYLE: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: '0.5rem' };
 const SWITCH_COLUMN_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.6rem' };
+// L7 (call-12) — recipients field sits below the existing 3-column grid,
+// full width, same card.
+const RECIPIENTS_FIELD_STYLE: CSSProperties = { display: 'flex', flexDirection: 'column', gap: '0.5rem' };
+// SL-1: horizontal-scroll wrappers must declare `flexShrink: 0`
+// unconditionally — same shape as `SCROLL_WRAP_STYLE` above, kept as a
+// separate constant only because it names this table specifically.
+const MANAGEMENT_TABLE_WRAP_STYLE: CSSProperties = { overflowX: 'auto', flexShrink: 0 };
 // FIX WAVE (Class C, C1): rendered inside CARD_STYLE (spreads
 // PANEL_STYLE) — --ink2 fails AA on --panel in light theme; --chart-axis
 // is the prescribed panel-seated substitute.
@@ -251,6 +285,39 @@ const ALL_SOURCE_ROWS: SourceListRow[] = SRC_ROWS.map((row: SrcRow) => {
   };
 });
 
+/** L7 (call-12) — one row per digest, cardinality-1 (D7). Columns bind
+ * directly to the live digest state (frequency/recipients/delivery/
+ * enabled), never a separate copy. */
+interface DigestManagementRow {
+  id: 'digest';
+  frequency: string;
+  recipientNames: string[];
+  deliverySummary: string;
+  enabled: boolean;
+}
+
+const DIGEST_STATUS_VARIANT: Record<'enabled' | 'disabled', NonRaciTagVariant> = {
+  enabled: 'status-positive',
+  disabled: 'status-caution',
+};
+
+/** AD-lookup match for the recipient Input (D7: exact match against the
+ * SAME `USERS` roster the Chip group reads — never unconstrained free
+ * text). Case-insensitive exact match on full name, first name, or
+ * email. */
+function findUserByQuery(query: string): StudioUser | null {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return null;
+  return (
+    USERS.find(
+      (candidate) =>
+        candidate.email.toLowerCase() === normalized ||
+        candidate.name.toLowerCase() === normalized ||
+        candidate.first.toLowerCase() === normalized,
+    ) ?? null
+  );
+}
+
 /** Link-styled real `<button>` for an in-cell instrument link — the base
  * `.doclink` affordance (source 3391) rendered accessibly. */
 const INSTRUMENT_LINK_STYLE: CSSProperties = {
@@ -272,6 +339,11 @@ export function RegulatoryFeedSources({ onOpenSource, onOpenInstrument }: Regula
   const [deliveryApp, setDeliveryApp] = useState(DIGEST.app);
   const [deliveryBindingOnly, setDeliveryBindingOnly] = useState(DIGEST.bindingOnly);
   const [sourceAlerts, setSourceAlerts] = useState<Record<string, boolean>>({});
+  // L7 (call-12, D7) — AD recipients (honest empty start; see file header)
+  // and the single digest's enabled/disabled state (cardinality-1, D7).
+  const [recipientIds, setRecipientIds] = useState<Set<string>>(() => new Set());
+  const [recipientQuery, setRecipientQuery] = useState('');
+  const [digestEnabled, setDigestEnabled] = useState(true);
   // ONSIDE-09 — toast confirmations (base setDigest/toggleSrcAlert, source
   // 3360–3371). Keyed by a monotonically-increasing id so a fresh toast
   // remounts (and restarts its auto-dismiss) even with identical text.
@@ -315,6 +387,110 @@ export function RegulatoryFeedSources({ onOpenSource, onOpenInstrument }: Regula
   const handleDeliveryChange = (apply: (value: boolean) => void) => (value: boolean) => {
     apply(value);
     showToast('Digest preferences updated');
+  };
+
+  // L7 (call-12, D7) — roster Chip toggle is both the add AND the
+  // remove-recipient affordance (press unselected to add, press selected
+  // to remove), mirroring the frequency-Chip toggle pattern above.
+  const toggleRecipient = (user: StudioUser) => {
+    setRecipientIds((current) => {
+      const next = new Set(current);
+      if (next.has(user.id)) {
+        next.delete(user.id);
+        showToast(`${user.name} removed as a digest recipient.`);
+      } else {
+        next.add(user.id);
+        showToast(`${user.name} added as a digest recipient.`);
+      }
+      return next;
+    });
+  };
+
+  // AD-lookup add path for the recipient Input (D7: exact match against
+  // the SAME roster, never free text — see `findUserByQuery`).
+  const handleRecipientSubmit = (rawQuery: string) => {
+    const query = rawQuery.trim();
+    if (!query) return;
+    const match = findUserByQuery(query);
+    if (!match) {
+      showToast(`No Active Directory match for "${query}".`);
+      return;
+    }
+    if (recipientIds.has(match.id)) {
+      showToast(`${match.name} is already a digest recipient.`);
+      return;
+    }
+    setRecipientIds((current) => new Set(current).add(match.id));
+    showToast(`${match.name} added as a digest recipient.`);
+    setRecipientQuery('');
+  };
+
+  const recipients = useMemo(() => USERS.filter((candidate) => recipientIds.has(candidate.id)), [recipientIds]);
+
+  // D7 cap: single digest configuration, so the management DataTable is
+  // always exactly this one row — no "add digest" path exists anywhere.
+  const digestManagementRows: DigestManagementRow[] = useMemo(() => {
+    const deliveryParts: string[] = [];
+    if (deliveryEmail) deliveryParts.push('Email');
+    if (deliveryApp) deliveryParts.push('In-app');
+    if (deliveryBindingOnly) deliveryParts.push('Binding rules only');
+    return [
+      {
+        id: 'digest',
+        frequency,
+        recipientNames: recipients.map((recipient) => recipient.name),
+        deliverySummary: deliveryParts.length > 0 ? deliveryParts.join(' · ') : 'No delivery channel selected',
+        enabled: digestEnabled,
+      },
+    ];
+  }, [frequency, recipients, deliveryEmail, deliveryApp, deliveryBindingOnly, digestEnabled]);
+
+  const digestManagementColumns: DataTableColumn<DigestManagementRow>[] = [
+    { id: 'frequency', header: 'Frequency', render: (row) => <span>{row.frequency}</span> },
+    {
+      id: 'recipients',
+      header: 'Recipients',
+      render: (row) => (
+        <span>
+          {row.recipientNames.length} recipient{row.recipientNames.length === 1 ? '' : 's'}
+          {row.recipientNames.length > 0 ? ` — ${row.recipientNames.join(', ')}` : ''}
+        </span>
+      ),
+    },
+    {
+      id: 'delivery',
+      header: 'Delivery',
+      // Panel-seated (this table renders inside CARD_STYLE, which spreads
+      // PANEL_STYLE) — `--ink2` fails AA on `--panel` in light theme;
+      // `--chart-axis` is the token file's prescribed panel-seated
+      // substitute, same rule already documented at `DIGEST_HINT_STYLE`
+      // above (FIX WAVE Class C1).
+      render: (row) => <span style={{ color: 'var(--chart-axis)' }}>{row.deliverySummary}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      render: (row) => (
+        <Tag
+          text={row.enabled ? 'Active' : 'Disabled'}
+          variant={row.enabled ? DIGEST_STATUS_VARIANT.enabled : DIGEST_STATUS_VARIANT.disabled}
+        />
+      ),
+    },
+  ];
+
+  // Enable/disable (D7 cap: this is the only per-digest action — never a
+  // delete). Toggling is a plain, idempotent client-state flip (no server
+  // round trip here), so no request-key/pessimistic-render machinery
+  // applies — a double-press settles on the correct final toggled state
+  // exactly as `setDigestEnabled` composes.
+  const digestManagementRowAction: DataTableRowAction<DigestManagementRow> = {
+    label: (row) => (row.enabled ? 'Disable' : 'Enable'),
+    onPress: (row) => {
+      const next = !row.enabled;
+      setDigestEnabled(next);
+      showToast(next ? 'Digest enabled.' : 'Digest disabled.');
+    },
   };
 
   const columns: DataTableColumn<SourceListRow>[] = [
@@ -409,6 +585,43 @@ export function RegulatoryFeedSources({ onOpenSource, onOpenInstrument }: Regula
               {deliveryBindingOnly ? ' · binding rules only' : ''}
             </p>
           </div>
+        </div>
+
+        <div style={RECIPIENTS_FIELD_STYLE}>
+          <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink)' }}>Recipients</span>
+          <Input
+            label="Add recipient"
+            value={recipientQuery}
+            onChange={setRecipientQuery}
+            onSubmit={handleRecipientSubmit}
+            placeholder="Name or email"
+            surface="panel"
+          />
+          <div style={CHIP_ROW_STYLE} role="group" aria-label="Digest recipients">
+            {USERS.map((candidate) => (
+              <Chip
+                key={candidate.id}
+                text={candidate.name}
+                variant="filter"
+                selected={recipientIds.has(candidate.id)}
+                onPress={() => toggleRecipient(candidate)}
+              />
+            ))}
+          </div>
+          <p style={DIGEST_HINT_STYLE}>
+            {recipients.length} recipient{recipients.length === 1 ? '' : 's'} on this digest
+          </p>
+        </div>
+
+        <div style={MANAGEMENT_TABLE_WRAP_STYLE}>
+          <DataTable
+            caption="Daily digest management"
+            columns={digestManagementColumns}
+            rows={digestManagementRows}
+            getRowId={(row) => row.id}
+            rowAction={digestManagementRowAction}
+            surface="panel"
+          />
         </div>
       </div>
 
