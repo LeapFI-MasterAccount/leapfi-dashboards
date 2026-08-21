@@ -283,6 +283,21 @@ export function Reporting({ onNavigate, currentUser = CURRENT, deepLink, onDeepL
                 />
               );
             })}
+            {/* D4 (`DECISIONS.md`): Findings lands as a 12th SetupCard,
+                `locked` variant (C15) — appended after the 11 interactive
+                report cards, no Sidebar cost. A description region, not a
+                button (SetupCard's `locked` a11y baseline), matching the
+                existing locked-card pattern exactly (`OnSideOwnership.tsx`
+                onboarding steps, `ConnectSoon.tsx` sibling modules). No
+                fabricated data: title/description restate call-02's own
+                requirement text (Dan's "report repository"/"findings" tab
+                naming, `meeting_notes_2026-08-20.md:96`), not invented
+                counts, dates, or statuses. */}
+            <SetupCard
+              title="Findings"
+              description="Audit and exam findings repository — coming soon"
+              variant="locked"
+            />
           </div>
       </main>
       <Drawer
