@@ -17,7 +17,7 @@
  *    BOARD_LOG) and shows the base's reset toast (source 3960).
  */
 import { beforeEach, describe, expect, it } from 'vitest'
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../../App'
 import { notifyCaseRouted, resetDemo } from '../../state/demoStore'
@@ -81,8 +81,26 @@ describe('notification pipeline through the shell (SH-1/CS-01; base notify → r
 
     // Back to the list INSIDE the Cases screen (screenId stays 'cases',
     // pendingCaseId still holds this case id).
+    //
+    // REGRESSION FIX (PI2-D14 host migration, docflow/lane-2): this
+    // assertion originally read synchronously (no `waitFor`), pinning
+    // pre-D14 behavior — `CaseDetail.tsx` was a standalone full page and
+    // "← All cases" swapped `screenId` back to the list instantly. PI2-D14
+    // (design_system_spec.md §2.10 preamble, "CaseDetail.tsx's full-page
+    // exception DISSOLVES... its approval logic migrates into the case
+    // side-car Drawer") dissolves exactly that: the case detail now renders
+    // as the SAME shared Drawer (C7) every other screen's detail overlay
+    // uses (`Cases.tsx`, PI2-D14 host migration comment), and "← All cases"
+    // closes it through C7's own standard ~200ms exit transition
+    // (`Drawer.tsx`'s `TRANSITION_MS`) rather than unmounting synchronously
+    // — the content stays mounted through `phase: 'closing'` by design (see
+    // `case_sidecar_migration.test.tsx`'s own fake-timer pin of this exact
+    // transition). This is the new, intentional behavior, not a defect:
+    // waiting for it here is the correct assertion, not a workaround.
     await user.click(screen.getByRole('button', { name: '← All cases' }))
-    expect(screen.queryByRole('button', { name: '← All cases' })).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: '← All cases' })).not.toBeInTheDocument()
+    })
 
     // Same bell row, same case — previously a no-op setState (unchanged
     // key, no remount); the per-press nonce now forces the remount.
